@@ -145,8 +145,19 @@ public class Errors {
 
 
     // Stuff I've added
-    public static final Error INVALID_NULL_CONVERSION = new Error(40, WARNING);
-    public static final Error PARAMETER_NAME_CHANGE = new Error(41, WARNING);
+    // Compatibility checks
+    public static final Error INVALID_NULL_CONVERSION = new Error(40, ERROR);
+    public static final Error PARAMETER_NAME_CHANGE = new Error(41, ERROR);
+    public static final Error OPERATOR_REMOVAL = new Error(42, ERROR);
+    public static final Error INFIX_REMOVAL = new Error(43, ERROR);
+    public static final Error VARARG_REMOVAL = new Error(44, ERROR);
+    public static final Error NEWLY_FINAL = new Error(45, ERROR);
+    public static final Error ADD_SEALED = new Error(46, ERROR);
+    public static final Error KOTLIN_KEYWORD = new Error(47, WARNING);
+    public static final Error SAM_SHOULD_BE_LAST = new Error(48, WARNING);
+    public static final Error MISSING_JVMSTATIC = new Error(49, WARNING);
+    public static final Error DEFAULT_VALUE_CHANGE = new Error(50, ERROR);
+    public static final Error DOCUMENT_EXCEPTIONS = new Error(51, ERROR);
 
 
     // Errors in javadoc generation

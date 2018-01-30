@@ -34,12 +34,14 @@ class TextClassItem(
     isPublic: Boolean = false,
     isProtected: Boolean = false,
     isPrivate: Boolean = false,
+    isInternal: Boolean = false,
     isStatic: Boolean = false,
     private var isInterface: Boolean = false,
     isAbstract: Boolean = false,
     private var isEnum: Boolean = false,
     private var isAnnotation: Boolean = false,
     isFinal: Boolean = false,
+    isSealed: Boolean = false,
     val qualifiedName: String = "",
     private val qualifiedTypeName: String = qualifiedName,
     var name: String = qualifiedName.substring(qualifiedName.lastIndexOf('.') + 1),
@@ -50,8 +52,8 @@ class TextClassItem(
     modifiers = TextModifiers(
         codebase = codebase,
         annotationStrings = annotations,
-        public = isPublic, protected = isProtected, private = isPrivate,
-        static = isStatic, abstract = isAbstract, final = isFinal
+        public = isPublic, protected = isProtected, private = isPrivate, internal = isInternal,
+        static = isStatic, abstract = isAbstract, final = isFinal, sealed = isSealed
     )
 ), ClassItem {
 

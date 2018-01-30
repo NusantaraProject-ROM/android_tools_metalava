@@ -137,6 +137,13 @@ interface Item {
      */
     fun isFromClassPath(): Boolean = false
 
+
+    /** Is this element declared in Java (rather than Kotlin) ? */
+    fun isJava(): Boolean = true
+
+    /** Is this element declared in Kotlin (rather than Java) ? */
+    fun isKotlin() = !isJava()
+
     /**
      * Returns true if this item requires nullness information and supplies it
      * (for all items, e.g. if a method is partially annotated this method would

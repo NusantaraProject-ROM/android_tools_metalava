@@ -289,6 +289,10 @@ private fun loadFromSources(): Codebase {
     analyzer.computeApi()
     analyzer.handleStripping()
 
+    if (options.checkKotlinInterop) {
+        KotlinInteropChecks().check(codebase)
+    }
+
     progress("\nInsert missing constructors: ")
     val ignoreShown = options.showUnannotated
 
@@ -554,6 +558,11 @@ private fun createReportFile(
 
 /** Used for verbose output to show progress bar */
 private var tick = 0
+
+/** Needed for tests to ensure we don't get unpredictable behavior of "." in output */
+fun resetTicker() {
+    tick = 0
+}
 
 /** Print progress */
 fun tick() {

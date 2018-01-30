@@ -20,7 +20,10 @@ import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.ParameterItem
 import com.android.tools.metalava.model.TypeItem
 import com.intellij.psi.PsiParameter
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
+import org.jetbrains.uast.kotlin.declarations.KotlinUMethod
 
 class PsiParameterItem(
     override val codebase: PsiBasedCodebase,
@@ -49,6 +52,48 @@ class PsiParameterItem(
         } else {
             // Java: Look for @ParameterName annotation
             val annotation = modifiers.annotations().firstOrNull { it.isParameterName() }
+            if (annotation != null) {
+                return annotation.attributes().firstOrNull()?.value?.value()?.toString()
+            }
+        }
+
+        return null
+    }
+
+    override fun hasDefaultValue(): Boolean {
+        return if (isKotlin(psiParameter)) {
+            getKtParameter()?.hasDefaultValue() ?: false
+        } else {
+            // Java: Look for @ParameterName annotation
+            modifiers.annotations().any { it.isDefaultValue() }
+        }
+    }
+
+    private fun getKtParameter(): KtParameter? {
+        val ktParameters =
+            ((containingMethod.psiMethod as? KotlinUMethod)?.sourcePsi as? KtNamedFunction)?.valueParameters
+                    ?: return null
+        // Line up from the end: there might be receiver for extension methods etc
+        val rem = containingMethod.parameters().size - parameterIndex
+        val index = ktParameters.size - rem
+        if (index >= 0) {
+            return ktParameters[index]
+        }
+
+        return null
+    }
+
+    override fun defaultValue(): String? {
+        if (isKotlin(psiParameter)) {
+            val ktParameter = getKtParameter() ?: return null
+            if (ktParameter.hasDefaultValue()) {
+                return ktParameter.defaultValue?.text
+            }
+
+            return null
+        } else {
+            // Java: Look for @ParameterName annotation
+            val annotation = modifiers.annotations().firstOrNull { it.isDefaultValue() }
             if (annotation != null) {
                 return annotation.attributes().firstOrNull()?.value?.value()?.toString()
             }

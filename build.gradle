@@ -18,7 +18,7 @@ apply plugin: 'kotlin'
 apply plugin: 'maven'
 
 group = 'com.android'
-version = '0.9.0'
+version = '0.9.1'
 
 mainClassName = "com.android.tools.metalava.Driver"
 applicationDefaultJvmArgs = ["-ea", "-Xms2g", "-Xmx4g"]
