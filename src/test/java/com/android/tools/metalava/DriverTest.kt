@@ -65,13 +65,16 @@ abstract class DriverTest {
         return dir
     }
 
-    protected fun runDriver(vararg args: String): String {
+    protected fun runDriver(vararg args: String, expectedFail: String = ""): String {
         resetTicker()
 
         val sw = StringWriter()
         val writer = PrintWriter(sw)
         if (!com.android.tools.metalava.run(arrayOf(*args), writer, writer)) {
-            fail(sw.toString())
+            val actualFail = sw.toString().trim()
+            if (expectedFail != actualFail) {
+                fail(actualFail)
+            }
         }
 
         return sw.toString()
@@ -196,6 +199,13 @@ abstract class DriverTest {
         }
 
         Errors.resetLevels()
+
+        /** Expected output if exiting with an error code */
+        val expectedFail = if (checkCompatibility) {
+            "Aborting: Found compatibility problems with --check-compatibility"
+        } else {
+            ""
+        }
 
         // Unit test which checks that a signature file is as expected
         val androidJar = getPlatformFile("android.jar")
@@ -417,6 +427,7 @@ abstract class DriverTest {
 
         val actualOutput = runDriver(
             "--no-color",
+            "--no-banner",
 
             // For the tests we want to treat references to APIs like java.io.Closeable
             // as a class that is part of the API surface, not as a hidden class as would
@@ -454,7 +465,8 @@ abstract class DriverTest {
             *importedPackageArgs.toTypedArray(),
             *skipEmitPackagesArgs.toTypedArray(),
             *extraArguments,
-            *sourceList
+            *sourceList,
+            expectedFail = expectedFail
         )
 
         if (expectedOutput != null) {

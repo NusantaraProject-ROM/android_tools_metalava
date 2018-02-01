@@ -218,10 +218,6 @@ interface ModifierList {
                     writer.write("operator ")
                 }
 
-                if (list.isOperator()) {
-                    writer.write("inline ")
-                }
-
                 val isInterface = classItem?.isInterface() == true
                         || (methodItem?.containingClass()?.isInterface() == true &&
                         !list.isDefault() && !list.isStatic())
@@ -309,10 +305,6 @@ interface ModifierList {
 
                 if (list.isOperator()) {
                     writer.write("operator ")
-                }
-
-                if (list.isOperator()) {
-                    writer.write("inline ")
                 }
 
                 if (list.isTransient()) {

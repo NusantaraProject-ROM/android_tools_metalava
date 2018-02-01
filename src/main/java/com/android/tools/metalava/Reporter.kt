@@ -107,7 +107,7 @@ open class Reporter(private val rootFolder: File? = null) {
     private fun isSuppressed(id: Errors.Error, item: Item?): Boolean {
         item ?: return false
 
-        if (id.level == LINT || id.level == WARNING) {
+        if (id.level == LINT || id.level == WARNING || id.level == ERROR) {
             val id1 = "Doclava${id.code}"
             val id2 = id.name
             val annotation = item.modifiers.findAnnotation("android.annotation.SuppressLint")
