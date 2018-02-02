@@ -72,6 +72,50 @@ class CompatibilityCheck : ComparisonVisitor() {
                 }
             }
         }
+
+        val oldModifiers = old.modifiers
+        val newModifiers = new.modifiers
+        if (oldModifiers.isOperator() && !newModifiers.isOperator()) {
+            reporter.report(
+                Errors.OPERATOR_REMOVAL, new,
+                "Cannot remove `operator` modifier from ${describe(new)}: Incompatible change"
+            )
+        }
+
+        if (oldModifiers.isInfix() && !newModifiers.isInfix()) {
+            reporter.report(
+                Errors.INFIX_REMOVAL, new,
+                "Cannot remove `infix` modifier from ${describe(new)}: Incompatible change"
+            )
+        }
+
+        if (!oldModifiers.isFinal() && newModifiers.isFinal() &&
+            (new is ClassItem || new is MethodItem)
+        ) {
+            reporter.report(
+                Errors.NEWLY_FINAL, new,
+                "Making a class or method final is an incompatible change: ${describe(new)}"
+            )
+        }
+
+        if (oldModifiers.isVarArg() && !newModifiers.isVarArg()) {
+            // In Java, changing from array to varargs is a compatible change, but
+            // not the other way around. Kotlin is the same, though in Kotlin
+            // you have to change the parameter type as well to an array type; assuming you
+            // do that it's the same situation as Java; otherwise the normal
+            // signature check will catch the incompatibility.
+            reporter.report(
+                Errors.VARARG_REMOVAL, new,
+                "Changing from varargs to array is an incompatible change: ${describe(new)}"
+            )
+        }
+
+        if (!oldModifiers.isSealed() && newModifiers.isSealed()) {
+            reporter.report(
+                Errors.ADD_SEALED, new,
+                "Cannot add `sealed` modifier to ${describe(new)}: Incompatible change"
+            )
+        }
     }
 
     override fun compare(old: ParameterItem, new: ParameterItem) {
@@ -86,6 +130,13 @@ class CompatibilityCheck : ComparisonVisitor() {
             reporter.report(
                 Errors.PARAMETER_NAME_CHANGE, new,
                 "Attempted to change parameter name from $prevName to $newName in ${describe(new.containingMethod())}"
+            )
+        }
+
+        if (old.hasDefaultValue() && !new.hasDefaultValue()) {
+            reporter.report(
+                Errors.DEFAULT_VALUE_CHANGE, new,
+                "Attempted to remove default value from ${describe(new)} in ${describe(new.containingMethod())}"
             )
         }
     }

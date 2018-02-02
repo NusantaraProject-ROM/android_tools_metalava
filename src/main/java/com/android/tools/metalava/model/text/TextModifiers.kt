@@ -31,6 +31,7 @@ class TextModifiers(
     private var public: Boolean = false,
     private var protected: Boolean = false,
     private var private: Boolean = false,
+    private var internal: Boolean = false,
     private var static: Boolean = false,
     private var abstract: Boolean = false,
     private var final: Boolean = false,
@@ -39,7 +40,12 @@ class TextModifiers(
     private var strictfp: Boolean = false,
     private var transient: Boolean = false,
     private var volatile: Boolean = false,
-    private var default: Boolean = false
+    private var default: Boolean = false,
+    private var infix: Boolean = false,
+    private var operator: Boolean = false,
+    private var inline: Boolean = false,
+    private var sealed: Boolean = false,
+    private var vararg: Boolean = false
 ) : MutableModifierList {
     private var annotations: MutableList<AnnotationItem> = mutableListOf()
 
@@ -71,6 +77,7 @@ class TextModifiers(
     override fun isPublic(): Boolean = public
     override fun isProtected(): Boolean = protected
     override fun isPrivate(): Boolean = private
+    override fun isInternal(): Boolean = internal
     override fun isStatic(): Boolean = static
     override fun isAbstract(): Boolean = abstract
     override fun isFinal(): Boolean = final
@@ -80,6 +87,10 @@ class TextModifiers(
     override fun isTransient(): Boolean = transient
     override fun isVolatile(): Boolean = volatile
     override fun isDefault(): Boolean = default
+    override fun isSealed(): Boolean = sealed
+    override fun isInfix(): Boolean = infix
+    override fun isOperator(): Boolean = operator
+    override fun isVarArg(): Boolean = vararg
 
     override fun setPublic(public: Boolean) {
         this.public = public

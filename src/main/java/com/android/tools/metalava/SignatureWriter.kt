@@ -24,6 +24,7 @@ import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.ModifierList
 import com.android.tools.metalava.model.PackageItem
 import com.android.tools.metalava.model.TypeItem
+import com.android.tools.metalava.model.javaEscapeString
 import com.android.tools.metalava.model.visitors.ApiVisitor
 import java.io.PrintWriter
 import java.util.function.Predicate
@@ -231,6 +232,17 @@ class SignatureWriter(
                     writer.print(" ")
                     writer.print(name)
                 }
+            }
+            if (options.outputDefaultValues && parameter.hasDefaultValue()) {
+                writer.print(" = \"")
+                val defaultValue = parameter.defaultValue()
+                if (defaultValue != null) {
+                    writer.print(javaEscapeString(defaultValue))
+                } else {
+                    // null is a valid default value!
+                    writer.print("null")
+                }
+                writer.print("\"")
             }
         }
         writer.print(")")

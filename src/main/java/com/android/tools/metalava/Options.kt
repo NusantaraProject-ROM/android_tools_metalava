@@ -67,6 +67,7 @@ private const val ARG_MIGRATE_NULLNESS = "--migrate-nullness"
 private const val ARG_CHECK_COMPATIBILITY = "--check-compatibility"
 private const val ARG_INPUT_KOTLIN_NULLS = "--input-kotlin-nulls"
 private const val ARG_OUTPUT_KOTLIN_NULLS = "--output-kotlin-nulls"
+private const val ARG_OUTPUT_DEFAULT_VALUES = "--output-default-values"
 private const val ARG_ANNOTATION_COVERAGE_STATS = "--annotation-coverage-stats"
 private const val ARG_ANNOTATION_COVERAGE_OF = "--annotation-coverage-of"
 private const val ARG_WARNINGS_AS_ERRORS = "--warnings-as-errors"
@@ -92,6 +93,7 @@ private const val ARG_ANDROID_JAR_PATTERN = "--android-jar-pattern"
 private const val ARG_CURRENT_VERSION = "--current-version"
 private const val ARG_CURRENT_CODENAME = "--current-codename"
 private const val ARG_CURRENT_JAR = "--current-jar"
+private const val ARG_CHECK_KOTLIN_INTEROP = "--check-kotlin-interop"
 
 class Options(
     args: Array<String>,
@@ -137,6 +139,9 @@ class Options(
     /** Whether nullness annotations should be displayed as ?/!/empty instead of with @NonNull/@Nullable. */
     var outputKotlinStyleNulls = !compatOutput
 
+    /** Whether default values should be included in signature files */
+    var outputDefaultValues = !compatOutput
+
     /** Whether we should omit common packages such as java.lang.* and kotlin.* from signature output */
     var omitCommonPackages = !compatOutput
 
@@ -166,6 +171,9 @@ class Options(
 
     /** Whether to include unannotated elements if {@link #showAnnotations} is set */
     var showUnannotated = false
+
+    /** Whether to validate the API for Kotlin interop */
+    var checkKotlinInterop = false
 
     /** Packages to include (if null, include all) */
     var stubPackages: PackageFilter? = null
@@ -461,8 +469,11 @@ class Options(
                 ARG_WARNINGS_AS_ERRORS, "-werror" -> warningsAreErrors = true
                 ARG_LINTS_AS_ERRORS, "-lerror" -> lintsAreErrors = true
 
+                ARG_CHECK_KOTLIN_INTEROP -> checkKotlinInterop = true
+
                 ARG_COLOR -> color = true
                 ARG_NO_COLOR -> color = false
+                ARG_NO_BANNER -> {} // Already processed above but don't flag it here as invalid
 
                 ARG_OMIT_COMMON_PACKAGES, ARG_OMIT_COMMON_PACKAGES + "=yes" -> omitCommonPackages = true
                 ARG_OMIT_COMMON_PACKAGES + "=no" -> omitCommonPackages = false
@@ -609,6 +620,12 @@ class Options(
                         } else {
                             yesNo(arg.substring(ARG_INPUT_KOTLIN_NULLS.length + 1))
                         }
+                    } else if (arg.startsWith(ARG_OUTPUT_DEFAULT_VALUES)) {
+                        outputDefaultValues = if (arg == ARG_OUTPUT_DEFAULT_VALUES) {
+                            true
+                        } else {
+                            yesNo(arg.substring(ARG_OUTPUT_DEFAULT_VALUES.length + 1))
+                        }
                     } else if (arg.startsWith(ARG_OMIT_COMMON_PACKAGES)) {
                         omitCommonPackages = if (arg == ARG_OMIT_COMMON_PACKAGES) {
                             true
@@ -748,6 +765,13 @@ class Options(
         if (compatOutput && outputKotlinStyleNulls) {
             throw OptionsException(
                 stderr = "$ARG_OUTPUT_KOTLIN_NULLS should not be combined with " +
+                        "$ARGS_COMPAT_OUTPUT=yes"
+            )
+        }
+
+        if (compatOutput && outputDefaultValues) {
+            throw OptionsException(
+                stderr = "$ARG_OUTPUT_DEFAULT_VALUES should not be combined with " +
                         "$ARGS_COMPAT_OUTPUT=yes"
             )
         }
@@ -986,6 +1010,8 @@ class Options(
             ARG_OUTPUT_KOTLIN_NULLS + "[=yes|no]", "Controls whether nullness annotations should be formatted as " +
                     "in Kotlin (with \"?\" for nullable types, \"\" for non nullable types, and \"!\" for unknown. " +
                     "The default is yes.",
+            ARG_OUTPUT_DEFAULT_VALUES + "[=yes|no]", "Controls whether default values should be included in " +
+                    "signature files. The default is yes.",
             ARGS_COMPAT_OUTPUT + "=[yes|no]", "Controls whether to keep signature files compatible with the " +
                     "historical format (with its various quirks) or to generate the new format (which will also include " +
                     "annotations that are part of the API, etc.)",
@@ -1008,6 +1034,8 @@ class Options(
                     "interpreted as having encoded its types using Kotlin style types: a suffix of \"?\" for nullable " +
                     "types, no suffix for non nullable types, and \"!\" for unknown. The default is no.",
             ARG_CHECK_COMPATIBILITY, "Check compatibility with the previous API",
+            ARG_CHECK_KOTLIN_INTEROP, "Check API intended to be used from both Kotlin and Java for interoperability " +
+                    "issues",
             ARG_MIGRATE_NULLNESS, "Compare nullness information with the previous API and mark newly " +
                     "annotated APIs as under migration.",
             ARG_WARNINGS_AS_ERRORS, "Promote all warnings to errors",

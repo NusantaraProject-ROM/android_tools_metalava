@@ -25,6 +25,8 @@ import com.intellij.psi.PsiDocCommentOwner
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierList
 import com.intellij.psi.PsiModifierListOwner
+import org.jetbrains.kotlin.asJava.elements.KtLightModifierList
+import org.jetbrains.kotlin.lexer.KtTokens
 
 class PsiModifierItem(
     override val codebase: Codebase,
@@ -107,6 +109,30 @@ class PsiModifierItem(
 
     fun isDeprecated(): Boolean {
         return isSet(DEPRECATED)
+    }
+
+    override fun isVarArg(): Boolean {
+        return isSet(VARARG)
+    }
+
+    override fun isSealed(): Boolean {
+        return isSet(SEALED)
+    }
+
+    override fun isInternal(): Boolean {
+        return isSet(INTERNAL)
+    }
+
+    override fun isInfix(): Boolean {
+        return isSet(INFIX)
+    }
+
+    override fun isOperator(): Boolean {
+        return isSet(OPERATOR)
+    }
+
+    override fun isInline(): Boolean {
+        return isSet(INLINE)
     }
 
     override fun setPublic(public: Boolean) {
@@ -217,9 +243,16 @@ class PsiModifierItem(
         const val VOLATILE = 1 shl 10
         const val DEFAULT = 1 shl 11
         const val DEPRECATED = 1 shl 12
+        const val VARARG = 1 shl 13
+        const val SEALED = 1 shl 14
+        const val INTERNAL = 1 shl 15
+        const val INFIX = 1 shl 16
+        const val OPERATOR = 1 shl 17
+        const val INLINE = 1 shl 178
 
         private const val EQUIVALENCE_MASK = PUBLIC or PROTECTED or PRIVATE or STATIC or ABSTRACT or
-                FINAL or TRANSIENT or VOLATILE or SYNCHRONIZED or DEPRECATED
+                FINAL or TRANSIENT or VOLATILE or SYNCHRONIZED or DEPRECATED or VARARG or
+                SEALED or INTERNAL or INFIX or OPERATOR or INLINE
 
         fun create(codebase: PsiBasedCodebase, element: PsiModifierListOwner, documentation: String?): PsiModifierItem {
             val modifiers = create(
@@ -276,6 +309,34 @@ class PsiModifierItem(
             }
             if (modifierList.hasModifierProperty(PsiModifier.DEFAULT)) {
                 flags = flags or DEFAULT
+            }
+
+            // Look for special Kotlin keywords
+            if (modifierList is KtLightModifierList<*>) {
+                val ktModifierList = modifierList.kotlinOrigin
+                if (ktModifierList != null) {
+                    if (ktModifierList.hasModifier(KtTokens.VARARG_KEYWORD)) {
+                        flags = flags or VARARG
+                    }
+                    if (ktModifierList.hasModifier(KtTokens.SEALED_KEYWORD)) {
+                        flags = flags or SEALED
+                    }
+                    if (ktModifierList.hasModifier(KtTokens.INTERNAL_KEYWORD)) {
+                        // Also remove public flag which at the UAST levels it promotes these
+                        // methods to, e.g. "internal myVar" gets turned into
+                        //    public final boolean getMyHiddenVar$lintWithKotlin()
+                        flags = (flags or INTERNAL) and PUBLIC.inv()
+                    }
+                    if (ktModifierList.hasModifier(KtTokens.INFIX_KEYWORD)) {
+                        flags = flags or INFIX
+                    }
+                    if (ktModifierList.hasModifier(KtTokens.OPERATOR_KEYWORD)) {
+                        flags = flags or OPERATOR
+                    }
+                    if (ktModifierList.hasModifier(KtTokens.INLINE_KEYWORD)) {
+                        flags = flags or INLINE
+                    }
+                }
             }
 
             val psiAnnotations = modifierList.annotations

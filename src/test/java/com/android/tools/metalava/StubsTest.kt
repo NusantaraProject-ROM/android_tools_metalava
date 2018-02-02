@@ -1116,7 +1116,7 @@ class StubsTest : DriverTest() {
                 ),
                 requiresPermissionSource
             ),
-            warnings = "src/test/pkg/HiddenPermission.java:5: lint: Permission android.Manifest.permission.INTERACT_ACROSS_USERS required by method test.pkg.HiddenPermission.removeStickyBroadcast(Object) is hidden or removed [MissingPermission:132]",
+            warnings = "src/test/pkg/HiddenPermission.java:7: lint: Permission android.Manifest.permission.INTERACT_ACROSS_USERS required by method test.pkg.HiddenPermission.removeStickyBroadcast(Object) is hidden or removed [MissingPermission:132]",
             source = """
                     package test.pkg;
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
