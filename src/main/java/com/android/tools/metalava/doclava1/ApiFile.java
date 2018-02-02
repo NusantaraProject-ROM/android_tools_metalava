@@ -706,7 +706,7 @@ public class ApiFile {
             if ("=".equals(token)) {
                 token = tokenizer.requireToken(false);
                 try {
-                    defaultValue = (String)parseValue("java.lang.String", token);
+                    defaultValue = (String) parseValue("java.lang.String", token);
                 } catch (ApiParseException ex) {
                     ex.line = tokenizer.getLine();
                     throw ex;

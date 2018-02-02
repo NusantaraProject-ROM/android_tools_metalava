@@ -18,9 +18,8 @@ package com.android.tools.metalava
 
 import com.android.SdkConstants
 import com.android.tools.lint.annotations.ApiDatabase
-import com.android.tools.lint.annotations.SdkUtils2
-import com.android.tools.lint.annotations.SdkUtils2.wrap
 import com.android.tools.metalava.doclava1.Errors
+import com.android.utils.SdkUtils.wrap
 import com.google.common.base.CharMatcher
 import com.google.common.base.Splitter
 import com.google.common.collect.Lists
@@ -469,7 +468,9 @@ class Options(
 
                 ARG_COLOR -> color = true
                 ARG_NO_COLOR -> color = false
-                ARG_NO_BANNER -> {} // Already processed above but don't flag it here as invalid
+                ARG_NO_BANNER -> {
+                    // Already processed above but don't flag it here as invalid
+                }
 
                 ARG_OMIT_COMMON_PACKAGES, ARG_OMIT_COMMON_PACKAGES + "=yes" -> omitCommonPackages = true
                 ARG_OMIT_COMMON_PACKAGES + "=no" -> omitCommonPackages = false
@@ -1114,14 +1115,14 @@ class Options(
                     val colorFormatString = "%1$-" + (argWidth + invisibleChars) + "s%2\$s"
 
                     out.print(
-                        SdkUtils2.wrap(
+                        wrap(
                             String.format(colorFormatString, colorArg, description),
                             MAX_LINE_WIDTH + invisibleChars, MAX_LINE_WIDTH, indent
                         )
                     )
                 } else {
                     out.print(
-                        SdkUtils2.wrap(
+                        wrap(
                             String.format(formatString, arg, description),
                             MAX_LINE_WIDTH, indent
                         )
