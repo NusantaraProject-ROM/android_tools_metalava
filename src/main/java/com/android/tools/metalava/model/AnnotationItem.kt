@@ -76,6 +76,14 @@ interface AnnotationItem {
         return qualifiedName()?.endsWith(".ParameterName") ?: return false
     }
 
+    /**
+     * True if this annotation represents a @DefaultValue annotation (or some synonymous annotation).
+     * The default value should be the default atttribute or "value".
+     */
+    fun isDefaultValue(): Boolean {
+        return qualifiedName()?.endsWith(".DefaultValue") ?: return false
+    }
+
     /** Returns the given named attribute if specified */
     fun findAttribute(name: String?): AnnotationAttribute? {
         val actualName = name ?: ATTR_VALUE

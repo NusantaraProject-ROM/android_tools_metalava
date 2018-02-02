@@ -295,6 +295,10 @@ abstract class PsiItem(
         modifiers.setOwner(this)
     }
 
+    override fun isKotlin(): Boolean {
+        return isKotlin(element)
+    }
+
     companion object {
         fun javadoc(element: PsiElement): String {
             if (element is PsiCompiledElement) {

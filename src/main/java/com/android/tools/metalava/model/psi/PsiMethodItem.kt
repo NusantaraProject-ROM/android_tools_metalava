@@ -26,6 +26,15 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.TypeConversionUtil
 import org.intellij.lang.annotations.Language
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UThrowExpression
+import org.jetbrains.uast.UTryExpression
+import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.kotlin.declarations.KotlinUMethod
+import org.jetbrains.uast.visitor.AbstractUastVisitor
 import java.io.StringWriter
 
 open class PsiMethodItem(
@@ -120,6 +129,65 @@ open class PsiMethodItem(
     }
 
     override fun throwsTypes(): List<ClassItem> = throwsTypes
+
+    override fun isExtensionMethod(): Boolean {
+        if (isKotlin()) {
+            val ktParameters =
+                ((psiMethod as? KotlinUMethod)?.sourcePsi as? KtNamedFunction)?.valueParameters
+                        ?: return false
+            return ktParameters.size < parameters.size
+        }
+
+        return false
+    }
+
+    override fun isKotlinProperty(): Boolean {
+        return psiMethod is KotlinUMethod && psiMethod.sourcePsi is KtProperty
+    }
+
+    override fun findThrownExceptions(): Set<ClassItem> {
+        val method = psiMethod as? UMethod ?: return emptySet()
+        if (!isKotlin()) {
+            return emptySet()
+        }
+
+        val exceptions = mutableSetOf<ClassItem>()
+
+        method.accept(object : AbstractUastVisitor() {
+            override fun visitThrowExpression(node: UThrowExpression): Boolean {
+                val type = node.thrownExpression.getExpressionType()
+                if (type != null) {
+                    val exceptionClass = codebase.getType(type).asClass()
+                    if (exceptionClass != null && !isCaught(exceptionClass, node)) {
+                        exceptions.add(exceptionClass)
+                    }
+                }
+                return super.visitThrowExpression(node)
+            }
+
+            private fun isCaught(exceptionClass: ClassItem, node: UThrowExpression): Boolean {
+                var current: UElement = node
+                while (true) {
+                    val tryExpression = current.getParentOfType<UTryExpression>(
+                        UTryExpression::class.java, true, UMethod::class.java
+                    ) ?: return false
+
+                    for (catchClause in tryExpression.catchClauses) {
+                        for (type in catchClause.types) {
+                            val qualifiedName = type.canonicalText
+                            if (exceptionClass.extends(qualifiedName)) {
+                                return true
+                            }
+                        }
+                    }
+
+                    current = tryExpression
+                }
+            }
+        })
+
+        return exceptions
+    }
 
     override fun duplicate(targetContainingClass: ClassItem): PsiMethodItem {
         val duplicated = create(codebase, targetContainingClass as PsiClassItem, psiMethod)

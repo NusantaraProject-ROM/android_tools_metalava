@@ -101,6 +101,15 @@ interface ClassItem : Item {
         return superClass
     }
 
+    /** Returns true if this class extends the given class */
+    fun extends(qualifiedName: String): Boolean {
+        if (qualifiedName() == qualifiedName) {
+            return true
+        }
+
+        return superClass()?.extends(qualifiedName) ?: false
+    }
+
     /** Any interfaces implemented by this class */
     fun interfaceTypes(): List<TypeItem>
 

@@ -40,6 +40,26 @@ interface ParameterItem : Item {
      */
     fun publicName(): String?
 
+    /**
+     * Returns whether this parameter has a default value. In Kotlin, this is supported
+     * directly; in Java, it's supported via a special annotation,
+     * {@literal @DefaultValue("source").
+     */
+    fun hasDefaultValue(): Boolean
+
+    /**
+     * Returns the default value.
+     *
+     * **This method should only be called if [hasDefaultValue] returned true!** (This
+     * is necessary since the null return value is a valid default value separate from
+     * no default value specified.)
+     *
+     * The default value is the source string
+     * literal representation of the value, e.g. strings would be surrounded
+     * by quotes, Booleans are the strings "true" or "false", and so on.
+     */
+    fun defaultValue(): String?
+
     override fun parent(): MethodItem? = containingMethod()
 
     override fun accept(visitor: ItemVisitor) {

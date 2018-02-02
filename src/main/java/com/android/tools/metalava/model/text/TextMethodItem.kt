@@ -32,12 +32,16 @@ open class TextMethodItem(
     isPublic: Boolean,
     isProtected: Boolean,
     isPrivate: Boolean,
+    isInternal: Boolean,
     isFinal: Boolean,
     isStatic: Boolean,
     isAbstract: Boolean,
     isSynchronized: Boolean,
     isNative: Boolean,
     isDefault: Boolean,
+    isInfix: Boolean,
+    isOperator: Boolean,
+    isInline: Boolean,
     private val returnType: TextTypeItem?,
     position: SourcePositionInfo,
     annotations: List<String>?
@@ -47,9 +51,10 @@ open class TextMethodItem(
     codebase, name, containingClass, position,
     modifiers = TextModifiers(
         codebase = codebase,
-        annotationStrings = annotations, public = isPublic, protected = isProtected,
+        annotationStrings = annotations, public = isPublic, protected = isProtected, internal = isInternal,
         private = isPrivate, static = isStatic, final = isFinal, abstract = isAbstract,
-        synchronized = isSynchronized, native = isNative, default = isDefault
+        synchronized = isSynchronized, native = isNative, default = isDefault,
+        infix = isInfix, operator = isOperator, inline = isInline
     )
 ), MethodItem {
 
@@ -138,7 +143,9 @@ open class TextMethodItem(
         this.varargs = varargs
     }
 
-    fun isVarargs(): Boolean = varargs
+    fun isVarArg(): Boolean = varargs
+
+    override fun isExtensionMethod(): Boolean = codebase.unsupported()
 
     override var inheritedInterfaceMethod: Boolean = false
 

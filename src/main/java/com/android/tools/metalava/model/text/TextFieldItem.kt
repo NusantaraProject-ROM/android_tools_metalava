@@ -29,6 +29,7 @@ class TextFieldItem(
     isPublic: Boolean,
     isProtected: Boolean,
     isPrivate: Boolean,
+    isInternal: Boolean,
     isFinal: Boolean, isStatic: Boolean,
     isTransient: Boolean,
     isVolatile: Boolean,
@@ -41,7 +42,7 @@ class TextFieldItem(
     TextModifiers(
         codebase = codebase,
         annotationStrings = annotations,
-        public = isPublic, protected = isProtected, private = isPrivate,
+        public = isPublic, protected = isProtected, private = isPrivate, internal = isInternal,
         static = isStatic, final = isFinal, transient = isTransient, volatile = isVolatile
     )
 ), FieldItem {

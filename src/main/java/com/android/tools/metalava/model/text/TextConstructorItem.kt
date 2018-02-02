@@ -27,6 +27,7 @@ class TextConstructorItem(
     isPublic: Boolean,
     isProtected: Boolean,
     isPrivate: Boolean,
+    isInternal: Boolean,
     isFinal: Boolean,
     isStatic: Boolean,
     isAbstract: Boolean,
@@ -37,8 +38,9 @@ class TextConstructorItem(
     position: SourcePositionInfo,
     annotations: List<String>?
 ) : TextMethodItem(
-    codebase, name, containingClass, isPublic, isProtected, isPrivate,
-    isFinal, isStatic, isAbstract, isSynchronized, isNative, isDefault, returnType, position, annotations
+    codebase, name, containingClass, isPublic, isProtected, isPrivate, isInternal,
+    isFinal, isStatic, isAbstract, isSynchronized, isNative, isDefault, false, false, false,
+    returnType, position, annotations
 ),
     ConstructorItem {
     override var superConstructor: ConstructorItem? = null

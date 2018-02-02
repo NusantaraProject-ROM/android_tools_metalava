@@ -277,4 +277,29 @@ class ApiFromTextTest : DriverTest() {
         )
     }
 
+    @Test
+    fun `Loading a signature file with default values`() {
+        @Language("TEXT")
+        val source = """
+                package test.pkg {
+                  public final class Foo {
+                    ctor public Foo();
+                    method public final void error(int p = "42", Integer? int2 = "null");
+                  }
+                  public class Foo2 {
+                    ctor public Foo2();
+                    method public void foo(String! = "null", String! = "\"Hello World\"", int = "42");
+                  }
+                }
+                """
+
+        check(
+            compatibilityMode = false,
+            inputKotlinStyleNulls = true,
+            omitCommonPackages = false,
+            signatureSource = source,
+            api = source
+        )
+    }
+
 }
