@@ -48,7 +48,8 @@ class CompatibilityCheck : ComparisonVisitor() {
             val newNullnessAnnotation = findNullnessAnnotation(new)
             if (newNullnessAnnotation == null) {
                 val name = AnnotationItem.simpleName(oldNullnessAnnotation)
-                report(Errors.INVALID_NULL_CONVERSION, new,
+                report(
+                    Errors.INVALID_NULL_CONVERSION, new,
                     "Attempted to remove $name annotation from ${describe(new)}"
                 )
             } else {
@@ -246,7 +247,10 @@ class CompatibilityCheck : ComparisonVisitor() {
             val checker = CompatibilityCheck()
             previous.compareWith(checker, codebase, ApiPredicate(codebase))
             if (checker.foundProblems) {
-                throw DriverException(exitCode = -1, stderr = "Aborting: Found compatibility problems with --check-compatibility")
+                throw DriverException(
+                    exitCode = -1,
+                    stderr = "Aborting: Found compatibility problems with --check-compatibility"
+                )
             }
         }
     }
