@@ -362,7 +362,7 @@ class Options(
                 ARG_SOURCE_PATH, "--sources", "--sourcepath", "-sourcepath" -> {
                     val path = getValue(args, ++index)
                     if (path.endsWith(SdkConstants.DOT_JAVA)) {
-                        throw OptionsException(
+                        throw DriverException(
                             "$arg should point to a source root directory, not a source file ($path)"
                         )
                     }
@@ -448,10 +448,6 @@ class Options(
 
                 ARG_CHECK_COMPATIBILITY -> {
                     checkCompatibility = true
-
-                    // Normally some compatibility changes are warnings but when you
-                    // explicitly check compatibility, turn them all into errors
-                    Errors.enforceCompatibility()
                 }
 
                 ARG_ANNOTATION_COVERAGE_STATS -> dumpAnnotationStatistics = true
@@ -505,7 +501,7 @@ class Options(
                 ARG_CURRENT_VERSION -> {
                     currentApiLevel = Integer.parseInt(getValue(args, ++index))
                     if (currentApiLevel <= 26) {
-                        throw OptionsException("Suspicious currentApi=$currentApiLevel, expected at least 27")
+                        throw DriverException("Suspicious currentApi=$currentApiLevel, expected at least 27")
                     }
                 }
                 ARG_CURRENT_CODENAME -> {
@@ -544,14 +540,14 @@ class Options(
                 "-encoding" -> {
                     val value = getValue(args, ++index)
                     if (value.toUpperCase() != "UTF-8") {
-                        throw OptionsException("$value: Only UTF-8 encoding is supported")
+                        throw DriverException("$value: Only UTF-8 encoding is supported")
                     }
                 }
 
                 "-source" -> {
                     val value = getValue(args, ++index)
                     if (value != "1.8") {
-                        throw OptionsException("$value: Only source 1.8 is supported")
+                        throw DriverException("$value: Only source 1.8 is supported")
                     }
                 }
 
@@ -639,7 +635,7 @@ class Options(
                             yesNo(arg.substring(ARGS_COMPAT_OUTPUT.length + 1))
                     } else if (arg.startsWith("-")) {
                         val usage = getUsage(includeHeader = false, colorize = color)
-                        throw OptionsException(stderr = "Invalid argument $arg\n\n$usage")
+                        throw DriverException(stderr = "Invalid argument $arg\n\n$usage")
                     } else {
                         // All args that don't start with "-" are taken to be filenames
                         mutableSources.addAll(stringToExistingFiles(arg))
@@ -658,13 +654,13 @@ class Options(
                 }
                 ApiDatabase(lines)
             } catch (e: IOException) {
-                throw OptionsException("Could not open API database $apiFilters: ${e.localizedMessage}")
+                throw DriverException("Could not open API database $apiFilters: ${e.localizedMessage}")
             }
         }
 
         if (generateApiLevelXml != null) {
             if (currentJar != null && currentApiLevel == -1 || currentJar == null && currentApiLevel != -1) {
-                throw OptionsException("You must specify both --current-jar and --current-version (or neither one)")
+                throw DriverException("You must specify both --current-jar and --current-version (or neither one)")
             }
             if (androidJarPatterns == null) {
                 androidJarPatterns = mutableListOf(
@@ -744,33 +740,33 @@ class Options(
         return when (answer) {
             "yes", "true", "enabled", "on" -> true
             "no", "false", "disabled", "off" -> false
-            else -> throw OptionsException(stderr = "Unexpected $answer; expected yes or no")
+            else -> throw DriverException(stderr = "Unexpected $answer; expected yes or no")
         }
     }
 
     /** Makes sure that the flag combinations make sense */
     private fun checkFlagConsistency() {
         if (checkCompatibility && previousApi == null) {
-            throw OptionsException(stderr = "$ARG_CHECK_COMPATIBILITY requires $ARG_PREVIOUS_API")
+            throw DriverException(stderr = "$ARG_CHECK_COMPATIBILITY requires $ARG_PREVIOUS_API")
         }
 
         if (migrateNulls && previousApi == null) {
-            throw OptionsException(stderr = "$ARG_MIGRATE_NULLNESS requires $ARG_PREVIOUS_API")
+            throw DriverException(stderr = "$ARG_MIGRATE_NULLNESS requires $ARG_PREVIOUS_API")
         }
 
         if (apiJar != null && sources.isNotEmpty()) {
-            throw OptionsException(stderr = "Specify either $ARG_SOURCE_FILES or $ARG_INPUT_API_JAR, not both")
+            throw DriverException(stderr = "Specify either $ARG_SOURCE_FILES or $ARG_INPUT_API_JAR, not both")
         }
 
         if (compatOutput && outputKotlinStyleNulls) {
-            throw OptionsException(
+            throw DriverException(
                 stderr = "$ARG_OUTPUT_KOTLIN_NULLS should not be combined with " +
                         "$ARGS_COMPAT_OUTPUT=yes"
             )
         }
 
         if (compatOutput && outputDefaultValues) {
-            throw OptionsException(
+            throw DriverException(
                 stderr = "$ARG_OUTPUT_DEFAULT_VALUES should not be combined with " +
                         "$ARGS_COMPAT_OUTPUT=yes"
             )
@@ -810,12 +806,12 @@ class Options(
     }
 
     private fun helpAndQuit(colorize: Boolean = color) {
-        throw OptionsException(stdout = getUsage(colorize = colorize))
+        throw DriverException(stdout = getUsage(colorize = colorize))
     }
 
     private fun getValue(args: Array<String>, index: Int): String {
         if (index >= args.size) {
-            throw OptionsException("Missing argument for ${args[index - 1]}")
+            throw DriverException("Missing argument for ${args[index - 1]}")
         }
         return args[index]
     }
@@ -823,7 +819,7 @@ class Options(
     private fun stringToExistingDir(value: String): File {
         val file = File(value)
         if (!file.isDirectory) {
-            throw OptionsException("$file is not a directory")
+            throw DriverException("$file is not a directory")
         }
         return file
     }
@@ -833,7 +829,7 @@ class Options(
         for (path in value.split(File.pathSeparatorChar)) {
             val file = File(path)
             if (!file.isDirectory) {
-                throw OptionsException("$file is not a directory")
+                throw DriverException("$file is not a directory")
             }
             files.add(file)
         }
@@ -845,7 +841,7 @@ class Options(
         for (path in value.split(File.pathSeparatorChar)) {
             val file = File(path)
             if (!file.isDirectory && !(file.path.endsWith(SdkConstants.DOT_JAR) && file.isFile)) {
-                throw OptionsException("$file is not a jar or directory")
+                throw DriverException("$file is not a jar or directory")
             }
             files.add(file)
         }
@@ -857,7 +853,7 @@ class Options(
         for (path in value.split(File.pathSeparatorChar)) {
             val file = File(path)
             if (!file.exists()) {
-                throw OptionsException("$file does not exist")
+                throw DriverException("$file does not exist")
             }
             files.add(file)
         }
@@ -867,7 +863,7 @@ class Options(
     private fun stringToExistingFile(value: String): File {
         val file = File(value)
         if (!file.isFile) {
-            throw OptionsException("$file is not a file")
+            throw DriverException("$file is not a file")
         }
         return file
     }
@@ -875,7 +871,7 @@ class Options(
     private fun stringToExistingFileOrDir(value: String): File {
         val file = File(value)
         if (!file.exists()) {
-            throw OptionsException("$file is not a file or directory")
+            throw DriverException("$file is not a file or directory")
         }
         return file
     }
@@ -891,7 +887,7 @@ class Options(
                     // which means you can't point to files in paths with spaces)
                     val listFile = File(file.path.substring(1))
                     if (!listFile.isFile) {
-                        throw OptionsException("$listFile is not a file")
+                        throw DriverException("$listFile is not a file")
                     }
                     val contents = Files.asCharSource(listFile, Charsets.UTF_8).read()
                     val pathList = Splitter.on(CharMatcher.whitespace()).trimResults().omitEmptyStrings().split(
@@ -899,13 +895,13 @@ class Options(
                     )
                     pathList.asSequence().map { File(it) }.forEach {
                         if (!it.isFile) {
-                            throw OptionsException("$it is not a file")
+                            throw DriverException("$it is not a file")
                         }
                         files.add(it)
                     }
                 } else {
                     if (!file.isFile) {
-                        throw OptionsException("$file is not a file")
+                        throw DriverException("$file is not a file")
                     }
                     files.add(file)
                 }
@@ -918,16 +914,16 @@ class Options(
 
         if (output.exists()) {
             if (output.isDirectory) {
-                throw OptionsException("$output is a directory")
+                throw DriverException("$output is a directory")
             }
             val deleted = output.delete()
             if (!deleted) {
-                throw OptionsException("Could not delete previous version of $output")
+                throw DriverException("Could not delete previous version of $output")
             }
         } else if (output.parentFile != null && !output.parentFile.exists()) {
             val ok = output.parentFile.mkdirs()
             if (!ok) {
-                throw OptionsException("Could not create ${output.parentFile}")
+                throw DriverException("Could not create ${output.parentFile}")
             }
         }
 
@@ -944,7 +940,7 @@ class Options(
         } else if (output.parentFile != null && !output.parentFile.exists()) {
             val ok = output.parentFile.mkdirs()
             if (!ok) {
-                throw OptionsException("Could not create ${output.parentFile}")
+                throw DriverException("Could not create ${output.parentFile}")
             }
         }
 
@@ -1135,10 +1131,4 @@ class Options(
             i += 2
         }
     }
-
-    class OptionsException(
-        val stderr: String = "",
-        val stdout: String = "",
-        val exitCode: Int = if (stderr.isBlank()) 0 else -1
-    ) : RuntimeException(stdout + stderr)
 }

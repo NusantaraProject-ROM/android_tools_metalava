@@ -123,12 +123,6 @@ CompatibilityCheckTest : DriverTest() {
                   public class MyTest1 {
                   }
                 }
-                """,
-            api = """
-                package test.pkg {
-                  public class MyTest1 {
-                  }
-                }
                 """
         )
     }
@@ -161,18 +155,6 @@ CompatibilityCheckTest : DriverTest() {
                 """,
             // Changes: +nullness, -nullness, nullable->nonnull, nonnull->nullable
             signatureSource = """
-                package test.pkg {
-                  public class MyTest {
-                    method @Nullable public Double convert1(@Nullable Float);
-                    method @NonNull public Double convert2(@NonNull Float);
-                    method public Double convert3(Float);
-                    method public Double convert4(Float);
-                    method @NonNull public Double convert5(@NonNull Float);
-                    method @Nullable public Double convert6(@Nullable Float);
-                  }
-                }
-                """,
-            api = """
                 package test.pkg {
                   public class MyTest {
                     method @Nullable public Double convert1(@Nullable Float);
@@ -233,22 +215,7 @@ CompatibilityCheckTest : DriverTest() {
                     }
                     """
                 )
-            ),
-            api = """
-                package test.pkg {
-                  public final class Outer {
-                    ctor public Outer();
-                    method public final String? method1(String string, String? maybeString);
-                    method public final String? method2(String string, String? maybeString);
-                    method public final String method3(String? maybeString, String string);
-                  }
-                  public static final class Outer.Inner {
-                    ctor public Outer.Inner();
-                    method public final String? method2(String string, String? maybeString);
-                    method public final String method3(String? maybeString, String string);
-                  }
-                }
-                """
+            )
         )
     }
 
@@ -285,15 +252,6 @@ CompatibilityCheckTest : DriverTest() {
                 ),
                 supportParameterName
             ),
-            api = """
-                package test.pkg {
-                  public class JavaClass {
-                    ctor public JavaClass();
-                    method public String! method1(String!);
-                    method public String! method2(String! firstParameter, String! newName);
-                  }
-                }
-                """,
             extraArguments = arrayOf("--hide-package", "android.support.annotation")
         )
     }
@@ -326,15 +284,7 @@ CompatibilityCheckTest : DriverTest() {
                     }
                     """
                 )
-            ),
-            api = """
-                package test.pkg {
-                  public final class KotlinClass {
-                    ctor public KotlinClass();
-                    method public final String? method1(String newName);
-                  }
-                }
-                """
+            )
         )
     }
 
@@ -343,8 +293,8 @@ CompatibilityCheckTest : DriverTest() {
         check(
             checkCompatibility = true,
             warnings = """
-                src/test/pkg/MyClass.java:6: error: Added method test.pkg.MyClass.method2 [AddedMethod:4]
-                src/test/pkg/MyClass.java:7: error: Added field test.pkg.MyClass.newField [AddedField:5]
+                src/test/pkg/MyClass.java:6: warning: Added method test.pkg.MyClass.method2 [AddedMethod:4]
+                src/test/pkg/MyClass.java:7: warning: Added field test.pkg.MyClass.newField [AddedField:5]
                 """,
             compatibilityMode = false,
             previousApi = """
@@ -416,15 +366,6 @@ CompatibilityCheckTest : DriverTest() {
                     ctor public TestKt();
                     method public static final void method1(int[] x);
                     method public static final void method2(int... x);
-                  }
-                }
-                """,
-            api = """
-                package test.pkg {
-                  public final class TestKt {
-                    ctor public TestKt();
-                    method public static final void method1(int... x);
-                    method public static final void method2(int[] x);
                   }
                 }
                 """,
