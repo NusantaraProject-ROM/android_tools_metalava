@@ -173,16 +173,17 @@ open class Reporter(private val rootFolder: File? = null) {
             // No source offsets, just use filename
             path
         } else {
-            val lineNumber = getLineNumber(psiFile.text, range.startOffset)
+            val lineNumber = getLineNumber(psiFile.text, range.startOffset) + 1
             path + ":" + lineNumber
         }
     }
 
+    /** Returns the 0-based line number */
     private fun getLineNumber(text: String, offset: Int): Int {
         var line = 0
-        var curr = offset
-        val length = text.length
-        while (curr < length) {
+        var curr = 0
+        val target = Math.min(offset, text.length)
+        while (curr < target) {
             if (text[curr++] == '\n') {
                 line++
             }

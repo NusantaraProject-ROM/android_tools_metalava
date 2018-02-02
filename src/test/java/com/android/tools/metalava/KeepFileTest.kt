@@ -78,7 +78,8 @@ class KeepFileTest : DriverTest() {
                 -keep class test.pkg.MyInterface2${"$"}TtsSpan {
                     <init>();
                 }
-                """
+                """,
+            extraArguments = arrayOf("--hide", "KotlinKeyword")
         )
     }
 }

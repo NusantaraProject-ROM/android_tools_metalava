@@ -66,6 +66,8 @@ abstract class DriverTest {
     }
 
     protected fun runDriver(vararg args: String): String {
+        resetTicker()
+
         val sw = StringWriter()
         val writer = PrintWriter(sw)
         if (!com.android.tools.metalava.run(arrayOf(*args), writer, writer)) {
@@ -516,7 +518,7 @@ abstract class DriverTest {
                 reportedWarnings.toString().replace(project.path, "TESTROOT").replace(
                     project.canonicalPath,
                     "TESTROOT"
-                ).split("\n").sorted().joinToString(separator = "\n").trim()
+                ).trim()
             )
         }
 
@@ -1067,6 +1069,22 @@ import static java.lang.annotation.RetentionPolicy.SOURCE;
 @Retention(SOURCE)
 @Target({METHOD, PARAMETER, FIELD})
 public @interface ParameterName {
+    String value();
+}
+
+"""
+)
+
+val supportDefaultValue: TestFile = java(
+    """
+package android.support.annotation;
+import java.lang.annotation.*;
+import static java.lang.annotation.ElementType.*;
+import static java.lang.annotation.RetentionPolicy.SOURCE;
+@SuppressWarnings("WeakerAccess")
+@Retention(SOURCE)
+@Target({METHOD, PARAMETER, FIELD})
+public @interface DefaultValue {
     String value();
 }
 
