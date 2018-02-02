@@ -415,7 +415,7 @@ class ApiFileTest : DriverTest() {
                   }
                   public final class TestKt {
                     ctor public TestKt();
-                    method public static final operator inline <F, S> F! component1(androidx.util.PlatformJavaPair<F,S>);
+                    method public static final operator <F, S> F! component1(androidx.util.PlatformJavaPair<F,S>);
                   }
                 }
                 """,

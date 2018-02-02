@@ -248,11 +248,11 @@ class PsiModifierItem(
         const val INTERNAL = 1 shl 15
         const val INFIX = 1 shl 16
         const val OPERATOR = 1 shl 17
-        const val INLINE = 1 shl 178
+        const val INLINE = 1 shl 18
 
         private const val EQUIVALENCE_MASK = PUBLIC or PROTECTED or PRIVATE or STATIC or ABSTRACT or
                 FINAL or TRANSIENT or VOLATILE or SYNCHRONIZED or DEPRECATED or VARARG or
-                SEALED or INTERNAL or INFIX or OPERATOR or INLINE
+                SEALED or INTERNAL or INFIX or OPERATOR
 
         fun create(codebase: PsiBasedCodebase, element: PsiModifierListOwner, documentation: String?): PsiModifierItem {
             val modifiers = create(

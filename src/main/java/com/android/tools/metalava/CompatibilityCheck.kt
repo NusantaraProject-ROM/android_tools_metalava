@@ -18,10 +18,12 @@ package com.android.tools.metalava
 
 import com.android.tools.metalava.NullnessMigration.Companion.findNullnessAnnotation
 import com.android.tools.metalava.NullnessMigration.Companion.isNullable
+import com.android.tools.metalava.doclava1.ApiPredicate
 import com.android.tools.metalava.doclava1.Errors
 import com.android.tools.metalava.doclava1.Errors.Error
 import com.android.tools.metalava.model.AnnotationItem
 import com.android.tools.metalava.model.ClassItem
+import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.FieldItem
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
@@ -36,6 +38,8 @@ import com.android.tools.metalava.model.ParameterItem
  * TODO: Only allow nullness changes on final classes!
  */
 class CompatibilityCheck : ComparisonVisitor() {
+    var foundProblems = false
+
     override fun compare(old: Item, new: Item) {
         // Should not remove nullness information
         // Can't change information incompatibly
@@ -44,8 +48,7 @@ class CompatibilityCheck : ComparisonVisitor() {
             val newNullnessAnnotation = findNullnessAnnotation(new)
             if (newNullnessAnnotation == null) {
                 val name = AnnotationItem.simpleName(oldNullnessAnnotation)
-                reporter.report(
-                    Errors.INVALID_NULL_CONVERSION, new,
+                report(Errors.INVALID_NULL_CONVERSION, new,
                     "Attempted to remove $name annotation from ${describe(new)}"
                 )
             } else {
@@ -57,14 +60,16 @@ class CompatibilityCheck : ComparisonVisitor() {
                     // You cannot change a parameter from nullable to nonnull
                     // You cannot change a method from nonnull to nullable
                     if (oldNullable && old is ParameterItem) {
-                        reporter.report(
-                            Errors.INVALID_NULL_CONVERSION, new,
+                        report(
+                            Errors.INVALID_NULL_CONVERSION,
+                            new,
                             "Attempted to change parameter from @Nullable to @NonNull: " +
                                     "incompatible change for ${describe(new)}"
                         )
                     } else if (!oldNullable && old is MethodItem) {
-                        reporter.report(
-                            Errors.INVALID_NULL_CONVERSION, new,
+                        report(
+                            Errors.INVALID_NULL_CONVERSION,
+                            new,
                             "Attempted to change method return from @NonNull to @Nullable: " +
                                     "incompatible change for ${describe(new)}"
                         )
@@ -76,15 +81,17 @@ class CompatibilityCheck : ComparisonVisitor() {
         val oldModifiers = old.modifiers
         val newModifiers = new.modifiers
         if (oldModifiers.isOperator() && !newModifiers.isOperator()) {
-            reporter.report(
-                Errors.OPERATOR_REMOVAL, new,
+            report(
+                Errors.OPERATOR_REMOVAL,
+                new,
                 "Cannot remove `operator` modifier from ${describe(new)}: Incompatible change"
             )
         }
 
         if (oldModifiers.isInfix() && !newModifiers.isInfix()) {
-            reporter.report(
-                Errors.INFIX_REMOVAL, new,
+            report(
+                Errors.INFIX_REMOVAL,
+                new,
                 "Cannot remove `infix` modifier from ${describe(new)}: Incompatible change"
             )
         }
@@ -92,8 +99,9 @@ class CompatibilityCheck : ComparisonVisitor() {
         if (!oldModifiers.isFinal() && newModifiers.isFinal() &&
             (new is ClassItem || new is MethodItem)
         ) {
-            reporter.report(
-                Errors.NEWLY_FINAL, new,
+            report(
+                Errors.NEWLY_FINAL,
+                new,
                 "Making a class or method final is an incompatible change: ${describe(new)}"
             )
         }
@@ -104,17 +112,15 @@ class CompatibilityCheck : ComparisonVisitor() {
             // you have to change the parameter type as well to an array type; assuming you
             // do that it's the same situation as Java; otherwise the normal
             // signature check will catch the incompatibility.
-            reporter.report(
-                Errors.VARARG_REMOVAL, new,
+            report(
+                Errors.VARARG_REMOVAL,
+                new,
                 "Changing from varargs to array is an incompatible change: ${describe(new)}"
             )
         }
 
         if (!oldModifiers.isSealed() && newModifiers.isSealed()) {
-            reporter.report(
-                Errors.ADD_SEALED, new,
-                "Cannot add `sealed` modifier to ${describe(new)}: Incompatible change"
-            )
+            report(Errors.ADD_SEALED, new, "Cannot add `sealed` modifier to ${describe(new)}: Incompatible change")
         }
     }
 
@@ -122,20 +128,23 @@ class CompatibilityCheck : ComparisonVisitor() {
         val prevName = old.publicName() ?: return
         val newName = new.publicName()
         if (newName == null) {
-            reporter.report(
-                Errors.PARAMETER_NAME_CHANGE, new,
+            report(
+                Errors.PARAMETER_NAME_CHANGE,
+                new,
                 "Attempted to remove parameter name from ${describe(new)} in ${describe(new.containingMethod())}"
             )
         } else if (newName != prevName) {
-            reporter.report(
-                Errors.PARAMETER_NAME_CHANGE, new,
+            report(
+                Errors.PARAMETER_NAME_CHANGE,
+                new,
                 "Attempted to change parameter name from $prevName to $newName in ${describe(new.containingMethod())}"
             )
         }
 
         if (old.hasDefaultValue() && !new.hasDefaultValue()) {
-            reporter.report(
-                Errors.DEFAULT_VALUE_CHANGE, new,
+            report(
+                Errors.DEFAULT_VALUE_CHANGE,
+                new,
                 "Attempted to remove default value from ${describe(new)} in ${describe(new.containingMethod())}"
             )
         }
@@ -143,7 +152,7 @@ class CompatibilityCheck : ComparisonVisitor() {
 
     override fun compare(old: ClassItem, new: ClassItem) {
         if (old.isInterface() != new.isInterface()) {
-            reporter.report(
+            report(
                 Errors.CHANGED_CLASS, new, "Class " + new.qualifiedName()
                         + " changed class/interface declaration"
             )
@@ -162,11 +171,11 @@ class CompatibilityCheck : ComparisonVisitor() {
             }
         }
 
-        reporter.report(error, item, "Added ${describe(item)}")
+        report(error, item, "Added ${describe(item)}")
     }
 
     private fun handleRemoved(error: Error, item: Item) {
-        reporter.report(error, item, "Removed ${if (item.deprecated) "deprecated " else ""}${describe(item)}")
+        report(error, item, "Removed ${if (item.deprecated) "deprecated " else ""}${describe(item)}")
     }
 
     override fun added(item: PackageItem) {
@@ -220,6 +229,25 @@ class CompatibilityCheck : ComparisonVisitor() {
             is ParameterItem -> "parameter ${item.name()} in " +
                     "${item.containingMethod().containingClass().qualifiedName()}.${item.containingMethod().name()}"
             else -> item.toString()
+        }
+    }
+
+    private fun report(
+        error: Error,
+        item: Item,
+        message: String
+    ) {
+        reporter.report(error, item, message)
+        foundProblems = true
+    }
+
+    companion object {
+        fun checkCompatibility(codebase: Codebase, previous: Codebase) {
+            val checker = CompatibilityCheck()
+            previous.compareWith(checker, codebase, ApiPredicate(codebase))
+            if (checker.foundProblems) {
+                throw DriverException(exitCode = -1, stderr = "Aborting: Found compatibility problems with --check-compatibility")
+            }
         }
     }
 }
