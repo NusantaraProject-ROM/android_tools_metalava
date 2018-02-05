@@ -113,6 +113,70 @@ class ApiFileTest : DriverTest() {
     }
 
     @Test
+    fun `Default Values Names in Java`() {
+        // Java code which explicitly specifies parameter names
+        check(
+            compatibilityMode = false,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    import android.support.annotation.DefaultValue;
+
+                    public class Foo {
+                        public void foo(
+                            @DefaultValue("null") String prefix,
+                            @DefaultValue("\"Hello World\"") String greeting,
+                            @DefaultValue("42") int meaning) {
+                        }
+                    }
+                    """
+                ),
+                supportDefaultValue
+            ),
+            api = """
+                package test.pkg {
+                  public class Foo {
+                    ctor public Foo();
+                    method public void foo(String! = "null", String! = "\"Hello World\"", int = "42");
+                  }
+                }
+                 """,
+            extraArguments = arrayOf("--hide-package", "android.support.annotation"),
+            checkDoclava1 = false /* doesn't support default Values */
+        )
+    }
+
+    @Test
+    fun `Default Values Names in Kotlin`() {
+        // Java code which explicitly specifies parameter names
+        check(
+            compatibilityMode = false,
+            sourceFiles = *arrayOf(
+                kotlin(
+                    """
+                    package test.pkg
+
+                    class Foo {
+                        fun error(int: Int = 42, int2: Int? = null) { }
+                    }
+                    """
+                )
+            ),
+            api = """
+                package test.pkg {
+                  public final class Foo {
+                    ctor public Foo();
+                    method public final void error(int p = "42", Integer? int2 = "null");
+                  }
+                }
+                """,
+            extraArguments = arrayOf("--hide-package", "android.support.annotation"),
+            checkDoclava1 = false /* doesn't support default Values */
+        )
+    }
+
+    @Test
     fun `Basic Kotlin class`() {
         check(
             sourceFiles = *arrayOf(
@@ -129,6 +193,14 @@ class ApiFileTest : DriverTest() {
                         private var someField = 42
                         @JvmField
                         var someField2 = 42
+
+                        internal var myHiddenVar = false
+                        internal fun myHiddenMethod(): Unit { }
+                        internal data class myHiddenClass(): Unit { }
+
+                        companion object {
+                            const val MY_CONST = 42
+                        }
                     }
 
                     open class Parent {
@@ -147,13 +219,37 @@ class ApiFileTest : DriverTest() {
                     method public final java.lang.String getProperty2();
                     method public final void otherMethod(boolean ok, int times);
                     method public final void setProperty2(java.lang.String p);
+                    field public static final test.pkg.Kotlin.Companion Companion;
+                    field public static final int MY_CONST = 42; // 0x2a
                     field public int someField2;
+                  }
+                  public static final class Kotlin.Companion {
                   }
                   public class Parent {
                     ctor public Parent();
                     method public java.lang.String method();
                     method public java.lang.String method2(boolean value, java.lang.Boolean value);
                     method public int method3(java.lang.Integer value, int value2);
+                  }
+                }
+                """,
+            privateApi = """
+                package test.pkg {
+                  public final class Kotlin extends test.pkg.Parent {
+                    method internal final boolean getMyHiddenVar${"$"}lintWithKotlin();
+                    method internal final void myHiddenMethod${"$"}lintWithKotlin();
+                    method internal final void setMyHiddenVar${"$"}lintWithKotlin(boolean p);
+                    field internal boolean myHiddenVar;
+                    field private final java.lang.String property1;
+                    field private java.lang.String property2;
+                    field private int someField;
+                  }
+                  public static final class Kotlin.Companion {
+                    ctor private Kotlin.Companion();
+                  }
+                   internal static final class Kotlin.myHiddenClass extends kotlin.Unit {
+                    ctor public Kotlin.myHiddenClass();
+                    method internal final test.pkg.Kotlin.myHiddenClass copy();
                   }
                 }
                 """,
@@ -319,7 +415,7 @@ class ApiFileTest : DriverTest() {
                   }
                   public final class TestKt {
                     ctor public TestKt();
-                    method public static final <F, S> F! component1(androidx.util.PlatformJavaPair<F,S>);
+                    method public static final operator <F, S> F! component1(androidx.util.PlatformJavaPair<F,S>);
                   }
                 }
                 """,
@@ -414,7 +510,8 @@ class ApiFileTest : DriverTest() {
                       public abstract interface MyOtherInterface implements test.pkg.AutoCloseable test.pkg.MyBaseInterface {
                       }
                     }
-                """
+                """,
+            extraArguments = arrayOf("--hide", "KotlinKeyword")
         )
     }
 
@@ -786,11 +883,11 @@ class ApiFileTest : DriverTest() {
             ),
 
             warnings = """
-                        src/test/pkg/Foo.java:4: warning: Class test.pkg.Foo.Inner3: @Deprecated annotation (present) and @deprecated doc tag (not present) do not match [DeprecationMismatch:113]
-                        src/test/pkg/Foo.java:5: warning: Class test.pkg.Foo.Inner2: @Deprecated annotation (present) and @deprecated doc tag (not present) do not match [DeprecationMismatch:113]
-                        src/test/pkg/Foo.java:6: warning: Class test.pkg.Foo.Inner1: @Deprecated annotation (present) and @deprecated doc tag (not present) do not match [DeprecationMismatch:113]
-                        src/test/pkg/Foo.java:7: warning: Method test.pkg.Foo.method2(): @Deprecated annotation (present) and @deprecated doc tag (not present) do not match [DeprecationMismatch:113]
-                        src/test/pkg/Foo.java:8: warning: Method test.pkg.Foo.method1(): @Deprecated annotation (present) and @deprecated doc tag (not present) do not match [DeprecationMismatch:113]
+                    src/test/pkg/Foo.java:7: warning: Method test.pkg.Foo.method1(): @Deprecated annotation (present) and @deprecated doc tag (not present) do not match [DeprecationMismatch:113]
+                    src/test/pkg/Foo.java:8: warning: Method test.pkg.Foo.method2(): @Deprecated annotation (present) and @deprecated doc tag (not present) do not match [DeprecationMismatch:113]
+                    src/test/pkg/Foo.java:9: warning: Class test.pkg.Foo.Inner1: @Deprecated annotation (present) and @deprecated doc tag (not present) do not match [DeprecationMismatch:113]
+                    src/test/pkg/Foo.java:10: warning: Class test.pkg.Foo.Inner2: @Deprecated annotation (present) and @deprecated doc tag (not present) do not match [DeprecationMismatch:113]
+                    src/test/pkg/Foo.java:11: warning: Class test.pkg.Foo.Inner3: @Deprecated annotation (present) and @deprecated doc tag (not present) do not match [DeprecationMismatch:113]
                         """,
 
             api = """
@@ -1251,7 +1348,7 @@ class ApiFileTest : DriverTest() {
             ),
             // Notice how the intermediate methods (method2, method3) have been removed
             includeStrippedSuperclassWarnings = true,
-            warnings = "src/test/pkg/MyClass.java:3: warning: Public class test.pkg.MyClass stripped of unavailable superclass test.pkg.HiddenParent [HiddenSuperclass:111]",
+            warnings = "src/test/pkg/MyClass.java:2: warning: Public class test.pkg.MyClass stripped of unavailable superclass test.pkg.HiddenParent [HiddenSuperclass:111]",
             api = """
                 package test.pkg {
                   public class MyClass extends test.pkg.PublicParent {
@@ -2066,12 +2163,12 @@ class ApiFileTest : DriverTest() {
 
             // TODO: Test annotations! (values, annotation classes, etc.)
             warnings = """
-                    src/test/pkg1/Usage.java:1: warning: Parameter myargs references hidden type class test.pkg1.Class9. [HiddenTypeParameter:121]
-                    src/test/pkg1/Usage.java:2: warning: Parameter myargs references hidden type class test.pkg1.Class8. [HiddenTypeParameter:121]
-                    src/test/pkg1/Usage.java:3: warning: Parameter list references hidden type class test.pkg1.Class7. [HiddenTypeParameter:121]
-                    src/test/pkg1/Usage.java:4: warning: Field Usage.myClass3 references hidden type class test.pkg1.Class5. [HiddenTypeParameter:121]
-                    src/test/pkg1/Usage.java:5: warning: Field Usage.myClass2 references hidden type class test.pkg1.Class4. [HiddenTypeParameter:121]
-                    src/test/pkg1/Usage.java:6: warning: Field Usage.myClass1 references hidden type test.pkg1.Class3. [HiddenTypeParameter:121]
+                    src/test/pkg1/Usage.java:12: warning: Parameter myargs references hidden type class test.pkg1.Class9. [HiddenTypeParameter:121]
+                    src/test/pkg1/Usage.java:11: warning: Parameter myargs references hidden type class test.pkg1.Class8. [HiddenTypeParameter:121]
+                    src/test/pkg1/Usage.java:10: warning: Parameter list references hidden type class test.pkg1.Class7. [HiddenTypeParameter:121]
+                    src/test/pkg1/Usage.java:7: warning: Field Usage.myClass1 references hidden type test.pkg1.Class3. [HiddenTypeParameter:121]
+                    src/test/pkg1/Usage.java:8: warning: Field Usage.myClass2 references hidden type class test.pkg1.Class4. [HiddenTypeParameter:121]
+                    src/test/pkg1/Usage.java:9: warning: Field Usage.myClass3 references hidden type class test.pkg1.Class5. [HiddenTypeParameter:121]
                     """,
             api = """
                     package test.pkg1 {

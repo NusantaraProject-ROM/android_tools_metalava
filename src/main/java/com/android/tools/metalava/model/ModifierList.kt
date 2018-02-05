@@ -39,6 +39,16 @@ interface ModifierList {
     fun isVolatile(): Boolean
     fun isDefault(): Boolean
 
+    // Modifier in Kotlin, separate syntax (...) in Java but modeled as modifier here
+    fun isVarArg(): Boolean = false
+
+    // Kotlin
+    fun isSealed(): Boolean = false
+
+    fun isInternal(): Boolean = false
+    fun isInfix(): Boolean = false
+    fun isOperator(): Boolean = false
+    fun isInline(): Boolean = false
     fun isEmpty(): Boolean
 
     fun isPackagePrivate() = !(isPublic() || isProtected() || isPrivate())
@@ -161,6 +171,9 @@ interface ModifierList {
                 }
             }
 
+            // Kotlin order:
+            //   https://kotlinlang.org/docs/reference/coding-conventions.html#modifiers
+
             // Abstract: should appear in interfaces if in compat mode
             val classItem = item as? ClassItem
             val methodItem = item as? MethodItem
@@ -171,6 +184,7 @@ interface ModifierList {
                 when {
                     list.isPublic() -> writer.write("public ")
                     list.isProtected() -> writer.write("protected ")
+                    list.isInternal() -> writer.write("internal ")
                     list.isPrivate() -> writer.write("private ")
                 }
 
@@ -190,6 +204,18 @@ interface ModifierList {
                     methodItem?.name() == "values" && methodItem.containingClass().isEnum()
                 ) {
                     writer.write("final ")
+                }
+
+                if (list.isSealed()) {
+                    writer.write("sealed ")
+                }
+
+                if (list.isInfix()) {
+                    writer.write("infix ")
+                }
+
+                if (list.isOperator()) {
+                    writer.write("operator ")
                 }
 
                 val isInterface = classItem?.isInterface() == true
@@ -236,6 +262,7 @@ interface ModifierList {
                 when {
                     list.isPublic() -> writer.write("public ")
                     list.isProtected() -> writer.write("protected ")
+                    list.isInternal() -> writer.write("internal ")
                     list.isPrivate() -> writer.write("private ")
                 }
 
@@ -266,6 +293,18 @@ interface ModifierList {
                     (classItem?.isEnum() != true || compatibility.finalInInterfaces)
                 ) {
                     writer.write("final ")
+                }
+
+                if (list.isSealed()) {
+                    writer.write("sealed ")
+                }
+
+                if (list.isInfix()) {
+                    writer.write("infix ")
+                }
+
+                if (list.isOperator()) {
+                    writer.write("operator ")
                 }
 
                 if (list.isTransient()) {

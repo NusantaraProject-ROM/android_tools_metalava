@@ -21,22 +21,25 @@ import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.ParameterItem
 
+const val NO_DEFAULT_VALUE = "__no_default_value__"
+
 class TextParameterItem(
     codebase: Codebase,
     private val containingMethod: TextMethodItem,
     private var name: String,
     private var publicName: String?,
+    private var defaultValue: String? = NO_DEFAULT_VALUE,
     override val parameterIndex: Int,
     var typeName: String,
     private var type: TextTypeItem,
-    var vararg: Boolean,
+    vararg: Boolean,
     position: SourcePositionInfo,
     annotations: List<String>?
 )
 // TODO: We need to pass in parameter modifiers here (synchronized etc)
     : TextItem(
     codebase, position,
-    modifiers = TextModifiers(codebase = codebase, annotationStrings = annotations)
+    modifiers = TextModifiers(codebase = codebase, annotationStrings = annotations, vararg = vararg)
 ), ParameterItem {
 
     init {
@@ -47,6 +50,8 @@ class TextParameterItem(
     override fun type(): TextTypeItem = type
     override fun name(): String = name
     override fun publicName(): String? = publicName
+    override fun hasDefaultValue(): Boolean = defaultValue != NO_DEFAULT_VALUE
+    override fun defaultValue(): String? = defaultValue
     override fun containingMethod(): MethodItem = containingMethod
 
     override fun equals(other: Any?): Boolean {

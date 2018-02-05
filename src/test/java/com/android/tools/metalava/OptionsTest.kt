@@ -74,6 +74,8 @@ Extracting Signature Files:
                                        formatted as in Kotlin (with "?" for nullable
                                        types, "" for non nullable types, and "!" for
                                        unknown. The default is yes.
+--output-default-values[=yes|no]       Controls whether default values should be included
+                                       in signature files. The default is yes.
 --compatible-output=[yes|no]           Controls whether to keep signature files compatible
                                        with the historical format (with its various
                                        quirks) or to generate the new format (which will
@@ -101,6 +103,8 @@ Diffs and Checks:
                                        types, no suffix for non nullable types, and "!"
                                        for unknown. The default is no.
 --check-compatibility                  Check compatibility with the previous API
+--check-kotlin-interop                 Check API intended to be used from both Kotlin and
+                                       Java for interoperability issues
 --migrate-nullness                     Compare nullness information with the previous API
                                        and mark newly annotated APIs as under migration.
 --warnings-as-errors                   Promote all warnings to errors

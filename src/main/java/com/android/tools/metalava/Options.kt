@@ -18,9 +18,8 @@ package com.android.tools.metalava
 
 import com.android.SdkConstants
 import com.android.tools.lint.annotations.ApiDatabase
-import com.android.tools.lint.annotations.SdkUtils2
-import com.android.tools.lint.annotations.SdkUtils2.wrap
 import com.android.tools.metalava.doclava1.Errors
+import com.android.utils.SdkUtils.wrap
 import com.google.common.base.CharMatcher
 import com.google.common.base.Splitter
 import com.google.common.collect.Lists
@@ -67,6 +66,7 @@ private const val ARG_MIGRATE_NULLNESS = "--migrate-nullness"
 private const val ARG_CHECK_COMPATIBILITY = "--check-compatibility"
 private const val ARG_INPUT_KOTLIN_NULLS = "--input-kotlin-nulls"
 private const val ARG_OUTPUT_KOTLIN_NULLS = "--output-kotlin-nulls"
+private const val ARG_OUTPUT_DEFAULT_VALUES = "--output-default-values"
 private const val ARG_ANNOTATION_COVERAGE_STATS = "--annotation-coverage-stats"
 private const val ARG_ANNOTATION_COVERAGE_OF = "--annotation-coverage-of"
 private const val ARG_WARNINGS_AS_ERRORS = "--warnings-as-errors"
@@ -92,6 +92,7 @@ private const val ARG_ANDROID_JAR_PATTERN = "--android-jar-pattern"
 private const val ARG_CURRENT_VERSION = "--current-version"
 private const val ARG_CURRENT_CODENAME = "--current-codename"
 private const val ARG_CURRENT_JAR = "--current-jar"
+private const val ARG_CHECK_KOTLIN_INTEROP = "--check-kotlin-interop"
 
 class Options(
     args: Array<String>,
@@ -137,6 +138,9 @@ class Options(
     /** Whether nullness annotations should be displayed as ?/!/empty instead of with @NonNull/@Nullable. */
     var outputKotlinStyleNulls = !compatOutput
 
+    /** Whether default values should be included in signature files */
+    var outputDefaultValues = !compatOutput
+
     /** Whether we should omit common packages such as java.lang.* and kotlin.* from signature output */
     var omitCommonPackages = !compatOutput
 
@@ -166,6 +170,9 @@ class Options(
 
     /** Whether to include unannotated elements if {@link #showAnnotations} is set */
     var showUnannotated = false
+
+    /** Whether to validate the API for Kotlin interop */
+    var checkKotlinInterop = false
 
     /** Packages to include (if null, include all) */
     var stubPackages: PackageFilter? = null
@@ -354,7 +361,7 @@ class Options(
                 ARG_SOURCE_PATH, "--sources", "--sourcepath", "-sourcepath" -> {
                     val path = getValue(args, ++index)
                     if (path.endsWith(SdkConstants.DOT_JAVA)) {
-                        throw OptionsException(
+                        throw DriverException(
                             "$arg should point to a source root directory, not a source file ($path)"
                         )
                     }
@@ -440,10 +447,6 @@ class Options(
 
                 ARG_CHECK_COMPATIBILITY -> {
                     checkCompatibility = true
-
-                    // Normally some compatibility changes are warnings but when you
-                    // explicitly check compatibility, turn them all into errors
-                    Errors.enforceCompatibility()
                 }
 
                 ARG_ANNOTATION_COVERAGE_STATS -> dumpAnnotationStatistics = true
@@ -461,8 +464,13 @@ class Options(
                 ARG_WARNINGS_AS_ERRORS, "-werror" -> warningsAreErrors = true
                 ARG_LINTS_AS_ERRORS, "-lerror" -> lintsAreErrors = true
 
+                ARG_CHECK_KOTLIN_INTEROP -> checkKotlinInterop = true
+
                 ARG_COLOR -> color = true
                 ARG_NO_COLOR -> color = false
+                ARG_NO_BANNER -> {
+                    // Already processed above but don't flag it here as invalid
+                }
 
                 ARG_OMIT_COMMON_PACKAGES, ARG_OMIT_COMMON_PACKAGES + "=yes" -> omitCommonPackages = true
                 ARG_OMIT_COMMON_PACKAGES + "=no" -> omitCommonPackages = false
@@ -494,7 +502,7 @@ class Options(
                 ARG_CURRENT_VERSION -> {
                     currentApiLevel = Integer.parseInt(getValue(args, ++index))
                     if (currentApiLevel <= 26) {
-                        throw OptionsException("Suspicious currentApi=$currentApiLevel, expected at least 27")
+                        throw DriverException("Suspicious currentApi=$currentApiLevel, expected at least 27")
                     }
                 }
                 ARG_CURRENT_CODENAME -> {
@@ -533,14 +541,14 @@ class Options(
                 "-encoding" -> {
                     val value = getValue(args, ++index)
                     if (value.toUpperCase() != "UTF-8") {
-                        throw OptionsException("$value: Only UTF-8 encoding is supported")
+                        throw DriverException("$value: Only UTF-8 encoding is supported")
                     }
                 }
 
                 "-source" -> {
                     val value = getValue(args, ++index)
                     if (value != "1.8") {
-                        throw OptionsException("$value: Only source 1.8 is supported")
+                        throw DriverException("$value: Only source 1.8 is supported")
                     }
                 }
 
@@ -609,6 +617,12 @@ class Options(
                         } else {
                             yesNo(arg.substring(ARG_INPUT_KOTLIN_NULLS.length + 1))
                         }
+                    } else if (arg.startsWith(ARG_OUTPUT_DEFAULT_VALUES)) {
+                        outputDefaultValues = if (arg == ARG_OUTPUT_DEFAULT_VALUES) {
+                            true
+                        } else {
+                            yesNo(arg.substring(ARG_OUTPUT_DEFAULT_VALUES.length + 1))
+                        }
                     } else if (arg.startsWith(ARG_OMIT_COMMON_PACKAGES)) {
                         omitCommonPackages = if (arg == ARG_OMIT_COMMON_PACKAGES) {
                             true
@@ -622,7 +636,7 @@ class Options(
                             yesNo(arg.substring(ARGS_COMPAT_OUTPUT.length + 1))
                     } else if (arg.startsWith("-")) {
                         val usage = getUsage(includeHeader = false, colorize = color)
-                        throw OptionsException(stderr = "Invalid argument $arg\n\n$usage")
+                        throw DriverException(stderr = "Invalid argument $arg\n\n$usage")
                     } else {
                         // All args that don't start with "-" are taken to be filenames
                         mutableSources.addAll(stringToExistingFiles(arg))
@@ -641,13 +655,13 @@ class Options(
                 }
                 ApiDatabase(lines)
             } catch (e: IOException) {
-                throw OptionsException("Could not open API database $apiFilters: ${e.localizedMessage}")
+                throw DriverException("Could not open API database $apiFilters: ${e.localizedMessage}")
             }
         }
 
         if (generateApiLevelXml != null) {
             if (currentJar != null && currentApiLevel == -1 || currentJar == null && currentApiLevel != -1) {
-                throw OptionsException("You must specify both --current-jar and --current-version (or neither one)")
+                throw DriverException("You must specify both --current-jar and --current-version (or neither one)")
             }
             if (androidJarPatterns == null) {
                 androidJarPatterns = mutableListOf(
@@ -727,27 +741,34 @@ class Options(
         return when (answer) {
             "yes", "true", "enabled", "on" -> true
             "no", "false", "disabled", "off" -> false
-            else -> throw OptionsException(stderr = "Unexpected $answer; expected yes or no")
+            else -> throw DriverException(stderr = "Unexpected $answer; expected yes or no")
         }
     }
 
     /** Makes sure that the flag combinations make sense */
     private fun checkFlagConsistency() {
         if (checkCompatibility && previousApi == null) {
-            throw OptionsException(stderr = "$ARG_CHECK_COMPATIBILITY requires $ARG_PREVIOUS_API")
+            throw DriverException(stderr = "$ARG_CHECK_COMPATIBILITY requires $ARG_PREVIOUS_API")
         }
 
         if (migrateNulls && previousApi == null) {
-            throw OptionsException(stderr = "$ARG_MIGRATE_NULLNESS requires $ARG_PREVIOUS_API")
+            throw DriverException(stderr = "$ARG_MIGRATE_NULLNESS requires $ARG_PREVIOUS_API")
         }
 
         if (apiJar != null && sources.isNotEmpty()) {
-            throw OptionsException(stderr = "Specify either $ARG_SOURCE_FILES or $ARG_INPUT_API_JAR, not both")
+            throw DriverException(stderr = "Specify either $ARG_SOURCE_FILES or $ARG_INPUT_API_JAR, not both")
         }
 
         if (compatOutput && outputKotlinStyleNulls) {
-            throw OptionsException(
+            throw DriverException(
                 stderr = "$ARG_OUTPUT_KOTLIN_NULLS should not be combined with " +
+                        "$ARGS_COMPAT_OUTPUT=yes"
+            )
+        }
+
+        if (compatOutput && outputDefaultValues) {
+            throw DriverException(
+                stderr = "$ARG_OUTPUT_DEFAULT_VALUES should not be combined with " +
                         "$ARGS_COMPAT_OUTPUT=yes"
             )
         }
@@ -786,12 +807,12 @@ class Options(
     }
 
     private fun helpAndQuit(colorize: Boolean = color) {
-        throw OptionsException(stdout = getUsage(colorize = colorize))
+        throw DriverException(stdout = getUsage(colorize = colorize))
     }
 
     private fun getValue(args: Array<String>, index: Int): String {
         if (index >= args.size) {
-            throw OptionsException("Missing argument for ${args[index - 1]}")
+            throw DriverException("Missing argument for ${args[index - 1]}")
         }
         return args[index]
     }
@@ -799,7 +820,7 @@ class Options(
     private fun stringToExistingDir(value: String): File {
         val file = File(value)
         if (!file.isDirectory) {
-            throw OptionsException("$file is not a directory")
+            throw DriverException("$file is not a directory")
         }
         return file
     }
@@ -809,7 +830,7 @@ class Options(
         for (path in value.split(File.pathSeparatorChar)) {
             val file = File(path)
             if (!file.isDirectory) {
-                throw OptionsException("$file is not a directory")
+                throw DriverException("$file is not a directory")
             }
             files.add(file)
         }
@@ -821,7 +842,7 @@ class Options(
         for (path in value.split(File.pathSeparatorChar)) {
             val file = File(path)
             if (!file.isDirectory && !(file.path.endsWith(SdkConstants.DOT_JAR) && file.isFile)) {
-                throw OptionsException("$file is not a jar or directory")
+                throw DriverException("$file is not a jar or directory")
             }
             files.add(file)
         }
@@ -833,7 +854,7 @@ class Options(
         for (path in value.split(File.pathSeparatorChar)) {
             val file = File(path)
             if (!file.exists()) {
-                throw OptionsException("$file does not exist")
+                throw DriverException("$file does not exist")
             }
             files.add(file)
         }
@@ -843,7 +864,7 @@ class Options(
     private fun stringToExistingFile(value: String): File {
         val file = File(value)
         if (!file.isFile) {
-            throw OptionsException("$file is not a file")
+            throw DriverException("$file is not a file")
         }
         return file
     }
@@ -851,7 +872,7 @@ class Options(
     private fun stringToExistingFileOrDir(value: String): File {
         val file = File(value)
         if (!file.exists()) {
-            throw OptionsException("$file is not a file or directory")
+            throw DriverException("$file is not a file or directory")
         }
         return file
     }
@@ -867,7 +888,7 @@ class Options(
                     // which means you can't point to files in paths with spaces)
                     val listFile = File(file.path.substring(1))
                     if (!listFile.isFile) {
-                        throw OptionsException("$listFile is not a file")
+                        throw DriverException("$listFile is not a file")
                     }
                     val contents = Files.asCharSource(listFile, Charsets.UTF_8).read()
                     val pathList = Splitter.on(CharMatcher.whitespace()).trimResults().omitEmptyStrings().split(
@@ -875,13 +896,13 @@ class Options(
                     )
                     pathList.asSequence().map { File(it) }.forEach {
                         if (!it.isFile) {
-                            throw OptionsException("$it is not a file")
+                            throw DriverException("$it is not a file")
                         }
                         files.add(it)
                     }
                 } else {
                     if (!file.isFile) {
-                        throw OptionsException("$file is not a file")
+                        throw DriverException("$file is not a file")
                     }
                     files.add(file)
                 }
@@ -894,16 +915,16 @@ class Options(
 
         if (output.exists()) {
             if (output.isDirectory) {
-                throw OptionsException("$output is a directory")
+                throw DriverException("$output is a directory")
             }
             val deleted = output.delete()
             if (!deleted) {
-                throw OptionsException("Could not delete previous version of $output")
+                throw DriverException("Could not delete previous version of $output")
             }
         } else if (output.parentFile != null && !output.parentFile.exists()) {
             val ok = output.parentFile.mkdirs()
             if (!ok) {
-                throw OptionsException("Could not create ${output.parentFile}")
+                throw DriverException("Could not create ${output.parentFile}")
             }
         }
 
@@ -920,7 +941,7 @@ class Options(
         } else if (output.parentFile != null && !output.parentFile.exists()) {
             val ok = output.parentFile.mkdirs()
             if (!ok) {
-                throw OptionsException("Could not create ${output.parentFile}")
+                throw DriverException("Could not create ${output.parentFile}")
             }
         }
 
@@ -986,6 +1007,8 @@ class Options(
             ARG_OUTPUT_KOTLIN_NULLS + "[=yes|no]", "Controls whether nullness annotations should be formatted as " +
                     "in Kotlin (with \"?\" for nullable types, \"\" for non nullable types, and \"!\" for unknown. " +
                     "The default is yes.",
+            ARG_OUTPUT_DEFAULT_VALUES + "[=yes|no]", "Controls whether default values should be included in " +
+                    "signature files. The default is yes.",
             ARGS_COMPAT_OUTPUT + "=[yes|no]", "Controls whether to keep signature files compatible with the " +
                     "historical format (with its various quirks) or to generate the new format (which will also include " +
                     "annotations that are part of the API, etc.)",
@@ -1008,6 +1031,8 @@ class Options(
                     "interpreted as having encoded its types using Kotlin style types: a suffix of \"?\" for nullable " +
                     "types, no suffix for non nullable types, and \"!\" for unknown. The default is no.",
             ARG_CHECK_COMPATIBILITY, "Check compatibility with the previous API",
+            ARG_CHECK_KOTLIN_INTEROP, "Check API intended to be used from both Kotlin and Java for interoperability " +
+                    "issues",
             ARG_MIGRATE_NULLNESS, "Compare nullness information with the previous API and mark newly " +
                     "annotated APIs as under migration.",
             ARG_WARNINGS_AS_ERRORS, "Promote all warnings to errors",
@@ -1090,14 +1115,14 @@ class Options(
                     val colorFormatString = "%1$-" + (argWidth + invisibleChars) + "s%2\$s"
 
                     out.print(
-                        SdkUtils2.wrap(
+                        wrap(
                             String.format(colorFormatString, colorArg, description),
                             MAX_LINE_WIDTH + invisibleChars, MAX_LINE_WIDTH, indent
                         )
                     )
                 } else {
                     out.print(
-                        SdkUtils2.wrap(
+                        wrap(
                             String.format(formatString, arg, description),
                             MAX_LINE_WIDTH, indent
                         )
@@ -1107,10 +1132,4 @@ class Options(
             i += 2
         }
     }
-
-    class OptionsException(
-        val stderr: String = "",
-        val stdout: String = "",
-        val exitCode: Int = if (stderr.isBlank()) 0 else -1
-    ) : RuntimeException(stdout + stderr)
 }

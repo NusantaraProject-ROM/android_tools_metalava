@@ -118,10 +118,10 @@ public class Errors {
     public static final Error ADDED_METHOD = new Error(4, WARNING);
     public static final Error ADDED_FIELD = new Error(5, WARNING);
     public static final Error ADDED_INTERFACE = new Error(6, WARNING);
-    public static final Error REMOVED_PACKAGE = new Error(7, WARNING);
-    public static final Error REMOVED_CLASS = new Error(8, WARNING);
-    public static final Error REMOVED_METHOD = new Error(9, WARNING);
-    public static final Error REMOVED_FIELD = new Error(10, WARNING);
+    public static final Error REMOVED_PACKAGE = new Error(7, ERROR);
+    public static final Error REMOVED_CLASS = new Error(8, ERROR);
+    public static final Error REMOVED_METHOD = new Error(9, ERROR);
+    public static final Error REMOVED_FIELD = new Error(10, ERROR);
     public static final Error REMOVED_INTERFACE = new Error(11, WARNING);
     public static final Error CHANGED_STATIC = new Error(12, WARNING);
     public static final Error ADDED_FINAL = new Error(13, WARNING);
@@ -134,7 +134,7 @@ public class Errors {
     public static final Error CHANGED_ABSTRACT = new Error(20, WARNING);
     public static final Error CHANGED_THROWS = new Error(21, WARNING);
     public static final Error CHANGED_NATIVE = new Error(22, HIDDEN);
-    public static final Error CHANGED_CLASS = new Error(23, WARNING);
+    public static final Error CHANGED_CLASS = new Error(23, ERROR);
     public static final Error CHANGED_DEPRECATED = new Error(24, WARNING);
     public static final Error CHANGED_SYNCHRONIZED = new Error(25, WARNING);
     public static final Error ADDED_FINAL_UNINSTANTIABLE = new Error(26, WARNING);
@@ -145,8 +145,19 @@ public class Errors {
 
 
     // Stuff I've added
-    public static final Error INVALID_NULL_CONVERSION = new Error(40, WARNING);
-    public static final Error PARAMETER_NAME_CHANGE = new Error(41, WARNING);
+    // Compatibility checks
+    public static final Error INVALID_NULL_CONVERSION = new Error(40, ERROR);
+    public static final Error PARAMETER_NAME_CHANGE = new Error(41, ERROR);
+    public static final Error OPERATOR_REMOVAL = new Error(42, ERROR);
+    public static final Error INFIX_REMOVAL = new Error(43, ERROR);
+    public static final Error VARARG_REMOVAL = new Error(44, ERROR);
+    public static final Error NEWLY_FINAL = new Error(45, ERROR);
+    public static final Error ADD_SEALED = new Error(46, ERROR);
+    public static final Error KOTLIN_KEYWORD = new Error(47, WARNING);
+    public static final Error SAM_SHOULD_BE_LAST = new Error(48, WARNING);
+    public static final Error MISSING_JVMSTATIC = new Error(49, WARNING);
+    public static final Error DEFAULT_VALUE_CHANGE = new Error(50, ERROR);
+    public static final Error DOCUMENT_EXCEPTIONS = new Error(51, ERROR);
 
 
     // Errors in javadoc generation
@@ -215,15 +226,6 @@ public class Errors {
             }
         }
         return false;
-    }
-
-    // Set error severity for all the compatibility related checks
-    public static void enforceCompatibility() {
-        for (Error e : sErrors) {
-            if (e.code >= Errors.PARSE_ERROR.code && e.code <= Errors.PARAMETER_NAME_CHANGE.code) {
-                e.setLevel(ERROR);
-            }
-        }
     }
 
     // Primary needed by unit tests; ensure that a previous test doesn't influence

@@ -123,12 +123,6 @@ CompatibilityCheckTest : DriverTest() {
                   public class MyTest1 {
                   }
                 }
-                """,
-            api = """
-                package test.pkg {
-                  public class MyTest1 {
-                  }
-                }
                 """
         )
     }
@@ -171,18 +165,6 @@ CompatibilityCheckTest : DriverTest() {
                     method @Nullable public Double convert6(@Nullable Float);
                   }
                 }
-                """,
-            api = """
-                package test.pkg {
-                  public class MyTest {
-                    method @Nullable public Double convert1(@Nullable Float);
-                    method @NonNull public Double convert2(@NonNull Float);
-                    method public Double convert3(Float);
-                    method public Double convert4(Float);
-                    method @NonNull public Double convert5(@NonNull Float);
-                    method @Nullable public Double convert6(@Nullable Float);
-                  }
-                }
                 """
         )
     }
@@ -192,12 +174,12 @@ CompatibilityCheckTest : DriverTest() {
         check(
             checkCompatibility = true,
             warnings = """
-                src/test/pkg/Outer.kt:2: error: Attempted to change parameter from @Nullable to @NonNull: incompatible change for parameter string in test.pkg.Outer.Inner.method3 [InvalidNullConversion:40]
-                src/test/pkg/Outer.kt:3: error: Attempted to change method return from @NonNull to @Nullable: incompatible change for method test.pkg.Outer.Inner.method2 [InvalidNullConversion:40]
-                src/test/pkg/Outer.kt:3: error: Attempted to change parameter from @Nullable to @NonNull: incompatible change for parameter string in test.pkg.Outer.Inner.method2 [InvalidNullConversion:40]
-                src/test/pkg/Outer.kt:5: error: Attempted to change parameter from @Nullable to @NonNull: incompatible change for parameter string in test.pkg.Outer.method3 [InvalidNullConversion:40]
-                src/test/pkg/Outer.kt:6: error: Attempted to change method return from @NonNull to @Nullable: incompatible change for method test.pkg.Outer.method2 [InvalidNullConversion:40]
-                src/test/pkg/Outer.kt:6: error: Attempted to change parameter from @Nullable to @NonNull: incompatible change for parameter string in test.pkg.Outer.method2 [InvalidNullConversion:40]
+                src/test/pkg/Outer.kt:5: error: Attempted to change method return from @NonNull to @Nullable: incompatible change for method test.pkg.Outer.method2 [InvalidNullConversion:40]
+                src/test/pkg/Outer.kt:5: error: Attempted to change parameter from @Nullable to @NonNull: incompatible change for parameter string in test.pkg.Outer.method2 [InvalidNullConversion:40]
+                src/test/pkg/Outer.kt:6: error: Attempted to change parameter from @Nullable to @NonNull: incompatible change for parameter string in test.pkg.Outer.method3 [InvalidNullConversion:40]
+                src/test/pkg/Outer.kt:8: error: Attempted to change method return from @NonNull to @Nullable: incompatible change for method test.pkg.Outer.Inner.method2 [InvalidNullConversion:40]
+                src/test/pkg/Outer.kt:8: error: Attempted to change parameter from @Nullable to @NonNull: incompatible change for parameter string in test.pkg.Outer.Inner.method2 [InvalidNullConversion:40]
+                src/test/pkg/Outer.kt:9: error: Attempted to change parameter from @Nullable to @NonNull: incompatible change for parameter string in test.pkg.Outer.Inner.method3 [InvalidNullConversion:40]
                 """,
             compatibilityMode = false,
             inputKotlinStyleNulls = true,
@@ -233,22 +215,7 @@ CompatibilityCheckTest : DriverTest() {
                     }
                     """
                 )
-            ),
-            api = """
-                package test.pkg {
-                  public final class Outer {
-                    ctor public Outer();
-                    method public final String? method1(String string, String? maybeString);
-                    method public final String? method2(String string, String? maybeString);
-                    method public final String method3(String? maybeString, String string);
-                  }
-                  public static final class Outer.Inner {
-                    ctor public Outer.Inner();
-                    method public final String? method2(String string, String? maybeString);
-                    method public final String method3(String? maybeString, String string);
-                  }
-                }
-                """
+            )
         )
     }
 
@@ -257,8 +224,8 @@ CompatibilityCheckTest : DriverTest() {
         check(
             checkCompatibility = true,
             warnings = """
-                src/test/pkg/JavaClass.java:1: error: Attempted to change parameter name from secondParameter to newName in method test.pkg.JavaClass.method2 [ParameterNameChange:41]
-                src/test/pkg/JavaClass.java:2: error: Attempted to remove parameter name from parameter newName in test.pkg.JavaClass.method1 in method test.pkg.JavaClass.method1 [ParameterNameChange:41]
+                src/test/pkg/JavaClass.java:6: error: Attempted to remove parameter name from parameter newName in test.pkg.JavaClass.method1 in method test.pkg.JavaClass.method1 [ParameterNameChange:41]
+                src/test/pkg/JavaClass.java:7: error: Attempted to change parameter name from secondParameter to newName in method test.pkg.JavaClass.method2 [ParameterNameChange:41]
                 """,
             compatibilityMode = false,
             previousApi = """
@@ -273,6 +240,7 @@ CompatibilityCheckTest : DriverTest() {
             sourceFiles = *arrayOf(
                 java(
                     """
+                    @Suppress("all")
                     package test.pkg;
                     import android.support.annotation.ParameterName;
 
@@ -284,15 +252,6 @@ CompatibilityCheckTest : DriverTest() {
                 ),
                 supportParameterName
             ),
-            api = """
-                package test.pkg {
-                  public class JavaClass {
-                    ctor public JavaClass();
-                    method public String! method1(String!);
-                    method public String! method2(String! firstParameter, String! newName);
-                  }
-                }
-                """,
             extraArguments = arrayOf("--hide-package", "android.support.annotation")
         )
     }
@@ -302,7 +261,7 @@ CompatibilityCheckTest : DriverTest() {
         check(
             checkCompatibility = true,
             warnings = """
-                src/test/pkg/KotlinClass.kt:1: error: Attempted to change parameter name from prevName to newName in method test.pkg.KotlinClass.method1 [ParameterNameChange:41]
+                src/test/pkg/KotlinClass.kt:4: error: Attempted to change parameter name from prevName to newName in method test.pkg.KotlinClass.method1 [ParameterNameChange:41]
                 """,
             compatibilityMode = false,
             inputKotlinStyleNulls = true,
@@ -325,15 +284,7 @@ CompatibilityCheckTest : DriverTest() {
                     }
                     """
                 )
-            ),
-            api = """
-                package test.pkg {
-                  public final class KotlinClass {
-                    ctor public KotlinClass();
-                    method public final String? method1(String newName);
-                  }
-                }
-                """
+            )
         )
     }
 
@@ -342,8 +293,8 @@ CompatibilityCheckTest : DriverTest() {
         check(
             checkCompatibility = true,
             warnings = """
-                src/test/pkg/MyClass.java:2: error: Added field test.pkg.MyClass.newField [AddedField:5]
-                src/test/pkg/MyClass.java:3: error: Added method test.pkg.MyClass.method2 [AddedMethod:4]
+                src/test/pkg/MyClass.java:6: warning: Added method test.pkg.MyClass.method2 [AddedMethod:4]
+                src/test/pkg/MyClass.java:7: warning: Added field test.pkg.MyClass.newField [AddedField:5]
                 """,
             compatibilityMode = false,
             previousApi = """
@@ -364,6 +315,207 @@ CompatibilityCheckTest : DriverTest() {
                         public String method2(String newName) { return null; }
                         public int newField = 5;
                         public String toString() { return "Hello World"; }
+                    }
+                    """
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `Remove operator`() {
+        check(
+            checkCompatibility = true,
+            warnings = """
+                src/test/pkg/Foo.kt:4: error: Cannot remove `operator` modifier from method test.pkg.Foo.plus: Incompatible change [OperatorRemoval:42]
+                """,
+            compatibilityMode = false,
+            previousApi = """
+                package test.pkg {
+                  public final class Foo {
+                    ctor public Foo();
+                    method public final operator void plus(String s);
+                  }
+                }
+                """,
+            sourceFiles = *arrayOf(
+                kotlin(
+                    """
+                    package test.pkg
+
+                    class Foo {
+                        fun plus(s: String) { }
+                    }
+                    """
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `Remove vararg`() {
+        check(
+            checkCompatibility = true,
+            warnings = """
+                src/test/pkg/test.kt:3: error: Changing from varargs to array is an incompatible change: parameter x in test.pkg.TestKt.method2 [VarargRemoval:44]
+                """,
+            compatibilityMode = false,
+            previousApi = """
+                package test.pkg {
+                  public final class TestKt {
+                    ctor public TestKt();
+                    method public static final void method1(int[] x);
+                    method public static final void method2(int... x);
+                  }
+                }
+                """,
+            sourceFiles = *arrayOf(
+                kotlin(
+                    """
+                    package test.pkg
+                    fun method1(vararg x: Int) { }
+                    fun method2(x: IntArray) { }
+                    """
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `Add final`() {
+        // Adding final on class or method is incompatible; adding it on a parameter is fine.
+        // Field is iffy.
+        check(
+            checkCompatibility = true,
+            warnings = """
+                src/test/pkg/Java.java:4: error: Making a class or method final is an incompatible change: method test.pkg.Java.method [NewlyFinal:45]
+                src/test/pkg/Kotlin.kt:4: error: Making a class or method final is an incompatible change: method test.pkg.Kotlin.method [NewlyFinal:45]
+                """,
+            compatibilityMode = false,
+            previousApi = """
+                package test.pkg {
+                  public class Java {
+                    method public void method(int);
+                  }
+                  public class Kotlin {
+                    ctor public Kotlin();
+                    method public void method(String s);
+                  }
+                }
+                """,
+            sourceFiles = *arrayOf(
+                kotlin(
+                    """
+                    package test.pkg
+
+                    open class Kotlin {
+                        fun method(s: String) { }
+                    }
+                    """
+                ),
+                java(
+                    """
+                        package test.pkg;
+                        public class Java {
+                            private Java() { }
+                            public final void method(final int parameter) { }
+                        }
+                        """
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `Remove infix`() {
+        check(
+            checkCompatibility = true,
+            warnings = """
+                src/test/pkg/Foo.kt:5: error: Cannot remove `infix` modifier from method test.pkg.Foo.add2: Incompatible change [InfixRemoval:43]
+                """,
+            compatibilityMode = false,
+            previousApi = """
+                package test.pkg {
+                  public final class Foo {
+                    ctor public Foo();
+                    method public final void add1(String s);
+                    method public final infix void add2(String s);
+                    method public final infix void add3(String s);
+                  }
+                }
+                """,
+            sourceFiles = *arrayOf(
+                kotlin(
+                    """
+                    package test.pkg
+
+                    class Foo {
+                        infix fun add1(s: String) { }
+                        fun add2(s: String) { }
+                        infix fun add3(s: String) { }
+                    }
+                    """
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `Add seal`() {
+        check(
+            checkCompatibility = true,
+            warnings = """
+                src/test/pkg/Foo.kt: error: Cannot add `sealed` modifier to class test.pkg.Foo: Incompatible change [AddSealed:46]
+                """,
+            compatibilityMode = false,
+            previousApi = """
+                package test.pkg {
+                  public class Foo {
+                  }
+                }
+                """,
+            sourceFiles = *arrayOf(
+                kotlin(
+                    """
+                    package test.pkg
+                    sealed class Foo {
+                    }
+                    """
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `Remove default parameter`() {
+        check(
+            checkCompatibility = true,
+            warnings = """
+                src/test/pkg/Foo.kt:7: error: Attempted to remove default value from parameter s1 in test.pkg.Foo.method4 in method test.pkg.Foo.method4 [DefaultValueChange:50]
+                """,
+            compatibilityMode = false,
+            inputKotlinStyleNulls = true,
+            previousApi = """
+                package test.pkg {
+                  public final class Foo {
+                    ctor public Foo();
+                    method public final void method1(boolean b, String? s1);
+                    method public final void method2(boolean b, String? s1);
+                    method public final void method3(boolean b, String? s1 = "null");
+                    method public final void method4(boolean b, String? s1 = "null");
+                  }
+                }
+                """,
+            sourceFiles = *arrayOf(
+                kotlin(
+                    """
+                    package test.pkg
+
+                    class Foo {
+                        fun method1(b: Boolean, s1: String?) { }         // No change
+                        fun method2(b: Boolean, s1: String? = null) { }  // Adding: OK
+                        fun method3(b: Boolean, s1: String? = null) { }  // No change
+                        fun method4(b: Boolean, s1: String?) { }         // Removed
                     }
                     """
                 )

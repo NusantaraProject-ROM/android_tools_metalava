@@ -108,14 +108,14 @@ fun run(
             System.exit(-1)
         }
         return true
-    } catch (e: Options.OptionsException) {
+    } catch (e: DriverException) {
         if (e.stderr.isNotBlank()) {
             stderr.println("\n${e.stderr}")
         }
         if (e.stdout.isNotBlank()) {
             stdout.println("\n${e.stdout}")
         }
-        if (setExitCode) {
+        if (setExitCode) { // always true in production; not set from tests
             stdout.flush()
             stderr.flush()
             System.exit(e.exitCode)
@@ -170,7 +170,9 @@ private fun processFlags() {
 
         // If configured, compares the new API with the previous API and reports
         // any incompatibilities.
-        checkCompatibility(codebase, previous)
+        if (options.checkCompatibility) {
+            CompatibilityCheck.checkCompatibility(codebase, previous)
+        }
 
         // If configured, checks for newly added nullness information compared
         // to the previous stable API and marks the newly annotated elements
@@ -218,12 +220,6 @@ private fun migrateNulls(codebase: Codebase, previous: Codebase) {
     }
 }
 
-private fun checkCompatibility(codebase: Codebase, previous: Codebase) {
-    if (options.checkCompatibility) {
-        previous.compareWith(CompatibilityCheck(), codebase, ApiPredicate(codebase))
-    }
-}
-
 private fun loadFromSignatureFiles(
     file: File, kotlinStyleNulls: Boolean,
     manifest: File? = null,
@@ -242,7 +238,7 @@ private fun loadFromSignatureFiles(
         return codebase
     } catch (ex: ApiParseException) {
         val message = "Unable to parse signature file $file: ${ex.message}"
-        throw Options.OptionsException(message)
+        throw DriverException(message)
     }
 }
 
@@ -288,6 +284,10 @@ private fun loadFromSources(): Codebase {
     analyzer.mergeExternalAnnotations()
     analyzer.computeApi()
     analyzer.handleStripping()
+
+    if (options.checkKotlinInterop) {
+        KotlinInteropChecks().check(codebase)
+    }
 
     progress("\nInsert missing constructors: ")
     val ignoreShown = options.showUnannotated
@@ -554,6 +554,11 @@ private fun createReportFile(
 
 /** Used for verbose output to show progress bar */
 private var tick = 0
+
+/** Needed for tests to ensure we don't get unpredictable behavior of "." in output */
+fun resetTicker() {
+    tick = 0
+}
 
 /** Print progress */
 fun tick() {

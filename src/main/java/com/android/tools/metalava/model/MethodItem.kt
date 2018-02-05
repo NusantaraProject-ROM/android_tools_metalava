@@ -31,6 +31,9 @@ interface MethodItem : MemberItem {
     /** The list of parameters */
     fun parameters(): List<ParameterItem>
 
+    /** Returns true if this method is a Kotlin extension method */
+    fun isExtensionMethod(): Boolean
+
     /** Returns the super methods that this method is overriding */
     fun superMethods(): List<MethodItem>
 
@@ -350,6 +353,10 @@ interface MethodItem : MemberItem {
         return isConstructor() && modifiers.isPublic() && parameters().isEmpty()
     }
 
+    /** Finds uncaught exceptions actually thrown inside this method (as opposed to ones
+     * declared in the signature) */
+    fun findThrownExceptions(): Set<ClassItem> = codebase.unsupported()
+
     /**
      * Returns true if this method is a signature match for the given method (e.g. can
      * be overriding). This checks that the name and parameter lists match, but ignores
@@ -380,4 +387,7 @@ interface MethodItem : MemberItem {
         }
         return true
     }
+
+    /** Whether this method is a getter/setter for an underlying Kotlin property (val/var) */
+    fun isKotlinProperty(): Boolean = false
 }

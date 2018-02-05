@@ -319,7 +319,7 @@ class DocAnalyzerTest : DriverTest() {
             ),
             checkCompilation = true,
             checkDoclava1 = false,
-            warnings = "src/test/pkg/RangeTest.java:2: warning: Found more than one threading annotation on method test.pkg.RangeTest.test1(); the auto-doc feature does not handle this correctly [MultipleThreadAnnotations:133]",
+            warnings = "src/test/pkg/RangeTest.java:5: warning: Found more than one threading annotation on method test.pkg.RangeTest.test1(); the auto-doc feature does not handle this correctly [MultipleThreadAnnotations:133]",
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -519,7 +519,7 @@ class DocAnalyzerTest : DriverTest() {
             ),
             checkCompilation = true,
             checkDoclava1 = false,
-            warnings = "src/test/pkg/RangeTest.java:3: lint: Cannot find permission field for \"MyPermission\" required by method test.pkg.RangeTest.test1() (may be hidden or removed) [MissingPermission:132]",
+            warnings = "src/test/pkg/RangeTest.java:4: lint: Cannot find permission field for \"MyPermission\" required by method test.pkg.RangeTest.test1() (may be hidden or removed) [MissingPermission:132]",
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -924,6 +924,10 @@ class DocAnalyzerTest : DriverTest() {
                     package android.widget;
 
                     public class Toolbar {
+                        /**
+                        * Existing documentation for {@linkplain #getCurrentContentInsetEnd()} here.
+                        * @return blah blah blah
+                        */
                         public int getCurrentContentInsetEnd() {
                             return 0;
                         }
@@ -953,12 +957,16 @@ class DocAnalyzerTest : DriverTest() {
                 package android.widget;
                 /**
                  * Requires API level 21
+                 * @since 5.0 Lollipop (21)
                  */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class Toolbar {
                 public Toolbar() { throw new RuntimeException("Stub!"); }
                 /**
+                 * Existing documentation for {@linkplain #getCurrentContentInsetEnd()} here.
                  * Requires API level 24
+                 * @since 7.0 Nougat (24)
+                 * @return blah blah blah
                  */
                 public int getCurrentContentInsetEnd() { throw new RuntimeException("Stub!"); }
                 }
@@ -1020,7 +1028,9 @@ class DocAnalyzerTest : DriverTest() {
                  * Requires API level 14
                  * @deprecated
                  * <p class="caution"><strong>This class was deprecated in API level 21.</strong></p>
-                 *  Use something else. */
+                 *  Use something else.
+                 * @since 4.0 IceCreamSandwich (14)
+                 */
                 @Deprecated public static final java.lang.String ACTION_NEW_VIDEO = "android.hardware.action.NEW_VIDEO";
                 }
                 """

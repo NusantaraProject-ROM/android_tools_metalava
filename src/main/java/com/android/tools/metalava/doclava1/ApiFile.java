@@ -25,6 +25,7 @@ import com.android.tools.metalava.model.text.TextFieldItem;
 import com.android.tools.metalava.model.text.TextMethodItem;
 import com.android.tools.metalava.model.text.TextPackageItem;
 import com.android.tools.metalava.model.text.TextParameterItem;
+import com.android.tools.metalava.model.text.TextParameterItemKt;
 import com.android.tools.metalava.model.text.TextTypeItem;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -112,6 +113,7 @@ public class ApiFile {
         boolean pub = false;
         boolean prot = false;
         boolean priv = false;
+        boolean internal = false;
         boolean stat = false;
         boolean fin = false;
         boolean abs = false;
@@ -119,6 +121,7 @@ public class ApiFile {
         boolean isInterface = false;
         boolean isAnnotation = false;
         boolean isEnum = false;
+        boolean sealed = false;
         String name;
         String qname;
         String ext = null;
@@ -141,6 +144,9 @@ public class ApiFile {
         } else if ("private".equals(token)) {
             priv = true;
             token = tokenizer.requireToken();
+        } else if ("internal".equals(token)) {
+            internal = true;
+            token = tokenizer.requireToken();
         }
         if ("static".equals(token)) {
             stat = true;
@@ -158,6 +164,12 @@ public class ApiFile {
             dep = true;
             token = tokenizer.requireToken();
         }
+
+        if ("sealed".equals(token)) {
+            sealed = true;
+            token = tokenizer.requireToken();
+        }
+
         if ("class".equals(token)) {
             token = tokenizer.requireToken();
         } else if ("interface".equals(token)) {
@@ -185,8 +197,8 @@ public class ApiFile {
         token = tokenizer.requireToken();
 
         cl = new TextClassItem(api, tokenizer.pos(), pub, prot,
-                priv, stat, isInterface, abs, isEnum, isAnnotation,
-                fin, typeInfo.toErasedTypeString(), typeInfo.qualifiedTypeName(),
+                priv, internal, stat, isInterface, abs, isEnum, isAnnotation,
+                fin, sealed, typeInfo.toErasedTypeString(), typeInfo.qualifiedTypeName(),
                 simpleTypeInfo.toErasedTypeString(), annotations);
         cl.setContainingPackage(pkg);
         cl.setTypeInfo(typeInfo);
@@ -309,6 +321,7 @@ public class ApiFile {
         boolean pub = false;
         boolean prot = false;
         boolean priv = false;
+        boolean internal = false;
         boolean dep = false;
         String name;
         TextConstructorItem method;
@@ -330,6 +343,9 @@ public class ApiFile {
         } else if ("private".equals(token)) {
             priv = true;
             token = tokenizer.requireToken();
+        } else if ("internal".equals(token)) {
+            internal = true;
+            token = tokenizer.requireToken();
         }
         if ("deprecated".equals(token)) {
             dep = true;
@@ -342,7 +358,7 @@ public class ApiFile {
             throw new ApiParseException("expected (", tokenizer.getLine());
         }
         method = new TextConstructorItem(api, /*typeParameters*/
-                name, /*signature*/ cl, pub, prot, priv, false/*isFinal*/,
+                name, /*signature*/ cl, pub, prot, priv, internal, false/*isFinal*/,
                 false/*isStatic*/, /*isSynthetic*/ false/*isAbstract*/, false/*isSynthetic*/,
                 false/*isNative*/, false/* isDefault */,
                 /*isAnnotationElement*/  /*flatSignature*/
@@ -366,12 +382,16 @@ public class ApiFile {
         boolean pub = false;
         boolean prot = false;
         boolean priv = false;
+        boolean internal = false;
         boolean stat = false;
         boolean fin = false;
         boolean abs = false;
         boolean dep = false;
         boolean syn = false;
         boolean def = false;
+        boolean infix = false;
+        boolean operator = false;
+        boolean inline = false;
         TextTypeItem returnType;
         String name;
         TextMethodItem method;
@@ -393,6 +413,9 @@ public class ApiFile {
             token = tokenizer.requireToken();
         } else if ("private".equals(token)) {
             priv = true;
+            token = tokenizer.requireToken();
+        } else if ("internal".equals(token)) {
+            internal = true;
             token = tokenizer.requireToken();
         }
         if ("default".equals(token)) {
@@ -419,6 +442,18 @@ public class ApiFile {
             syn = true;
             token = tokenizer.requireToken();
         }
+        if ("infix".equals(token)) {
+            infix = true;
+            token = tokenizer.requireToken();
+        }
+        if ("operator".equals(token)) {
+            operator = true;
+            token = tokenizer.requireToken();
+        }
+        if ("inline".equals(token)) {
+            inline = true;
+            token = tokenizer.requireToken();
+        }
         if ("<".equals(token)) {
             typeParameterList = parseTypeParameterList(tokenizer);
             token = tokenizer.requireToken();
@@ -435,8 +470,8 @@ public class ApiFile {
         name = token;
         method = new TextMethodItem(
                 api, name, /*signature*/ cl,
-                pub, prot, priv, fin, stat, abs/*isAbstract*/,
-                syn, false/*isNative*/, def/*isDefault*/,
+                pub, prot, priv, internal, fin, stat, abs/*isAbstract*/,
+                syn, false/*isNative*/, def/*isDefault*/, infix, operator, inline,
                 returnType, tokenizer.pos(), annotations);
         method.setDeprecated(dep);
         method.setTypeParameterList(typeParameterList);
@@ -469,6 +504,7 @@ public class ApiFile {
         boolean pub = false;
         boolean prot = false;
         boolean priv = false;
+        boolean internal = false;
         boolean stat = false;
         boolean fin = false;
         boolean dep = false;
@@ -496,6 +532,9 @@ public class ApiFile {
             token = tokenizer.requireToken();
         } else if ("private".equals(token)) {
             priv = true;
+            token = tokenizer.requireToken();
+        } else if ("internal".equals(token)) {
+            internal = true;
             token = tokenizer.requireToken();
         }
         if ("static".equals(token)) {
@@ -545,7 +584,7 @@ public class ApiFile {
             throw ex;
         }
 
-        field = new TextFieldItem(api, name, cl, pub, prot, priv, fin, stat,
+        field = new TextFieldItem(api, name, cl, pub, prot, priv, internal, fin, stat,
                 trans, vol, typeInfo, v, tokenizer.pos(),
                 annotations);
         field.setDeprecated(dep);
@@ -644,10 +683,17 @@ public class ApiFile {
             String type = token;
             TextTypeItem typeInfo = api.obtainTypeFromString(token);
 
-            String name = null;
+            boolean vararg = false;
             token = tokenizer.requireToken();
+
+            if ("vararg".equals(token)) {
+                vararg = true;
+                token = tokenizer.requireToken();
+            }
+
+            String name;
             String publicName;
-            if (isIdent(token)) {
+            if (isIdent(token) && !token.equals("=")) {
                 name = token;
                 publicName = name;
                 token = tokenizer.requireToken();
@@ -655,6 +701,19 @@ public class ApiFile {
                 name = "arg" + (index + 1);
                 publicName = null;
             }
+
+            String defaultValue = TextParameterItemKt.NO_DEFAULT_VALUE;
+            if ("=".equals(token)) {
+                token = tokenizer.requireToken(false);
+                try {
+                    defaultValue = (String) parseValue("java.lang.String", token);
+                } catch (ApiParseException ex) {
+                    ex.line = tokenizer.getLine();
+                    throw ex;
+                }
+                token = tokenizer.requireToken();
+            }
+
             if (",".equals(token)) {
                 token = tokenizer.requireToken();
             } else if (")".equals(token)) {
@@ -662,9 +721,9 @@ public class ApiFile {
                 throw new ApiParseException("expected , found " + token, tokenizer.getLine());
             }
 
-            method.addParameter(new TextParameterItem(api, method, name, publicName, index, type,
+            method.addParameter(new TextParameterItem(api, method, name, publicName, defaultValue, index, type,
                     typeInfo,
-                    type.endsWith("..."),
+                    vararg || type.endsWith("..."),
                     tokenizer.pos(),
                     annotations));
             if (type.endsWith("...")) {
