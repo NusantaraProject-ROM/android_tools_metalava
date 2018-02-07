@@ -152,23 +152,14 @@ interface ModifierList {
                 modifiers
             }
 
-            if (includeAnnotations && list.annotations().isNotEmpty()) {
-                for (annotation in list.annotations()) {
-                    if ((annotation.isNonNull() || annotation.isNullable())) {
-                        if (skipNullnessAnnotations) {
-                            continue
-                        }
-                    } else if (!annotation.isSignificant()) {
-                        continue
-                    }
-                    val source = annotation.toSource()
-                    if (omitCommonPackages) {
-                        writer.write(AnnotationItem.shortenAnnotation(source))
-                    } else {
-                        writer.write(source)
-                    }
-                    writer.write(" ")
-                }
+            if (includeAnnotations) {
+                writeAnnotations(
+                    list = list,
+                    skipNullnessAnnotations = skipNullnessAnnotations,
+                    omitCommonPackages = omitCommonPackages,
+                    separateLines = false,
+                    writer = writer
+                )
             }
 
             // Kotlin order:
@@ -325,6 +316,38 @@ interface ModifierList {
 
                 if (!compatibility.skipStrictFpModifier && list.isStrictFp()) {
                     writer.write("strictfp ")
+                }
+            }
+        }
+
+        fun writeAnnotations(
+            list: ModifierList,
+            skipNullnessAnnotations: Boolean = false,
+            omitCommonPackages: Boolean = false,
+            separateLines: Boolean = false,
+            writer: Writer
+        ) {
+            if (list.annotations().isNotEmpty()) {
+                for (annotation in list.annotations()) {
+                    if ((annotation.isNonNull() || annotation.isNullable())) {
+                        if (skipNullnessAnnotations) {
+                            continue
+                        }
+                    } else if (!annotation.isSignificant()) {
+                        continue
+                    }
+
+                    val source = annotation.toSource()
+                    if (omitCommonPackages) {
+                        writer.write(AnnotationItem.shortenAnnotation(source))
+                    } else {
+                        writer.write(source)
+                    }
+                    if (separateLines) {
+                        writer.write("\n")
+                    } else {
+                        writer.write(" ")
+                    }
                 }
             }
         }

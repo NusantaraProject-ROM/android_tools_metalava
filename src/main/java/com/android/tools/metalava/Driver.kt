@@ -33,6 +33,7 @@ import com.android.tools.metalava.doclava1.Errors
 import com.android.tools.metalava.doclava1.FilterPredicate
 import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.Item
+import com.android.tools.metalava.model.PackageDocs
 import com.android.tools.metalava.model.psi.PsiBasedCodebase
 import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.google.common.base.Stopwatch
@@ -613,9 +614,9 @@ private fun addHiddenPackages(
                 addHiddenPackages(packageToDoc, hiddenPackages, child, subPkg)
             }
         }
-    } else if (file.isFile && file.name == "package.html") {
+    } else if (file.isFile && (file.name == "package.html" || file.name == "overview.html")) {
         val contents = Files.asCharSource(file, Charsets.UTF_8).read()
-        packageToDoc.put(pkg, contents)
+        packageToDoc[pkg] = contents + (packageToDoc[pkg] ?: "") // Concatenate in case package has both files
         if (contents.contains("@hide")) {
             hiddenPackages.add(pkg)
         }
@@ -687,5 +688,3 @@ fun findPackage(source: String): String? {
         null
     }
 }
-
-data class PackageDocs(val packageDocs: MutableMap<String, String>, val hiddenPackages: MutableSet<String>)
