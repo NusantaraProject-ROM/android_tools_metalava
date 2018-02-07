@@ -43,6 +43,33 @@ class ApiFromTextTest : DriverTest() {
     }
 
     @Test
+    fun `Loading a signature file with alternate modifier order`() {
+        // Regression test for https://github.com/android/android-ktx/issues/242
+        val source = """
+                package test.pkg {
+                  deprecated public class MyTest {
+                    ctor deprecated public Foo(int, int);
+                    method deprecated public static final void edit(android.content.SharedPreferences, kotlin.jvm.functions.Function1<? super android.content.SharedPreferences.Editor,kotlin.Unit> action);
+                    field deprecated public static java.util.List<java.lang.String> LIST;
+                  }
+                }
+                """
+        check(
+            compatibilityMode = true,
+            signatureSource = source,
+            api = """
+                package test.pkg {
+                  public deprecated class MyTest {
+                    ctor public deprecated MyTest(int, int);
+                    method public static final deprecated void edit(android.content.SharedPreferences, kotlin.jvm.functions.Function1<? super android.content.SharedPreferences.Editor,kotlin.Unit> action);
+                    field public static deprecated java.util.List<java.lang.String> LIST;
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
     fun `Test generics, superclasses and interfaces`() {
         val source = """
             package a.b.c {

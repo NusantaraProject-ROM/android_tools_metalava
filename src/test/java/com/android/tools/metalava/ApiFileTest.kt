@@ -18,7 +18,7 @@
 
 package com.android.tools.metalava
 
-import com.android.tools.lint.checks.infrastructure.TestFiles
+import com.android.tools.lint.checks.infrastructure.TestFiles.kotlin
 import org.junit.Ignore
 import org.junit.Test
 
@@ -1863,7 +1863,8 @@ class ApiFileTest : DriverTest() {
         check(
             checkDoclava1 = true,
             sourceFiles = *arrayOf(
-                TestFiles.kotlin("src/test/pkg/Foo.kt",
+                kotlin(
+                    "src/test/pkg/Foo.kt",
                     """
                     @file:JvmName("-Foo")
 
