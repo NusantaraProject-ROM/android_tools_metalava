@@ -475,7 +475,7 @@ class PsiClassItem(
                 }
             }
 
-            if (hasImplicitDefaultConstructor) {
+            if (hasImplicitDefaultConstructor ) {
                 assert(constructors.isEmpty())
                 constructors.add(PsiConstructorItem.createDefaultConstructor(codebase, item, psiClass))
             }
@@ -632,6 +632,12 @@ class PsiClassItem(
         }
 
         private fun hasImplicitDefaultConstructor(psiClass: PsiClass): Boolean {
+            if (psiClass.name?.startsWith("-") == true) {
+                // Deliberately hidden; see examples like
+                //     @file:JvmName("-ViewModelExtensions") // Hide from Java sources in the IDE.
+                return false
+            }
+
             val constructors = psiClass.constructors
             if (constructors.isEmpty() && !psiClass.isInterface && !psiClass.isAnnotationType && !psiClass.isEnum) {
                 if (PsiUtil.hasDefaultConstructor(psiClass)) {

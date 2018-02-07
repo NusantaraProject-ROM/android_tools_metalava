@@ -2767,6 +2767,45 @@ class StubsTest : DriverTest() {
         )
     }
 
+    @Test
+    fun `Check writing package info file`() {
+        checkStubs(
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
+                    @android.support.annotation.Nullable
+                    package test.pkg;
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+
+                    @SuppressWarnings("all")
+                    public class Test {
+                    }
+                    """
+                ),
+
+                supportNullableSource
+            ),
+            warnings = "",
+            api = """
+                package test.pkg {
+                  public class Test {
+                    ctor public Test();
+                  }
+                }
+            """, // WRONG: I should include package annotations!
+            source = """
+                @android.support.annotation.Nullable
+                package test.pkg;
+                """,
+            extraArguments = arrayOf("--hide-package", "android.support.annotation")
+        )
+    }
+
     // TODO: Add in some type variables in method signatures and constructors!
     // TODO: Test what happens when a class extends a hidden extends a public in separate packages,
     // and the hidden has a @hide constructor so the stub in the leaf class doesn't compile -- I should

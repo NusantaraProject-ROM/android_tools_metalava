@@ -733,7 +733,7 @@ class Options(
 
     private fun getAndroidJarFile(apiLevel: Int, patterns: List<String>): File? {
         return patterns
-            .map { File(it.replace("%", Integer.toString(apiLevel))) }
+            .map { fileForPath(it.replace("%", Integer.toString(apiLevel))) }
             .firstOrNull { it.isFile }
     }
 
@@ -818,7 +818,7 @@ class Options(
     }
 
     private fun stringToExistingDir(value: String): File {
-        val file = File(value)
+        val file = fileForPath(value)
         if (!file.isDirectory) {
             throw DriverException("$file is not a directory")
         }
@@ -828,7 +828,7 @@ class Options(
     private fun stringToExistingDirs(value: String): List<File> {
         val files = mutableListOf<File>()
         for (path in value.split(File.pathSeparatorChar)) {
-            val file = File(path)
+            val file = fileForPath(path)
             if (!file.isDirectory) {
                 throw DriverException("$file is not a directory")
             }
@@ -840,7 +840,7 @@ class Options(
     private fun stringToExistingDirsOrJars(value: String): List<File> {
         val files = mutableListOf<File>()
         for (path in value.split(File.pathSeparatorChar)) {
-            val file = File(path)
+            val file = fileForPath(path)
             if (!file.isDirectory && !(file.path.endsWith(SdkConstants.DOT_JAR) && file.isFile)) {
                 throw DriverException("$file is not a jar or directory")
             }
@@ -852,7 +852,7 @@ class Options(
     private fun stringToExistingDirsOrFiles(value: String): List<File> {
         val files = mutableListOf<File>()
         for (path in value.split(File.pathSeparatorChar)) {
-            val file = File(path)
+            val file = fileForPath(path)
             if (!file.exists()) {
                 throw DriverException("$file does not exist")
             }
@@ -862,7 +862,7 @@ class Options(
     }
 
     private fun stringToExistingFile(value: String): File {
-        val file = File(value)
+        val file = fileForPath(value)
         if (!file.isFile) {
             throw DriverException("$file is not a file")
         }
@@ -870,7 +870,7 @@ class Options(
     }
 
     private fun stringToExistingFileOrDir(value: String): File {
-        val file = File(value)
+        val file = fileForPath(value)
         if (!file.exists()) {
             throw DriverException("$file is not a file or directory")
         }
@@ -880,7 +880,7 @@ class Options(
     private fun stringToExistingFiles(value: String): List<File> {
         val files = mutableListOf<File>()
         value.split(File.pathSeparatorChar)
-            .map { File(it) }
+            .map { fileForPath(it) }
             .forEach { file ->
                 if (file.path.startsWith("@")) {
                     // File list; files to be read are stored inside. SHOULD have been one per line
@@ -911,7 +911,7 @@ class Options(
     }
 
     private fun stringToNewFile(value: String): File {
-        val output = File(value)
+        val output = fileForPath(value)
 
         if (output.exists()) {
             if (output.isDirectory) {
@@ -932,7 +932,7 @@ class Options(
     }
 
     private fun stringToNewDir(value: String): File {
-        val output = File(value)
+        val output = fileForPath(value)
 
         if (output.exists()) {
             if (output.isDirectory) {
@@ -946,6 +946,19 @@ class Options(
         }
 
         return output
+    }
+
+    private fun fileForPath(path: String): File {
+        // java.io.File doesn't automatically handle ~/ -> home directory expansion.
+        // This isn't necessary when metalava is run via the command line driver
+        // (since shells will perform this expansion) but when metalava is run
+        // directly, not from a shell.
+        if (path.startsWith("~/")) {
+            val home = System.getProperty("user.home") ?: return File(path)
+            return File(home + path.substring(1))
+        }
+
+        return File(path)
     }
 
     private fun getUsage(includeHeader: Boolean = true, colorize: Boolean = color): String {
