@@ -135,39 +135,48 @@ public class ApiFile {
             annotations = result.component2();
         }
 
-        if ("public".equals(token)) {
-            pub = true;
-            token = tokenizer.requireToken();
-        } else if ("protected".equals(token)) {
-            prot = true;
-            token = tokenizer.requireToken();
-        } else if ("private".equals(token)) {
-            priv = true;
-            token = tokenizer.requireToken();
-        } else if ("internal".equals(token)) {
-            internal = true;
-            token = tokenizer.requireToken();
-        }
-        if ("static".equals(token)) {
-            stat = true;
-            token = tokenizer.requireToken();
-        }
-        if ("final".equals(token)) {
-            fin = true;
-            token = tokenizer.requireToken();
-        }
-        if ("abstract".equals(token)) {
-            abs = true;
-            token = tokenizer.requireToken();
-        }
-        if ("deprecated".equals(token)) {
-            dep = true;
-            token = tokenizer.requireToken();
-        }
-
-        if ("sealed".equals(token)) {
-            sealed = true;
-            token = tokenizer.requireToken();
+        processModifiers:
+        while (true) {
+            switch (token) {
+                case "public":
+                    pub = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "protected":
+                    prot = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "private":
+                    priv = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "internal":
+                    internal = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "static":
+                    stat = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "final":
+                    fin = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "abstract":
+                    abs = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "deprecated":
+                    dep = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "sealed":
+                    sealed = true;
+                    token = tokenizer.requireToken();
+                    break;
+                default:
+                    break processModifiers;
+            }
         }
 
         if ("class".equals(token)) {
@@ -334,23 +343,34 @@ public class ApiFile {
             annotations = result.component2();
         }
 
-        if ("public".equals(token)) {
-            pub = true;
-            token = tokenizer.requireToken();
-        } else if ("protected".equals(token)) {
-            prot = true;
-            token = tokenizer.requireToken();
-        } else if ("private".equals(token)) {
-            priv = true;
-            token = tokenizer.requireToken();
-        } else if ("internal".equals(token)) {
-            internal = true;
-            token = tokenizer.requireToken();
+        processModifiers:
+        while (true) {
+            switch (token) {
+                case "public":
+                    pub = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "protected":
+                    prot = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "private":
+                    priv = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "internal":
+                    internal = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "deprecated":
+                    dep = true;
+                    token = tokenizer.requireToken();
+                    break;
+                default:
+                    break processModifiers;
+            }
         }
-        if ("deprecated".equals(token)) {
-            dep = true;
-            token = tokenizer.requireToken();
-        }
+
         assertIdent(tokenizer, token);
         name = token.substring(token.lastIndexOf('.') + 1); // For inner classes, strip outer classes from name
         token = tokenizer.requireToken();
@@ -405,55 +425,69 @@ public class ApiFile {
             annotations = result.component2();
         }
 
-        if ("public".equals(token)) {
-            pub = true;
-            token = tokenizer.requireToken();
-        } else if ("protected".equals(token)) {
-            prot = true;
-            token = tokenizer.requireToken();
-        } else if ("private".equals(token)) {
-            priv = true;
-            token = tokenizer.requireToken();
-        } else if ("internal".equals(token)) {
-            internal = true;
-            token = tokenizer.requireToken();
+        // Parse modifiers; we loop here because we're not sure about the order (which can vary
+        // based on metalava's preference flags)
+
+        processModifiers:
+        while (true) {
+            switch (token) {
+                case "public":
+                    pub = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "protected":
+                    prot = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "private":
+                    priv = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "internal":
+                    internal = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "default":
+                    def = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "static":
+                    stat = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "final":
+                    fin = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "abstract":
+                    abs = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "deprecated":
+                    dep = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "synchronized":
+                    syn = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "infix":
+                    infix = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "operator":
+                    operator = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "inline":
+                    inline = true;
+                    token = tokenizer.requireToken();
+                    break;
+                default:
+                    break processModifiers;
+            }
         }
-        if ("default".equals(token)) {
-            def = true;
-            token = tokenizer.requireToken();
-        }
-        if ("static".equals(token)) {
-            stat = true;
-            token = tokenizer.requireToken();
-        }
-        if ("final".equals(token)) {
-            fin = true;
-            token = tokenizer.requireToken();
-        }
-        if ("abstract".equals(token)) {
-            abs = true;
-            token = tokenizer.requireToken();
-        }
-        if ("deprecated".equals(token)) {
-            dep = true;
-            token = tokenizer.requireToken();
-        }
-        if ("synchronized".equals(token)) {
-            syn = true;
-            token = tokenizer.requireToken();
-        }
-        if ("infix".equals(token)) {
-            infix = true;
-            token = tokenizer.requireToken();
-        }
-        if ("operator".equals(token)) {
-            operator = true;
-            token = tokenizer.requireToken();
-        }
-        if ("inline".equals(token)) {
-            inline = true;
-            token = tokenizer.requireToken();
-        }
+
         if ("<".equals(token)) {
             typeParameterList = parseTypeParameterList(tokenizer);
             token = tokenizer.requireToken();
@@ -524,39 +558,50 @@ public class ApiFile {
             annotations = result.component2();
         }
 
-        if ("public".equals(token)) {
-            pub = true;
-            token = tokenizer.requireToken();
-        } else if ("protected".equals(token)) {
-            prot = true;
-            token = tokenizer.requireToken();
-        } else if ("private".equals(token)) {
-            priv = true;
-            token = tokenizer.requireToken();
-        } else if ("internal".equals(token)) {
-            internal = true;
-            token = tokenizer.requireToken();
+        processModifiers:
+        while (true) {
+            switch (token) {
+                case "public":
+                    pub = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "protected":
+                    prot = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "private":
+                    priv = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "internal":
+                    internal = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "static":
+                    stat = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "final":
+                    fin = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "deprecated":
+                    dep = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "transient":
+                    trans = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "volatile":
+                    vol = true;
+                    token = tokenizer.requireToken();
+                    break;
+                default:
+                    break processModifiers;
+            }
         }
-        if ("static".equals(token)) {
-            stat = true;
-            token = tokenizer.requireToken();
-        }
-        if ("final".equals(token)) {
-            fin = true;
-            token = tokenizer.requireToken();
-        }
-        if ("deprecated".equals(token)) {
-            dep = true;
-            token = tokenizer.requireToken();
-        }
-        if ("transient".equals(token)) {
-            trans = true;
-            token = tokenizer.requireToken();
-        }
-        if ("volatile".equals(token)) {
-            vol = true;
-            token = tokenizer.requireToken();
-        }
+
         assertIdent(tokenizer, token);
 
         Pair<String, List<String>> kotlinTypeSuffix = processKotlinTypeSuffix(api, token, annotations);

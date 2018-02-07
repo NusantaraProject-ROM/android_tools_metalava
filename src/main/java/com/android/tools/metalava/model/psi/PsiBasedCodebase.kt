@@ -17,7 +17,6 @@
 package com.android.tools.metalava.model.psi
 
 import com.android.SdkConstants
-import com.android.tools.metalava.model.PackageDocs
 import com.android.tools.metalava.compatibility
 import com.android.tools.metalava.doclava1.Errors
 import com.android.tools.metalava.model.ClassItem
@@ -26,6 +25,7 @@ import com.android.tools.metalava.model.DefaultCodebase
 import com.android.tools.metalava.model.FieldItem
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
+import com.android.tools.metalava.model.PackageDocs
 import com.android.tools.metalava.model.PackageItem
 import com.android.tools.metalava.model.PackageList
 import com.android.tools.metalava.model.TypeItem
