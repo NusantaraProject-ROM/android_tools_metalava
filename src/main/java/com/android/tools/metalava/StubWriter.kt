@@ -39,7 +39,7 @@ import java.io.PrintWriter
 import kotlin.text.Charsets.UTF_8
 
 class StubWriter(
-    codebase: Codebase,
+    private val codebase: Codebase,
     private val stubsDir: File,
     private val generateAnnotations: Boolean = false,
     private val preFiltered: Boolean = true
@@ -87,8 +87,59 @@ class StubWriter(
     override fun visitPackage(pkg: PackageItem) {
         getPackageDir(pkg, create = true)
 
-        // TODO: Write package annotations into package-info.java!
-        // TODO: Write package.html, if applicable
+        writePackageInfo(pkg)
+
+        codebase.getPackageDocs()?.getDocs(pkg)?.let { writeDocOverview(pkg, it) }
+    }
+
+    private fun writeDocOverview(pkg: PackageItem, content: String) {
+        if (content.isBlank()) {
+            return
+        }
+
+        val sourceFile = File(getPackageDir(pkg), "overview.html")
+        val writer = try {
+            PrintWriter(BufferedWriter(FileWriter(sourceFile)))
+        } catch (e: IOException) {
+            reporter.report(Errors.IO_ERROR, sourceFile, "Cannot open file for write.")
+            return
+        }
+
+        // Should we include this in our stub list?
+        //     startFile(sourceFile)
+
+        writer.println(content)
+        writer.flush()
+        writer.close()
+    }
+
+    private fun writePackageInfo(pkg: PackageItem) {
+        if (!generateAnnotations) {
+            // package-info,java is only needed to record annotations
+            return
+        }
+
+        val annotations = pkg.modifiers.annotations()
+        if (annotations.isNotEmpty()) {
+            val sourceFile = File(getPackageDir(pkg), "package-info.java")
+            val writer = try {
+                PrintWriter(BufferedWriter(FileWriter(sourceFile)))
+            } catch (e: IOException) {
+                reporter.report(Errors.IO_ERROR, sourceFile, "Cannot open file for write.")
+                return
+            }
+            startFile(sourceFile)
+
+            ModifierList.writeAnnotations(
+                list = pkg.modifiers,
+                separateLines = true,
+                writer = writer)
+            writer.println("package ${pkg.qualifiedName()};")
+
+
+            writer.flush()
+            writer.close()
+        }
     }
 
     private fun getPackageDir(packageItem: PackageItem, create: Boolean = true): File {
@@ -217,7 +268,7 @@ class StubWriter(
 
     private fun appendModifiers(
         item: Item,
-        removeAbstract: Boolean,
+        removeAbstract: Boolean = false,
         removeFinal: Boolean = false,
         addPublic: Boolean = false
     ) {

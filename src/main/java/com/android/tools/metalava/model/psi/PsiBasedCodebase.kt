@@ -17,7 +17,7 @@
 package com.android.tools.metalava.model.psi
 
 import com.android.SdkConstants
-import com.android.tools.metalava.PackageDocs
+import com.android.tools.metalava.model.PackageDocs
 import com.android.tools.metalava.compatibility
 import com.android.tools.metalava.doclava1.Errors
 import com.android.tools.metalava.model.ClassItem
@@ -469,6 +469,10 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
     override fun getPackages(): PackageList {
         // TODO: Sorting is probably not necessary here!
         return PackageList(packageMap.values.toMutableList().sortedWith(PackageItem.comparator))
+    }
+
+    override fun getPackageDocs(): PackageDocs? {
+        return packageDocs
     }
 
     override fun size(): Int {
