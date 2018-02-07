@@ -250,6 +250,10 @@ class PsiModifierItem(
         const val OPERATOR = 1 shl 17
         const val INLINE = 1 shl 18
 
+        /**
+         * Modifiers considered significant to include signature files (and similarly
+         * to consider whether an override of a method is different from its super implementation
+         */
         private const val EQUIVALENCE_MASK = PUBLIC or PROTECTED or PRIVATE or STATIC or ABSTRACT or
                 FINAL or TRANSIENT or VOLATILE or SYNCHRONIZED or DEPRECATED or VARARG or
                 SEALED or INTERNAL or INFIX or OPERATOR
