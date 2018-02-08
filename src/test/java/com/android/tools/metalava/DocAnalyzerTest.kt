@@ -1,5 +1,6 @@
 package com.android.tools.metalava
 
+import com.android.tools.lint.checks.infrastructure.TestFiles.source
 import com.android.tools.metalava.model.psi.trimDocIndent
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -1032,6 +1033,39 @@ class DocAnalyzerTest : DriverTest() {
                  * @since 4.0 IceCreamSandwich (14)
                  */
                 @Deprecated public static final java.lang.String ACTION_NEW_VIDEO = "android.hardware.action.NEW_VIDEO";
+                }
+                """
+            )
+        )
+    }
+
+
+    @Test
+    fun `Generate overview html docs)`() {
+        // If a codebase provides overview.html files in the a public package,
+        // make sure that we include this in the exported stubs folder as well!
+        check(
+            sourceFiles = *arrayOf(
+                source("src/test/visible/overview.html", "<html>My docs</html>"),
+                java(
+                    """
+                    package test.visible;
+                    public class MyClass {
+                        public void test() { }
+                    }
+                    """
+                )
+            ),
+            stubs = arrayOf(
+                """
+                <html>My docs</html>
+                """,
+                """
+                package test.visible;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class MyClass {
+                public MyClass() { throw new RuntimeException("Stub!"); }
+                public void test() { throw new RuntimeException("Stub!"); }
                 }
                 """
             )

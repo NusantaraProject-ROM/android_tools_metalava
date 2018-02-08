@@ -47,6 +47,12 @@ interface Codebase {
     /** The packages in the codebase (may include packages that are not included in the API) */
     fun getPackages(): PackageList
 
+    /**
+     * The package documentation, if any - this returns overview.html files for each package
+     * that provided one. Note all codebases provide this.
+     */
+    fun getPackageDocs(): PackageDocs?
+
     /** The rough size of the codebase (package count) */
     fun size(): Int
 
@@ -171,6 +177,8 @@ abstract class DefaultCodebase : Codebase {
 
         return permissions!![name]
     }
+
+    override fun getPackageDocs(): PackageDocs? = null
 
     override fun unsupported(desc: String?): Nothing {
         error(desc ?: "This operation is not available on this type of codebase (${this.javaClass.simpleName})")

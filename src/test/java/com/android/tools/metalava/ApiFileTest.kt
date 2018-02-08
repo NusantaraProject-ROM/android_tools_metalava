@@ -18,6 +18,7 @@
 
 package com.android.tools.metalava
 
+import com.android.tools.lint.checks.infrastructure.TestFiles.kotlin
 import org.junit.Ignore
 import org.junit.Test
 
@@ -1853,6 +1854,33 @@ class ApiFileTest : DriverTest() {
                       }
                     }
                     """
+        )
+    }
+
+    @Test
+    fun `Test invalid class name`() {
+        // Regression test for b/73018978
+        check(
+            checkDoclava1 = true,
+            sourceFiles = *arrayOf(
+                kotlin(
+                    "src/test/pkg/Foo.kt",
+                    """
+                    @file:JvmName("-Foo")
+
+                    package test.pkg;
+
+                    inline fun String.printHelloWorld() { println("Hello World") }
+                    """
+                )
+            ),
+            api = """
+                package test.pkg {
+                  public final class -Foo {
+                    method public static final void printHelloWorld(java.lang.String);
+                  }
+                }
+                """
         )
     }
 
