@@ -24,6 +24,7 @@ import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.ConstructorItem
 import com.android.tools.metalava.model.FieldItem
 import com.android.tools.metalava.model.Item
+import com.android.tools.metalava.model.MemberItem
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.ModifierList
 import com.android.tools.metalava.model.PackageItem
@@ -133,7 +134,8 @@ class StubWriter(
             ModifierList.writeAnnotations(
                 list = pkg.modifiers,
                 separateLines = true,
-                writer = writer)
+                writer = writer
+            )
             writer.println("package ${pkg.qualifiedName()};")
 
 
@@ -194,8 +196,13 @@ class StubWriter(
             }
 
             compilationUnit?.getImportStatements(filterReference)?.let {
-                for (importedClass in it) {
-                    writer.println("import $importedClass;")
+                for (item in it) {
+                    when (item) {
+                        is ClassItem ->
+                            writer.println("import ${item.qualifiedName()};")
+                        is MemberItem ->
+                            writer.println("import static ${item.containingClass().qualifiedName()}.${item.name()};")
+                    }
                 }
                 writer.println()
             }
@@ -248,7 +255,7 @@ class StubWriter(
     }
 
     private fun appendDocumentation(item: Item, writer: PrintWriter) {
-        val documentation = item.fullyQualifiedDocumentation()
+        val documentation = item.documentation
         if (documentation.isNotBlank()) {
             val trimmed = trimDocIndent(documentation)
             writer.println(trimmed)
@@ -282,7 +289,7 @@ class StubWriter(
         removeFinal: Boolean = false,
         addPublic: Boolean = false
     ) {
-        if (item.deprecated) {
+        if (item.deprecated && generateAnnotations) {
             writer.write("@Deprecated ")
         }
 
@@ -463,7 +470,7 @@ class StubWriter(
 
         if (isEnum && (method.name() == "values" ||
                     method.name() == "valueOf" && method.parameters().size == 1 &&
-                    method.parameters()[0].type().toTypeString() == "java.lang.String")
+                    method.parameters()[0].type().toTypeString() == JAVA_LANG_STRING)
         ) {
             // Skip the values() and valueOf(String) methods in enums: these are added by
             // the compiler for enums anyway, but was part of the doclava1 signature files
@@ -482,7 +489,7 @@ class StubWriter(
         generateTypeParameterList(typeList = method.typeParameterList(), addSpace = true)
 
         val returnType = method.returnType()
-        writer.print(returnType?.toTypeString(outerAnnotations = false, innerAnnotations = true))
+        writer.print(returnType?.toTypeString(outerAnnotations = false, innerAnnotations = generateAnnotations))
 
         writer.print(' ')
         writer.print(method.name())
@@ -508,7 +515,7 @@ class StubWriter(
 
         appendDocumentation(field, writer)
         appendModifiers(field, false, false)
-        writer.print(field.type().toTypeString(outerAnnotations = false, innerAnnotations = true))
+        writer.print(field.type().toTypeString(outerAnnotations = false, innerAnnotations = generateAnnotations))
         writer.print(' ')
         writer.print(field.name())
         val needsInitialization =
@@ -539,7 +546,12 @@ class StubWriter(
                 writer.print(", ")
             }
             appendModifiers(parameter, false)
-            writer.print(parameter.type().toTypeString(outerAnnotations = false, innerAnnotations = true))
+            writer.print(
+                parameter.type().toTypeString(
+                    outerAnnotations = false,
+                    innerAnnotations = generateAnnotations
+                )
+            )
             writer.print(' ')
             val name = parameter.publicName() ?: parameter.name()
             writer.print(name)

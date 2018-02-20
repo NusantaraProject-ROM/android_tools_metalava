@@ -31,5 +31,5 @@ open class CompilationUnit(
 
     override fun toString(): String = "compilation unit ${file.virtualFile?.path}"
 
-    open fun getImportStatements(predicate: Predicate<Item>): Collection<String>? = null
+    open fun getImportStatements(predicate: Predicate<Item>): Collection<Item> = emptyList()
 }

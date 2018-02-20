@@ -17,6 +17,7 @@
 package com.android.tools.metalava.model
 
 import com.android.tools.metalava.ApiAnalyzer
+import com.android.tools.metalava.JAVA_LANG_OBJECT
 import com.android.tools.metalava.compatibility
 import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.android.tools.metalava.model.visitors.ItemVisitor
@@ -169,7 +170,7 @@ interface ClassItem : Item {
     fun typeArgumentClasses(): List<ClassItem> = TODO("Not yet implemented")
 
     fun isJavaLangObject(): Boolean {
-        return qualifiedName() == "java.lang.Object"
+        return qualifiedName() == JAVA_LANG_OBJECT
     }
 
     // Mutation APIs: Used to "fix up" the API hierarchy (in [ApiAnalyzer]) to only expose
@@ -296,7 +297,7 @@ interface ClassItem : Item {
     }
 
     companion object {
-        // Same as doclava1 (modulo the new handling when class names match
+        // Same as doclava1 (modulo the new handling when class names match)
         val comparator: Comparator<in ClassItem> = Comparator { o1, o2 ->
             val delta = o1.fullName().compareTo(o2.fullName())
             if (delta == 0) {
@@ -652,7 +653,6 @@ class VisitCandidate(private val cls: ClassItem, private val visitor: ApiVisitor
             } else {
                 fields
             }
-
 
             for (constructor in sortedConstructors) {
                 constructor.accept(visitor)
