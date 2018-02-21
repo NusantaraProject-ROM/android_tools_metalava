@@ -113,7 +113,7 @@ class DocAnalyzer(
                 var result: MutableList<String>? = null
                 for (annotation in annotations) {
                     val name = annotation.qualifiedName()
-                    if (name != null && name.endsWith("Thread") && name.startsWith("android.support.annotation.")) {
+                    if (name != null && name.endsWith("Thread") && name.startsWith(ANDROID_SUPPORT_ANNOTATION_PREFIX)) {
                         if (result == null) {
                             result = mutableListOf()
                         }
@@ -143,7 +143,7 @@ class DocAnalyzer(
                 item: Item, depth: Int
             ) {
                 val name = annotation.qualifiedName()
-                if (name == null || name.startsWith("java.lang.")) {
+                if (name == null || name.startsWith(JAVA_LANG_PREFIX)) {
                     // Ignore java.lang.Retention etc.
                     return
                 }
@@ -309,6 +309,42 @@ class DocAnalyzer(
                         }
                     }
                     appendDocumentation(sb.toString(), item, true)
+                }
+
+                // Required Features
+                if (name == "android.annotation.RequiresFeature") {
+                    val value = annotation.findAttribute("value")?.leafValues()?.firstOrNull() ?: return
+                    val sb = StringBuilder(100)
+                    val resolved = value.resolve()
+                    val field = if (resolved is FieldItem)
+                        resolved
+                    else {
+                        val v: Any = value.value() ?: value.toSource()
+                        findPermissionField(codebase, v)
+                    }
+                    sb.append("Requires the ")
+                    if (field == null) {
+                        reporter.report(
+                            Errors.MISSING_PERMISSION, item,
+                            "Cannot find feature field for $value required by $item (may be hidden or removed)"
+                        )
+                        sb.append("{@link ${value.toSource()}}")
+
+                    } else {
+                        if (field.isHiddenOrRemoved()) {
+                            reporter.report(
+                                Errors.MISSING_PERMISSION, item,
+                                "Feature field $value required by $item is hidden or removed"
+                            )
+                        }
+
+                        sb.append("{@link ${field.containingClass().qualifiedName()}#${field.name()} ${field.containingClass().simpleName()}#${field.name()}} ")
+                    }
+
+                    sb.append("feature which can be detected using ")
+                    sb.append("{@link android.content.pm.PackageManager#hasSystemFeature(String) ")
+                    sb.append("PackageManager.hasSystemFeature(String)}.")
+                    appendDocumentation(sb.toString(), item, false)
                 }
 
                 // Thread annotations are ignored here because they're handled as a group afterwards

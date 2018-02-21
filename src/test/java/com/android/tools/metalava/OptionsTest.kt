@@ -62,6 +62,15 @@ API sources:
 --show-unannotated                     Include un-annotated public APIs in the signature
                                        file as well
 
+Documentation:
+--public                               Only include elements that are public
+--protected                            Only include elements that are public or protected
+--package                              Only include elements that are public, protected or
+                                       package protected
+--private                              Include all elements except those that are marked
+                                       hidden
+--hidden                               INclude all elements, including hidden
+
 Extracting Signature Files:
 --api <file>                           Generate a signature descriptor file
 --private-api <file>                   Generate a signature descriptor file listing the
@@ -86,6 +95,7 @@ Extracting Signature Files:
                                        for well known annotations like @Nullable and
                                        @NonNull.
 --proguard <file>                      Write a ProGuard keep file for the API
+--sdk-values <dir>                     Write SDK values files to the given directory
 
 Generating Stubs:
 --stubs <dir>                          Generate stub source files for the API

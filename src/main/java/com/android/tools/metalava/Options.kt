@@ -17,6 +17,7 @@
 package com.android.tools.metalava
 
 import com.android.SdkConstants
+import com.android.sdklib.SdkVersionInfo
 import com.android.tools.lint.annotations.ApiDatabase
 import com.android.tools.metalava.doclava1.Errors
 import com.android.utils.SdkUtils.wrap
@@ -29,12 +30,15 @@ import java.io.IOException
 import java.io.OutputStreamWriter
 import java.io.PrintWriter
 import java.io.StringWriter
+import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.full.memberProperties
 
 /** Global options for the metadata extraction tool */
 var options = Options(emptyArray())
 
 private const val MAX_LINE_WIDTH = 90
 
+private const val ARGS_COMPAT_OUTPUT = "--compatible-output"
 private const val ARG_HELP = "--help"
 private const val ARG_QUIET = "--quiet"
 private const val ARG_VERBOSE = "--verbose"
@@ -44,7 +48,7 @@ private const val ARG_SOURCE_FILES = "--source-files"
 private const val ARG_API = "--api"
 private const val ARG_PRIVATE_API = "--private-api"
 private const val ARG_PRIVATE_DEX_API = "--private-dex-api"
-private const val ARGS_COMPAT_OUTPUT = "--compatible-output"
+private const val ARG_SDK_VALUES = "--sdk-values"
 private const val ARG_REMOVED_API = "--removed-api"
 private const val ARG_MERGE_ANNOTATIONS = "--merge-annotations"
 private const val ARG_INPUT_API_JAR = "--input-api-jar"
@@ -93,6 +97,11 @@ private const val ARG_CURRENT_VERSION = "--current-version"
 private const val ARG_CURRENT_CODENAME = "--current-codename"
 private const val ARG_CURRENT_JAR = "--current-jar"
 private const val ARG_CHECK_KOTLIN_INTEROP = "--check-kotlin-interop"
+private const val ARG_PUBLIC = "--public"
+private const val ARG_PROTECTED = "--protected"
+private const val ARG_PACKAGE = "--package"
+private const val ARG_PRIVATE = "--private"
+private const val ARG_HIDDEN = "--hidden"
 
 class Options(
     args: Array<String>,
@@ -133,7 +142,7 @@ class Options(
      * for more fine grained control (which is not (currently) exposed as individual command line
      * flags.
      */
-    var compatOutput = COMPAT_MODE_BY_DEFAULT && !args.contains("$ARGS_COMPAT_OUTPUT=no")
+    var compatOutput = useCompatMode(args)
 
     /** Whether nullness annotations should be displayed as ?/!/empty instead of with @NonNull/@Nullable. */
     var outputKotlinStyleNulls = !compatOutput
@@ -215,6 +224,9 @@ class Options(
 
     /** If set, a file to write the private DEX signatures to. Corresponds to --private-dex-api. */
     var privateDexApiFile: File? = null
+
+    /** Path to directory to write SDK values to */
+    var sdkValueDir: File? = null
 
     /** If set, a file to write extracted annotations to. Corresponds to the --extract-annotations flag. */
     var externalAnnotations: File? = null
@@ -309,6 +321,9 @@ class Options(
     /** Reads API XML file to apply into documentation */
     var applyApiLevelsXml: File? = null
 
+    /** Level to include for javadoc */
+    var docLevel = DocLevel.PROTECTED
+
     init {
         // Pre-check whether --color/--no-color is present and use that to decide how
         // to emit the banner even before we emit errors
@@ -381,6 +396,8 @@ class Options(
                     )
                 )
 
+                "-sdkvalues", ARG_SDK_VALUES -> sdkValueDir = stringToNewDir(getValue(args, ++index))
+
                 ARG_API, "-api" -> apiFile = stringToNewFile(getValue(args, ++index))
 
                 ARG_PRIVATE_API, "-privateApi" -> privateApiFile = stringToNewFile(getValue(args, ++index))
@@ -409,6 +426,7 @@ class Options(
                 ARG_STUBS_SOURCE_LIST -> stubsSourceList = stringToNewFile(getValue(args, ++index))
 
                 ARG_EXCLUDE_ANNOTATIONS -> generateAnnotations = false
+                "--include-annotations" -> generateAnnotations = true // temporary for tests
 
                 ARG_PROGUARD, "-proguard" -> proguard = stringToNewFile(getValue(args, ++index))
 
@@ -436,6 +454,12 @@ class Options(
                     val packages = getValue(args, ++index)
                     mutableSkipEmitPackages += packages.split(File.pathSeparatorChar)
                 }
+
+                ARG_PUBLIC, "-public" -> docLevel = DocLevel.PUBLIC
+                ARG_PROTECTED, "-protected" -> docLevel = DocLevel.PROTECTED
+                ARG_PACKAGE, "-package" -> docLevel = DocLevel.PACKAGE
+                ARG_PRIVATE, "-private" -> docLevel = DocLevel.PRIVATE
+                ARG_HIDDEN, "-hidden" -> docLevel = DocLevel.HIDDEN
 
                 ARG_INPUT_API_JAR -> apiJar = stringToExistingFile(getValue(args, ++index))
 
@@ -561,6 +585,17 @@ class Options(
             // doclava1 doc-related flags: only supported here to make this command a drop-in
             // replacement
                 "-referenceonly",
+                "-devsite",
+                "-ignoreJdLinks",
+                "-nodefaultassets",
+                "-parsecomments",
+                "-offlinemode",
+                "-gcmref",
+                "-metadataDebug",
+                "-includePreview",
+                "-staticonly",
+                "-navtreeonly",
+                "-atLinksNavtree",
                 "-nodocs" -> {
                     javadoc(arg)
                 }
@@ -573,6 +608,16 @@ class Options(
                 "-knowntags",
                 "-resourcesdir",
                 "-resourcesoutdir",
+                "-yaml",
+                "-apidocsdir",
+                "-toroot",
+                "-samplegroup",
+                "-samplesdir",
+                "-dac_libraryroot",
+                "-dac_dataname",
+                "-title",
+                "-proofread",
+                "-todo",
                 "-overview" -> {
                     javadoc(arg)
                     index++
@@ -580,9 +625,17 @@ class Options(
 
             // doclava1 flags with two arguments
                 "-federate",
-                "-federationapi" -> {
+                "-federationapi",
+                "-artifact",
+                "-htmldir2" -> {
                     javadoc(arg)
                     index += 2
+                }
+
+            // doclava1 flags with three arguments
+                "-samplecode" -> {
+                    javadoc(arg)
+                    index += 3
                 }
 
             // doclava1 flag with variable number of arguments; skip everything until next arg
@@ -635,8 +688,23 @@ class Options(
                         else
                             yesNo(arg.substring(ARGS_COMPAT_OUTPUT.length + 1))
                     } else if (arg.startsWith("-")) {
-                        val usage = getUsage(includeHeader = false, colorize = color)
-                        throw DriverException(stderr = "Invalid argument $arg\n\n$usage")
+                        // Compatibility flag; map to mutable properties in the Compatibility
+                        // class and assign it
+                        val compatibilityArg = findCompatibilityFlag(arg)
+                        if (compatibilityArg != null) {
+                            val dash = arg.indexOf('=')
+                            val value = if (dash == -1) {
+                                true
+                            } else {
+                                arg.substring(dash + 1).toBoolean()
+                            }
+                            compatibilityArg.set(compatibility, value)
+                        } else {
+                            // Some other argument: display usage info and exit
+
+                            val usage = getUsage(includeHeader = false, colorize = color)
+                            throw DriverException(stderr = "Invalid argument $arg\n\n$usage")
+                        }
                     } else {
                         // All args that don't start with "-" are taken to be filenames
                         mutableSources.addAll(stringToExistingFiles(arg))
@@ -683,6 +751,20 @@ class Options(
         }
 
         checkFlagConsistency()
+    }
+
+    private fun findCompatibilityFlag(arg: String): KMutableProperty1<Compatibility, Boolean>? {
+        val index = arg.indexOf('=')
+        val name = arg
+            .substring(0, if (index != -1) index else arg.length)
+            .removePrefix("--")
+            .replace('-', '_')
+        val propertyName = SdkVersionInfo.underlinesToCamelCase(name).decapitalize()
+        return Compatibility::class.memberProperties
+            .filterIsInstance<KMutableProperty1<Compatibility, Boolean>>()
+            .find {
+                it.name == propertyName
+            }
     }
 
     private fun findAndroidJars(
@@ -802,7 +884,6 @@ class Options(
                         else -> ""
                     }
             reporter.report(Severity.WARNING, null as String?, message, color = color)
-
         }
     }
 
@@ -1011,6 +1092,13 @@ class Options(
             ARG_SHOW_ANNOTATION + " <annotation class>", "Include the given annotation in the API analysis",
             ARG_SHOW_UNANNOTATED, "Include un-annotated public APIs in the signature file as well",
 
+            "", "\nDocumentation:",
+            ARG_PUBLIC, "Only include elements that are public",
+            ARG_PROTECTED, "Only include elements that are public or protected",
+            ARG_PACKAGE, "Only include elements that are public, protected or package protected",
+            ARG_PRIVATE, "Include all elements except those that are marked hidden",
+            ARG_HIDDEN, "INclude all elements, including hidden",
+
             "", "\nExtracting Signature Files:",
             // TODO: Document --show-annotation!
             ARG_API + " <file>", "Generate a signature descriptor file",
@@ -1030,6 +1118,7 @@ class Options(
                     "@NonNull.",
 
             ARG_PROGUARD + " <file>", "Write a ProGuard keep file for the API",
+            ARG_SDK_VALUES + " <dir>", "Write SDK values files to the given directory",
 
             "", "\nGenerating Stubs:",
             ARG_STUBS + " <dir>", "Generate stub source files for the API",
@@ -1143,6 +1232,13 @@ class Options(
                 }
             }
             i += 2
+        }
+    }
+
+    companion object {
+        /** Whether we should use [Compatibility] mode */
+        fun useCompatMode(args: Array<String>): Boolean {
+            return COMPAT_MODE_BY_DEFAULT && !args.contains("$ARGS_COMPAT_OUTPUT=no")
         }
     }
 }

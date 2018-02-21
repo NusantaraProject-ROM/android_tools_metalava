@@ -156,7 +156,15 @@ class Compatibility(
     /**
      * Whether to include parameter names in the signature file
      */
-    val parameterNames: Boolean = true
+    var parameterNames: Boolean = true
+
+    /**
+     * Whether we should include public methods from super classes.
+     * Docalava1 did not do this in its signature files, but they
+     * were included in stub files. An example of this scenario
+     * is StringBuilder#setLength.
+     */
+    var includePublicMethodsFromHiddenSuperClasses = !compat
 
     // Other examples: sometimes we sort by qualified name, sometimes by full name
 }
