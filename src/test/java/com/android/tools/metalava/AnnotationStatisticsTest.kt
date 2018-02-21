@@ -138,15 +138,12 @@ class AnnotationStatisticsTest : DriverTest() {
                 6 methods and fields were missing nullness annotations out of 7 total API references.
                 API nullness coverage is 14%
 
-                |--------------------------------------------------------------|------------------|
                 | Qualified Class Name                                         |      Usage Count |
                 |--------------------------------------------------------------|-----------------:|
                 | test.pkg.ApiSurface                                          |                7 |
-                |--------------------------------------------------------------|------------------|
 
                 Top referenced un-annotated members:
 
-                |--------------------------------------------------------------|------------------|
                 | Member                                                       |      Usage Count |
                 |--------------------------------------------------------------|-----------------:|
                 | ApiSurface.missing1(Object)                                  |                2 |
@@ -155,7 +152,6 @@ class AnnotationStatisticsTest : DriverTest() {
                 | ApiSurface.missing3(int)                                     |                1 |
                 | ApiSurface.missing4(Object)                                  |                1 |
                 | ApiSurface.missing5(Object)                                  |                1 |
-                |--------------------------------------------------------------|------------------|
                 """,
             compatibilityMode = false
         )

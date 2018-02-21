@@ -18,6 +18,8 @@ package com.android.tools.metalava.model
 
 import com.android.SdkConstants
 import com.android.SdkConstants.ATTR_VALUE
+import com.android.tools.metalava.ANDROID_SUPPORT_ANNOTATION_PREFIX
+import com.android.tools.metalava.JAVA_LANG_PREFIX
 import com.android.tools.metalava.NEWLY_NONNULL
 import com.android.tools.metalava.NEWLY_NULLABLE
 import com.android.tools.metalava.Options
@@ -98,7 +100,7 @@ interface AnnotationItem {
     companion object {
         /** Whether the given annotation name is "significant", e.g. should be included in signature files */
         fun isSignificantAnnotation(qualifiedName: String?): Boolean {
-            return qualifiedName?.startsWith("android.support.annotation.") ?: false
+            return qualifiedName?.startsWith(ANDROID_SUPPORT_ANNOTATION_PREFIX) ?: false
         }
 
         /** The simple name of an annotation, which is the annotation name (not qualified name) prefixed by @ */
@@ -184,7 +186,6 @@ interface AnnotationItem {
                     // These aren't support annotations
                 "android.annotation.AppIdInt",
                 "android.annotation.BroadcastBehavior",
-                "android.annotation.SdkConstant",
                 "android.annotation.SuppressAutoDoc",
                 "android.annotation.SystemApi",
                 "android.annotation.TestApi",
@@ -208,6 +209,8 @@ interface AnnotationItem {
                 }
 
             // Included for analysis, but should not be exported:
+                "android.annotation.SdkConstant",
+                "android.annotation.RequiresFeature",
                 "android.annotation.SystemService" -> return qualifiedName
 
             // Should not be mapped to a different package name:
@@ -230,8 +233,8 @@ interface AnnotationItem {
                         isNonNullAnnotation(qualifiedName) -> "android.support.annotation.NonNull"
 
                     // Support library annotations are all included, as is the built-in stuff like @Retention
-                        qualifiedName.startsWith("android.support.annotation.") -> return qualifiedName
-                        qualifiedName.startsWith("java.lang.") -> return qualifiedName
+                        qualifiedName.startsWith(ANDROID_SUPPORT_ANNOTATION_PREFIX) -> return qualifiedName
+                        qualifiedName.startsWith(JAVA_LANG_PREFIX) -> return qualifiedName
 
                     // Unknown Android platform annotations
                         qualifiedName.startsWith("android.annotation.") -> {
@@ -276,7 +279,7 @@ interface AnnotationItem {
                 source.startsWith("android.annotation.", 1) -> {
                     "@" + source.substring("@android.annotation.".length)
                 }
-                source.startsWith("android.support.annotation.", 1) -> {
+                source.startsWith(ANDROID_SUPPORT_ANNOTATION_PREFIX, 1) -> {
                     "@" + source.substring("@android.support.annotation.".length)
                 }
                 else -> source

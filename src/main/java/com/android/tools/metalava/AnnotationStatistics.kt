@@ -43,9 +43,11 @@ import java.util.zip.ZipFile
 const val CLASS_COLUMN_WIDTH = 60
 const val COUNT_COLUMN_WIDTH = 16
 const val USAGE_REPORT_MAX_ROWS = 15
+/** Sadly gitiles' markdown support doesn't handle tables with top/bottom horizontal edges */
+const val INCLUDE_HORIZONTAL_EDGES = false
 
 class AnnotationStatistics(val api: Codebase) {
-    val apiFilter = ApiPredicate(api)
+    private val apiFilter = ApiPredicate(api)
 
     /** Measure the coverage statistics for the API */
     fun count() {
@@ -191,7 +193,10 @@ class AnnotationStatistics(val api: Codebase) {
         printer: PrintWriter = options.stdout
     ) {
         // Print table in clean Markdown table syntax
-        edge(printer, CLASS_COLUMN_WIDTH + 2, COUNT_COLUMN_WIDTH + 2)
+        @Suppress("ConstantConditionIf")
+        if (INCLUDE_HORIZONTAL_EDGES) {
+            edge(printer, CLASS_COLUMN_WIDTH + COUNT_COLUMN_WIDTH + 7)
+        }
         printer.printf(
             "| %-${CLASS_COLUMN_WIDTH}s | %${COUNT_COLUMN_WIDTH}s |\n",
             labelHeader, countHeader
@@ -215,7 +220,10 @@ class AnnotationStatistics(val api: Codebase) {
                 break
             }
         }
-        edge(printer, CLASS_COLUMN_WIDTH + 2, COUNT_COLUMN_WIDTH + 2)
+        @Suppress("ConstantConditionIf")
+        if (INCLUDE_HORIZONTAL_EDGES) {
+            edge(printer, CLASS_COLUMN_WIDTH + 2, COUNT_COLUMN_WIDTH + 2)
+        }
     }
 
     private fun printClassTable(classes: List<Item>, classCount: MutableMap<Item, Int>) {
@@ -252,6 +260,11 @@ class AnnotationStatistics(val api: Codebase) {
         for (count in 0 until max) {
             printer.print('-')
         }
+    }
+
+    private fun edge(printer: PrintWriter, max: Int) {
+        dashes(printer, max)
+        printer.println()
     }
 
     private fun edge(printer: PrintWriter, column1: Int, column2: Int) {

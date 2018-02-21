@@ -412,6 +412,24 @@ class ApiAnalyzer(
             }
         }
 
+        if (compatibility.includePublicMethodsFromHiddenSuperClasses) {
+            // Also add in any concrete public methods from hidden super classes
+            for (superClass in hiddenSuperClasses) {
+                for (method in superClass.methods()) {
+                    if (method.modifiers.isAbstract()) {
+                        continue
+                    }
+                    val name = method.name()
+                    val list = interfaceNames[name] ?: run {
+                        val list = ArrayList<MethodItem>()
+                        interfaceNames[name] = list
+                        list
+                    }
+                    list.add(method)
+                }
+            }
+        }
+
         // Find all methods that are inherited from these classes into our class
         // (making sure that we don't have duplicates, e.g. a method defined by one
         // inherited class and then overridden by another closer one).
@@ -470,9 +488,14 @@ class ApiAnalyzer(
         // interfaces that are listed in this class. Create stubs for them:
         map.values.flatten().forEach {
             val method = cls.createMethod(it)
+            /* Insert comment marker: This is useful for debugging purposes but doesn't
+               belong in the stub
             method.documentation = "// Inlined stub from hidden parent class ${it.containingClass().qualifiedName()}\n" +
                     method.documentation
-            method.inheritedInterfaceMethod = true
+             */
+            if (it.containingClass().isInterface()) {
+                method.inheritedInterfaceMethod = true
+            }
             cls.addMethod(method)
         }
     }

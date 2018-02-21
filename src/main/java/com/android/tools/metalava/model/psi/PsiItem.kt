@@ -215,7 +215,6 @@ abstract class PsiItem(
             }
 
             when (resolved) {
-            // TODO: If same package, do nothing
             // TODO: If not absolute, preserve syntax
                 is PsiClass -> {
                     if (samePackage(resolved)) {

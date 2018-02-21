@@ -187,7 +187,19 @@ abstract class DriverTest {
         /** Whether we should warn about super classes that are stripped because they are hidden */
         includeStrippedSuperclassWarnings: Boolean = false,
         /** Apply level to XML */
-        applyApiLevelsXml: String? = null
+        applyApiLevelsXml: String? = null,
+        /** Corresponds to SDK constants file broadcast_actions.txt */
+        sdk_broadcast_actions: String? = null,
+        /** Corresponds to SDK constants file activity_actions.txt */
+        sdk_activity_actions: String? = null,
+        /** Corresponds to SDK constants file service_actions.txt */
+        sdk_service_actions: String? = null,
+        /** Corresponds to SDK constants file categories.txt */
+        sdk_categories: String? = null,
+        /** Corresponds to SDK constants file features.txt */
+        sdk_features: String? = null,
+        /** Corresponds to SDK constants file widgets.txt */
+        sdk_widgets: String? = null
     ) {
         System.setProperty("METALAVA_TESTS_RUNNING", VALUE_TRUE)
 
@@ -425,6 +437,23 @@ abstract class DriverTest {
                 emptyArray()
             }
 
+        val sdkFilesDir: File?
+        val sdkFilesArgs: Array<String>
+        if (sdk_broadcast_actions != null ||
+            sdk_activity_actions != null ||
+            sdk_service_actions != null ||
+            sdk_categories != null ||
+            sdk_features != null ||
+            sdk_widgets != null
+        ) {
+            val dir = File(project, "sdk-files")
+            sdkFilesArgs = arrayOf("--sdk-values", dir.path)
+            sdkFilesDir = dir
+        } else {
+            sdkFilesArgs = emptyArray()
+            sdkFilesDir = null
+        }
+
         val actualOutput = runDriver(
             "--no-color",
             "--no-banner",
@@ -434,6 +463,10 @@ abstract class DriverTest {
             // be the case when analyzing a complete API surface
             //"--unhide-classpath-classes",
             "--allow-referencing-unknown-classes",
+
+            // Annotation generation temporarily turned off by default while integrating with
+            // SDK builds; tests need these
+            "--include-annotations",
 
             "--sourcepath",
             sourcePath,
@@ -462,6 +495,7 @@ abstract class DriverTest {
             *applyApiLevelsXmlArgs,
             *showAnnotationArguments,
             *showUnannotatedArgs,
+            *sdkFilesArgs,
             *importedPackageArgs.toTypedArray(),
             *skipEmitPackagesArgs.toTypedArray(),
             *extraArguments,
@@ -522,6 +556,36 @@ abstract class DriverTest {
                 proguardFile.exists()
             )
             assertEquals(stripComments(proguard, stripLineComments = false).trimIndent(), expectedProguard.trim())
+        }
+
+        if (sdk_broadcast_actions != null) {
+            val actual = readFile(File(sdkFilesDir, "broadcast_actions.txt"), stripBlankLines, trim)
+            assertEquals(sdk_broadcast_actions.trimIndent().trim(), actual.trim())
+        }
+
+        if (sdk_activity_actions != null) {
+            val actual = readFile(File(sdkFilesDir, "activity_actions.txt"), stripBlankLines, trim)
+            assertEquals(sdk_activity_actions.trimIndent().trim(), actual.trim())
+        }
+
+        if (sdk_service_actions != null) {
+            val actual = readFile(File(sdkFilesDir, "service_actions.txt"), stripBlankLines, trim)
+            assertEquals(sdk_service_actions.trimIndent().trim(), actual.trim())
+        }
+
+        if (sdk_categories != null) {
+            val actual = readFile(File(sdkFilesDir, "categories.txt"), stripBlankLines, trim)
+            assertEquals(sdk_categories.trimIndent().trim(), actual.trim())
+        }
+
+        if (sdk_features != null) {
+            val actual = readFile(File(sdkFilesDir, "features.txt"), stripBlankLines, trim)
+            assertEquals(sdk_features.trimIndent().trim(), actual.trim())
+        }
+
+        if (sdk_widgets != null) {
+            val actual = readFile(File(sdkFilesDir, "widgets.txt"), stripBlankLines, trim)
+            assertEquals(sdk_widgets.trimIndent().trim(), actual.trim())
         }
 
         if (warnings != null) {
@@ -960,102 +1024,129 @@ val intRangeAnnotationSource: TestFile = java(
             long from() default Long.MIN_VALUE;
             long to() default Long.MAX_VALUE;
         }
-                """
+        """
 ).indented()
 
 val intDefAnnotationSource: TestFile = java(
     """
-package android.annotation;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import static java.lang.annotation.ElementType.*;
-import static java.lang.annotation.RetentionPolicy.SOURCE;
-@Retention(SOURCE)
-@Target({ANNOTATION_TYPE})
-public @interface IntDef {
-    long[] value() default {};
-    boolean flag() default false;
-}
-"""
-)
+    package android.annotation;
+    import java.lang.annotation.Retention;
+    import java.lang.annotation.RetentionPolicy;
+    import java.lang.annotation.Target;
+    import static java.lang.annotation.ElementType.*;
+    import static java.lang.annotation.RetentionPolicy.SOURCE;
+    @Retention(SOURCE)
+    @Target({ANNOTATION_TYPE})
+    public @interface IntDef {
+        long[] value() default {};
+        boolean flag() default false;
+    }
+    """
+).indented()
 
 val nonNullSource: TestFile = java(
     """
-package android.annotation;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+    package android.annotation;
+    import java.lang.annotation.Retention;
+    import java.lang.annotation.Target;
 
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.RetentionPolicy.SOURCE;
-/**
- * Denotes that a parameter, field or method return value can never be null.
- * @paramDoc This value must never be {@code null}.
- * @returnDoc This value will never be {@code null}.
- * @hide
- */
-@SuppressWarnings({"WeakerAccess", "JavaDoc"})
-@Retention(SOURCE)
-@Target({METHOD, PARAMETER, FIELD, TYPE_USE})
-public @interface NonNull {
-}
-
-"""
-)
+    import static java.lang.annotation.ElementType.FIELD;
+    import static java.lang.annotation.ElementType.METHOD;
+    import static java.lang.annotation.ElementType.PARAMETER;
+    import static java.lang.annotation.RetentionPolicy.SOURCE;
+    /**
+     * Denotes that a parameter, field or method return value can never be null.
+     * @paramDoc This value must never be {@code null}.
+     * @returnDoc This value will never be {@code null}.
+     * @hide
+     */
+    @SuppressWarnings({"WeakerAccess", "JavaDoc"})
+    @Retention(SOURCE)
+    @Target({METHOD, PARAMETER, FIELD, TYPE_USE})
+    public @interface NonNull {
+    }
+    """
+).indented()
 
 val requiresPermissionSource: TestFile = java(
     """
-package android.annotation;
-import java.lang.annotation.*;
-import static java.lang.annotation.ElementType.*;
-import static java.lang.annotation.RetentionPolicy.SOURCE;
-@Retention(SOURCE)
-@Target({ANNOTATION_TYPE,METHOD,CONSTRUCTOR,FIELD,PARAMETER})
-public @interface RequiresPermission {
-    String value() default "";
-    String[] allOf() default {};
-    String[] anyOf() default {};
-    boolean conditional() default false;
-}
-                """
-)
+    package android.annotation;
+    import java.lang.annotation.*;
+    import static java.lang.annotation.ElementType.*;
+    import static java.lang.annotation.RetentionPolicy.SOURCE;
+    @Retention(SOURCE)
+    @Target({ANNOTATION_TYPE,METHOD,CONSTRUCTOR,FIELD,PARAMETER})
+    public @interface RequiresPermission {
+        String value() default "";
+        String[] allOf() default {};
+        String[] anyOf() default {};
+        boolean conditional() default false;
+    }
+                    """
+).indented()
+
+val requiresFeatureSource: TestFile = java(
+    """
+    package android.annotation;
+    import java.lang.annotation.*;
+    import static java.lang.annotation.ElementType.*;
+    import static java.lang.annotation.RetentionPolicy.SOURCE;
+    @Retention(SOURCE)
+    @Target({TYPE,FIELD,METHOD,CONSTRUCTOR})
+    public @interface RequiresFeature {
+        String value();
+    }
+            """
+).indented()
+
+val sdkConstantSource: TestFile = java(
+    """
+    package android.annotation;
+    import java.lang.annotation.*;
+    @Target({ ElementType.FIELD })
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface SdkConstant {
+        enum SdkConstantType {
+            ACTIVITY_INTENT_ACTION, BROADCAST_INTENT_ACTION, SERVICE_ACTION, INTENT_CATEGORY, FEATURE;
+        }
+        SdkConstantType value();
+    }
+        """
+).indented()
 
 val nullableSource: TestFile = java(
     """
-package android.annotation;
-import java.lang.annotation.*;
-import static java.lang.annotation.ElementType.*;
-import static java.lang.annotation.RetentionPolicy.SOURCE;
-/**
- * Denotes that a parameter, field or method return value can be null.
- * @paramDoc This value may be {@code null}.
- * @returnDoc This value may be {@code null}.
- * @hide
- */
-@SuppressWarnings({"WeakerAccess", "JavaDoc"})
-@Retention(SOURCE)
-@Target({METHOD, PARAMETER, FIELD, TYPE_USE})
-public @interface Nullable {
-}
-                """
-)
+    package android.annotation;
+    import java.lang.annotation.*;
+    import static java.lang.annotation.ElementType.*;
+    import static java.lang.annotation.RetentionPolicy.SOURCE;
+    /**
+     * Denotes that a parameter, field or method return value can be null.
+     * @paramDoc This value may be {@code null}.
+     * @returnDoc This value may be {@code null}.
+     * @hide
+     */
+    @SuppressWarnings({"WeakerAccess", "JavaDoc"})
+    @Retention(SOURCE)
+    @Target({METHOD, PARAMETER, FIELD, TYPE_USE})
+    public @interface Nullable {
+    }
+    """
+).indented()
 
 val supportNonNullSource: TestFile = java(
     """
-package android.support.annotation;
-import java.lang.annotation.*;
-import static java.lang.annotation.ElementType.*;
-import static java.lang.annotation.RetentionPolicy.SOURCE;
-@SuppressWarnings("WeakerAccess")
-@Retention(SOURCE)
-@Target({METHOD, PARAMETER, FIELD, TYPE_USE})
-public @interface NonNull {
-}
-
-"""
-)
+    package android.support.annotation;
+    import java.lang.annotation.*;
+    import static java.lang.annotation.ElementType.*;
+    import static java.lang.annotation.RetentionPolicy.SOURCE;
+    @SuppressWarnings("WeakerAccess")
+    @Retention(SOURCE)
+    @Target({METHOD, PARAMETER, FIELD, TYPE_USE})
+    public @interface NonNull {
+    }
+    """
+).indented()
 
 val supportNullableSource: TestFile = java(
     """
@@ -1073,80 +1164,78 @@ public @interface Nullable {
 
 val supportParameterName: TestFile = java(
     """
-package android.support.annotation;
-import java.lang.annotation.*;
-import static java.lang.annotation.ElementType.*;
-import static java.lang.annotation.RetentionPolicy.SOURCE;
-@SuppressWarnings("WeakerAccess")
-@Retention(SOURCE)
-@Target({METHOD, PARAMETER, FIELD})
-public @interface ParameterName {
-    String value();
-}
-
-"""
-)
+    package android.support.annotation;
+    import java.lang.annotation.*;
+    import static java.lang.annotation.ElementType.*;
+    import static java.lang.annotation.RetentionPolicy.SOURCE;
+    @SuppressWarnings("WeakerAccess")
+    @Retention(SOURCE)
+    @Target({METHOD, PARAMETER, FIELD})
+    public @interface ParameterName {
+        String value();
+    }
+    """
+).indented()
 
 val supportDefaultValue: TestFile = java(
     """
-package android.support.annotation;
-import java.lang.annotation.*;
-import static java.lang.annotation.ElementType.*;
-import static java.lang.annotation.RetentionPolicy.SOURCE;
-@SuppressWarnings("WeakerAccess")
-@Retention(SOURCE)
-@Target({METHOD, PARAMETER, FIELD})
-public @interface DefaultValue {
-    String value();
-}
-
-"""
-)
+    package android.support.annotation;
+    import java.lang.annotation.*;
+    import static java.lang.annotation.ElementType.*;
+    import static java.lang.annotation.RetentionPolicy.SOURCE;
+    @SuppressWarnings("WeakerAccess")
+    @Retention(SOURCE)
+    @Target({METHOD, PARAMETER, FIELD})
+    public @interface DefaultValue {
+        String value();
+    }
+    """
+).indented()
 
 val uiThreadSource: TestFile = java(
     """
-package android.support.annotation;
-import java.lang.annotation.*;
-import static java.lang.annotation.ElementType.*;
-import static java.lang.annotation.RetentionPolicy.SOURCE;
-/**
- * Denotes that the annotated method or constructor should only be called on the
- * UI thread. If the annotated element is a class, then all methods in the class
- * should be called on the UI thread.
- * @memberDoc This method must be called on the thread that originally created
- *            this UI element. This is typically the main thread of your app.
- * @classDoc Methods in this class must be called on the thread that originally created
- *            this UI element, unless otherwise noted. This is typically the
- *            main thread of your app. * @hide
- */
-@SuppressWarnings({"WeakerAccess", "JavaDoc"})
-@Retention(SOURCE)
-@Target({METHOD,CONSTRUCTOR,TYPE,PARAMETER})
-public @interface UiThread {
-}
-                """
-)
+    package android.support.annotation;
+    import java.lang.annotation.*;
+    import static java.lang.annotation.ElementType.*;
+    import static java.lang.annotation.RetentionPolicy.SOURCE;
+    /**
+     * Denotes that the annotated method or constructor should only be called on the
+     * UI thread. If the annotated element is a class, then all methods in the class
+     * should be called on the UI thread.
+     * @memberDoc This method must be called on the thread that originally created
+     *            this UI element. This is typically the main thread of your app.
+     * @classDoc Methods in this class must be called on the thread that originally created
+     *            this UI element, unless otherwise noted. This is typically the
+     *            main thread of your app. * @hide
+     */
+    @SuppressWarnings({"WeakerAccess", "JavaDoc"})
+    @Retention(SOURCE)
+    @Target({METHOD,CONSTRUCTOR,TYPE,PARAMETER})
+    public @interface UiThread {
+    }
+    """
+).indented()
 
 val workerThreadSource: TestFile = java(
     """
-package android.support.annotation;
-import java.lang.annotation.*;
-import static java.lang.annotation.ElementType.*;
-import static java.lang.annotation.RetentionPolicy.SOURCE;
-/**
- * @memberDoc This method may take several seconds to complete, so it should
- *            only be called from a worker thread.
- * @classDoc Methods in this class may take several seconds to complete, so it should
- *            only be called from a worker thread unless otherwise noted.
- * @hide
- */
-@SuppressWarnings({"WeakerAccess", "JavaDoc"})
-@Retention(SOURCE)
-@Target({METHOD,CONSTRUCTOR,TYPE,PARAMETER})
-public @interface WorkerThread {
-}
-                """
-)
+    package android.support.annotation;
+    import java.lang.annotation.*;
+    import static java.lang.annotation.ElementType.*;
+    import static java.lang.annotation.RetentionPolicy.SOURCE;
+    /**
+     * @memberDoc This method may take several seconds to complete, so it should
+     *            only be called from a worker thread.
+     * @classDoc Methods in this class may take several seconds to complete, so it should
+     *            only be called from a worker thread unless otherwise noted.
+     * @hide
+     */
+    @SuppressWarnings({"WeakerAccess", "JavaDoc"})
+    @Retention(SOURCE)
+    @Target({METHOD,CONSTRUCTOR,TYPE,PARAMETER})
+    public @interface WorkerThread {
+    }
+    """
+).indented()
 
 val suppressLintSource: TestFile = java(
     """
@@ -1164,27 +1253,38 @@ public @interface SuppressLint {
 
 val systemServiceSource: TestFile = java(
     """
-package android.annotation;
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.SOURCE;
-import java.lang.annotation.*;
-@Retention(SOURCE)
-@Target(TYPE)
-public @interface SystemService {
-    String value();
-}
-                """
-)
+    package android.annotation;
+    import static java.lang.annotation.ElementType.TYPE;
+    import static java.lang.annotation.RetentionPolicy.SOURCE;
+    import java.lang.annotation.*;
+    @Retention(SOURCE)
+    @Target(TYPE)
+    public @interface SystemService {
+        String value();
+    }
+    """
+).indented()
 
 val systemApiSource: TestFile = java(
     """
-package android.annotation;
-import static java.lang.annotation.ElementType.*;
-import java.lang.annotation.*;
-@Target({TYPE, FIELD, METHOD, CONSTRUCTOR, ANNOTATION_TYPE, PACKAGE})
-@Retention(RetentionPolicy.SOURCE)
-public @interface SystemApi {
-}
-"""
-)
+    package android.annotation;
+    import static java.lang.annotation.ElementType.*;
+    import java.lang.annotation.*;
+    @Target({TYPE, FIELD, METHOD, CONSTRUCTOR, ANNOTATION_TYPE, PACKAGE})
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface SystemApi {
+    }
+    """
+).indented()
+
+val widgetSource: TestFile = java(
+    """
+    package android.annotation;
+    import java.lang.annotation.*;
+    @Target({ ElementType.TYPE })
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface Widget {
+    }
+    """
+).indented()
 

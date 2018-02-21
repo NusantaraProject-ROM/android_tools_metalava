@@ -19,6 +19,7 @@ package com.android.tools.metalava.doclava1
 import com.android.annotations.NonNull
 import com.android.tools.metalava.CodebaseComparator
 import com.android.tools.metalava.ComparisonVisitor
+import com.android.tools.metalava.JAVA_LANG_OBJECT
 import com.android.tools.metalava.model.AnnotationItem
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.Codebase
@@ -118,7 +119,7 @@ class ApiInfo : DefaultCodebase() {
             }
             var scName: String? = mClassToSuper[cl]
             if (scName == null) {
-                scName = "java.lang.Object"
+                scName = JAVA_LANG_OBJECT
             }
             var superclass: TextClassItem? = mAllClasses[scName]
             if (superclass == null) {
@@ -153,7 +154,7 @@ class ApiInfo : DefaultCodebase() {
             // java.lang.Object has no superclass
             var scName: String? = mClassToSuper[cl]
             if (scName == null) {
-                scName = "java.lang.Object"
+                scName = JAVA_LANG_OBJECT
             }
             var superclass: TextClassItem? = mAllClasses[scName]
             if (superclass == null) {
