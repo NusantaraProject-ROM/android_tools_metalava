@@ -36,6 +36,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.android.tools.metalava.ConstantsKt.JAVA_LANG_ANNOTATION;
+import static com.android.tools.metalava.ConstantsKt.JAVA_LANG_ENUM;
+import static com.android.tools.metalava.ConstantsKt.JAVA_LANG_STRING;
 import static com.android.tools.metalava.model.FieldItemKt.javaUnescapeString;
 
 //
@@ -192,7 +195,7 @@ public class ApiFile {
         } else if ("enum".equals(token)) {
             isEnum = true;
             fin = true;
-            ext = "java.lang.Enum";
+            ext = JAVA_LANG_ENUM;
             token = tokenizer.requireToken();
         } else {
             throw new ApiParseException("missing class or interface. got: " + token, tokenizer.getLine());
@@ -233,11 +236,11 @@ public class ApiFile {
                 }
             }
         }
-        if ("java.lang.Enum".equals(ext)) {
+        if (JAVA_LANG_ENUM.equals(ext)) {
             cl.setIsEnum(true);
         } else if (isAnnotation) {
-            api.mapClassToInterface(cl, "java.lang.annotation.Annotation");
-        } else if (api.implementsInterface(cl, "java.lang.annotation.Annotation")) {
+            api.mapClassToInterface(cl, JAVA_LANG_ANNOTATION);
+        } else if (api.implementsInterface(cl, JAVA_LANG_ANNOTATION)) {
             cl.setIsAnnotationType(true);
         }
         if (!"{".equals(token)) {
@@ -674,7 +677,7 @@ public class ApiFile {
                 }
             } else if ("char".equals(type)) {
                 return (char) Integer.parseInt(val);
-            } else if ("java.lang.String".equals(type)) {
+            } else if (JAVA_LANG_STRING.equals(type)) {
                 if ("null".equals(val)) {
                     return null;
                 } else {
@@ -751,7 +754,7 @@ public class ApiFile {
             if ("=".equals(token)) {
                 token = tokenizer.requireToken(false);
                 try {
-                    defaultValue = (String) parseValue("java.lang.String", token);
+                    defaultValue = (String) parseValue(JAVA_LANG_STRING, token);
                 } catch (ApiParseException ex) {
                     ex.line = tokenizer.getLine();
                     throw ex;

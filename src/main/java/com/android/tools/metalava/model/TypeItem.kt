@@ -17,6 +17,8 @@
 package com.android.tools.metalava.model
 
 import com.android.tools.lint.detector.api.ClassContext
+import com.android.tools.metalava.JAVA_LANG_OBJECT
+import com.android.tools.metalava.JAVA_LANG_PREFIX
 import com.android.tools.metalava.compatibility
 import com.android.tools.metalava.options
 import java.util.function.Predicate
@@ -53,7 +55,7 @@ interface TypeItem {
     fun asClass(): ClassItem?
 
     fun toSimpleType(): String {
-        return toTypeString().replace("java.lang.", "")
+        return stripJavaLangPrefix(toTypeString())
     }
 
     val primitive: Boolean
@@ -76,7 +78,7 @@ interface TypeItem {
     }
 
     fun isJavaLangObject(): Boolean {
-        return toTypeString() == "java.lang.Object"
+        return toTypeString() == JAVA_LANG_OBJECT
     }
 
     fun defaultValue(): Any? {
@@ -115,20 +117,27 @@ interface TypeItem {
     fun isTypeParameter(): Boolean = toTypeString().length == 1 // heuristic; accurate implementation in PSI subclass
 
     companion object {
-        private const val JAVA_LANG_PREFIX = "java.lang."
-        private const val ANDROID_SUPPORT_ANNOTATION_PREFIX = "@android.support.annotation."
-
+        /** Shortens types, if configured */
         fun shortenTypes(type: String): String {
-            if (options.omitCommonPackages &&
-                (type.contains("java.lang.") ||
-                        type.contains("@android.support.annotation."))
-            ) {
+            if (options.omitCommonPackages) {
                 var cleaned = type
-                if (options.omitCommonPackages) {
-                    if (cleaned.contains(ANDROID_SUPPORT_ANNOTATION_PREFIX)) {
-                        cleaned = cleaned.replace(ANDROID_SUPPORT_ANNOTATION_PREFIX, "@")
-                    }
+                if (cleaned.contains("@android.support.annotation.")) {
+                    cleaned = cleaned.replace("@android.support.annotation.", "@")
                 }
+
+                return stripJavaLangPrefix(cleaned)
+            }
+
+            return type
+        }
+
+        /**
+         * Removes java.lang. prefixes from types, unless it's in a subpackage such
+         * as java.lang.reflect
+         */
+        fun stripJavaLangPrefix(type: String): String {
+            if (type.contains(JAVA_LANG_PREFIX)) {
+                var cleaned = type
 
                 // Replacing java.lang is harder, since we don't want to operate in sub packages,
                 // e.g. java.lang.String -> String, but java.lang.reflect.Method -> unchanged

@@ -16,6 +16,7 @@
 
 package com.android.tools.metalava.model
 
+import com.android.tools.metalava.JAVA_LANG_STRING
 import com.android.tools.metalava.options
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
@@ -25,7 +26,7 @@ class TypeItemTest {
     fun test() {
         options.omitCommonPackages = true
         assertThat(TypeItem.shortenTypes("@android.support.annotation.Nullable")).isEqualTo("@Nullable")
-        assertThat(TypeItem.shortenTypes("java.lang.String")).isEqualTo("String")
+        assertThat(TypeItem.shortenTypes(JAVA_LANG_STRING)).isEqualTo("String")
         assertThat(TypeItem.shortenTypes("java.lang.reflect.Method")).isEqualTo("java.lang.reflect.Method")
         assertThat(TypeItem.shortenTypes("java.util.List<java.lang.String>")).isEqualTo("java.util.List<String>")
         assertThat(TypeItem.shortenTypes("java.util.List<@android.support.annotation.NonNull java.lang.String>")).isEqualTo(

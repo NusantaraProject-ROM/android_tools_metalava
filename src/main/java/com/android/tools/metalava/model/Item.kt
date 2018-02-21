@@ -175,12 +175,8 @@ interface Item {
     fun hasShowAnnotation(): Boolean = modifiers.hasShowAnnotation()
     fun hasHideAnnotation(): Boolean = modifiers.hasHideAnnotations()
 
-    // TODO: Cache?
     fun checkLevel(): Boolean {
-        if (isHiddenOrRemoved()) {
-            return false
-        }
-        return modifiers.isPublic() || modifiers.isProtected()
+        return modifiers.checkLevel()
     }
 
     fun compilationUnit(): CompilationUnit? {

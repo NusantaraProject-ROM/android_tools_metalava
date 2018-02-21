@@ -99,14 +99,14 @@ fun run(
                 args
             }
 
+        compatibility = Compatibility(compat = Options.useCompatMode(args))
         options = Options(modifiedArgs, stdout, stderr)
-        compatibility = Compatibility(options.compatOutput)
         processFlags()
         stdout.flush()
         stderr.flush()
 
         if (setExitCode && reporter.hasErrors()) {
-            System.exit(-1)
+            exit(-1)
         }
         return true
     } catch (e: DriverException) {
@@ -117,14 +117,21 @@ fun run(
             stdout.println("\n${e.stdout}")
         }
         if (setExitCode) { // always true in production; not set from tests
-            stdout.flush()
-            stderr.flush()
-            System.exit(e.exitCode)
+            exit(e.exitCode)
         }
     }
     stdout.flush()
     stderr.flush()
     return false
+}
+
+private fun exit(exitCode: Int = 0) {
+    if (options.verbose) {
+        options.stdout.println("$PROGRAM_NAME exiting with exit code $exitCode")
+    }
+    options.stdout.flush()
+    options.stderr.flush()
+    System.exit(exitCode)
 }
 
 private fun processFlags() {
@@ -290,21 +297,21 @@ private fun loadFromSources(): Codebase {
         KotlinInteropChecks().check(codebase)
     }
 
-    progress("\nInsert missing constructors: ")
     val ignoreShown = options.showUnannotated
+
+    val filterEmit = ApiPredicate(codebase, ignoreShown = ignoreShown, ignoreRemoved = false)
+    val apiEmit = ApiPredicate(codebase, ignoreShown = ignoreShown)
+    val apiReference = ApiPredicate(codebase, ignoreShown = true)
+
+    // Copy methods from soon-to-be-hidden parents into descendant classes, when necessary
+    progress("\nInsert missing stubs methods: ")
+    analyzer.generateInheritedStubs(apiEmit, apiReference)
 
     // Compute default constructors (and add missing package private constructors
     // to make stubs compilable if necessary)
     if (options.stubsDir != null) {
-        val filterEmit = ApiPredicate(codebase, ignoreShown = ignoreShown, ignoreRemoved = false)
+        progress("\nInsert missing constructors: ")
         analyzer.addConstructors(filterEmit)
-
-        val apiEmit = ApiPredicate(codebase, ignoreShown = ignoreShown)
-        val apiReference = ApiPredicate(codebase, ignoreShown = true)
-
-        // Copy methods from soon-to-be-hidden parents into descendant classes, when necessary
-        progress("\nInsert missing stubs methods: ")
-        analyzer.generateInheritedStubs(apiEmit, apiReference)
 
         progress("\nEnhancing docs: ")
         val docAnalyzer = DocAnalyzer(codebase)
@@ -320,9 +327,6 @@ private fun loadFromSources(): Codebase {
     progress("\nPerforming misc API checks: ")
     analyzer.performChecks()
 
-//    // TODO: Move the filtering earlier
-//    progress("\nFiltering API: ")
-//    return filterCodebase(codebase)
     return codebase
 }
 
@@ -420,6 +424,11 @@ private fun generateOutputs(codebase: Codebase) {
         val apiReference = ApiPredicate(codebase, ignoreShown = true)
         createReportFile(codebase, proguard, "Proguard file",
             { printWriter -> ProguardWriter(printWriter, apiEmit, apiReference) })
+    }
+
+    options.sdkValueDir?.let { dir ->
+        dir.mkdirs()
+        SdkFileWriter(codebase, dir).generate()
     }
 
     options.stubsDir?.let { createStubFiles(it, codebase) }

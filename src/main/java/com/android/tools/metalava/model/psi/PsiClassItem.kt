@@ -28,20 +28,13 @@ import com.google.common.base.Splitter
 import com.intellij.lang.jvm.types.JvmReferenceType
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiCompiledFile
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
-import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.util.PsiUtil
-import org.jetbrains.kotlin.kdoc.psi.api.KDoc
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class PsiClassItem(
     override val codebase: PsiBasedCodebase,
@@ -206,34 +199,7 @@ class PsiClassItem(
             return null
         }
 
-        return object : CompilationUnit(containingFile) {
-            override fun getHeaderComments(): String? {
-                // https://youtrack.jetbrains.com/issue/KT-22135
-                if (file is PsiJavaFile) {
-                    val pkg = file.packageStatement ?: return null
-                    return file.text.substring(0, pkg.startOffset)
-                } else if (file is KtFile) {
-                    var curr: PsiElement? = file.firstChild
-                    var comment: String? = null
-                    while (curr != null) {
-                        if (curr is PsiComment || curr is KDoc) {
-                            val text = curr.text
-                            comment = if (comment != null) {
-                                comment + "\n" + text
-                            } else {
-                                text
-                            }
-                        } else if (curr !is PsiWhiteSpace) {
-                            break
-                        }
-                        curr = curr.nextSibling
-                    }
-                    return comment
-                }
-
-                return super.getHeaderComments()
-            }
-        }
+        return PsiCompilationUnit(codebase, containingFile)
     }
 
     fun findMethod(template: MethodItem): MethodItem? {
@@ -475,7 +441,7 @@ class PsiClassItem(
                 }
             }
 
-            if (hasImplicitDefaultConstructor ) {
+            if (hasImplicitDefaultConstructor) {
                 assert(constructors.isEmpty())
                 constructors.add(PsiConstructorItem.createDefaultConstructor(codebase, item, psiClass))
             }
@@ -553,8 +519,8 @@ class PsiClassItem(
             newClass.fields = classFilter.fields.asSequence()
                 // Preserve sorting order for enums
                 .sortedBy { it.sortingRank }.map {
-                PsiFieldItem.create(codebase, newClass, it as PsiFieldItem)
-            }.toMutableList()
+                    PsiFieldItem.create(codebase, newClass, it as PsiFieldItem)
+                }.toMutableList()
 
 
             newClass.innerClasses = classFilter.innerClasses.map {
