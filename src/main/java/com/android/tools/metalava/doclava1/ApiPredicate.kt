@@ -56,7 +56,7 @@ class ApiPredicate(
             return false
         }
 
-        var visible = member.isPublic || member.isProtected
+        var visible = member.isPublic || member.isProtected // TODO: Should this use checkLevel instead?
         var hidden = member.hidden
         if (!visible || hidden) {
             return false

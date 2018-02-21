@@ -184,6 +184,7 @@ class DocAnalyzerTest : DriverTest() {
             stubs = arrayOf(
                 """
                 package test.pkg;
+                import android.Manifest;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class PermissionTest {
                 public PermissionTest() { throw new RuntimeException("Stub!"); }
@@ -917,7 +918,7 @@ class DocAnalyzerTest : DriverTest() {
     }
 
     @Test
-    fun `Merge API levels)`() {
+    fun `Merge API levels`() {
         check(
             sourceFiles = *arrayOf(
                 java(
@@ -977,7 +978,7 @@ class DocAnalyzerTest : DriverTest() {
     }
 
     @Test
-    fun `Merge deprecation levels)`() {
+    fun `Merge deprecation levels`() {
         check(
             sourceFiles = *arrayOf(
                 java(
@@ -1041,7 +1042,7 @@ class DocAnalyzerTest : DriverTest() {
 
 
     @Test
-    fun `Generate overview html docs)`() {
+    fun `Generate overview html docs`() {
         // If a codebase provides overview.html files in the a public package,
         // make sure that we include this in the exported stubs folder as well!
         check(
@@ -1071,4 +1072,50 @@ class DocAnalyzerTest : DriverTest() {
             )
         )
     }
+
+    @Test
+    fun `Check RequiresFeature handling`() {
+        check(
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    import android.annotation.RequiresFeature;
+                    import android.content.pm.PackageManager;
+                    @SuppressWarnings("WeakerAccess")
+                    @RequiresFeature(PackageManager.FEATURE_LOCATION)
+                    public class LocationManager {
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package android.content.pm;
+                    public abstract class PackageManager {
+                        public static final String FEATURE_LOCATION = "android.hardware.location";
+                    }
+                    """
+                ),
+
+                requiresFeatureSource
+            ),
+            checkCompilation = true,
+            checkDoclava1 = false,
+            stubs = arrayOf(
+                """
+                package test.pkg;
+                import android.content.pm.PackageManager;
+                /**
+                 * Requires the {@link android.content.pm.PackageManager#FEATURE_LOCATION PackageManager#FEATURE_LOCATION} feature which can be detected using {@link android.content.pm.PackageManager#hasSystemFeature(String) PackageManager.hasSystemFeature(String)}.
+                 */
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class LocationManager {
+                public LocationManager() { throw new RuntimeException("Stub!"); }
+                }
+                """
+            )
+        )
+    }
+
+
 }

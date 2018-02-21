@@ -558,6 +558,10 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
         val name = top.name
         val fullName = top.qualifiedName ?: return ""
 
+        if (name == fullName) {
+            return ""
+        }
+
         return fullName.substring(0, fullName.length - 1 - name!!.length)
     }
 

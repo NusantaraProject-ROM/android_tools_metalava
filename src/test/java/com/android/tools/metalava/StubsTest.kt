@@ -709,9 +709,10 @@ class StubsTest : DriverTest() {
     @Test
     fun `Check inheriting from package private class`() {
         checkStubs(
-            // Disabled because doclava1 includes fields here that it doesn't include in the
-            // signature file; not sure if it's a bug or intentional but it seems suspicious.
+            // Note that doclava1 includes fields here that it doesn't include in the
+            // signature file.
             //checkDoclava1 = true,
+            compatibilityMode = false,
             sourceFiles =
             *arrayOf(
                 java(
@@ -739,6 +740,7 @@ class StubsTest : DriverTest() {
                     public class MyClass {
                     public MyClass() { throw new RuntimeException("Stub!"); }
                     public void method1() { throw new RuntimeException("Stub!"); }
+                    public void method2() { throw new RuntimeException("Stub!"); }
                     }
                 """
         )
@@ -1261,12 +1263,12 @@ class StubsTest : DriverTest() {
                     public Kotlin(@android.support.annotation.NonNull java.lang.String property1, int arg2) { throw new RuntimeException("Stub!"); }
                     @android.support.annotation.NonNull public java.lang.String method() { throw new RuntimeException("Stub!"); }
                     /** My method doc */
-                    public final void otherMethod(boolean ok, int times) { throw new RuntimeException("Stub!"); }
+                    public void otherMethod(boolean ok, int times) { throw new RuntimeException("Stub!"); }
                     /** property doc */
-                    @android.support.annotation.Nullable public final java.lang.String getProperty2() { throw new RuntimeException("Stub!"); }
+                    @android.support.annotation.Nullable public java.lang.String getProperty2() { throw new RuntimeException("Stub!"); }
                     /** property doc */
-                    public final void setProperty2(@android.support.annotation.Nullable java.lang.String p) { throw new RuntimeException("Stub!"); }
-                    @android.support.annotation.NonNull public final java.lang.String getProperty1() { throw new RuntimeException("Stub!"); }
+                    public void setProperty2(@android.support.annotation.Nullable java.lang.String p) { throw new RuntimeException("Stub!"); }
+                    @android.support.annotation.NonNull public java.lang.String getProperty1() { throw new RuntimeException("Stub!"); }
                     public int someField2;
                     }
                 """,
@@ -1553,6 +1555,7 @@ class StubsTest : DriverTest() {
     fun `Check generating required stubs from hidden super classes and interfaces`() {
         checkStubs(
             checkDoclava1 = false,
+            compatibilityMode = false,
             sourceFiles =
             *arrayOf(
                 java(
@@ -1617,14 +1620,17 @@ class StubsTest : DriverTest() {
                       public class MyClass extends test.pkg.PublicSuperParent implements test.pkg.PublicInterface test.pkg.PublicInterface2 {
                         ctor public MyClass();
                         method public void myMethod();
+                        method public void publicInterfaceMethod();
                         method public void publicInterfaceMethod2();
+                        method public void publicMethod();
+                        method public void publicMethod2();
                         field public static final int MY_CONSTANT = 5; // 0x5
                       }
-                      public abstract interface PublicInterface {
-                        method public abstract void publicInterfaceMethod();
+                      public interface PublicInterface {
+                        method public void publicInterfaceMethod();
                       }
-                      public abstract interface PublicInterface2 {
-                        method public abstract void publicInterfaceMethod2();
+                      public interface PublicInterface2 {
+                        method public void publicInterfaceMethod2();
                       }
                       public abstract class PublicSuperParent {
                         ctor public PublicSuperParent();
@@ -1641,10 +1647,10 @@ class StubsTest : DriverTest() {
                 public MyClass() { throw new RuntimeException("Stub!"); }
                 public void myMethod() { throw new RuntimeException("Stub!"); }
                 public void publicInterfaceMethod2() { throw new RuntimeException("Stub!"); }
-                // Inlined stub from hidden parent class test.pkg.HiddenSuperClass
                 public void publicMethod() { throw new RuntimeException("Stub!"); }
-                // Inlined stub from hidden parent class test.pkg.HiddenSuperClass
+                public void publicMethod2() { throw new RuntimeException("Stub!"); }
                 public void publicInterfaceMethod() { throw new RuntimeException("Stub!"); }
+                public void inheritedMethod2() { throw new RuntimeException("Stub!"); }
                 public static final int MY_CONSTANT = 5; // 0x5
                 }
                 """
@@ -1835,19 +1841,16 @@ class StubsTest : DriverTest() {
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class MyClass<X extends java.lang.Number, Y> implements test.pkg.Generics.PublicParent<X,Y> {
                     public MyClass() { throw new RuntimeException("Stub!"); }
-                    // Inlined stub from hidden parent class test.pkg.Generics.HiddenParent2
                     public java.util.Map<X,java.util.Map<Y,java.lang.String>> createMap(java.util.List<X> list) { throw new RuntimeException("Stub!"); }
                     }
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class MyClass2<W> implements test.pkg.Generics.PublicParent<java.lang.Float,W> {
                     public MyClass2() { throw new RuntimeException("Stub!"); }
-                    // Inlined stub from hidden parent class test.pkg.Generics.HiddenParent2
                     public java.util.Map<java.lang.Float,java.util.Map<W,java.lang.String>> createMap(java.util.List<java.lang.Float> list) { throw new RuntimeException("Stub!"); }
                     }
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class MyClass3 implements test.pkg.Generics.PublicParent<java.lang.Float,java.lang.Double> {
                     public MyClass3() { throw new RuntimeException("Stub!"); }
-                    // Inlined stub from hidden parent class test.pkg.Generics.HiddenParent2
                     public java.util.Map<java.lang.Float,java.util.Map<java.lang.Double,java.lang.String>> createMap(java.util.List<java.lang.Float> list) { throw new RuntimeException("Stub!"); }
                     }
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
@@ -1911,6 +1914,8 @@ class StubsTest : DriverTest() {
                       }
                       public class Generics.MyClass<X, Y extends java.lang.Number> extends test.pkg.Generics.PublicParent implements test.pkg.Generics.PublicInterface {
                         ctor public Generics.MyClass();
+                        method public java.util.Map<X, java.util.Map<Y, java.lang.String>> createMap(java.util.List<X>);
+                        method public java.util.List<X> foo();
                       }
                       public static abstract interface Generics.PublicInterface<A, B> {
                         method public abstract java.util.Map<A, java.util.Map<B, java.lang.String>> createMap(java.util.List<A>) throws java.io.IOException;
@@ -1929,9 +1934,7 @@ class StubsTest : DriverTest() {
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class MyClass<X, Y extends java.lang.Number> extends test.pkg.Generics.PublicParent<X,Y> implements test.pkg.Generics.PublicInterface<X,Y> {
                     public MyClass() { throw new RuntimeException("Stub!"); }
-                    // Inlined stub from hidden parent class test.pkg.Generics.HiddenParent
                     public java.util.List<X> foo() { throw new RuntimeException("Stub!"); }
-                    // Inlined stub from hidden parent class test.pkg.Generics.HiddenParent
                     public java.util.Map<X,java.util.Map<Y,java.lang.String>> createMap(java.util.List<X> list) { throw new RuntimeException("Stub!"); }
                     }
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
@@ -1993,6 +1996,9 @@ class StubsTest : DriverTest() {
                       }
                       public static abstract class ConcurrentHashMap.KeySetView<K, V> implements java.util.Collection java.io.Serializable java.util.Set {
                         ctor public ConcurrentHashMap.KeySetView();
+                        method public int size();
+                        method public final java.lang.Object[] toArray();
+                        method public final <T> T[] toArray(T[]);
                       }
                     }
                     """,
@@ -2004,11 +2010,8 @@ class StubsTest : DriverTest() {
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public abstract static class KeySetView<K, V> implements java.util.Collection<K>, java.io.Serializable, java.util.Set<K> {
                     public KeySetView() { throw new RuntimeException("Stub!"); }
-                    // Inlined stub from hidden parent class test.pkg.ConcurrentHashMap.CollectionView
                     public int size() { throw new RuntimeException("Stub!"); }
-                    // Inlined stub from hidden parent class test.pkg.ConcurrentHashMap.CollectionView
                     public final java.lang.Object[] toArray() { throw new RuntimeException("Stub!"); }
-                    // Inlined stub from hidden parent class test.pkg.ConcurrentHashMap.CollectionView
                     public final <T> T[] toArray(T[] a) { throw new RuntimeException("Stub!"); }
                     }
                     }
@@ -2612,7 +2615,6 @@ class StubsTest : DriverTest() {
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class SpannableString implements test.pkg.SpanTest.CharSequence, test.pkg.SpanTest.Spannable {
                     public SpannableString() { throw new RuntimeException("Stub!"); }
-                    // Inlined stub from hidden parent class test.pkg.SpanTest.SpannableStringInternal
                     public int nextSpanTransition(int start, int limit, java.lang.Class kind) { throw new RuntimeException("Stub!"); }
                     }
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
@@ -2705,10 +2707,12 @@ class StubsTest : DriverTest() {
                     public class SomeClass {
                        /**
                        * My method.
+                       * @param focus The focus to find. One of {@link OtherClass#FOCUS_INPUT} or
+                       *         {@link OtherClass#FOCUS_ACCESSIBILITY}.
                        * @throws IOException when blah blah blah
                        * @throws {@link RuntimeException} when blah blah blah
                        */
-                       public void baz() throws IOException;
+                       public void baz(int focus) throws IOException;
                        public boolean importance;
                     }
                     """
@@ -2719,6 +2723,8 @@ class StubsTest : DriverTest() {
 
                     @SuppressWarnings("all")
                     public class OtherClass {
+                        public static final int FOCUS_INPUT = 1;
+                        public static final int FOCUS_ACCESSIBILITY = 2;
                         public int foo;
                         public void bar(int baz, boolean bar);
                     }
@@ -2737,11 +2743,12 @@ class StubsTest : DriverTest() {
             warnings = "",
             source = """
                     package test.pkg1;
+                    import test.pkg2.OtherClass;
+                    import java.io.IOException;
                     /**
-                     *  Blah blah {@link test.pkg2.OtherClass OtherClass} blah blah.
-                     *  Referencing <b>field</b> {@link test.pkg2.OtherClass#foo OtherClass#foo},
-                     *  and referencing method {@link test.pkg2.OtherClass#bar(int,
-                     *   boolean) OtherClass#bar(int,
+                     *  Blah blah {@link OtherClass} blah blah.
+                     *  Referencing <b>field</b> {@link OtherClass#foo},
+                     *  and referencing method {@link OtherClass#bar(int,
                      *   boolean)}.
                      *  And relative method reference {@link #baz()}.
                      *  And relative field reference {@link #importance}.
@@ -2749,7 +2756,7 @@ class StubsTest : DriverTest() {
                      *  And here's one in the same package: {@link LocalClass}.
                      *
                      *  @deprecated For some reason
-                     *  @see test.pkg2.OtherClass
+                     *  @see OtherClass
                      *  @see OtherClass#bar(int, boolean)
                      */
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
@@ -2757,10 +2764,12 @@ class StubsTest : DriverTest() {
                     public SomeClass() { throw new RuntimeException("Stub!"); }
                     /**
                      * My method.
-                     * @throws java.io.IOException when blah blah blah
-                     * @throws {java.lang.RuntimeExceptionk RuntimeException} when blah blah blah
+                     * @param focus The focus to find. One of {@link OtherClass#FOCUS_INPUT} or
+                     *         {@link OtherClass#FOCUS_ACCESSIBILITY}.
+                     * @throws IOException when blah blah blah
+                     * @throws {@link RuntimeException} when blah blah blah
                      */
-                    public void baz() throws java.io.IOException { throw new RuntimeException("Stub!"); }
+                    public void baz(int focus) throws java.io.IOException { throw new RuntimeException("Stub!"); }
                     public boolean importance;
                     }
                     """

@@ -170,6 +170,15 @@ example, you'll see something like this (unless running with --quiet) :
   inconsistency. In metalava the stub files contain **exactly** the same signatures
   as in the signature files.
 
+  (This turned out to be incredibly important; this revealed for example that
+  StringBuilder.setLength(int) was missing from the API signatures since it is
+  a public method inherited from a package protected super class, which the
+  API extraction code in doclava1 missed, but accidentally included in the SDK
+  anyway since it packages package private classes. Metalava strictly applies
+  the exact same API as is listed in the signature files, and once this was
+  hooked up to the build it immediately became apparent that it was missing
+  important methods that should really be part of the API.)
+
 * Metalava can generate reports about nullness annotation coverage (which helps
   target efforts since we plan to annotate the entire API). First, it can
   generate a raw count:
@@ -194,7 +203,6 @@ example, you'll see something like this (unless running with --quiet) :
     324 methods and fields were missing nullness annotations out of 650 total API references.
     API nullness coverage is 50%
 
-    |--------------------------------------------------------------|------------------|
     | Qualified Class Name                                         |      Usage Count |
     |--------------------------------------------------------------|-----------------:|
     | android.os.Parcel                                            |              146 |
@@ -214,11 +222,9 @@ example, you'll see something like this (unless running with --quiet) :
     | android.text.SpannableStringBuilder                          |               23 |
     | android.view.ViewGroup.MarginLayoutParams                    |               21 |
     | ... (99 more items                                           |                  |
-    |--------------------------------------------------------------|------------------|
 
     Top referenced un-annotated members:
 
-    |--------------------------------------------------------------|------------------|
     | Member                                                       |      Usage Count |
     |--------------------------------------------------------------|-----------------:|
     | Parcel.readString()                                          |               62 |
@@ -238,7 +244,6 @@ example, you'll see something like this (unless running with --quiet) :
     | Context.getResources()                                       |               18 |
     | EditText.getText()                                           |               18 |
     | ... (309 more items                                          |                  |
-    |--------------------------------------------------------------|------------------|
 
 
   From this it's clear that it would be useful to start annotating android.os.Parcel

@@ -168,7 +168,7 @@ class ApiFileTest : DriverTest() {
                 package test.pkg {
                   public final class Foo {
                     ctor public Foo();
-                    method public final void error(int p = "42", Integer? int2 = "null");
+                    method public void error(int p = "42", Integer? int2 = "null");
                   }
                 }
                 """,
@@ -216,10 +216,10 @@ class ApiFileTest : DriverTest() {
                 package test.pkg {
                   public final class Kotlin extends test.pkg.Parent {
                     ctor public Kotlin(java.lang.String property1, int arg2);
-                    method public final java.lang.String getProperty1();
-                    method public final java.lang.String getProperty2();
-                    method public final void otherMethod(boolean ok, int times);
-                    method public final void setProperty2(java.lang.String p);
+                    method public java.lang.String getProperty1();
+                    method public java.lang.String getProperty2();
+                    method public void otherMethod(boolean ok, int times);
+                    method public void setProperty2(java.lang.String p);
                     field public static final test.pkg.Kotlin.Companion Companion;
                     field public static final int MY_CONST = 42; // 0x2a
                     field public int someField2;
@@ -237,9 +237,9 @@ class ApiFileTest : DriverTest() {
             privateApi = """
                 package test.pkg {
                   public final class Kotlin extends test.pkg.Parent {
-                    method internal final boolean getMyHiddenVar${"$"}lintWithKotlin();
-                    method internal final void myHiddenMethod${"$"}lintWithKotlin();
-                    method internal final void setMyHiddenVar${"$"}lintWithKotlin(boolean p);
+                    method internal boolean getMyHiddenVar${"$"}lintWithKotlin();
+                    method internal void myHiddenMethod${"$"}lintWithKotlin();
+                    method internal void setMyHiddenVar${"$"}lintWithKotlin(boolean p);
                     field internal boolean myHiddenVar;
                     field private final java.lang.String property1;
                     field private java.lang.String property2;
@@ -250,7 +250,7 @@ class ApiFileTest : DriverTest() {
                   }
                    internal static final class Kotlin.myHiddenClass extends kotlin.Unit {
                     ctor public Kotlin.myHiddenClass();
-                    method internal final test.pkg.Kotlin.myHiddenClass copy();
+                    method internal test.pkg.Kotlin.myHiddenClass copy();
                   }
                 }
                 """,
@@ -396,8 +396,8 @@ class ApiFileTest : DriverTest() {
                   }
                   public final class NonNullableKotlinPair<F, S> {
                     ctor public NonNullableKotlinPair(F first, S second);
-                    method public final F getFirst();
-                    method public final S getSecond();
+                    method public F getFirst();
+                    method public S getSecond();
                   }
                   public class NullableJavaPair<F, S> {
                     ctor public NullableJavaPair(F?, S?);
@@ -406,8 +406,8 @@ class ApiFileTest : DriverTest() {
                   }
                   public final class NullableKotlinPair<F, S> {
                     ctor public NullableKotlinPair(F? first, S? second);
-                    method public final F? getFirst();
-                    method public final S? getSecond();
+                    method public F? getFirst();
+                    method public S? getSecond();
                   }
                   public class PlatformJavaPair<F, S> {
                     ctor public PlatformJavaPair(F!, S!);
@@ -416,7 +416,7 @@ class ApiFileTest : DriverTest() {
                   }
                   public final class TestKt {
                     ctor public TestKt();
-                    method public static final operator <F, S> F! component1(androidx.util.PlatformJavaPair<F,S>);
+                    method public static operator <F, S> F! component1(androidx.util.PlatformJavaPair<F,S>);
                   }
                 }
                 """,
@@ -698,6 +698,75 @@ class ApiFileTest : DriverTest() {
                 }
                 package test.pkg {
                   public abstract class Foo implements java.lang.annotation.Annotation {
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
+    fun `Do not include inherited public methods from private parents in compat mode`() {
+        // Real life example: StringBuilder.setLength, in compat mode
+        check(
+            compatibilityMode = true,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    public class MyStringBuilder extends AbstractMyStringBuilder {
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    class AbstractMyStringBuilder {
+                        public void setLength(int length) {
+                        }
+                    }
+                    """
+                )
+            ),
+            api = """
+                package test.pkg {
+                  public class MyStringBuilder {
+                    ctor public MyStringBuilder();
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
+    fun `Include inherited public methods from private parents`() {
+        // In non-compat mode, include public methods from hidden parents too.
+        // Real life example: StringBuilder.setLength
+        // This is just like the above test, but with compat mode disabled.
+        check(
+            compatibilityMode = false,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    public class MyStringBuilder extends AbstractMyStringBuilder {
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    class AbstractMyStringBuilder {
+                        public void setLength(int length) {
+                        }
+                    }
+                    """
+                )
+            ),
+            api = """
+                package test.pkg {
+                  public class MyStringBuilder {
+                    ctor public MyStringBuilder();
+                    method public void setLength(int);
                   }
                 }
                 """
@@ -1368,7 +1437,8 @@ class ApiFileTest : DriverTest() {
     @Test
     fun `Inheriting from package private classes, package private class should be included`() {
         check(
-            checkDoclava1 = true,
+            checkDoclava1 = false, // doclava1 does not include method2, which it should
+            compatibilityMode = false,
             sourceFiles =
             *arrayOf(
                 java(
@@ -1398,6 +1468,52 @@ class ApiFileTest : DriverTest() {
                       public class MyClass {
                         ctor public MyClass();
                         method public void method1();
+                        method public void method2();
+                      }
+                    }
+            """
+        )
+    }
+
+    @Test
+    fun `Using compatibility flag manually`() {
+        // Like previous test, but using compatibility mode and explicitly turning on
+        // the hidden super class compatibility flag. This test is mostly intended
+        // to test the flag handling for individual compatibility flags.
+        check(
+            checkDoclava1 = false, // doclava1 does not include method2, which it should
+            compatibilityMode = true,
+            extraArguments = arrayOf("--include-public-methods-from-hidden-super-classes=true"),
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    @SuppressWarnings("ALL")
+                    public class MyClass extends HiddenParent {
+                        public void method1() { }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    @SuppressWarnings("ALL")
+                    class HiddenParent {
+                        public static final String CONSTANT = "MyConstant";
+                        protected int mContext;
+                        public void method2() { }
+                    }
+                    """
+                )
+            ),
+            warnings = "",
+            api = """
+                    package test.pkg {
+                      public class MyClass {
+                        ctor public MyClass();
+                        method public void method1();
+                        method public void method2();
                       }
                     }
             """
@@ -1877,7 +1993,7 @@ class ApiFileTest : DriverTest() {
             api = """
                 package test.pkg {
                   public final class -Foo {
-                    method public static final void printHelloWorld(java.lang.String);
+                    method public static void printHelloWorld(java.lang.String);
                   }
                 }
                 """
