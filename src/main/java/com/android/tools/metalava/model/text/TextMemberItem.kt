@@ -17,13 +17,13 @@
 package com.android.tools.metalava.model.text
 
 import com.android.tools.metalava.doclava1.SourcePositionInfo
+import com.android.tools.metalava.doclava1.TextCodebase
 import com.android.tools.metalava.model.ClassItem
-import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.MemberItem
 import com.android.tools.metalava.model.ModifierList
 
 abstract class TextMemberItem(
-    codebase: Codebase,
+    codebase: TextCodebase,
     private val name: String,
     private val containingClass: TextClassItem,
     position: SourcePositionInfo,

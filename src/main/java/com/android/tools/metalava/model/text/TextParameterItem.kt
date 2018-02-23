@@ -17,14 +17,14 @@
 package com.android.tools.metalava.model.text
 
 import com.android.tools.metalava.doclava1.SourcePositionInfo
-import com.android.tools.metalava.model.Codebase
+import com.android.tools.metalava.doclava1.TextCodebase
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.ParameterItem
 
 const val NO_DEFAULT_VALUE = "__no_default_value__"
 
 class TextParameterItem(
-    codebase: Codebase,
+    codebase: TextCodebase,
     private val containingMethod: TextMethodItem,
     private var name: String,
     private var publicName: String?,
@@ -44,6 +44,10 @@ class TextParameterItem(
 
     init {
         (modifiers as TextModifiers).owner = this
+    }
+
+    override fun isVarArgs(): Boolean {
+        return type.toString().contains("...")
     }
 
     override var included: Boolean = true

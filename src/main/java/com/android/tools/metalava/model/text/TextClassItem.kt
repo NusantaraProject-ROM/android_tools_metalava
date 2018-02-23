@@ -16,20 +16,20 @@
 
 package com.android.tools.metalava.model.text
 
-import com.android.tools.metalava.doclava1.ApiInfo
 import com.android.tools.metalava.doclava1.SourcePositionInfo
+import com.android.tools.metalava.doclava1.TextCodebase
 import com.android.tools.metalava.model.ClassItem
-import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.ConstructorItem
 import com.android.tools.metalava.model.FieldItem
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.PackageItem
 import com.android.tools.metalava.model.TypeItem
+import com.android.tools.metalava.model.TypeParameterList
 import java.util.function.Predicate
 
-class TextClassItem(
-    override val codebase: ApiInfo,
+open class TextClassItem(
+    override val codebase: TextCodebase,
     position: SourcePositionInfo = SourcePositionInfo.UNKNOWN,
     isPublic: Boolean = false,
     isProtected: Boolean = false,
@@ -58,6 +58,7 @@ class TextClassItem(
 ), ClassItem {
 
     init {
+        @Suppress("LeakingThis")
         (modifiers as TextModifiers).owner = this
     }
 
@@ -115,8 +116,8 @@ class TextClassItem(
     override fun containingPackage(): PackageItem = containingPackage ?: error(this)
 
     override fun toType(): TypeItem = codebase.obtainTypeFromString(
-// TODO: No, handle List<String>[]
-        if (typeParameterList() != null)
+        if (typeParameterList().toString().isNotEmpty())
+// TODO: No, handle List<String>[], though this is highly unlikely in a class
             qualifiedName() + "<" + typeParameterList() + ">"
         else
             qualifiedName()
@@ -126,17 +127,15 @@ class TextClassItem(
         return typeInfo?.hasTypeArguments() ?: false
     }
 
-    override fun typeParameterList(): String? {
-// TODO: No, handle List<String>[]
+    override fun typeParameterList(): TypeParameterList {
+        // TODO: No, handle List<String>[]  (though it's not likely for type parameters)
         val s = typeInfo.toString()
         val index = s.indexOf('<')
         if (index != -1) {
-            return s.substring(index)
+            return TextTypeParameterList.create(codebase, s.substring(index))
         }
-        return null
+        return TypeParameterList.NONE
     }
-
-    override fun typeParameterNames(): List<String> = codebase.unsupported()
 
     private var superClass: ClassItem? = null
     private var superClassType: TypeItem? = null
@@ -152,10 +151,6 @@ class TextClassItem(
     override fun setInterfaceTypes(interfaceTypes: List<TypeItem>) {
         this.interfaceTypes = interfaceTypes.toMutableList()
     }
-
-    override fun findMethod(methodName: String, parameters: String): MethodItem? = codebase.unsupported()
-
-    override fun findField(fieldName: String): FieldItem? = codebase.unsupported()
 
     private var typeInfo: TextTypeItem? = null
     fun setTypeInfo(typeInfo: TextTypeItem) {
@@ -178,12 +173,12 @@ class TextClassItem(
     override fun methods(): List<MethodItem> = methods
     override fun fields(): List<FieldItem> = fields
 
-    fun addInterface(intf: TypeItem) {
-        interfaceTypes.add(intf)
+    fun addInterface(itf: TypeItem) {
+        interfaceTypes.add(itf)
     }
 
-    fun addInterface(intf: TextClassItem) {
-        interfaceTypes.add(intf.toType())
+    fun addInterface(itf: TextClassItem) {
+        interfaceTypes.add(itf.toType())
     }
 
     fun addConstructor(constructor: TextConstructorItem) {
@@ -222,7 +217,7 @@ class TextClassItem(
     override fun toString(): String = qualifiedName()
 
     companion object {
-        fun createClassStub(codebase: ApiInfo, name: String): TextClassItem =
+        fun createClassStub(codebase: TextCodebase, name: String): TextClassItem =
             TextClassItem(codebase = codebase, qualifiedName = name, isPublic = true).also {
                 addStubPackage(
                     name,
@@ -232,10 +227,11 @@ class TextClassItem(
             }
 
         private fun addStubPackage(
-            name: String, codebase: Codebase,
+            name: String, codebase: TextCodebase,
             textClassItem: TextClassItem
         ) {
-            val pkgPath = name.substring(0, name.lastIndexOf('.'))
+            val endIndex = name.lastIndexOf('.')
+            val pkgPath = name.substring(0, endIndex)
             val pkg = codebase.findPackage(pkgPath) as? TextPackageItem ?: TextPackageItem(
                 codebase,
                 pkgPath,
@@ -244,7 +240,7 @@ class TextClassItem(
             textClassItem.setContainingPackage(pkg)
         }
 
-        fun createInterfaceStub(codebase: ApiInfo, name: String): TextClassItem =
+        fun createInterfaceStub(codebase: TextCodebase, name: String): TextClassItem =
             TextClassItem(isInterface = true, codebase = codebase, qualifiedName = name, isPublic = true).also {
                 addStubPackage(
                     name,

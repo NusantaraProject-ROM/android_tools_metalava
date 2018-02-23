@@ -28,6 +28,7 @@ import com.android.tools.metalava.model.MemberItem
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.ModifierList
 import com.android.tools.metalava.model.PackageItem
+import com.android.tools.metalava.model.TypeParameterList
 import com.android.tools.metalava.model.psi.PsiClassItem
 import com.android.tools.metalava.model.psi.trimDocIndent
 import com.android.tools.metalava.model.visitors.ApiVisitor
@@ -360,13 +361,14 @@ class StubWriter(
     }
 
     private fun generateTypeParameterList(
-        typeList: String?,
+        typeList: TypeParameterList,
         addSpace: Boolean
     ) {
         // TODO: Do I need to map type variables?
 
-        if (typeList != null) {
-            writer.print(typeList)
+        val typeListString = typeList.toString()
+        if (typeListString.isNotEmpty()) {
+            writer.print(typeListString)
 
             if (addSpace) {
                 writer.print(' ')

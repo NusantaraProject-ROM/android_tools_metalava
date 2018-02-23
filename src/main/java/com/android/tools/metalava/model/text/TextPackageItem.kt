@@ -17,12 +17,12 @@
 package com.android.tools.metalava.model.text
 
 import com.android.tools.metalava.doclava1.SourcePositionInfo
+import com.android.tools.metalava.doclava1.TextCodebase
 import com.android.tools.metalava.model.ClassItem
-import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.PackageItem
 
 class TextPackageItem(
-    codebase: Codebase,
+    codebase: TextCodebase,
     private val name: String,
     position: SourcePositionInfo
 ) : TextItem(codebase, position, modifiers = TextModifiers(codebase = codebase, public = true)), PackageItem {

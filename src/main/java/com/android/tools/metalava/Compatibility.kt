@@ -160,7 +160,7 @@ class Compatibility(
 
     /**
      * Whether we should include public methods from super classes.
-     * Docalava1 did not do this in its signature files, but they
+     * Doclava1 did not do this in its signature files, but they
      * were included in stub files. An example of this scenario
      * is StringBuilder#setLength.
      */

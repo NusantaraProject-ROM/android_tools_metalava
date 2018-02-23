@@ -38,7 +38,7 @@ class PsiConstructorItem(
     documentation: String,
     parameters: List<PsiParameterItem>,
     returnType: PsiTypeItem,
-    private val implicitConstructor: Boolean = false
+    val implicitConstructor: Boolean = false
 ) :
     PsiMethodItem(
         codebase = codebase,
@@ -97,10 +97,10 @@ class PsiConstructorItem(
             // Delegate to parent implicit constructors
             (containingClass().superClass() as? PsiClassItem)?.constructors()?.forEach {
                 if (it.implicitConstructor) {
-                    if (predicate.test(it)) {
-                        return it
+                    return if (predicate.test(it)) {
+                        it
                     } else {
-                        return it.findDelegate(predicate, allowInexactMatch)
+                        it.findDelegate(predicate, allowInexactMatch)
                     }
                 }
             }

@@ -17,13 +17,13 @@
 package com.android.tools.metalava.model.text
 
 import com.android.tools.metalava.doclava1.SourcePositionInfo
-import com.android.tools.metalava.model.Codebase
+import com.android.tools.metalava.doclava1.TextCodebase
 import com.android.tools.metalava.model.DefaultItem
 import com.android.tools.metalava.model.ModifierList
 import com.android.tools.metalava.model.MutableModifierList
 
 abstract class TextItem(
-    override val codebase: Codebase,
+    override val codebase: TextCodebase,
     val position: SourcePositionInfo,
     override var docOnly: Boolean = false,
     override var documentation: String = "",

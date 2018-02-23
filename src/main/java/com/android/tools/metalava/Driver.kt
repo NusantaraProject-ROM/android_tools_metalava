@@ -18,6 +18,7 @@
 package com.android.tools.metalava
 
 import com.android.SdkConstants
+import com.android.SdkConstants.DOT_JAR
 import com.android.SdkConstants.DOT_JAVA
 import com.android.SdkConstants.DOT_KT
 import com.android.tools.lint.KotlinLintAnalyzerFacade
@@ -158,6 +159,8 @@ private fun processFlags() {
             )
         } else if (options.apiJar != null) {
             loadFromJarFile(options.apiJar!!)
+        } else if (options.sources.size == 1 && options.sources[0].path.endsWith(SdkConstants.DOT_JAR)) {
+            loadFromJarFile(options.sources[0])
         } else {
             loadFromSources()
         }
@@ -169,12 +172,15 @@ private fun processFlags() {
 
     val previousApiFile = options.previousApi
     if (previousApiFile != null) {
-        val previous = loadFromSignatureFiles(
-            previousApiFile, options.inputKotlinStyleNulls,
-            supportsStagedNullability = true
-        )
-        codebase.description = "Source tree"
-        previous.description = "Previous stable API"
+        val previous =
+            if (previousApiFile.path.endsWith(DOT_JAR)) {
+                loadFromJarFile(previousApiFile)
+            } else {
+                loadFromSignatureFiles(
+                    previousApiFile, options.inputKotlinStyleNulls,
+                    supportsStagedNullability = true
+                )
+            }
 
         // If configured, compares the new API with the previous API and reports
         // any incompatibilities.
@@ -297,6 +303,9 @@ private fun loadFromSources(): Codebase {
         KotlinInteropChecks().check(codebase)
     }
 
+    // General API checks for Android APIs
+    AndroidApiChecks().check(codebase)
+
     val ignoreShown = options.showUnannotated
 
     val filterEmit = ApiPredicate(codebase, ignoreShown = ignoreShown, ignoreRemoved = false)
@@ -349,14 +358,18 @@ private fun loadFromJarFile(apiJar: File, manifest: File? = null): Codebase {
     // Create project environment with those paths
     val project = projectEnvironment.project
     projectEnvironment.registerPaths(listOf(apiJar))
+
+    val kotlinFiles = emptyList<File>()
+    KotlinLintAnalyzerFacade.analyze(kotlinFiles, listOf(apiJar), project)
+
     val codebase = PsiBasedCodebase()
+    codebase.description = "Codebase loaded from $apiJar"
     codebase.initialize(project, apiJar)
     if (manifest != null) {
         codebase.manifest = options.manifest
     }
     val analyzer = ApiAnalyzer(codebase)
     analyzer.mergeExternalAnnotations()
-    codebase.description = "Codebase loaded from ${apiJar.name}"
     return codebase
 }
 
@@ -368,9 +381,11 @@ private fun createProjectEnvironment(): LintCoreProjectEnvironment {
 }
 
 private fun ensurePsiFileCapacity() {
+    //noinspection SpellCheckingInspection
     val fileSize = System.getProperty("idea.max.intellisense.filesize")
     if (fileSize == null) {
         // Ensure we can handle large compilation units like android.R
+        //noinspection SpellCheckingInspection
         System.setProperty("idea.max.intellisense.filesize", "100000")
     }
 }
@@ -499,7 +514,7 @@ private fun createStubFiles(stubDir: File, codebase: Codebase) {
     /*
     // Temporary hack: Also write out annotations to make stub compilation work. This is
     // just temporary: the Makefiles for the platform should be updated to supply a
-    // bootclasspath instead.
+    // boot classpath instead.
     val nullable = File(stubDir, "android/support/annotation/Nullable.java")
     val nonnull = File(stubDir, "android/support/annotation/NonNull.java")
     nullable.parentFile.mkdirs()
@@ -653,7 +668,7 @@ private fun extractRoots(sources: List<File>, sourceRoots: MutableList<File> = m
         }
 
         val root = findRoot(file) ?: continue
-        dirToRootCache.put(parent.path, root)
+        dirToRootCache[parent.path] = root
 
         if (!sourceRoots.contains(root)) {
             sourceRoots.add(root)

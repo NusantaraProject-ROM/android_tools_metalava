@@ -153,11 +153,11 @@ public class ApiClass extends ApiElement {
      * @param allClasses all classes keyed by their names.
      */
     public void removeOverridingMethods(Map<String, ApiClass> allClasses) {
-        for (Iterator<Map.Entry<String, ApiElement>> iter = mMethods.entrySet().iterator(); iter.hasNext(); ) {
-            Map.Entry<String, ApiElement> entry = iter.next();
+        for (Iterator<Map.Entry<String, ApiElement>> it = mMethods.entrySet().iterator(); it.hasNext(); ) {
+            Map.Entry<String, ApiElement> entry = it.next();
             ApiElement method = entry.getValue();
             if (!method.getName().startsWith("<init>(") && isOverrideOfInherited(method, allClasses)) {
-                iter.remove();
+                it.remove();
             }
         }
     }

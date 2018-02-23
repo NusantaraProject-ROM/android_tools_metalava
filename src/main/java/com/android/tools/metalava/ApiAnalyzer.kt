@@ -204,7 +204,7 @@ class ApiAnalyzer(
             if (!constructors.isEmpty()) {
                 // Try to pick the constructor, sorting first by "matches filter", then by
                 // uses available types, then by fewest throwables, then fewest parameters,
-                // then based on order in listfilter.test(cls)
+                // then based on order in listFilter.test(cls)
                 val first = constructors.first()
                 val best =
                     if (constructors.size > 1) {
@@ -232,7 +232,7 @@ class ApiAnalyzer(
             cls.defaultConstructor = cls.createDefaultConstructor().also {
                 it.mutableModifiers().setPackagePrivate(true)
                 it.hidden = false
-                it.superConstructor = superClass?.defaultConstructor;
+                it.superConstructor = superClass?.defaultConstructor
             }
         }
     }
@@ -979,30 +979,30 @@ class ApiAnalyzer(
             )
         }
         // blow open super class and interfaces
-        val supr = cl.superClass()
-        if (supr != null) {
-            if (supr.isHiddenOrRemoved()) {
+        val superClass = cl.superClass()
+        if (superClass != null) {
+            if (superClass.isHiddenOrRemoved()) {
                 // cl is a public class declared as extending a hidden superclass.
                 // this is not a desired practice but it's happened, so we deal
-                // with it by finding the first super class which passes checklevel for purposes of
+                // with it by finding the first super class which passes checkLevel for purposes of
                 // generating the doc & stub information, and proceeding normally.
                 val publicSuper = cl.publicSuperClass()
                 // TODO: Initialize and pass super type too (in case generics are involved)
                 cl.setSuperClass(publicSuper)
-                if (!supr.isFromClassPath()) {
+                if (!superClass.isFromClassPath()) {
                     reporter.report(
                         Errors.HIDDEN_SUPERCLASS, cl, "Public class " + cl.qualifiedName()
-                                + " stripped of unavailable superclass " + supr.qualifiedName()
+                                + " stripped of unavailable superclass " + superClass.qualifiedName()
                     )
                 }
             } else {
                 cantStripThis(
-                    supr, notStrippable, stubImportPackages
+                    superClass, notStrippable, stubImportPackages
                 )
-                if (supr.isPrivate && !supr.isFromClassPath()) {
+                if (superClass.isPrivate && !superClass.isFromClassPath()) {
                     reporter.report(
                         Errors.PRIVATE_SUPERCLASS, cl, "Public class "
-                                + cl.qualifiedName() + " extends private class " + supr.qualifiedName()
+                                + cl.qualifiedName() + " extends private class " + superClass.qualifiedName()
                     )
                 }
             }
