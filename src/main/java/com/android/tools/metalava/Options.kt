@@ -324,6 +324,13 @@ class Options(
     /** Level to include for javadoc */
     var docLevel = DocLevel.PROTECTED
 
+    /**
+     * Whether to omit locations for warnings and errors. This is not a flag exposed to users
+     * or listed in help; this is intended for the unit test suite, used for example for the
+     * test which checks compatibility between signature and API files where the paths vary.
+     */
+    var omitLocations = false
+
     init {
         // Pre-check whether --color/--no-color is present and use that to decide how
         // to emit the banner even before we emit errors
@@ -426,7 +433,15 @@ class Options(
                 ARG_STUBS_SOURCE_LIST -> stubsSourceList = stringToNewFile(getValue(args, ++index))
 
                 ARG_EXCLUDE_ANNOTATIONS -> generateAnnotations = false
+
+            // Note that this only affects stub generation, not signature files.
+            // For signature files, clear the compatibility mode
+            // (--annotations-in-signatures)
                 "--include-annotations" -> generateAnnotations = true // temporary for tests
+
+            // Flag used by test suite to avoid including locations in
+            // the output when diffing against golden files
+                "--omit-locations" -> omitLocations = true
 
                 ARG_PROGUARD, "-proguard" -> proguard = stringToNewFile(getValue(args, ++index))
 
@@ -1097,7 +1112,7 @@ class Options(
             ARG_PROTECTED, "Only include elements that are public or protected",
             ARG_PACKAGE, "Only include elements that are public, protected or package protected",
             ARG_PRIVATE, "Include all elements except those that are marked hidden",
-            ARG_HIDDEN, "INclude all elements, including hidden",
+            ARG_HIDDEN, "Include all elements, including hidden",
 
             "", "\nExtracting Signature Files:",
             // TODO: Document --show-annotation!

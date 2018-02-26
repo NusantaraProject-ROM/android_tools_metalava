@@ -18,6 +18,7 @@ package com.android.tools.metalava.model
 
 import com.android.tools.metalava.model.visitors.ItemVisitor
 import com.android.tools.metalava.model.visitors.TypeVisitor
+import com.intellij.psi.PsiField
 import java.io.PrintWriter
 
 interface FieldItem : MemberItem {
@@ -63,6 +64,52 @@ interface FieldItem : MemberItem {
         visitor.visitType(type, this)
         visitor.afterVisitType(type, this)
     }
+
+    /**
+     * Check the declared value with a typed comparison, not a string comparison,
+     * to accommodate toolchains with different fp -> string conversions.
+     */
+    fun hasSameValue(other: FieldItem): Boolean {
+        val thisConstant = initialValue(true)
+        val otherConstant = other.initialValue(true)
+        if (thisConstant == null != (otherConstant == null)) {
+            return false
+        }
+
+        // Null values are considered equal
+        if (thisConstant == null) {
+            return true
+        }
+
+        if (type() != other.type()) {
+            return false
+        }
+
+        if (thisConstant == otherConstant) {
+            return true
+        }
+
+        if (thisConstant.toString() == otherConstant.toString()) {
+            // e.g. Integer(3) and Short(3) are the same; when comparing
+            // with signature files we sometimes don't have the right
+            // types from signatures
+            return true
+        }
+
+        // Try a little harder when we're dealing with PsiElements
+        if (thisConstant is PsiField && otherConstant is PsiField) {
+            val name1 = thisConstant.name
+            val name2 = otherConstant.name
+            if (name1 == name2) {
+                val qualifiedName1 = thisConstant.containingClass?.qualifiedName
+                val qualifiedName2 = otherConstant.containingClass?.qualifiedName
+                return qualifiedName1 == qualifiedName2
+            }
+        }
+
+        return false
+    }
+
 
     companion object {
         val comparator: java.util.Comparator<FieldItem> = Comparator { a, b -> a.name().compareTo(b.name()) }
@@ -187,6 +234,7 @@ fun javaEscapeString(str: String): String {
     return result
 }
 
+@Suppress("LocalVariableName")
 // From doclava1 TextFieldItem#javaUnescapeString
 fun javaUnescapeString(str: String): String {
     val n = str.length

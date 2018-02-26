@@ -37,6 +37,7 @@ import com.google.common.collect.HashBiMap
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiClassType
@@ -48,7 +49,6 @@ import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPackage
 import com.intellij.psi.PsiType
-import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.javadoc.PsiDocTag
 import com.intellij.psi.search.GlobalSearchScope
@@ -229,14 +229,14 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
         for (pkg in packageMap.values) {
             var name = pkg.qualifiedName()
             // Find parent package; we have to loop since we don't always find a PSI package
-            // for intermediate elements; e.g. we may jump from java.lang straing up to the default
+            // for intermediate elements; e.g. we may jump from java.lang straight up to the default
             // package
             while (name.isNotEmpty()) {
                 val index = name.lastIndexOf('.')
-                if (index != -1) {
-                    name = name.substring(0, index)
+                name = if (index != -1) {
+                    name.substring(0, index)
                 } else {
-                    name = ""
+                    ""
                 }
                 val parent = findPackage(name) ?: continue
                 pkg.containingPackageField = parent
@@ -341,7 +341,13 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
             // TODO: How do we obtain the package docs? We generally don't have them, but it *would* be
             // nice if we picked up "overview.html" bundled files and added them. But since the docs
             // are generally missing for all elements *anyway*, let's not bother.
-            val packageHtml: String? = packageDocs?.packageDocs!![pkgName]
+            val docs = packageDocs?.packageDocs
+            val packageHtml: String? =
+                if (docs != null) {
+                    docs[pkgName]
+                } else {
+                    null
+                }
             registerPackage(psiPackage, packageClasses, packageHtml, pkgName)
         }
 
@@ -354,7 +360,6 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
         for (pkg in packageMap.values) {
             pkg.finishInitialization()
         }
-
     }
 
     fun dumpStats() {
@@ -425,11 +430,12 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
             }
         }
 
-        if (clz is PsiTypeParameter) {
+        if (classItem.classType == ClassType.TYPE_PARAMETER) {
             // Don't put PsiTypeParameter classes into the registry; e.g. when we're visiting
             //  java.util.stream.Stream<R>
             // we come across "R" and would try to place it here.
             classItem.containingPackage = emptyPackage
+            classItem.finishInitialization()
             return classItem
         }
         val qualifiedName: String = clz.qualifiedName ?: clz.name!!
@@ -526,6 +532,12 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
         if (psiType is PsiClassType) {
             val cls = psiType.resolve() ?: return null
             return findOrCreateClass(cls)
+        } else if (psiType is PsiArrayType) {
+            val componentType = psiType.componentType
+            if (componentType is PsiClassType) {
+                val cls = componentType.resolve() ?: return null
+                return findOrCreateClass(cls)
+            }
         }
         return null
     }
@@ -588,8 +600,8 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
             val result = methods[updatedMethod!!]
             if (result == null) {
                 val extra = PsiMethodItem.create(this, cls, updatedMethod)
-                methods.put(method, extra)
-                methods.put(updatedMethod, extra)
+                methods[method] = extra
+                methods[updatedMethod] = extra
                 if (!initializing) {
                     extra.finishInitialization()
                 }
@@ -703,7 +715,7 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
 
                         newPackage.addClass(newClass) // (inner classes are not registered in the package)
 
-                        oldToNew.put(cls, newClass)
+                        oldToNew[cls] = newClass
                         newClass.containingPackage = newPackage
                     }
                 }

@@ -17,11 +17,13 @@
 package com.android.tools.metalava.model.psi
 
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiTypeParameter
 
 enum class ClassType {
     INTERFACE,
     ENUM,
     ANNOTATION_TYPE,
+    TYPE_PARAMETER,
     CLASS;
 
     companion object {
@@ -30,6 +32,7 @@ enum class ClassType {
                 psiClass.isAnnotationType -> ANNOTATION_TYPE
                 psiClass.isInterface -> INTERFACE
                 psiClass.isEnum -> ENUM
+                psiClass is PsiTypeParameter -> TYPE_PARAMETER
                 else -> CLASS
             }
         }

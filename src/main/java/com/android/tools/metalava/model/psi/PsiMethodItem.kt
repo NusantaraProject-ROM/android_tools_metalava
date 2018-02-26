@@ -22,6 +22,7 @@ import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.ModifierList
 import com.android.tools.metalava.model.ParameterItem
 import com.android.tools.metalava.model.TypeItem
+import com.android.tools.metalava.model.TypeParameterList
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.TypeConversionUtil
@@ -113,8 +114,15 @@ open class PsiMethodItem(
         this.superMethods = superMethods
     }
 
-    override fun typeParameterList(): String? {
-        return PsiTypeItem.typeParameterList(psiMethod.typeParameterList)
+    override fun typeParameterList(): TypeParameterList {
+        if (psiMethod.hasTypeParameters()) {
+            return PsiTypeParameterList(
+                codebase, psiMethod.typeParameterList
+                        ?: return TypeParameterList.NONE
+            )
+        } else {
+            return TypeParameterList.NONE
+        }
     }
 
     override fun typeArgumentClasses(): List<ClassItem> {
@@ -231,8 +239,8 @@ open class PsiMethodItem(
         )
         sb.append(modifierString.toString())
 
-        val typeParameters = typeParameterList()
-        if (typeParameters != null) {
+        val typeParameters = typeParameterList().toString()
+        if (typeParameters.isNotEmpty()) {
             sb.append(' ')
             sb.append(TypeItem.convertTypeString(typeParameters, replacementMap))
         }

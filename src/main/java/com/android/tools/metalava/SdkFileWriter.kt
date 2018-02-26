@@ -178,8 +178,8 @@ class SdkFileWriter(val codebase: Codebase, private val outputDir: java.io.File)
      * Check if the clazz is in package android.view or android.widget
      */
     private fun isIncludedPackage(clazz: ClassItem): Boolean {
-        val pckg = clazz.containingPackage().qualifiedName()
-        return "android.widget" == pckg || "android.view" == pckg
+        val pkgName = clazz.containingPackage().qualifiedName()
+        return "android.widget" == pkgName || "android.view" == pkgName
     }
 
     /**

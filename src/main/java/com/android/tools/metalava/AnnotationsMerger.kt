@@ -72,7 +72,6 @@ import java.io.FileInputStream
 import java.io.IOException
 import java.lang.reflect.Field
 import java.util.ArrayList
-import java.util.Collections
 import java.util.HashMap
 import java.util.jar.JarInputStream
 import java.util.regex.Pattern
@@ -429,14 +428,14 @@ class AnnotationsMerger(
 
                             if (fields != null) {
                                 val sorted = ArrayList(fields)
-                                Collections.sort(sorted)
+                                sorted.sort()
                                 if (reflectionFields != null) {
                                     val rank = HashMap<String, Int>()
                                     run {
                                         var i = 0
                                         val n = sorted.size
                                         while (i < n) {
-                                            rank.put(sorted[i], reflectionFields.size + i)
+                                            rank[sorted[i]] = reflectionFields.size + i
                                             i++
 
                                         }
@@ -444,7 +443,7 @@ class AnnotationsMerger(
                                     var i = 0
                                     val n = reflectionFields.size
                                     while (i < n) {
-                                        rank.put(reflectionFields[i].name, i)
+                                        rank[reflectionFields[i].name] = i
                                         i++
                                     }
                                     sorted.sortWith(Comparator { o1, o2 ->

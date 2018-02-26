@@ -52,6 +52,7 @@ class DocAnalyzer(
         // insertMissingDocFromHiddenSuperclasses()
     }
 
+    //noinspection SpellCheckingInspection
     val mentionsNull: Pattern = Pattern.compile("\\bnull\\b")
 
     /** Hide packages explicitly listed in [Options.hidePackages] */
@@ -420,6 +421,7 @@ class DocAnalyzer(
 
     /** Replacements to perform in documentation */
     val typos = mapOf(
+        //noinspection SpellCheckingInspection
         "Andriod" to "Android",
         "Kitkat" to "KitKat",
         "LemonMeringuePie" to "Lollipop",
@@ -478,7 +480,6 @@ class DocAnalyzer(
 
         val apiLookup = ApiLookup.get(client)
 
-        //codebase.accept(object : VisibleItemVisitor(visitConstructorsAsMethods = false) {
         codebase.accept(object : ApiVisitor(codebase, visitConstructorsAsMethods = false) {
             override fun visitMethod(method: MethodItem) {
                 val psiMethod = method.psi() as PsiMethod
