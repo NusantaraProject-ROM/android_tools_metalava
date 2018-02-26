@@ -43,6 +43,33 @@ class ApiFromTextTest : DriverTest() {
     }
 
     @Test
+    fun `Infer fully qualified names from shorter names`() {
+
+        check(
+            compatibilityMode = true,
+            extraArguments = arrayOf("--annotations-in-signatures"),
+            signatureSource = """
+                package test.pkg {
+                  public class MyTest {
+                    ctor public MyTest();
+                    method public int clamp(int);
+                    method public double convert(@Nullable Float, byte[], Iterable<java.io.File>);
+                  }
+                }
+                """,
+            api = """
+                package test.pkg {
+                  public class MyTest {
+                    ctor public MyTest();
+                    method public int clamp(int);
+                    method public double convert(@android.support.annotation.Nullable java.lang.Float, byte[], java.lang.Iterable<java.io.File>);
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
     fun `Loading a signature file with alternate modifier order`() {
         // Regression test for https://github.com/android/android-ktx/issues/242
         val source = """
@@ -311,11 +338,11 @@ class ApiFromTextTest : DriverTest() {
                 package test.pkg {
                   public final class Foo {
                     ctor public Foo();
-                    method public final void error(int p = "42", Integer? int2 = "null");
+                    method public final void error(int p = "42", java.lang.Integer? int2 = "null");
                   }
                   public class Foo2 {
                     ctor public Foo2();
-                    method public void foo(String! = "null", String! = "\"Hello World\"", int = "42");
+                    method public void foo(java.lang.String! = "null", java.lang.String! = "\"Hello World\"", int = "42");
                   }
                 }
                 """

@@ -17,13 +17,13 @@
 package com.android.tools.metalava.model.text
 
 import com.android.tools.metalava.doclava1.SourcePositionInfo
+import com.android.tools.metalava.doclava1.TextCodebase
 import com.android.tools.metalava.model.ClassItem
-import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.FieldItem
 import com.android.tools.metalava.model.TypeItem
 
 class TextFieldItem(
-    codebase: Codebase,
+    codebase: TextCodebase,
     name: String,
     containingClass: TextClassItem,
     isPublic: Boolean,

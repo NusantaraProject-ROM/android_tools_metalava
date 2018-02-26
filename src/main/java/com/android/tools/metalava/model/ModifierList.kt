@@ -145,6 +145,32 @@ interface ModifierList {
         }
     }
 
+    /**
+     * Returns true if the visibility modifiers in this modifier list is as least as visible
+     * as the ones in the given [other] modifier list
+     */
+    fun asAccessibleAs(other: ModifierList): Boolean {
+        return when {
+            other.isPublic() -> isPublic()
+            other.isProtected() -> isPublic() || isProtected()
+            other.isPackagePrivate() -> isPublic() || isProtected() || isPackagePrivate()
+            other.isInternal() -> isPublic() || isProtected() || isInternal()
+            other.isPrivate() -> true
+            else -> true
+        }
+    }
+
+    fun getVisibilityString(): String {
+        return when {
+            isPublic() -> "public"
+            isProtected() -> "protected"
+            isPackagePrivate() -> "package private"
+            isInternal() -> "internal"
+            isPrivate() -> "private"
+            else -> error(toString())
+        }
+    }
+
     companion object {
         fun write(
             writer: Writer,

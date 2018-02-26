@@ -17,6 +17,7 @@ package com.android.tools.metalava.doclava1;
 
 import com.android.annotations.Nullable;
 import com.android.tools.metalava.Severity;
+import com.google.common.base.Splitter;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -36,7 +37,7 @@ public class Errors {
         public final int code;
 
         private Severity level;
-        private Severity defaultLevel;
+        private final Severity defaultLevel;
 
         /**
          * The name of this error if known
@@ -142,23 +143,7 @@ public class Errors {
     public static final Error REMOVED_DEPRECATED_CLASS = new Error(28, REMOVED_CLASS);
     public static final Error REMOVED_DEPRECATED_METHOD = new Error(29, REMOVED_METHOD);
     public static final Error REMOVED_DEPRECATED_FIELD = new Error(30, REMOVED_FIELD);
-
-
-    // Stuff I've added
-    // Compatibility checks
-    public static final Error INVALID_NULL_CONVERSION = new Error(40, ERROR);
-    public static final Error PARAMETER_NAME_CHANGE = new Error(41, ERROR);
-    public static final Error OPERATOR_REMOVAL = new Error(42, ERROR);
-    public static final Error INFIX_REMOVAL = new Error(43, ERROR);
-    public static final Error VARARG_REMOVAL = new Error(44, ERROR);
-    public static final Error NEWLY_FINAL = new Error(45, ERROR);
-    public static final Error ADD_SEALED = new Error(46, ERROR);
-    public static final Error KOTLIN_KEYWORD = new Error(47, WARNING);
-    public static final Error SAM_SHOULD_BE_LAST = new Error(48, WARNING);
-    public static final Error MISSING_JVMSTATIC = new Error(49, WARNING);
-    public static final Error DEFAULT_VALUE_CHANGE = new Error(50, ERROR);
-    public static final Error DOCUMENT_EXCEPTIONS = new Error(51, ERROR);
-
+    public static final Error ADDED_ABSTRACT_METHOD = new Error(31, ADDED_METHOD);
 
     // Errors in javadoc generation
     public static final Error UNRESOLVED_LINK = new Error(101, LINT);
@@ -192,11 +177,23 @@ public class Errors {
     public static final Error NO_ARTIFACT_DATA = new Error(129, HIDDEN);
     public static final Error BROKEN_ARTIFACT_FILE = new Error(130, ERROR);
 
-    // Metalava new warnings
+    // Metalava new warnings (not from doclava)
+
     public static final Error TYPO = new Error(131, LINT);
     public static final Error MISSING_PERMISSION = new Error(132, LINT);
     public static final Error MULTIPLE_THREAD_ANNOTATIONS = new Error(133, LINT);
     public static final Error UNRESOLVED_CLASS = new Error(134, LINT);
+    public static final Error INVALID_NULL_CONVERSION = new Error(135, ERROR);
+    public static final Error PARAMETER_NAME_CHANGE = new Error(136, ERROR);
+    public static final Error OPERATOR_REMOVAL = new Error(137, ERROR);
+    public static final Error INFIX_REMOVAL = new Error(138, ERROR);
+    public static final Error VARARG_REMOVAL = new Error(139, ERROR);
+    public static final Error ADD_SEALED = new Error(140, ERROR);
+    public static final Error KOTLIN_KEYWORD = new Error(141, WARNING);
+    public static final Error SAM_SHOULD_BE_LAST = new Error(142, WARNING);
+    public static final Error MISSING_JVMSTATIC = new Error(143, WARNING);
+    public static final Error DEFAULT_VALUE_CHANGE = new Error(144, ERROR);
+    public static final Error DOCUMENT_EXCEPTIONS = new Error(145, ERROR);
 
     static {
         // Attempt to initialize error names based on the field names
@@ -215,6 +212,13 @@ public class Errors {
     }
 
     public static boolean setErrorLevel(String id, Severity level) {
+        if (id.contains(",")) { // Handle being passed in multiple comma separated id's
+            boolean ok = true;
+            for (String individualId : Splitter.on(',').trimResults().split(id)) {
+                ok = setErrorLevel(individualId, level) && ok;
+            }
+            return ok;
+        }
         int code = -1;
         if (Character.isDigit(id.charAt(0))) {
             code = Integer.parseInt(id);

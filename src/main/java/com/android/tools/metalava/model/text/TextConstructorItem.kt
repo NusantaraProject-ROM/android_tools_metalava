@@ -17,11 +17,11 @@
 package com.android.tools.metalava.model.text
 
 import com.android.tools.metalava.doclava1.SourcePositionInfo
-import com.android.tools.metalava.model.Codebase
+import com.android.tools.metalava.doclava1.TextCodebase
 import com.android.tools.metalava.model.ConstructorItem
 
 class TextConstructorItem(
-    codebase: Codebase,
+    codebase: TextCodebase,
     name: String,
     containingClass: TextClassItem,
     isPublic: Boolean,
@@ -43,6 +43,7 @@ class TextConstructorItem(
     returnType, position, annotations
 ),
     ConstructorItem {
+
     override var superConstructor: ConstructorItem? = null
 
     override fun isConstructor(): Boolean = true

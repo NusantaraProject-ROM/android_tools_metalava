@@ -72,7 +72,7 @@ interface AnnotationItem {
 
     /**
      * True if this annotation represents a @ParameterName annotation (or some synonymous annotation).
-     * The parameter name should be the default atttribute or "value".
+     * The parameter name should be the default attribute or "value".
      */
     fun isParameterName(): Boolean {
         return qualifiedName()?.endsWith(".ParameterName") ?: return false
@@ -80,7 +80,7 @@ interface AnnotationItem {
 
     /**
      * True if this annotation represents a @DefaultValue annotation (or some synonymous annotation).
-     * The default value should be the default atttribute or "value".
+     * The default value should be the default attribute or "value".
      */
     fun isDefaultValue(): Boolean {
         return qualifiedName()?.endsWith(".DefaultValue") ?: return false
@@ -185,7 +185,6 @@ interface AnnotationItem {
 
                     // These aren't support annotations
                 "android.annotation.AppIdInt",
-                "android.annotation.BroadcastBehavior",
                 "android.annotation.SuppressAutoDoc",
                 "android.annotation.SystemApi",
                 "android.annotation.TestApi",
@@ -209,6 +208,7 @@ interface AnnotationItem {
                 }
 
             // Included for analysis, but should not be exported:
+                "android.annotation.BroadcastBehavior",
                 "android.annotation.SdkConstant",
                 "android.annotation.RequiresFeature",
                 "android.annotation.SystemService" -> return qualifiedName

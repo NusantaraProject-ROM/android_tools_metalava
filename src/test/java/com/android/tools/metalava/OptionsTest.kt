@@ -69,7 +69,7 @@ Documentation:
                                        package protected
 --private                              Include all elements except those that are marked
                                        hidden
---hidden                               INclude all elements, including hidden
+--hidden                               Include all elements, including hidden
 
 Extracting Signature Files:
 --api <file>                           Generate a signature descriptor file
