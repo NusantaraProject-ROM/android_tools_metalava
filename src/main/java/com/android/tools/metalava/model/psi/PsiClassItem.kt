@@ -24,7 +24,7 @@ import com.android.tools.metalava.model.FieldItem
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.PackageItem
 import com.android.tools.metalava.model.TypeItem
-import com.google.common.base.Splitter
+import com.android.tools.metalava.model.TypeParameterList
 import com.intellij.lang.jvm.types.JvmReferenceType
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
@@ -36,14 +36,14 @@ import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.util.PsiUtil
 
-class PsiClassItem(
+open class PsiClassItem(
     override val codebase: PsiBasedCodebase,
     val psiClass: PsiClass,
     private val name: String,
     private val fullName: String,
     private val qualifiedName: String,
     private val hasImplicitDefaultConstructor: Boolean,
-    private val classType: ClassType,
+    val classType: ClassType,
     modifiers: PsiModifierItem,
     documentation: String
 ) :
@@ -161,8 +161,15 @@ class PsiClassItem(
 
     override fun hasTypeVariables(): Boolean = psiClass.hasTypeParameters()
 
-    override fun typeParameterList(): String? {
-        return PsiTypeItem.typeParameterList(psiClass.typeParameterList)
+    override fun typeParameterList(): TypeParameterList {
+        if (psiClass.hasTypeParameters()) {
+            return PsiTypeParameterList(
+                codebase, psiClass.typeParameterList
+                        ?: return TypeParameterList.NONE
+            )
+        } else {
+            return TypeParameterList.NONE
+        }
     }
 
     override fun typeArgumentClasses(): List<ClassItem> {
@@ -170,20 +177,6 @@ class PsiClassItem(
             codebase,
             psiClass.typeParameterList
         )
-    }
-
-    override fun typeParameterNames(): List<String> {
-        if (!psiClass.hasTypeParameters()) {
-            return emptyList()
-        }
-
-        val typeParameters = psiClass.typeParameters
-        val list = mutableListOf<String>()
-        for (parameter in typeParameters) {
-            list.add(parameter.name ?: continue)
-        }
-
-        return list
     }
 
     override val isTypeParameter: Boolean
@@ -200,64 +193,6 @@ class PsiClassItem(
         }
 
         return PsiCompilationUnit(codebase, containingFile)
-    }
-
-    fun findMethod(template: MethodItem): MethodItem? {
-        if (template.isConstructor()) {
-            return findConstructor(template as ConstructorItem)
-        }
-
-        methods().asSequence()
-            .filter { it.matches(template) }
-            .forEach { return it }
-        return null
-    }
-
-    fun findConstructor(template: ConstructorItem): ConstructorItem? {
-        constructors().asSequence()
-            .filter { it.matches(template) }
-            .forEach { return it }
-        return null
-    }
-
-    override fun findMethod(methodName: String, parameters: String): MethodItem? {
-        if (methodName == simpleName()) {
-            // Constructor
-            constructors()
-                .filter { parametersMatch(it, parameters) }
-                .forEach { return it }
-        } else {
-            methods()
-                .filter { it.name() == methodName && parametersMatch(it, parameters) }
-                .forEach { return it }
-        }
-
-        return null
-    }
-
-    private fun parametersMatch(method: MethodItem, description: String): Boolean {
-        val parameterStrings = Splitter.on(",").trimResults().omitEmptyStrings().splitToList(description)
-        val parameters = method.parameters()
-        if (parameters.size != parameterStrings.size) {
-            return false
-        }
-        for (i in 0 until parameters.size) {
-            var parameterString = parameterStrings[i]
-            val index = parameterString.indexOf('<')
-            if (index != -1) {
-                parameterString = parameterString.substring(0, index)
-            }
-            val parameter = parameters[i].type().toErasedTypeString()
-            if (parameter != parameterString) {
-                return false
-            }
-        }
-
-        return true
-    }
-
-    override fun findField(fieldName: String): FieldItem? {
-        return fields().firstOrNull { it.name() == fieldName }
     }
 
     override fun finishInitialization() {
@@ -308,6 +243,20 @@ class PsiClassItem(
         })
     }
 
+    protected fun initialize(
+        innerClasses: List<PsiClassItem>,
+        interfaceTypes: List<TypeItem>,
+        constructors: List<PsiConstructorItem>,
+        methods: List<PsiMethodItem>,
+        fields: List<FieldItem>
+    ) {
+        this.innerClasses = innerClasses
+        this.interfaceTypes = interfaceTypes
+        this.constructors = constructors
+        this.methods = methods
+        this.fields = fields
+    }
+
     override fun mapTypeVariables(target: ClassItem, reverse: Boolean): Map<String, String> {
         val targetPsi = target.psi() as PsiClass
         val maps = mapTypeVariablesToSuperclass(
@@ -333,7 +282,7 @@ class PsiClassItem(
                 if (value == null) {
                     break
                 } else {
-                    flattened.put(key, value)
+                    flattened[key] = value
                 }
             }
         }
@@ -397,6 +346,9 @@ class PsiClassItem(
 
     companion object {
         fun create(codebase: PsiBasedCodebase, psiClass: PsiClass): PsiClassItem {
+            if (psiClass is PsiTypeParameter) {
+                return PsiTypeParameterItem.create(codebase, psiClass)
+            }
             val simpleName = psiClass.name!!
             val fullName = computeFullClassName(psiClass)
             val qualifiedName = psiClass.qualifiedName ?: simpleName
@@ -664,7 +616,7 @@ class PsiClassItem(
             return null
         }
 
-        fun mapTypeVariablesToSuperclass(
+        private fun mapTypeVariablesToSuperclass(
             type: JvmReferenceType?,
             targetClass: PsiClass,
             considerSuperClasses: Boolean = true,
@@ -676,10 +628,10 @@ class PsiClassItem(
             if (superClass != null) {
                 if (superClass == targetClass) {
                     val map = mapTypeVariablesToSuperclass(superType)
-                    if (map != null) {
-                        return mutableListOf(map)
+                    return if (map != null) {
+                        mutableListOf(map)
                     } else {
-                        return null
+                        null
                     }
                 } else {
                     val list = mapTypeVariablesToSuperclass(
@@ -699,7 +651,7 @@ class PsiClassItem(
             return null
         }
 
-        fun mapTypeVariablesToSuperclass(superType: PsiClassReferenceType?): Map<String, String>? {
+        private fun mapTypeVariablesToSuperclass(superType: PsiClassReferenceType?): Map<String, String>? {
             superType ?: return null
 
             val map = mutableMapOf<String, String>()
@@ -715,7 +667,7 @@ class PsiClassItem(
                                 val superTypeParameter = superTypeParameters[index]
                                 val superTypeName = superTypeParameter.qualifiedName ?: superTypeParameter.name
                                 if (superTypeName != null) {
-                                    map.put(superTypeName, parameterName)
+                                    map[superTypeName] = parameterName
                                 }
                             }
                         }

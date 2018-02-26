@@ -72,7 +72,7 @@ abstract class DriverTest {
         val writer = PrintWriter(sw)
         if (!com.android.tools.metalava.run(arrayOf(*args), writer, writer)) {
             val actualFail = sw.toString().trim()
-            if (expectedFail != actualFail) {
+            if (expectedFail != actualFail.replace(".", "").trim()) {
                 fail(actualFail)
             }
         }
@@ -147,6 +147,8 @@ abstract class DriverTest {
         @Language("XML") mergeAnnotations: String? = null,
         /** An optional API signature file content to load **instead** of Java/Kotlin source files */
         @Language("TEXT") signatureSource: String? = null,
+        /** An optional API jar file content to load **instead** of Java/Kotlin source files */
+        apiJar: File? = null,
         /** An optional API signature representing the previous API level to diff */
         @Language("TEXT") previousApi: String? = null,
         /** An optional Proguard keep file to generate */
@@ -243,6 +245,10 @@ abstract class DriverTest {
                         "HiddenSuperclass"
                     ) // Suppress warning #111
                 }
+            } else if (apiJar != null) {
+                sourcePathDir.mkdirs()
+                assert(sourceFiles.isEmpty(), { "Shouldn't combine sources with API jar file loads" })
+                arrayOf(apiJar.path)
             } else {
                 sourceFiles.asSequence().map { File(project, it.targetPath).path }.toList().toTypedArray()
             }
@@ -263,9 +269,14 @@ abstract class DriverTest {
         }
 
         val previousApiFile = if (previousApi != null) {
-            val file = File(project, "previous-api.txt")
-            Files.asCharSink(file, Charsets.UTF_8).write(previousApi.trimIndent())
-            file
+            val prevApiJar = File(previousApi)
+            if (prevApiJar.isFile) {
+                prevApiJar
+            } else {
+                val file = File(project, "previous-api.txt")
+                Files.asCharSink(file, Charsets.UTF_8).write(previousApi.trimIndent())
+                file
+            }
         } else {
             null
         }
@@ -890,7 +901,7 @@ abstract class DriverTest {
             emptyArray()
         }
 
-        val args = arrayOf<String>(
+        val args = arrayOf(
             *sourceList,
             "-stubpackages",
             packages.joinToString(separator = ":") { it },
@@ -963,7 +974,7 @@ abstract class DriverTest {
     }
 
     companion object {
-        private val apiLevel = "27"
+        private const val apiLevel = 27
 
         private val latestAndroidPlatform: String
             get() = "android-$apiLevel"
@@ -974,18 +985,25 @@ abstract class DriverTest {
                         ?: error("You must set \$ANDROID_HOME before running tests")
             )
 
-        fun getPlatformFile(path: String): File {
+        fun getAndroidJar(apiLevel: Int): File? {
             val localFile = File("../../prebuilts/sdk/$apiLevel/android.jar")
             if (localFile.exists()) {
                 return localFile
             }
-            val file = FileUtils.join(sdk, SdkConstants.FD_PLATFORMS, latestAndroidPlatform, path)
-            if (!file.exists()) {
-                throw IllegalArgumentException(
-                    "File \"$path\" not found in platform ${latestAndroidPlatform}"
-                )
+
+            return null
+        }
+
+        fun getPlatformFile(path: String): File {
+            return getAndroidJar(apiLevel) ?: run {
+                val file = FileUtils.join(sdk, SdkConstants.FD_PLATFORMS, latestAndroidPlatform, path)
+                if (!file.exists()) {
+                    throw IllegalArgumentException(
+                        "File \"$path\" not found in platform $latestAndroidPlatform"
+                    )
+                }
+                file
             }
-            return file
         }
 
         @NonNull
@@ -1111,6 +1129,22 @@ val sdkConstantSource: TestFile = java(
         }
         SdkConstantType value();
     }
+        """
+).indented()
+
+val broadcastBehaviorSource: TestFile = java(
+    """
+        package android.annotation;
+        import java.lang.annotation.*;
+        /** @hide */
+        @Target({ ElementType.FIELD })
+        @Retention(RetentionPolicy.SOURCE)
+        public @interface BroadcastBehavior {
+            boolean explicitOnly() default false;
+            boolean registeredOnly() default false;
+            boolean includeBackground() default false;
+            boolean protectedBroadcast() default false;
+        }
         """
 ).indented()
 

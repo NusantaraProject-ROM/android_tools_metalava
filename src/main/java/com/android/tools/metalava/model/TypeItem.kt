@@ -52,6 +52,9 @@ interface TypeItem {
         return toSlashFormat(toErasedTypeString())
     }
 
+    /** Array dimensions of this type; for example, for String it's 0 and for String[][] it's 2. */
+    fun arrayDimensions(): Int
+
     fun asClass(): ClassItem?
 
     fun toSimpleType(): String {
@@ -114,7 +117,13 @@ interface TypeItem {
 
     fun hasTypeArguments(): Boolean = toTypeString().contains("<")
 
-    fun isTypeParameter(): Boolean = toTypeString().length == 1 // heuristic; accurate implementation in PSI subclass
+    /**
+     * If this type is a type parameter, then return the corresponding [TypeParameterItem].
+     * The optional [context] provides the method or class where this type parameter
+     * appears, and can be used for example to resolve the bounds for a type variable
+     * used in a method that was specified on the class.
+     */
+    fun asTypeParameter(context: MemberItem? = null): TypeParameterItem?
 
     companion object {
         /** Shortens types, if configured */
@@ -247,26 +256,17 @@ interface TypeItem {
             }
 
             val base: String
-            if (name == "void") {
-                base = "V"
-            } else if (name == "byte") {
-                base = "B"
-            } else if (name == "boolean") {
-                base = "Z"
-            } else if (name == "char") {
-                base = "C"
-            } else if (name == "short") {
-                base = "S"
-            } else if (name == "int") {
-                base = "I"
-            } else if (name == "long") {
-                base = "L"
-            } else if (name == "float") {
-                base = "F"
-            } else if (name == "double") {
-                base = "D"
-            } else {
-                base = "L" + ClassContext.getInternalName(name) + ";"
+            base = when (name) {
+                "void" -> "V"
+                "byte" -> "B"
+                "boolean" -> "Z"
+                "char" -> "C"
+                "short" -> "S"
+                "int" -> "I"
+                "long" -> "L"
+                "float" -> "F"
+                "double" -> "D"
+                else -> "L" + ClassContext.getInternalName(name) + ";"
             }
 
             return dimension + base

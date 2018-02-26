@@ -25,6 +25,7 @@ import com.android.tools.metalava.Severity.WARNING
 import com.android.tools.metalava.doclava1.Errors
 import com.android.tools.metalava.model.AnnotationArrayAttributeValue
 import com.android.tools.metalava.model.Item
+import com.android.tools.metalava.model.psi.PsiConstructorItem
 import com.android.tools.metalava.model.psi.PsiItem
 import com.android.tools.metalava.model.text.TextItem
 import com.intellij.openapi.util.TextRange
@@ -98,7 +99,20 @@ open class Reporter(private val rootFolder: File? = null) {
         }
 
         when (item) {
-            is PsiItem -> report(id.level, item.psi(), message, id)
+            is PsiItem -> {
+                var psi = item.psi()
+
+                // If no PSI element, is this a synthetic/implicit constructor? If so
+                // grab the parent class' PSI element instead for file/location purposes
+
+                if (item is PsiConstructorItem && item.implicitConstructor &&
+                    psi?.containingFile?.virtualFile == null
+                ) {
+                    psi = item.containingClass().psi()
+                }
+
+                report(id.level, psi, message, id)
+            }
             is TextItem -> report(id.level, (item as? TextItem)?.position.toString(), message, id)
             else -> report(id.level, "<unknown location>", message, id)
         }
@@ -163,7 +177,7 @@ open class Reporter(private val rootFolder: File? = null) {
         val path =
             if (rootFolder != null) {
                 val root: VirtualFile? = StandardFileSystems.local().findFileByPath(rootFolder.path)
-                if (root != null) VfsUtilCore.getRelativePath(virtualFile, root) else file.path
+                if (root != null) VfsUtilCore.getRelativePath(virtualFile, root) ?: file.path else file.path
             } else {
                 file.path
             }
@@ -224,7 +238,9 @@ open class Reporter(private val rootFolder: File? = null) {
 
         if (color) {
             sb.append(terminalAttributes(bold = true))
-            location?.let { sb.append(it).append(": ") }
+            if (!options.omitLocations) {
+                location?.let { sb.append(it).append(": ") }
+            }
             when (effectiveSeverity) {
                 LINT -> sb.append(terminalAttributes(foreground = TerminalColor.CYAN)).append("lint: ")
                 WARNING -> sb.append(terminalAttributes(foreground = TerminalColor.YELLOW)).append("warning: ")
@@ -236,7 +252,9 @@ open class Reporter(private val rootFolder: File? = null) {
             sb.append(message)
             id?.let { sb.append(" [").append(if (it.name != null) it.name else it.code).append("]") }
         } else {
-            location?.let { sb.append(it).append(": ") }
+            if (!options.omitLocations) {
+                location?.let { sb.append(it).append(": ") }
+            }
             if (compatibility.oldErrorOutputFormat) {
                 // according to doclava1 there are some people or tools parsing old format
                 when (effectiveSeverity) {

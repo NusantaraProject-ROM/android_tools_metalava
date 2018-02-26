@@ -221,7 +221,7 @@ class PsiModifierItem(
             val mask = EQUIVALENCE_MASK
 
             // Skipping the "default" flag
-            // TODO: Compatibility: skipnative modiifier and skipstrictfp modifier flags!
+            // TODO: Compatibility: skipNativeModifier and skipStrictFpModifier modifier flags!
             //if (!compatibility.skipNativeModifier && isNative() != other.isNative()) return false
             //if (!compatibility.skipStrictFpModifier && isStrictFp() != other.isStrictFp()) return false
             return flags and mask == flags2 and mask

@@ -60,6 +60,11 @@ interface ParameterItem : Item {
      */
     fun defaultValue(): String?
 
+    /**
+     * Whether this is a varargs parameter
+     */
+    fun isVarArgs(): Boolean
+
     override fun parent(): MethodItem? = containingMethod()
 
     override fun accept(visitor: ItemVisitor) {

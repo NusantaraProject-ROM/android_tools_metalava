@@ -16,6 +16,8 @@
 
 package com.android.tools.metalava.doclava1;
 
+import com.android.annotations.NonNull;
+
 // Copied from doclava1
 public class SourcePositionInfo implements Comparable {
     public static final SourcePositionInfo UNKNOWN = new SourcePositionInfo("(unknown)", 0, 0);
@@ -30,7 +32,7 @@ public class SourcePositionInfo implements Comparable {
      * Given this position and str which occurs at that position, as well as str an index into str,
      * find the SourcePositionInfo.
      *
-     * @throw StringIndexOutOfBoundsException if index &gt; str.length()
+     * @throws StringIndexOutOfBoundsException if index &gt; str.length()
      */
     public static SourcePositionInfo add(SourcePositionInfo that, String str, int index) {
         if (that == null) {
@@ -53,14 +55,14 @@ public class SourcePositionInfo implements Comparable {
         return file + ':' + line;
     }
 
-    public int compareTo(Object o) {
+    public int compareTo(@NonNull Object o) {
         SourcePositionInfo that = (SourcePositionInfo) o;
         int r = this.file.compareTo(that.file);
         if (r != 0) return r;
         return this.line - that.line;
     }
 
-    public String file;
-    public int line;
-    public int column;
+    public final String file;
+    public final int line;
+    public final int column;
 }
