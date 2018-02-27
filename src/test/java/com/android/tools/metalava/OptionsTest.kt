@@ -33,6 +33,7 @@ Usage: $PROGRAM_NAME <flags>
 
 General:
 --help                                 This message.
+--version                              Show the version of metalava.
 --quiet                                Only include vital output
 --verbose                              Include extra diagnostic output
 --color                                Attempt to colorize the output (defaults to true if

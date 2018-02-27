@@ -192,7 +192,6 @@ class TextTypeItem(
         private fun eraseTypeArguments(s: String): String {
             val index = s.indexOf('<')
             if (index != -1) {
-                var erased = ""
                 var balance = 0
                 for (i in index..s.length) {
                     val c = s[i]
