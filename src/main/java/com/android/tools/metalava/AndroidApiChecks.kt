@@ -257,8 +257,6 @@ class AndroidApiChecks {
         type: TypeItem?
     ) {
         type ?: return
-        val text = item.documentation
-
         if (type.toString() == "int" && constantPattern.matcher(getDocumentation(item, tag)).find()) {
             var foundTypeDef = false
             for (annotation in item.modifiers.annotations()) {

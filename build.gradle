@@ -18,7 +18,14 @@ apply plugin: 'kotlin'
 apply plugin: 'maven'
 
 group = 'com.android'
-version = '0.9.3'
+def versionPropertyFile = file('src/main/resources/version.properties')
+if (versionPropertyFile.canRead()) {
+   Properties versionProps = new Properties()
+   versionProps.load(new FileInputStream(versionPropertyFile))
+   version = versionProps['metalavaVersion']
+} else {
+    throw new FileNotFoundException("Could not read $versionPropertyFile")
+}
 
 mainClassName = "com.android.tools.metalava.Driver"
 applicationDefaultJvmArgs = ["-ea", "-Xms2g", "-Xmx4g"]

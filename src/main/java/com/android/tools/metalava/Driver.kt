@@ -117,6 +117,8 @@ fun run(
         if (e.stdout.isNotBlank()) {
             stdout.println("\n${e.stdout}")
         }
+        stderr.flush()
+        stdout.flush()
         if (setExitCode) { // always true in production; not set from tests
             exit(e.exitCode)
         }
