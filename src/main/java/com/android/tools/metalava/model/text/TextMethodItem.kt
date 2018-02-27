@@ -17,16 +17,17 @@
 package com.android.tools.metalava.model.text
 
 import com.android.tools.metalava.doclava1.SourcePositionInfo
+import com.android.tools.metalava.doclava1.TextCodebase
 import com.android.tools.metalava.model.ClassItem
-import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.ParameterItem
 import com.android.tools.metalava.model.TypeItem
+import com.android.tools.metalava.model.TypeParameterList
 import java.util.function.Predicate
 
 open class TextMethodItem(
-    codebase: Codebase,
+    codebase: TextCodebase,
     name: String,
     containingClass: TextClassItem,
     isPublic: Boolean,
@@ -59,6 +60,7 @@ open class TextMethodItem(
 ), MethodItem {
 
     init {
+        @Suppress("LeakingThis")
         (modifiers as TextModifiers).owner = this
     }
 
@@ -99,17 +101,51 @@ open class TextMethodItem(
 
     override fun returnType(): TypeItem? = returnType
 
-    override fun superMethods(): List<MethodItem> = codebase.unsupported()
+    override fun superMethods(): List<MethodItem> {
+        if (isConstructor()) {
+            return emptyList()
+        }
+
+        val list = mutableListOf<MethodItem>()
+
+        var curr = containingClass().superClass()
+        while (curr != null) {
+            val superMethod = curr.findMethod(this)
+            if (superMethod != null) {
+                list.add(superMethod)
+                break
+            }
+            curr = curr.superClass()
+        }
+
+        // Interfaces
+        for (itf in containingClass().allInterfaces()) {
+            val interfaceMethod = itf.findMethod(this)
+            if (interfaceMethod != null) {
+                list.add(interfaceMethod)
+            }
+        }
+
+        return list
+    }
 
     override fun findPredicateSuperMethod(predicate: Predicate<Item>): MethodItem? = null
 
-    private var typeParameterList: String? = null
+    private var typeParameterList: TypeParameterList = TypeParameterList.NONE
 
-    fun setTypeParameterList(typeParameterList: String?) {
+    fun setTypeParameterList(typeParameterList: TypeParameterList) {
         this.typeParameterList = typeParameterList
     }
 
-    override fun typeParameterList(): String? = typeParameterList
+    fun setTypeParameterList(typeParameterList: String?) {
+        this.typeParameterList = if (typeParameterList != null) {
+            TextTypeParameterList.create(codebase, typeParameterList)
+        } else {
+            TypeParameterList.NONE
+        }
+    }
+
+    override fun typeParameterList(): TypeParameterList = typeParameterList
 
     override fun duplicate(targetContainingClass: ClassItem): MethodItem = codebase.unsupported()
 

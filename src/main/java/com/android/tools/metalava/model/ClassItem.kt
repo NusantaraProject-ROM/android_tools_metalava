@@ -17,12 +17,15 @@
 package com.android.tools.metalava.model
 
 import com.android.tools.metalava.ApiAnalyzer
+import com.android.tools.metalava.JAVA_LANG_ANNOTATION
+import com.android.tools.metalava.JAVA_LANG_ENUM
 import com.android.tools.metalava.JAVA_LANG_OBJECT
 import com.android.tools.metalava.compatibility
 import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.android.tools.metalava.model.visitors.ItemVisitor
 import com.android.tools.metalava.model.visitors.TypeVisitor
 import com.android.tools.metalava.options
+import com.google.common.base.Splitter
 import java.util.ArrayList
 import java.util.LinkedHashSet
 import java.util.function.Predicate
@@ -102,14 +105,43 @@ interface ClassItem : Item {
         return superClass
     }
 
-    /** Returns true if this class extends the given class */
+    /** Returns true if this class extends the given class (includes self) */
     fun extends(qualifiedName: String): Boolean {
         if (qualifiedName() == qualifiedName) {
             return true
         }
 
-        return superClass()?.extends(qualifiedName) ?: false
+        val superClass = superClass()
+        return superClass?.extends(qualifiedName) ?: when {
+            isEnum() -> qualifiedName == JAVA_LANG_ENUM
+            isAnnotationType() -> qualifiedName == JAVA_LANG_ANNOTATION
+            else -> qualifiedName == JAVA_LANG_OBJECT
+        }
     }
+
+    /** Returns true if this class implements the given interface (includes self) */
+    fun implements(qualifiedName: String): Boolean {
+        if (qualifiedName() == qualifiedName) {
+            return true
+        }
+
+        interfaceTypes().forEach {
+            val cls = it.asClass()
+            if (cls != null && cls.implements(qualifiedName)) {
+                return true
+            }
+        }
+
+        // Might be implementing via superclass
+        if (superClass()?.implements(qualifiedName) == true) {
+            return true
+        }
+
+        return false
+    }
+
+    /** Returns true if this class extends or implements the given class or interface */
+    fun extendsOrImplements(qualifiedName: String): Boolean = extends(qualifiedName) || implements(qualifiedName)
 
     /** Any interfaces implemented by this class */
     fun interfaceTypes(): List<TypeItem>
@@ -162,9 +194,7 @@ interface ClassItem : Item {
     fun hasTypeVariables(): Boolean
 
     /** Any type parameters for the class, if any, as a source string (with fully qualified class names) */
-    fun typeParameterList(): String?
-
-    fun typeParameterNames(): List<String>
+    fun typeParameterList(): TypeParameterList
 
     /** Returns the classes that are part of the type parameters of this method, if any */
     fun typeArgumentClasses(): List<ClassItem> = TODO("Not yet implemented")
@@ -325,9 +355,98 @@ interface ClassItem : Item {
             }
     }
 
-    fun findMethod(methodName: String, parameters: String): MethodItem?
+    fun findMethod(
+        template: MethodItem,
+        includeSuperClasses: Boolean = false,
+        includeInterfaces: Boolean = false
+    ): MethodItem? {
+        if (template.isConstructor()) {
+            return findConstructor(template as ConstructorItem)
+        }
 
-    fun findField(fieldName: String): FieldItem?
+        methods().asSequence()
+            .filter { it.matches(template) }
+            .forEach { return it }
+
+        if (includeSuperClasses) {
+            superClass()?.findMethod(template, true, includeInterfaces)?.let { return it }
+        }
+
+        if (includeInterfaces) {
+            for (itf in interfaceTypes()) {
+                val cls = itf.asClass() ?: continue
+                cls.findMethod(template, includeSuperClasses, true)?.let { return it }
+            }
+        }
+        return null
+    }
+
+    fun findConstructor(template: ConstructorItem): ConstructorItem? {
+        constructors().asSequence()
+            .filter { it.matches(template) }
+            .forEach { return it }
+        return null
+    }
+
+    fun findField(
+        fieldName: String,
+        includeSuperClasses: Boolean = false,
+        includeInterfaces: Boolean = false
+    ): FieldItem? {
+        val field = fields().firstOrNull { it.name() == fieldName }
+        if (field != null) {
+            return field
+        }
+
+        if (includeSuperClasses) {
+            superClass()?.findField(fieldName, true, includeInterfaces)?.let { return it }
+        }
+
+        if (includeInterfaces) {
+            for (itf in interfaceTypes()) {
+                val cls = itf.asClass() ?: continue
+                cls.findField(fieldName, includeSuperClasses, true)?.let { return it }
+            }
+        }
+        return null
+    }
+
+    fun findMethod(methodName: String, parameters: String): MethodItem? {
+        if (methodName == simpleName()) {
+            // Constructor
+            constructors()
+                .filter { parametersMatch(it, parameters) }
+                .forEach { return it }
+        } else {
+            methods()
+                .filter { it.name() == methodName && parametersMatch(it, parameters) }
+                .forEach { return it }
+        }
+
+        return null
+    }
+
+    private fun parametersMatch(method: MethodItem, description: String): Boolean {
+        val parameterStrings = Splitter.on(",").trimResults().omitEmptyStrings().splitToList(description)
+        val parameters = method.parameters()
+        if (parameters.size != parameterStrings.size) {
+            return false
+        }
+        for (i in 0 until parameters.size) {
+            var parameterString = parameterStrings[i]
+            val index = parameterString.indexOf('<')
+            if (index != -1) {
+                parameterString = parameterString.substring(0, index)
+            }
+            val parameter = parameters[i].type().toErasedTypeString()
+            if (parameter != parameterString) {
+                return false
+            }
+        }
+
+        return true
+    }
+
 
     /** Returns the corresponding compilation unit, if any */
     fun getCompilationUnit(): CompilationUnit? = null

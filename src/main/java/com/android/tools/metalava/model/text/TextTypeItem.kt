@@ -16,13 +16,17 @@
 
 package com.android.tools.metalava.model.text
 
+import com.android.tools.metalava.doclava1.TextCodebase
 import com.android.tools.metalava.model.ClassItem
-import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.Item
+import com.android.tools.metalava.model.MemberItem
+import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.TypeItem
+import com.android.tools.metalava.model.TypeParameterItem
+import com.android.tools.metalava.model.TypeParameterList
 
 class TextTypeItem(
-    val codebase: Codebase,
+    val codebase: TextCodebase,
     val type: String
 ) : TypeItem {
     override fun toString(): String = type
@@ -40,21 +44,95 @@ class TextTypeItem(
     }
 
     override fun asClass(): ClassItem? {
-        val cls = toErasedTypeString()
-        return codebase.findClass(cls)
+        if (primitive) {
+            return null
+        }
+        val cls = run {
+            val erased = toErasedTypeString()
+            // Also chop off array dimensions
+            val index = erased.indexOf('[')
+            if (index != -1) {
+                erased.substring(0, index)
+            } else {
+                erased
+            }
+        }
+        return codebase.findClass(cls) ?: TextClassItem.createClassStub(codebase, cls)
     }
 
     fun qualifiedTypeName(): String = type
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is TextTypeItem) return false
 
-        return qualifiedTypeName() == other.qualifiedTypeName()
+        return when (other) {
+            is TextTypeItem -> toString() == other.toString()
+            is TypeItem -> toTypeString().replace(" ", "") == other.toTypeString().replace(" ", "")
+            else -> false
+        }
     }
 
     override fun hashCode(): Int {
         return qualifiedTypeName().hashCode()
+    }
+
+    override fun arrayDimensions(): Int {
+        val type = toErasedTypeString()
+        var dimensions = 0
+        for (c in type) {
+            if (c == '[') {
+                dimensions++
+            }
+        }
+        return dimensions
+    }
+
+    private fun findTypeVariableBounds(typeParameterList: TypeParameterList, name: String): List<ClassItem> {
+        for (p in typeParameterList.typeParameters()) {
+            if (p.simpleName() == name) {
+                val bounds = p.bounds()
+                if (bounds.isNotEmpty()) {
+                    return bounds
+                }
+            }
+        }
+
+        return emptyList()
+    }
+
+    private fun findTypeVariableBounds(context: Item?, name: String): List<ClassItem> {
+        if (context is MethodItem) {
+            val bounds = findTypeVariableBounds(context.typeParameterList(), name)
+            if (bounds.isNotEmpty()) {
+                return bounds
+            }
+            return findTypeVariableBounds(context.containingClass().typeParameterList(), name)
+        } else if (context is ClassItem) {
+            return findTypeVariableBounds(context.typeParameterList(), name)
+        }
+
+        return emptyList()
+    }
+
+    override fun asTypeParameter(context: MemberItem?): TypeParameterItem? {
+        return if (isLikelyTypeParameter(toTypeString())) {
+            val typeParameter = TextTypeParameterItem.create(codebase, toTypeString())
+
+            if (context != null && typeParameter.bounds().isEmpty()) {
+                val bounds = findTypeVariableBounds(context, typeParameter.simpleName())
+                if (bounds.isNotEmpty()) {
+                    val filtered = bounds.filter { !it.isJavaLangObject() }
+                    if (filtered.isNotEmpty()) {
+                        return TextTypeParameterItem.create(codebase, toTypeString(), bounds)
+                    }
+                }
+            }
+
+            typeParameter
+
+        } else {
+            null
+        }
     }
 
     override val primitive: Boolean
@@ -67,6 +145,28 @@ class TextTypeItem(
     }
 
     companion object {
+        // heuristic to guess if a given type parameter is a type variable
+        fun isLikelyTypeParameter(typeString: String): Boolean {
+            val first = typeString[0]
+            if (!Character.isUpperCase((first)) && first != '_') {
+                // This rules out primitives which otherwise don't have
+                return false
+            }
+            for (c in typeString) {
+                if (c == '.') {
+                    // This rules out qualified class names
+                    return false
+                }
+                if (c == ' ' || c == '[' || c == '<') {
+                    return true
+                }
+                // I'd like to check for all uppercase here but there are APIs which
+                // violate this, such as AsyncTask where the type variable names include "Result"
+            }
+
+            return true
+        }
+
         fun toTypeString(
             type: String,
             outerAnnotations: Boolean,
@@ -92,6 +192,24 @@ class TextTypeItem(
         private fun eraseTypeArguments(s: String): String {
             val index = s.indexOf('<')
             if (index != -1) {
+                var erased = ""
+                var balance = 0
+                for (i in index..s.length) {
+                    val c = s[i]
+                    if (c == '<') {
+                        balance++
+                    } else if (c == '>') {
+                        balance--
+                        if (balance == 0) {
+                            return if (i == s.length - 1) {
+                                s.substring(0, index)
+                            } else {
+                                s.substring(0, index) + s.substring(i + 1)
+                            }
+                        }
+                    }
+                }
+
                 return s.substring(0, index)
             }
             return s

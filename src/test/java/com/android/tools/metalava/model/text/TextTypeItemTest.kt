@@ -50,5 +50,14 @@ class TextTypeItemTest {
             )
         ).isEqualTo("@android.support.annotation.Nullable java.util.List")
         assertThat(TextTypeItem.toTypeString("int", false, false, false)).isEqualTo("int")
+
+        assertThat(
+            TextTypeItem.toTypeString(
+                "java.util.List<java.util.Number>[]",
+                false,
+                false,
+                erased = true
+            )
+        ).isEqualTo("java.util.List[]")
     }
 }

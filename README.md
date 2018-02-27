@@ -162,7 +162,7 @@ example, you'll see something like this (unless running with --quiet) :
   problems such as removing API elements. Metalava adds new warnings around
   nullness, such as attempting to change a nullness contract incompatibly
   (e.g. you can change a parameter from non null to nullable for final classes,
-  but not versa).  It also lets you diff directly on a source tree; it doesn't
+  but not versa).  It also lets you diff directly on a source tree; it does not
   require you to create two signature files to diff.
 
 * Consistent stubs: In doclava1, the code which iterated over the API and generated
@@ -203,6 +203,7 @@ example, you'll see something like this (unless running with --quiet) :
     324 methods and fields were missing nullness annotations out of 650 total API references.
     API nullness coverage is 50%
 
+    ```
     | Qualified Class Name                                         |      Usage Count |
     |--------------------------------------------------------------|-----------------:|
     | android.os.Parcel                                            |              146 |
@@ -222,9 +223,10 @@ example, you'll see something like this (unless running with --quiet) :
     | android.text.SpannableStringBuilder                          |               23 |
     | android.view.ViewGroup.MarginLayoutParams                    |               21 |
     | ... (99 more items                                           |                  |
-
+    ```
     Top referenced un-annotated members:
 
+    ```
     | Member                                                       |      Usage Count |
     |--------------------------------------------------------------|-----------------:|
     | Parcel.readString()                                          |               62 |
@@ -244,7 +246,7 @@ example, you'll see something like this (unless running with --quiet) :
     | Context.getResources()                                       |               18 |
     | EditText.getText()                                           |               18 |
     | ... (309 more items                                          |                  |
-
+    ```
 
   From this it's clear that it would be useful to start annotating android.os.Parcel
   and android.view.View for example where there are unannotated APIs that are
@@ -410,7 +412,9 @@ Similarly, the API Check can simply override
     }
 
 to flag all API elements that have been removed as invalid (since you cannot
-remove API.)
+remove API. (The real check is slightly more complicated; it looks into the
+hierarchy to see if there still is an inherited method with the same signature,
+in which case the deletion is allowed.))
 
 ### Documentation Generation
 
@@ -438,7 +442,8 @@ be "and").
 
 Some things are still missing before this tool can be integrated:
 
-- doclava1 had various error checking, and many of these have not been included yet
+- there are some remaining bugs around type resolution in Kotlin and
+  reified methods (also in Kotlin) are not included
 
 - the code needs cleanup, and some performance optimizations (it's about 3x
   slower than doclava1)

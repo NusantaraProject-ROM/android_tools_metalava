@@ -19,6 +19,7 @@ package com.android.tools.metalava
 import com.android.tools.metalava.model.AnnotationItem
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.Codebase
+import com.android.tools.metalava.model.ConstructorItem
 import com.android.tools.metalava.model.FieldItem
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
@@ -34,28 +35,38 @@ import java.util.function.Predicate
  * matches up the items and invokes [compare] on each pair, or
  * [added] or [removed] when items are not matched
  */
-open class ComparisonVisitor {
+open class ComparisonVisitor(
+    /**
+     * Whether constructors should be visited as part of a [#visitMethod] call
+     * instead of just a [#visitConstructor] call. Helps simplify visitors that
+     * don't care to distinguish between the two cases. Defaults to true.
+     */
+    val visitConstructorsAsMethods: Boolean = true
+) {
     open fun compare(old: Item, new: Item) {}
     open fun added(item: Item) {}
-    open fun removed(item: Item) {}
+    open fun removed(item: Item, from: Item?) {}
 
     open fun compare(old: PackageItem, new: PackageItem) {}
     open fun compare(old: ClassItem, new: ClassItem) {}
+    open fun compare(old: ConstructorItem, new: ConstructorItem) {}
     open fun compare(old: MethodItem, new: MethodItem) {}
     open fun compare(old: FieldItem, new: FieldItem) {}
     open fun compare(old: ParameterItem, new: ParameterItem) {}
 
     open fun added(item: PackageItem) {}
     open fun added(item: ClassItem) {}
+    open fun added(item: ConstructorItem) {}
     open fun added(item: MethodItem) {}
     open fun added(item: FieldItem) {}
     open fun added(item: ParameterItem) {}
 
-    open fun removed(item: PackageItem) {}
-    open fun removed(item: ClassItem) {}
-    open fun removed(item: MethodItem) {}
-    open fun removed(item: FieldItem) {}
-    open fun removed(item: ParameterItem) {}
+    open fun removed(item: PackageItem, from: Item?) {}
+    open fun removed(item: ClassItem, from: Item?) {}
+    open fun removed(item: ConstructorItem, from: ClassItem?) {}
+    open fun removed(item: MethodItem, from: ClassItem?) {}
+    open fun removed(item: FieldItem, from: ClassItem?) {}
+    open fun removed(item: ParameterItem, from: MethodItem?) {}
 }
 
 class CodebaseComparator {
@@ -68,10 +79,14 @@ class CodebaseComparator {
         // two trees
         val oldTree = createTree(old, filter)
         val newTree = createTree(new, filter)
-        compare(visitor, oldTree, newTree)
+        compare(visitor, oldTree, newTree, null)
     }
 
-    private fun compare(visitor: ComparisonVisitor, oldList: List<ItemTree>, newList: List<ItemTree>) {
+    private fun compare(
+        visitor: ComparisonVisitor, oldList: List<ItemTree>, newList: List<ItemTree>,
+        newParent: Item?
+    ) {
+        // Debugging tip: You can print out a tree like this: ItemTree.prettyPrint(list)
         var index1 = 0
         var index2 = 0
         val length1 = oldList.size
@@ -85,6 +100,7 @@ class CodebaseComparator {
                     val newTree = newList[index2]
                     val old = oldTree.item()
                     val new = newTree.item()
+
                     val compare = compare(old, new)
                     when {
                         compare > 0 -> {
@@ -93,13 +109,13 @@ class CodebaseComparator {
                         }
                         compare < 0 -> {
                             index1++
-                            visitRemoved(visitor, old)
+                            visitRemoved(visitor, old, newParent)
                         }
                         else -> {
                             visitCompare(visitor, old, new)
 
                             // Compare the children (recurse)
-                            compare(visitor, oldTree.children, newTree.children)
+                            compare(visitor, oldTree.children, newTree.children, newTree.item())
 
                             index1++
                             index2++
@@ -109,7 +125,7 @@ class CodebaseComparator {
                 } else {
                     // All the remaining items in oldList have been deleted
                     while (index1 < length1) {
-                        visitRemoved(visitor, oldList[index1++].item())
+                        visitRemoved(visitor, oldList[index1++].item(), newParent)
                     }
                 }
             } else if (index2 < length2) {
@@ -123,37 +139,70 @@ class CodebaseComparator {
         }
     }
 
+    @Suppress("USELESS_CAST") // Overloaded visitor methods: be explicit about which one is being invoked
     private fun visitAdded(visitor: ComparisonVisitor, item: Item) {
         visitor.added(item)
 
         when (item) {
             is PackageItem -> visitor.added(item)
             is ClassItem -> visitor.added(item)
-            is MethodItem -> visitor.added(item)
+            is MethodItem -> {
+                if (visitor.visitConstructorsAsMethods) {
+                    visitor.added(item)
+                } else {
+                    if (item is ConstructorItem) {
+                        visitor.added(item as ConstructorItem)
+                    } else {
+                        visitor.added(item as MethodItem)
+                    }
+                }
+            }
             is FieldItem -> visitor.added(item)
             is ParameterItem -> visitor.added(item)
         }
     }
 
-    private fun visitRemoved(visitor: ComparisonVisitor, item: Item) {
-        visitor.added(item)
+    @Suppress("USELESS_CAST") // Overloaded visitor methods: be explicit about which one is being invoked
+    private fun visitRemoved(visitor: ComparisonVisitor, item: Item, from: Item?) {
+        visitor.removed(item, from)
 
         when (item) {
-            is PackageItem -> visitor.removed(item)
-            is ClassItem -> visitor.removed(item)
-            is MethodItem -> visitor.removed(item)
-            is FieldItem -> visitor.removed(item)
-            is ParameterItem -> visitor.removed(item)
+            is PackageItem -> visitor.removed(item, from)
+            is ClassItem -> visitor.removed(item, from)
+            is MethodItem -> {
+                if (visitor.visitConstructorsAsMethods) {
+                    visitor.removed(item, from as ClassItem?)
+                } else {
+                    if (item is ConstructorItem) {
+                        visitor.removed(item as ConstructorItem, from as ClassItem?)
+                    } else {
+                        visitor.removed(item as MethodItem, from as ClassItem?)
+                    }
+                }
+            }
+            is FieldItem -> visitor.removed(item, from as ClassItem?)
+            is ParameterItem -> visitor.removed(item, from as MethodItem?)
         }
     }
 
+    @Suppress("USELESS_CAST") // Overloaded visitor methods: be explicit about which one is being invoked
     private fun visitCompare(visitor: ComparisonVisitor, old: Item, new: Item) {
         visitor.compare(old, new)
 
         when (old) {
             is PackageItem -> visitor.compare(old, new as PackageItem)
             is ClassItem -> visitor.compare(old, new as ClassItem)
-            is MethodItem -> visitor.compare(old, new as MethodItem)
+            is MethodItem -> {
+                if (visitor.visitConstructorsAsMethods) {
+                    visitor.compare(old, new as MethodItem)
+                } else {
+                    if (old is ConstructorItem) {
+                        visitor.compare(old as ConstructorItem, new as MethodItem)
+                    } else {
+                        visitor.compare(old as MethodItem, new as MethodItem)
+                    }
+                }
+            }
             is FieldItem -> visitor.compare(old, new as FieldItem)
             is ParameterItem -> visitor.compare(old, new as ParameterItem)
         }
@@ -188,8 +237,39 @@ class CodebaseComparator {
                         item1.qualifiedName().compareTo((item2 as ClassItem).qualifiedName())
                     }
                     is MethodItem -> {
-                        val delta = item1.name().compareTo((item2 as MethodItem).name())
-                        // TODO: Sort by signatures/parameters
+                        var delta = item1.name().compareTo((item2 as MethodItem).name())
+                        if (delta == 0) {
+                            val parameters1 = item1.parameters()
+                            val parameters2 = item2.parameters()
+                            val parameterCount1 = parameters1.size
+                            val parameterCount2 = parameters2.size
+                            delta = parameterCount1 - parameterCount2
+                            if (delta == 0) {
+                                for (i in 0 until parameterCount1) {
+                                    val parameter1 = parameters1[i]
+                                    val parameter2 = parameters2[i]
+                                    val type1 = parameter1.type().toTypeString()
+                                    val type2 = parameter2.type().toTypeString()
+                                    delta = type1.compareTo(type2)
+                                    if (delta != 0) {
+                                        // Consider varargs the same (... == [])
+                                        if (type1.endsWith("...") && type2.endsWith("[]") &&
+                                            type1.length == type2.length + 1 &&
+                                            type1.regionMatches(0, type2, 0, type1.length - 3, false)
+                                        ) {
+                                            delta = 0
+                                        } else if (type1.endsWith("[]") && type2.endsWith("...") &&
+                                            type1.length == type2.length - 1 &&
+                                            type1.regionMatches(0, type2, 0, type1.length - 2, false)
+                                        ) {
+                                            delta = 0
+                                        } else {
+                                            break
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         delta
                     }
                     is FieldItem -> {
@@ -270,6 +350,7 @@ class CodebaseComparator {
             return item.toString()
         }
 
+        @Suppress("unused") // Left for debugging
         fun prettyPrint(): String {
             val sb = StringBuilder(1000)
             prettyPrint(sb, 0)
@@ -288,6 +369,7 @@ class CodebaseComparator {
         }
 
         companion object {
+            @Suppress("unused") // Left for debugging
             fun prettyPrint(list: List<ItemTree>): String {
                 val sb = StringBuilder(1000)
                 for (child in list) {

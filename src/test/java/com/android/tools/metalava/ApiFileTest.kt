@@ -1977,7 +1977,7 @@ class ApiFileTest : DriverTest() {
     fun `Test invalid class name`() {
         // Regression test for b/73018978
         check(
-            checkDoclava1 = true,
+            checkDoclava1 = false,
             sourceFiles = *arrayOf(
                 kotlin(
                     "src/test/pkg/Foo.kt",
@@ -2307,8 +2307,8 @@ class ApiFileTest : DriverTest() {
 
             // TODO: Test annotations! (values, annotation classes, etc.)
             warnings = """
-                    src/test/pkg1/Usage.java:12: warning: Parameter myargs references hidden type class test.pkg1.Class9. [HiddenTypeParameter:121]
-                    src/test/pkg1/Usage.java:11: warning: Parameter myargs references hidden type class test.pkg1.Class8. [HiddenTypeParameter:121]
+                    src/test/pkg1/Usage.java:12: warning: Parameter myargs references hidden type test.pkg1.Class9[]. [HiddenTypeParameter:121]
+                    src/test/pkg1/Usage.java:11: warning: Parameter myargs references hidden type test.pkg1.Class8.... [HiddenTypeParameter:121]
                     src/test/pkg1/Usage.java:10: warning: Parameter list references hidden type class test.pkg1.Class7. [HiddenTypeParameter:121]
                     src/test/pkg1/Usage.java:7: warning: Field Usage.myClass1 references hidden type test.pkg1.Class3. [HiddenTypeParameter:121]
                     src/test/pkg1/Usage.java:8: warning: Field Usage.myClass2 references hidden type class test.pkg1.Class4. [HiddenTypeParameter:121]

@@ -15,6 +15,8 @@
  */
 package com.android.tools.metalava.apilevels;
 
+import com.android.annotations.NonNull;
+
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -223,7 +225,7 @@ public class ApiElement implements Comparable<ApiElement> {
     }
 
     @Override
-    public int compareTo(ApiElement other) {
+    public int compareTo(@NonNull ApiElement other) {
         return mName.compareTo(other.mName);
     }
 }

@@ -59,7 +59,7 @@ interface Codebase {
     /** Returns a class identified by fully qualified name, if in the codebase */
     fun findClass(className: String): ClassItem?
 
-    /** Returns a package identified by fully qualifiedname, if in the codebase */
+    /** Returns a package identified by fully qualified name, if in the codebase */
     fun findPackage(pkgName: String): PackageItem?
 
     /** Returns true if this codebase supports documentation. */
@@ -165,7 +165,7 @@ abstract class DefaultCodebase : Codebase {
                 while (current != null) {
                     val permissionName = current.getAttributeNS(ANDROID_URI, ATTR_NAME)
                     val protectionLevel = current.getAttributeNS(ANDROID_URI, "protectionLevel")
-                    map.put(permissionName, protectionLevel)
+                    map[permissionName] = protectionLevel
                     current = getNextTagByName(current, TAG_PERMISSION)
                 }
                 permissions = map

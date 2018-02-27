@@ -23,7 +23,9 @@ import com.android.tools.metalava.model.AnnotationItem
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.Item
+import com.android.tools.metalava.model.MemberItem
 import com.android.tools.metalava.model.TypeItem
+import com.android.tools.metalava.model.TypeParameterItem
 import com.android.tools.metalava.model.text.TextTypeItem
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.PsiArrayType
@@ -57,7 +59,7 @@ class PsiTypeItem private constructor(private val codebase: PsiBasedCodebase, pr
     private var toAnnotatedString: String? = null
     private var toInnerAnnotatedString: String? = null
     private var toErasedString: String? = null
-    private var asClass: ClassItem? = null
+    private var asClass: PsiClassItem? = null
 
     override fun toString(): String {
         return toTypeString()
@@ -124,8 +126,8 @@ class PsiTypeItem private constructor(private val codebase: PsiBasedCodebase, pr
         return toTypeString(outerAnnotations = false, innerAnnotations = false, erased = true)
     }
 
-    override fun isTypeParameter(): Boolean {
-        return asClass()?.psi() is PsiTypeParameter
+    override fun arrayDimensions(): Int {
+        return psiType.arrayDimensions
     }
 
     override fun internalName(): String {
@@ -149,11 +151,16 @@ class PsiTypeItem private constructor(private val codebase: PsiBasedCodebase, pr
         }
     }
 
-    override fun asClass(): ClassItem? {
+    override fun asClass(): PsiClassItem? {
         if (asClass == null) {
             asClass = codebase.findClass(psiType)
         }
         return asClass
+    }
+
+    override fun asTypeParameter(context: MemberItem?): TypeParameterItem? {
+        val cls = asClass() ?: return null
+        return cls as? PsiTypeParameterItem
     }
 
     override fun hashCode(): Int {

@@ -46,13 +46,30 @@ interface MethodItem : MemberItem {
     }
 
     /** Any type parameters for the class, if any, as a source string (with fully qualified class names) */
-    fun typeParameterList(): String?
+    fun typeParameterList(): TypeParameterList
 
     /** Returns the classes that are part of the type parameters of this method, if any */
     fun typeArgumentClasses(): List<ClassItem> = TODO("Not yet implemented")
 
     /** Types of exceptions that this method can throw */
     fun throwsTypes(): List<ClassItem>
+
+    /** Returns true if this class throws the given exception */
+    fun throws(qualifiedName: String): Boolean {
+        for (type in throwsTypes()) {
+            if (type.extends(qualifiedName)) {
+                return true
+            }
+        }
+
+        for (type in throwsTypes()) {
+            if (type.qualifiedName() == qualifiedName) {
+                return true
+            }
+        }
+
+        return false
+    }
 
     fun filteredThrowsTypes(predicate: Predicate<Item>): Collection<ClassItem> {
         return filteredThrowsTypes(predicate, LinkedHashSet())

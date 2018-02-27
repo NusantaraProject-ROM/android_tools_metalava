@@ -132,11 +132,7 @@ fun mergeDocumentation(
         val startOffset =
             if (!append) {
                 4 // "/** ".length
-            } else if (firstTag != null) {
-                firstTag.textRange.startOffset
-            } else {
-                doc.length - 2 // -2: end marker */
-            }
+            } else firstTag?.textRange?.startOffset ?: doc.length-2
         return insertInto(doc, newText, startOffset)
     }
 }
