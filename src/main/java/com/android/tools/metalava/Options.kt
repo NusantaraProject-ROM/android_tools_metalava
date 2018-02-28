@@ -40,6 +40,7 @@ private const val MAX_LINE_WIDTH = 90
 
 private const val ARGS_COMPAT_OUTPUT = "--compatible-output"
 private const val ARG_HELP = "--help"
+private const val ARG_VERSION = "--version"
 private const val ARG_QUIET = "--quiet"
 private const val ARG_VERBOSE = "--verbose"
 private const val ARG_CLASS_PATH = "--classpath"
@@ -342,7 +343,9 @@ class Options(
         // empty args: only when building initial default Options (options field
         // at the top of this file; replaced once the driver runs and passes in
         // a real argv. Don't print a banner when initializing the default options.)
-        if (args.isNotEmpty() && !args.contains(ARG_QUIET) && !args.contains(ARG_NO_BANNER)) {
+        if (args.isNotEmpty() && !args.contains(ARG_QUIET) && !args.contains(ARG_NO_BANNER) &&
+            !args.contains(ARG_VERSION)
+        ) {
             if (color) {
                 stdout.print(colorized(BANNER.trimIndent(), TerminalColor.BLUE))
             } else {
@@ -370,8 +373,13 @@ class Options(
                 ARG_QUIET -> {
                     quiet = true; verbose = false
                 }
+
                 ARG_VERBOSE -> {
                     verbose = true; quiet = false
+                }
+
+                ARG_VERSION -> {
+                    throw DriverException(stdout = "$PROGRAM_NAME version: ${Version.VERSION}")
                 }
 
                 ARGS_COMPAT_OUTPUT -> compatOutput = true
@@ -1078,6 +1086,7 @@ class Options(
         val args = arrayOf(
             "", "\nGeneral:",
             ARG_HELP, "This message.",
+            ARG_VERSION, "Show the version of $PROGRAM_NAME.",
             ARG_QUIET, "Only include vital output",
             ARG_VERBOSE, "Include extra diagnostic output",
             ARG_COLOR, "Attempt to colorize the output (defaults to true if \$TERM is xterm)",
