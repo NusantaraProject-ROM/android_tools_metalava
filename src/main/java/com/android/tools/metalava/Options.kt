@@ -103,6 +103,8 @@ private const val ARG_PROTECTED = "--protected"
 private const val ARG_PACKAGE = "--package"
 private const val ARG_PRIVATE = "--private"
 private const val ARG_HIDDEN = "--hidden"
+private const val ARG_NO_DOCS = "--no-docs"
+private const val ARG_GENERATE_DOCUMENTATION = "--generate-documentation"
 
 class Options(
     args: Array<String>,
@@ -135,6 +137,18 @@ class Options(
 
     /** Ignored flags we've already warned about - store here such that we don't keep reporting them */
     private val alreadyWarned: MutableSet<String> = mutableSetOf()
+
+    /**
+     * Set of arguments to invoke documentation generation tool (arg 0) with, unless --no-docs is also
+     * supplied
+     */
+    var invokeDocumentationToolArguments: Array<String> = emptyArray()
+
+    /**
+     * Whether to suppress documentation generation, even if a documentation generator has
+     * been configured via ${#ARG_GENERATE_DOCUMENTATION}
+     */
+    var noDocs = false
 
     /**
      * Whether signature files should emit in "compat" mode, preserving the various
@@ -519,8 +533,8 @@ class Options(
                     // Already processed above but don't flag it here as invalid
                 }
 
-                ARG_OMIT_COMMON_PACKAGES, ARG_OMIT_COMMON_PACKAGES + "=yes" -> omitCommonPackages = true
-                ARG_OMIT_COMMON_PACKAGES + "=no" -> omitCommonPackages = false
+                ARG_OMIT_COMMON_PACKAGES, "$ARG_OMIT_COMMON_PACKAGES=yes" -> omitCommonPackages = true
+                "$ARG_OMIT_COMMON_PACKAGES=no" -> omitCommonPackages = false
 
                 ARG_SKIP_JAVA_IN_COVERAGE_REPORT -> omitRuntimePackageStats = true
 
@@ -563,6 +577,24 @@ class Options(
                 }
                 ARG_APPLY_API_LEVELS -> {
                     applyApiLevelsXml = stringToExistingFile(getValue(args, ++index))
+                }
+
+                ARG_NO_DOCS, "-nodocs" -> noDocs = true
+
+                ARG_GENERATE_DOCUMENTATION -> {
+                    // Digest all the remaining arguments.
+                    // Allow "STUBS_DIR" to reference the stubs directory.
+                    invokeDocumentationToolArguments = args.slice(++index until args.size).mapNotNull {
+                        if (it == "STUBS_DIR" && stubsDir != null) {
+                            stubsDir?.path
+                        } else if (it == "STUBS_SOURCE_LIST" && stubsSourceList != null) {
+                            "@${stubsSourceList?.path}"
+                        } else {
+                            it
+                        }
+                    }.toTypedArray()
+
+                    index = args.size // jump to end of argument loop
                 }
 
             // Unimplemented doclava1 flags (no arguments)
@@ -618,8 +650,7 @@ class Options(
                 "-includePreview",
                 "-staticonly",
                 "-navtreeonly",
-                "-atLinksNavtree",
-                "-nodocs" -> {
+                "-atLinksNavtree" -> {
                     javadoc(arg)
                 }
 

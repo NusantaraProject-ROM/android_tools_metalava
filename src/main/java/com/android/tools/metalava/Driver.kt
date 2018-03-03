@@ -21,6 +21,9 @@ import com.android.SdkConstants
 import com.android.SdkConstants.DOT_JAR
 import com.android.SdkConstants.DOT_JAVA
 import com.android.SdkConstants.DOT_KT
+import com.android.ide.common.process.CachedProcessOutputHandler
+import com.android.ide.common.process.DefaultProcessExecutor
+import com.android.ide.common.process.ProcessInfoBuilder
 import com.android.tools.lint.KotlinLintAnalyzerFacade
 import com.android.tools.lint.LintCoreApplicationEnvironment
 import com.android.tools.lint.LintCoreProjectEnvironment
@@ -37,6 +40,8 @@ import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.PackageDocs
 import com.android.tools.metalava.model.psi.PsiBasedCodebase
 import com.android.tools.metalava.model.visitors.ApiVisitor
+import com.android.utils.StdLogger
+import com.android.utils.StdLogger.Level.ERROR
 import com.google.common.base.Stopwatch
 import com.google.common.collect.Lists
 import com.google.common.io.Files
@@ -218,6 +223,49 @@ private fun processFlags() {
         val packageCount = codebase.size()
         options.stdout.println("\n$PROGRAM_NAME finished handling $packageCount packages in $stopwatch")
         options.stdout.flush()
+    }
+
+    invokeDocumentationTool()
+}
+
+fun invokeDocumentationTool() {
+    if (options.noDocs) {
+        return
+    }
+
+    val args = options.invokeDocumentationToolArguments
+    if (args.isNotEmpty()) {
+        if (!options.quiet) {
+            options.stdout.println(
+                "Invoking external documentation tool ${args[0]} with arguments ${
+                args.slice(1 until args.size).joinToString { it }}"
+            )
+            options.stdout.flush()
+        }
+
+        val builder = ProcessInfoBuilder()
+
+        builder.setExecutable(File(args[0]))
+        builder.addArgs(args.slice(1 until args.size))
+
+        val processOutputHandler = CachedProcessOutputHandler()
+
+        val result = DefaultProcessExecutor(StdLogger(ERROR))
+            .execute(builder.createProcess(), processOutputHandler)
+        val output = processOutputHandler.processOutput
+        output.standardOutputAsString
+        output.errorOutputAsString
+
+        val exitCode = result.exitValue
+        options.stdout.println("${args[0]} finished with exitCode $exitCode")
+        options.stdout.flush()
+        if (exitCode != 0) {
+            throw DriverException(
+                stdout = output.standardOutputAsString,
+                stderr = output.errorOutputAsString,
+                exitCode = exitCode
+            )
+        }
     }
 }
 
