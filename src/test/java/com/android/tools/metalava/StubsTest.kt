@@ -1320,7 +1320,7 @@ class StubsTest : DriverTest() {
                     package test.pkg;
 
                     public class Foo {
-                        public void foo(int p1, @MyAnnotation("publicParameterName") java.util.Map<String, @MyAnnotation("Something") String> p2) {
+                        public void foo(int p1, @MyAnnotation("publicParameterName") java.util.Map<java.lang.String, @MyAnnotation("Something") String> p2) {
                         }
                     }
                     """
@@ -1345,7 +1345,7 @@ class StubsTest : DriverTest() {
                 package test.pkg {
                   public class Foo {
                     ctor public Foo();
-                    method public void foo(int, java.util.Map<String, java.lang.String>!);
+                    method public void foo(int, java.util.Map<java.lang.String, java.lang.String>!);
                   }
                 }
                 """,
