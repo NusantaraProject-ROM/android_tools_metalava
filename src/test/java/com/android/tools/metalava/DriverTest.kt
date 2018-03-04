@@ -1006,14 +1006,16 @@ abstract class DriverTest {
             }
         }
 
-        @NonNull
-        fun java(@NonNull @Language("JAVA") source: String): LintDetectorTest.TestFile {
+        fun java(@Language("JAVA") source: String): LintDetectorTest.TestFile {
             return TestFiles.java(source.trimIndent())
         }
 
-        @NonNull
-        fun kotlin(@NonNull @Language("kotlin") source: String): LintDetectorTest.TestFile {
+        fun kotlin(@Language("kotlin") source: String): LintDetectorTest.TestFile {
             return TestFiles.kotlin(source.trimIndent())
+        }
+
+        fun kotlin(to: String, @Language("kotlin") source: String): LintDetectorTest.TestFile {
+            return TestFiles.kotlin(to, source.trimIndent())
         }
 
         private fun readFile(file: File, stripBlankLines: Boolean = false, trim: Boolean = false): String {
