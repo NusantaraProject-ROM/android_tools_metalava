@@ -2,9 +2,12 @@ package com.android.tools.metalava
 
 import com.android.tools.lint.checks.infrastructure.TestFiles.source
 import com.android.tools.metalava.model.psi.trimDocIndent
+import com.google.common.io.Files
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Ignore
 import org.junit.Test
+import java.io.File
 
 /** Tests for the [DocAnalyzer] which enhances the docs */
 class DocAnalyzerTest : DriverTest() {
@@ -1120,5 +1123,101 @@ class DocAnalyzerTest : DriverTest() {
         )
     }
 
+    @Test
+    fun `Invoke external documentation tool`() {
+        val jdkPath = getJdkPath()
+        if (jdkPath == null) {
+            println("Ignoring external doc test: JDK not found")
+            return
+        }
+        val javadoc = File(jdkPath, "bin/javadoc")
+        if (!javadoc.isFile) {
+            println("Ignoring external doc test: javadoc not found *or* not running on Linux/OSX")
+            return
+        }
+        val androidJar = getAndroidJar(API_LEVEL)?.path
+        if (androidJar == null) {
+            println("Ignoring external doc test: android.jar not found")
+            return
+        }
 
+        val dir = Files.createTempDir()
+        val html = "$dir/javadoc"
+        val sourceList = "$dir/sources.txt"
+
+        check(
+            extraArguments = arrayOf(
+                "--write-stubs-source-list",
+                sourceList,
+                "--generate-documentation",
+                javadoc.path,
+                "-sourcepath",
+                "STUBS_DIR",
+                "-d",
+                html,
+                "-bootclasspath",
+                androidJar,
+                "STUBS_SOURCE_LIST"
+            ),
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    import android.annotation.RequiresFeature;
+                    import android.content.pm.PackageManager;
+                    @SuppressWarnings("WeakerAccess")
+                    @RequiresFeature(PackageManager.FEATURE_LOCATION)
+                    public class LocationManager {
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package android.content.pm;
+                    public abstract class PackageManager {
+                        public static final String FEATURE_LOCATION = "android.hardware.location";
+                        public boolean hasSystemFeature(String name) {
+                            return false;
+                        }
+                    }
+                    """
+                ),
+
+                requiresFeatureSource
+            ),
+            checkCompilation = true,
+            checkDoclava1 = false,
+            stubs = arrayOf(
+                """
+                package test.pkg;
+                import android.content.pm.PackageManager;
+                /**
+                 * Requires the {@link android.content.pm.PackageManager#FEATURE_LOCATION PackageManager#FEATURE_LOCATION} feature which can be detected using {@link android.content.pm.PackageManager#hasSystemFeature(String) PackageManager.hasSystemFeature(String)}.
+                 */
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class LocationManager {
+                public LocationManager() { throw new RuntimeException("Stub!"); }
+                }
+                """
+            )
+        )
+
+        val doc = File(html, "test/pkg/LocationManager.html").readText(Charsets.UTF_8)
+        assertTrue(
+            "Did not find matching javadoc fragment in LocationManager.html: actual content is\n$doc",
+            doc.contains(
+                """
+                <hr>
+                <br>
+                <pre>public class <span class="typeNameLabel">LocationManager</span>
+                extends java.lang.Object</pre>
+                <div class="block">Requires the <a href="../../android/content/pm/PackageManager.html#FEATURE_LOCATION"><code>PackageManager#FEATURE_LOCATION</code></a> feature which can be detected using <a href="../../android/content/pm/PackageManager.html#hasSystemFeature-java.lang.String-"><code>PackageManager.hasSystemFeature(String)</code></a>.</div>
+                </li>
+                </ul>
+                """.trimIndent()
+            )
+        )
+
+        dir.deleteRecursively()
+    }
 }
