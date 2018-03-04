@@ -252,18 +252,15 @@ class CodebaseComparator {
                                     val type2 = parameter2.type().toTypeString()
                                     delta = type1.compareTo(type2)
                                     if (delta != 0) {
-                                        // Consider varargs the same (... == [])
-                                        if (type1.endsWith("...") && type2.endsWith("[]") &&
-                                            type1.length == type2.length + 1 &&
-                                            type1.regionMatches(0, type2, 0, type1.length - 3, false)
-                                        ) {
-                                            delta = 0
-                                        } else if (type1.endsWith("[]") && type2.endsWith("...") &&
-                                            type1.length == type2.length - 1 &&
-                                            type1.regionMatches(0, type2, 0, type1.length - 2, false)
-                                        ) {
-                                            delta = 0
-                                        } else {
+                                        // Try a little harder:
+                                        //  (1) treat varargs and arrays the same, and
+                                        //  (2) drop java.lang. prefixes from comparisons in wildcard
+                                        //      signatures since older signature files may have removed
+                                        //      those
+                                        val simpleType1 = parameter1.type().toCanonicalType()
+                                        val simpleType2 = parameter2.type().toCanonicalType()
+                                        delta = simpleType1.compareTo(simpleType2)
+                                        if (delta != 0) {
                                             break
                                         }
                                     }

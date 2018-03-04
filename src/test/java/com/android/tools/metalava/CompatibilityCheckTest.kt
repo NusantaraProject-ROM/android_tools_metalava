@@ -1072,8 +1072,8 @@ CompatibilityCheckTest : DriverTest() {
             checkCompatibility = true,
             warnings = """
                 src/test/pkg/MyClass.java:5: warning: Method test.pkg.MyClass.method1 has changed return type from float to int [ChangedType:16]
-                src/test/pkg/MyClass.java:6: warning: Method test.pkg.MyClass.method2 has changed return type from java.util.List<Number> to java.util.List<Integer> [ChangedType:16]
-                src/test/pkg/MyClass.java:7: warning: Method test.pkg.MyClass.method3 has changed return type from java.util.List<Integer> to java.util.List<Number> [ChangedType:16]
+                src/test/pkg/MyClass.java:6: warning: Method test.pkg.MyClass.method2 has changed return type from java.util.List<Number> to java.util.List<java.lang.Integer> [ChangedType:16]
+                src/test/pkg/MyClass.java:7: warning: Method test.pkg.MyClass.method3 has changed return type from java.util.List<Integer> to java.util.List<java.lang.Number> [ChangedType:16]
                 src/test/pkg/MyClass.java:8: warning: Method test.pkg.MyClass.method4 has changed return type from String to String[] [ChangedType:16]
                 src/test/pkg/MyClass.java:9: warning: Method test.pkg.MyClass.method5 has changed return type from String[] to String[][] [ChangedType:16]
                 src/test/pkg/MyClass.java:10: warning: Method test.pkg.MyClass.method6 has changed return type from T (extends java.lang.Object) to U (extends java.lang.Number) [ChangedType:16]
@@ -1283,6 +1283,58 @@ CompatibilityCheckTest : DriverTest() {
     }
 
     @Test
+    fun `Test Kotlin extensions`() {
+        check(
+            checkCompatibility = true,
+            extraArguments = arrayOf(
+                "--compatible-output=no",
+                "--omit-common-packages=yes",
+                "--output-kotlin-nulls=yes",
+                "--input-kotlin-nulls=yes"
+            ),
+            warnings = "",
+            previousApi = """
+                package androidx.content {
+                  public final class ContentValuesKt {
+                    ctor public ContentValuesKt();
+                    method public static error.NonExistentClass contentValuesOf(kotlin.Pair<String,?>... pairs);
+                  }
+                }
+                """,
+            sourceFiles = *arrayOf(
+                kotlin("src/androidx/content/ContentValues.kt",
+                    """
+                    package androidx.content
+
+                    import android.content.ContentValues
+
+                    fun contentValuesOf(vararg pairs: Pair<String, Any?>) = ContentValues(pairs.size).apply {
+                        for ((key, value) in pairs) {
+                            when (value) {
+                                null -> putNull(key)
+                                is String -> put(key, value)
+                                is Int -> put(key, value)
+                                is Long -> put(key, value)
+                                is Boolean -> put(key, value)
+                                is Float -> put(key, value)
+                                is Double -> put(key, value)
+                                is ByteArray -> put(key, value)
+                                is Byte -> put(key, value)
+                                is Short -> put(key, value)
+                                else -> {
+                                    val valueType = value.javaClass.canonicalName
+                                    throw IllegalArgumentException("Illegal value type")
+                                }
+                            }
+                        }
+                    }
+                    """
+                )
+            )
+        )
+    }
+
+    @Test
     fun `Test All Android API levels`() {
         // Checks API across Android SDK versions and makes sure the results are
         // intentional (to help shake out bugs in the API compatibility checker)
@@ -1351,7 +1403,7 @@ CompatibilityCheckTest : DriverTest() {
 
             20 to """
                 error: Removed method android.util.TypedValue.complexToDimensionNoisy(int,android.util.DisplayMetrics) [RemovedMethod:9]
-                warning: Method org.json.JSONObject.keys has changed return type from java.util.Iterator to java.util.Iterator<String> [ChangedType:16]
+                warning: Method org.json.JSONObject.keys has changed return type from java.util.Iterator to java.util.Iterator<java.lang.String> [ChangedType:16]
                 warning: Field org.xmlpull.v1.XmlPullParserFactory.features has changed type from java.util.HashMap to java.util.HashMap<java.lang.String, java.lang.Boolean> [ChangedType:16]
                 """,
             26 to """

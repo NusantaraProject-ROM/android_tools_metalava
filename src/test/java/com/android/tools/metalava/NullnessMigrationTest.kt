@@ -281,7 +281,7 @@ class NullnessMigrationTest : DriverTest() {
                 package test.pkg {
                   public class Test {
                     ctor public Test();
-                    method @Nullable public Integer compute1(@Nullable java.util.List<@Nullable String>);
+                    method @Nullable public Integer compute1(@Nullable java.util.List<@Nullable java.lang.String>);
                     method @Nullable public Integer compute2(@Nullable java.util.List<@Nullable java.util.List<?>>);
                   }
                 }
