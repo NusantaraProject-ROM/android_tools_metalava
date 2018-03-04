@@ -73,11 +73,35 @@ class PsiParameterItem(
         val ktParameters =
             ((containingMethod.psiMethod as? KotlinUMethod)?.sourcePsi as? KtNamedFunction)?.valueParameters
                     ?: return null
-        // Line up from the end: there might be receiver for extension methods etc
+
+        // Perform matching based on parameter names, because indices won't work in the
+        // presence of @JvmOverloads where UAST generates multiple permutations of the
+        // method from the same KtParameters array.
+
+        // Quick lookup first which usually works (lined up from the end to account
+        // for receivers for extension methods etc)
         val rem = containingMethod.parameters().size - parameterIndex
         val index = ktParameters.size - rem
         if (index >= 0) {
-            return ktParameters[index]
+            val parameter = ktParameters[index]
+            if (parameter.name == name) {
+                return parameter
+            }
+        }
+
+        for (parameter in ktParameters) {
+            if (parameter.name == name) {
+                return parameter
+            }
+        }
+
+        // Fallback to handle scenario where the real parameter names are hidden by
+        // UAST (see UastKotlinPsiParameter which replaces parameter names to p$index)
+        if (index >= 0) {
+            val parameter = ktParameters[index]
+            if (name != "\$receiver") {
+                return parameter
+            }
         }
 
         return null

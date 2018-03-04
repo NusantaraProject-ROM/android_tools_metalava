@@ -16,6 +16,7 @@
 
 package com.android.tools.metalava
 
+import com.android.annotations.NonNull
 import com.android.tools.metalava.doclava1.Errors
 import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.FieldItem
@@ -267,6 +268,11 @@ class KotlinInteropChecks {
                 Errors.KOTLIN_KEYWORD, item,
                 "Avoid $typeLabel names that are Kotlin hard keywords (\"$name\"); see https://android.github.io/kotlin-guides/interop.html#no-hard-keywords"
             )
+        } else if (isJavaKeyword(name)) {
+            reporter.report(
+                Errors.KOTLIN_KEYWORD, item,
+                "Avoid $typeLabel names that are Java keywords (\"$name\"); this makes it harder to use the API from Java"
+            )
         }
     }
 
@@ -331,6 +337,69 @@ class KotlinInteropChecks {
             "when",
             "while"
             -> return true
+        }
+
+        return false
+    }
+
+    /** Returns true if the given string is a reserved Java keyword  */
+    fun isJavaKeyword(@NonNull keyword: String): Boolean {
+        // TODO when we built on top of IDEA core replace this with
+        //   JavaLexer.isKeyword(candidate, LanguageLevel.JDK_1_5)
+        when (keyword) {
+            "abstract",
+            "assert",
+            "boolean",
+            "break",
+            "byte",
+            "case",
+            "catch",
+            "char",
+            "class",
+            "const",
+            "continue",
+            "default",
+            "do",
+            "double",
+            "else",
+            "enum",
+            "extends",
+            "false",
+            "final",
+            "finally",
+            "float",
+            "for",
+            "goto",
+            "if",
+            "implements",
+            "import",
+            "instanceof",
+            "int",
+            "interface",
+            "long",
+            "native",
+            "new",
+            "null",
+            "package",
+            "private",
+            "protected",
+            "public",
+            "return",
+            "short",
+            "static",
+            "strictfp",
+            "super",
+            "switch",
+            "synchronized",
+            "this",
+            "throw",
+            "throws",
+            "transient",
+            "true",
+            "try",
+            "void",
+            "volatile",
+            "while" -> return true
         }
 
         return false
