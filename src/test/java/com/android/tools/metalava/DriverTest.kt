@@ -99,7 +99,7 @@ abstract class DriverTest {
         return paths
     }
 
-    private fun getJdkPath(): String? {
+    protected fun getJdkPath(): String? {
         val javaHome = System.getProperty("java.home")
         if (javaHome != null) {
             var javaHomeFile = File(javaHome)
@@ -509,8 +509,8 @@ abstract class DriverTest {
             *sdkFilesArgs,
             *importedPackageArgs.toTypedArray(),
             *skipEmitPackagesArgs.toTypedArray(),
-            *extraArguments,
             *sourceList,
+            *extraArguments,
             expectedFail = expectedFail
         )
 
@@ -974,10 +974,10 @@ abstract class DriverTest {
     }
 
     companion object {
-        private const val apiLevel = 27
+        const val API_LEVEL = 27
 
         private val latestAndroidPlatform: String
-            get() = "android-$apiLevel"
+            get() = "android-$API_LEVEL"
 
         private val sdk: File
             get() = File(
@@ -995,7 +995,7 @@ abstract class DriverTest {
         }
 
         fun getPlatformFile(path: String): File {
-            return getAndroidJar(apiLevel) ?: run {
+            return getAndroidJar(API_LEVEL) ?: run {
                 val file = FileUtils.join(sdk, SdkConstants.FD_PLATFORMS, latestAndroidPlatform, path)
                 if (!file.exists()) {
                     throw IllegalArgumentException(
@@ -1006,14 +1006,16 @@ abstract class DriverTest {
             }
         }
 
-        @NonNull
-        fun java(@NonNull @Language("JAVA") source: String): LintDetectorTest.TestFile {
+        fun java(@Language("JAVA") source: String): LintDetectorTest.TestFile {
             return TestFiles.java(source.trimIndent())
         }
 
-        @NonNull
-        fun kotlin(@NonNull @Language("kotlin") source: String): LintDetectorTest.TestFile {
+        fun kotlin(@Language("kotlin") source: String): LintDetectorTest.TestFile {
             return TestFiles.kotlin(source.trimIndent())
+        }
+
+        fun kotlin(to: String, @Language("kotlin") source: String): LintDetectorTest.TestFile {
+            return TestFiles.kotlin(to, source.trimIndent())
         }
 
         private fun readFile(file: File, stripBlankLines: Boolean = false, trim: Boolean = false): String {

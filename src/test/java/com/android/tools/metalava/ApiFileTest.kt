@@ -149,8 +149,8 @@ class ApiFileTest : DriverTest() {
     }
 
     @Test
-    fun `Default Values Names in Kotlin`() {
-        // Java code which explicitly specifies parameter names
+    fun `Default Values and Names in Kotlin`() {
+        // Kotlin code which explicitly specifies parameter names
         check(
             compatibilityMode = false,
             sourceFiles = *arrayOf(
@@ -159,7 +159,7 @@ class ApiFileTest : DriverTest() {
                     package test.pkg
 
                     class Foo {
-                        fun error(int: Int = 42, int2: Int? = null) { }
+                        fun error(int: Int = 42, int2: Int? = null, byte: Int = 42) { }
                     }
                     """
                 )
@@ -168,7 +168,7 @@ class ApiFileTest : DriverTest() {
                 package test.pkg {
                   public final class Foo {
                     ctor public Foo();
-                    method public void error(int p = "42", Integer? int2 = "null");
+                    method public void error(int p = "42", Integer? int2 = "null", int p1 = "42");
                   }
                 }
                 """,
@@ -422,6 +422,58 @@ class ApiFileTest : DriverTest() {
                 """,
             extraArguments = arrayOf("--hide-package", "android.support.annotation"),
             checkDoclava1 = false /* doesn't support Kotlin... */
+        )
+    }
+
+    @Test
+    fun `JvmOverloads`() {
+        // Regression test for https://github.com/android/android-ktx/issues/366
+        check(
+            compatibilityMode = false,
+            sourceFiles = *arrayOf(
+                kotlin(
+                    """
+                        package androidx.content
+
+                        import android.annotation.SuppressLint
+                        import android.content.SharedPreferences
+
+                        @SuppressLint("ApplySharedPref")
+                        @JvmOverloads
+                        inline fun SharedPreferences.edit(
+                            commit: Boolean = false,
+                            action: SharedPreferences.Editor.() -> Unit
+                        ) {
+                            val editor = edit()
+                            action(editor)
+                            if (commit) {
+                                editor.commit()
+                            } else {
+                                editor.apply()
+                            }
+                        }
+
+                        @JvmOverloads
+                        fun String.blahblahblah(firstArg: String = "hello", secondArg: Int = "42", thirdArg: String = "world") {
+                        }
+                    """
+                )
+            ),
+            api = """
+                package androidx.content {
+                  public final class TestKt {
+                    ctor public TestKt();
+                    method public static void blahblahblah(String, String firstArg = "\"hello\"", int secondArg = "\"42\"", String thirdArg = "\"world\"");
+                    method public static void blahblahblah(String, String firstArg = "\"hello\"", int secondArg = "\"42\"");
+                    method public static void blahblahblah(String, String firstArg = "\"hello\"");
+                    method public static void blahblahblah(String);
+                    method public static void edit(android.content.SharedPreferences, boolean commit = "false", kotlin.jvm.functions.Function1<? super android.content.SharedPreferences.Editor,kotlin.Unit> action);
+                    method public static void edit(android.content.SharedPreferences, kotlin.jvm.functions.Function1<? super android.content.SharedPreferences.Editor,kotlin.Unit> action);
+                  }
+                }
+                """,
+            extraArguments = arrayOf("--hide-package", "android.support.annotation"),
+            checkDoclava1 = false /* doesn't support default Values */
         )
     }
 

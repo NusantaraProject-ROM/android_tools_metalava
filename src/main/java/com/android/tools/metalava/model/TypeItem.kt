@@ -61,6 +61,23 @@ interface TypeItem {
         return stripJavaLangPrefix(toTypeString())
     }
 
+    /**
+     * Helper methods to compare types, especially types from signature files with types
+     * from parsing, which may have slightly different formats, e.g. varargs ("...") versus
+     * arrays ("[]"), java.lang. prefixes removed in wildcard signatures, etc.
+     */
+    fun toCanonicalType(): String {
+        var s = toTypeString()
+        while (s.contains(JAVA_LANG_PREFIX)) {
+            s = s.replace(JAVA_LANG_PREFIX, "")
+        }
+        if (s.contains("...")) {
+            s = s.replace("...", "[]")
+        }
+
+        return s
+    }
+
     val primitive: Boolean
 
     fun typeArgumentClasses(): List<ClassItem>
@@ -142,46 +159,31 @@ interface TypeItem {
 
         /**
          * Removes java.lang. prefixes from types, unless it's in a subpackage such
-         * as java.lang.reflect
+         * as java.lang.reflect. For simplicity we may also leave inner classes
+         * in the java.lang package untouched.
+         *
+         * NOTE: We only remove this from the front of the type; e.g. we'll replace
+         * java.lang.Class<java.lang.String> with Class<java.lang.String>.
+         * This is because the signature parsing of types is not 100% accurate
+         * and we don't want to run into trouble with more complicated generic
+         * type signatures where we end up not mapping the simplified types back
+         * to the real fully qualified type names.
          */
         fun stripJavaLangPrefix(type: String): String {
-            if (type.contains(JAVA_LANG_PREFIX)) {
-                var cleaned = type
-
+            if (type.startsWith(JAVA_LANG_PREFIX)) {
                 // Replacing java.lang is harder, since we don't want to operate in sub packages,
                 // e.g. java.lang.String -> String, but java.lang.reflect.Method -> unchanged
-                var index = cleaned.indexOf(JAVA_LANG_PREFIX)
-                while (index != -1) {
-                    val start = index + JAVA_LANG_PREFIX.length
-                    val end = cleaned.length
-                    for (index2 in start..end) {
-                        if (index2 == end) {
-                            val suffix = cleaned.substring(start)
-                            cleaned = if (index == 0) {
-                                suffix
-                            } else {
-                                cleaned.substring(0, index) + suffix
-                            }
-                            break
-                        }
-                        val c = cleaned[index2]
-                        if (c == '.') {
-                            break
-                        } else if (!Character.isJavaIdentifierPart(c)) {
-                            val suffix = cleaned.substring(start)
-                            cleaned = if (index == 0) {
-                                suffix
-                            } else {
-                                cleaned.substring(0, index) + suffix
-                            }
-                            break
-                        }
+                val start = JAVA_LANG_PREFIX.length
+                val end = type.length
+                for (index in start until end) {
+                    if (type[index] == '<') {
+                        return type.substring(start)
+                    } else if (type[index] == '.') {
+                        return type
                     }
-
-                    index = cleaned.indexOf(JAVA_LANG_PREFIX, start)
                 }
 
-                return cleaned
+                return type.substring(start)
             }
 
             return type
