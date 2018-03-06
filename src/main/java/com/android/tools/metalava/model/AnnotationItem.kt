@@ -34,8 +34,8 @@ fun isNullableAnnotation(qualifiedName: String): Boolean {
 
 fun isNonNullAnnotation(qualifiedName: String): Boolean {
     return qualifiedName.endsWith("NonNull") ||
-            qualifiedName.endsWith("NotNull") ||
-            qualifiedName.endsWith("Nonnull")
+        qualifiedName.endsWith("NotNull") ||
+        qualifiedName.endsWith("Nonnull")
 }
 
 interface AnnotationItem {
@@ -294,8 +294,8 @@ interface AnnotationItem {
             return when {
             // These 3 annotations are in the android.annotation. package, not android.support.annotation
                 source.startsWith("@SystemService") ||
-                        source.startsWith("@TargetApi") ||
-                        source.startsWith("@SuppressLint") ->
+                    source.startsWith("@TargetApi") ||
+                    source.startsWith("@SuppressLint") ->
                     "@android.annotation." + source.substring(1)
                 else -> {
                     "@android.support.annotation." + source.substring(1)

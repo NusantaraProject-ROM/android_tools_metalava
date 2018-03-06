@@ -139,7 +139,6 @@ class StubWriter(
             )
             writer.println("package ${pkg.qualifiedName()};")
 
-
             writer.flush()
             writer.close()
         }
@@ -308,9 +307,7 @@ class StubWriter(
 
         val superClass = if (preFiltered)
             cls.superClassType()
-        else
-            cls.filteredSuperClassType(filterReference)
-
+        else cls.filteredSuperClassType(filterReference)
 
         if (superClass != null && !superClass.isJavaLangObject()) {
             val qualifiedName = superClass.toTypeString()
@@ -340,14 +337,12 @@ class StubWriter(
 
         val interfaces = if (preFiltered)
             cls.interfaceTypes().asSequence()
-        else
-            cls.filteredInterfaceTypes(filterReference).asSequence()
+        else cls.filteredInterfaceTypes(filterReference).asSequence()
 
         if (interfaces.any()) {
             if (cls.isInterface() && cls.superClassType() != null)
                 writer.print(", ")
-            else
-                writer.print(" implements")
+            else writer.print(" implements")
             interfaces.forEachIndexed { index, type ->
                 if (index > 0) {
                     writer.print(",")
@@ -409,7 +404,7 @@ class StubWriter(
             val invokeOnThis = constructor != null && constructor.containingClass() == it.containingClass()
             if (invokeOnThis || parameters.isNotEmpty()) {
                 val includeCasts = parameters.isNotEmpty() &&
-                        it.containingClass().constructors().filter { filterReference.test(it) }.size > 1
+                    it.containingClass().constructors().filter { filterReference.test(it) }.size > 1
                 if (invokeOnThis) {
                     writer.print("this(")
                 } else {
@@ -434,7 +429,6 @@ class StubWriter(
                             writer.write(")")
                         }
                         writer.write("null")
-
                     } else {
                         if (typeString != "boolean" && typeString != "int" && typeString != "long") {
                             writer.write("(")
@@ -471,8 +465,8 @@ class StubWriter(
         val isAnnotation = containingClass.isAnnotationType()
 
         if (isEnum && (method.name() == "values" ||
-                    method.name() == "valueOf" && method.parameters().size == 1 &&
-                    method.parameters()[0].type().toTypeString() == JAVA_LANG_STRING)
+                method.name() == "valueOf" && method.parameters().size == 1 &&
+                method.parameters()[0].type().toTypeString() == JAVA_LANG_STRING)
         ) {
             // Skip the values() and valueOf(String) methods in enums: these are added by
             // the compiler for enums anyway, but was part of the doclava1 signature files
@@ -565,8 +559,7 @@ class StubWriter(
         // Note that throws types are already sorted internally to help comparison matching
         val throws = if (preFiltered)
             method.throwsTypes().asSequence()
-        else
-            method.throwsTypes().asSequence().filter { filterReference.test(it) }
+        else method.throwsTypes().asSequence().filter { filterReference.test(it) }
         if (throws.any()) {
             writer.print(" throws ")
             throws.asSequence().sortedWith(ClassItem.fullNameComparator).forEachIndexed { i, type ->

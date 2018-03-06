@@ -75,7 +75,5 @@ class ApiGeneratorTest : DriverTest() {
 
         val document = XmlUtils.parseDocumentSilently(xml, false)
         assertNotNull(document)
-
     }
-
 }

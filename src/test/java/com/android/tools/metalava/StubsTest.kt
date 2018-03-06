@@ -1665,9 +1665,9 @@ class StubsTest : DriverTest() {
             sourceFiles = *arrayOf(
                 java(
                     "package my.pkg;\n" +
-                            "public class String {\n" +
-                            "public String(char @libcore.util.NonNull [] value) { throw new RuntimeException(\"Stub!\"); }\n" +
-                            "}\n"
+                        "public class String {\n" +
+                        "public String(char @libcore.util.NonNull [] value) { throw new RuntimeException(\"Stub!\"); }\n" +
+                        "}\n"
                 )
             ),
             warnings = "",

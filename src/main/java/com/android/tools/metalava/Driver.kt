@@ -59,7 +59,7 @@ import kotlin.text.Charsets.UTF_8
 
 const val PROGRAM_NAME = "metalava"
 const val HELP_PROLOGUE = "$PROGRAM_NAME extracts metadata from source code to generate artifacts such as the " +
-        "signature files, the SDK stub files, external annotations etc."
+    "signature files, the SDK stub files, external annotations etc."
 
 @Suppress("PropertyName") // Can't mark const because trimIndent() :-(
 val BANNER: String = """
@@ -285,7 +285,8 @@ private fun migrateNulls(codebase: Codebase, previous: Codebase) {
 }
 
 private fun loadFromSignatureFiles(
-    file: File, kotlinStyleNulls: Boolean,
+    file: File,
+    kotlinStyleNulls: Boolean,
     manifest: File? = null,
     performChecks: Boolean = false,
     supportsStagedNullability: Boolean = false
@@ -499,20 +500,20 @@ private fun generateOutputs(codebase: Codebase) {
     options.stubsDir?.let { createStubFiles(it, codebase) }
     // Otherwise, if we've asked to write out a file list, write out the
     // input file list instead
-            ?: options.stubsSourceList?.let { file ->
-                val root = File("").absoluteFile
-                val sources = options.sources
-                val rootPath = root.path
-                val contents = sources.joinToString(" ") {
-                    val path = it.path
-                    if (path.startsWith(rootPath)) {
-                        path.substring(rootPath.length)
-                    } else {
-                        path
-                    }
+        ?: options.stubsSourceList?.let { file ->
+            val root = File("").absoluteFile
+            val sources = options.sources
+            val rootPath = root.path
+            val contents = sources.joinToString(" ") {
+                val path = it.path
+                if (path.startsWith(rootPath)) {
+                    path.substring(rootPath.length)
+                } else {
+                    path
                 }
-                Files.asCharSink(file, UTF_8).write(contents)
             }
+            Files.asCharSink(file, UTF_8).write(contents)
+        }
 
     options.externalAnnotations?.let { extractAnnotations(codebase, it) }
     progress("\n")
@@ -681,10 +682,8 @@ private fun addHiddenPackages(
                     if (child.isDirectory)
                         if (pkg.isEmpty())
                             child.name
-                        else
-                            pkg + "." + child.name
-                    else
-                        pkg
+                        else pkg + "." + child.name
+                    else pkg
                 addHiddenPackages(packageToDoc, hiddenPackages, child, subPkg)
             }
         }

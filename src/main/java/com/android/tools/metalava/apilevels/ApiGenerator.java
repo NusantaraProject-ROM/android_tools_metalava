@@ -93,10 +93,8 @@ public class ApiGenerator {
             } else if (arg.length() >= 2 && arg.substring(0, 2).equals("--")) {
                 System.err.println("Unknown argument: " + arg);
                 error = true;
-
             } else if (outPath == null) {
                 outPath = arg;
-
             } else if (new File(arg).isDirectory()) {
                 String pattern = arg;
                 if (!pattern.endsWith(File.separator)) {
@@ -104,7 +102,6 @@ public class ApiGenerator {
                 }
                 pattern += "platforms" + File.separator + "android-%" + File.separator + "android.jar";
                 patterns.add(pattern);
-
             } else {
                 System.err.println("Unknown argument: " + arg);
                 error = true;
@@ -169,12 +166,12 @@ public class ApiGenerator {
         System.err.println("Options:");
         System.err.println("--min-api <int> : The first API level to consider (>=1).");
         System.err.println("--pattern <pattern>: Path pattern to find per-API android.jar files, where\n" +
-                "            '%' is replaced by the API level.");
+            "            '%' is replaced by the API level.");
         System.err.println("--current-jar <path>: Path pattern to find the current android.jar");
         System.err.println("--current-version <int>: The API level for the current API");
         System.err.println("--current-codename <name>: REL, if a release, or codename for previews");
         System.err.println("SdkFolder: if given, this adds the pattern\n" +
-                "           '$SdkFolder/platforms/android-%/android.jar'");
+            "           '$SdkFolder/platforms/android-%/android.jar'");
         System.err.println("If multiple --pattern are specified, they are tried in the order given.\n");
     }
 

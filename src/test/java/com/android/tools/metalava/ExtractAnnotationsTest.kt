@@ -417,7 +417,7 @@ D test/pkg/IntDefTest${"$"}DialogStyle
         assertTrue(output.exists())
         val url = URL(
             "jar:" + fileToUrlString(output) + "!/" + pkg.replace('.', '/') +
-                    "/annotations.xml"
+                "/annotations.xml"
         )
         val stream = url.openStream()
         try {

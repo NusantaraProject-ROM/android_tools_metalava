@@ -137,7 +137,6 @@ interface Item {
      */
     fun isFromClassPath(): Boolean = false
 
-
     /** Is this element declared in Java (rather than Kotlin) ? */
     fun isJava(): Boolean = true
 
