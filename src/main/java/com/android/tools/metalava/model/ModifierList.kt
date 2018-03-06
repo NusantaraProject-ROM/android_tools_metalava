@@ -262,14 +262,14 @@ interface ModifierList {
                     writer.write("operator ")
                 }
 
-                val isInterface = classItem?.isInterface() == true
-                        || (methodItem?.containingClass()?.isInterface() == true &&
+                val isInterface = classItem?.isInterface() == true ||
+                    (methodItem?.containingClass()?.isInterface() == true &&
                         !list.isDefault() && !list.isStatic())
 
                 if ((compatibility.abstractInInterfaces && isInterface
-                            || list.isAbstract() &&
-                            (classItem?.isEnum() != true &&
-                                    (compatibility.abstractInAnnotations || classItem?.isAnnotationType() != true)))
+                        || list.isAbstract() &&
+                        (classItem?.isEnum() != true &&
+                            (compatibility.abstractInAnnotations || classItem?.isAnnotationType() != true)))
                     && (!isInterface || compatibility.abstractInInterfaces)
                 ) {
                     writer.write("abstract ")
@@ -310,14 +310,14 @@ interface ModifierList {
                     list.isPrivate() -> writer.write("private ")
                 }
 
-                val isInterface = classItem?.isInterface() == true
-                        || (methodItem?.containingClass()?.isInterface() == true &&
+                val isInterface = classItem?.isInterface() == true ||
+                    (methodItem?.containingClass()?.isInterface() == true &&
                         !list.isDefault() && !list.isStatic())
 
                 if ((compatibility.abstractInInterfaces && isInterface
-                            || list.isAbstract() &&
-                            (classItem?.isEnum() != true &&
-                                    (compatibility.abstractInAnnotations || classItem?.isAnnotationType() != true)))
+                        || list.isAbstract() &&
+                        (classItem?.isEnum() != true &&
+                            (compatibility.abstractInAnnotations || classItem?.isAnnotationType() != true)))
                     && (!isInterface || compatibility.abstractInInterfaces)
                 ) {
                     writer.write("abstract ")
@@ -406,4 +406,3 @@ interface ModifierList {
         }
     }
 }
-

@@ -110,7 +110,6 @@ interface FieldItem : MemberItem {
         return false
     }
 
-
     companion object {
         val comparator: java.util.Comparator<FieldItem> = Comparator { a, b -> a.name().compareTo(b.name()) }
     }
@@ -126,7 +125,7 @@ interface FieldItem : MemberItem {
     ) {
         val value =
             initialValue(!allowDefaultValue)
-                    ?: if (allowDefaultValue && !containingClass().isClass()) type().defaultValue() else null
+                ?: if (allowDefaultValue && !containingClass().isClass()) type().defaultValue() else null
         if (value != null) {
             when (value) {
                 is Int -> {
@@ -310,8 +309,8 @@ fun javaUnescapeString(str: String): String {
                     in 'a'..'f' -> (escaped.toInt() or (10 + (c - 'a'))).toChar()
                     in 'A'..'F' -> (escaped.toInt() or (10 + (c - 'A'))).toChar()
                     else -> throw IllegalArgumentException(
-                        "bad escape sequence: '" + c + "' at pos " + i + " in: \""
-                                + str + "\""
+                        "bad escape sequence: '" + c + "' at pos " + i + " in: \"" +
+                            str + "\""
                     )
                 }
                 if (state == CHAR4) {

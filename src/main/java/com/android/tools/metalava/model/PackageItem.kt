@@ -79,7 +79,6 @@ interface PackageItem : Item {
             return
         }
 
-
         if (visitor.skip(this)) {
             return
         }

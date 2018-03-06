@@ -255,8 +255,8 @@ class PsiModifierItem(
          * to consider whether an override of a method is different from its super implementation
          */
         private const val EQUIVALENCE_MASK = PUBLIC or PROTECTED or PRIVATE or STATIC or ABSTRACT or
-                FINAL or TRANSIENT or VOLATILE or SYNCHRONIZED or DEPRECATED or VARARG or
-                SEALED or INTERNAL or INFIX or OPERATOR
+            FINAL or TRANSIENT or VOLATILE or SYNCHRONIZED or DEPRECATED or VARARG or
+            SEALED or INTERNAL or INFIX or OPERATOR
 
         fun create(codebase: PsiBasedCodebase, element: PsiModifierListOwner, documentation: String?): PsiModifierItem {
             val modifiers = create(

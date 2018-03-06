@@ -114,12 +114,12 @@ class NullnessMigration : ComparisonVisitor() {
 
         fun isNewlyMigrated(qualifiedName: String): Boolean {
             return qualifiedName.endsWith(".NewlyNullable") ||
-                    qualifiedName.endsWith(".NewlyNonNull")
+                qualifiedName.endsWith(".NewlyNonNull")
         }
 
         fun isRecentlyMigrated(qualifiedName: String): Boolean {
             return qualifiedName.endsWith(".RecentlyNullable") ||
-                    qualifiedName.endsWith(".RecentlyNonNull")
+                qualifiedName.endsWith(".RecentlyNonNull")
         }
 
         fun isMigrationAnnotation(qualifiedName: String): Boolean {
@@ -167,4 +167,3 @@ const val RECENTLY_NULLABLE = "android.support.annotation.RecentlyNullable"
  * }
  */
 const val RECENTLY_NONNULL = "android.support.annotation.RecentlyNonNull"
-

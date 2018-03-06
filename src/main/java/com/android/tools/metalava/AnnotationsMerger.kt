@@ -106,7 +106,6 @@ class AnnotationsMerger(
                 } catch (e: IOException) {
                     error("Aborting: I/O problem during transform: " + e.toString())
                 }
-
             }
         }
     }
@@ -186,9 +185,9 @@ class AnnotationsMerger(
             if (signature == "java.util.Calendar int get(int)") {
                 // https://youtrack.jetbrains.com/issue/IDEA-137385
                 continue
-            } else if (signature == "java.util.Calendar void set(int, int, int) 1"
-                || signature == "java.util.Calendar void set(int, int, int, int, int) 1"
-                || signature == "java.util.Calendar void set(int, int, int, int, int, int) 1"
+            } else if (signature == "java.util.Calendar void set(int, int, int) 1" ||
+                signature == "java.util.Calendar void set(int, int, int, int, int) 1" ||
+                signature == "java.util.Calendar void set(int, int, int, int, int, int) 1"
             ) {
                 // http://b.android.com/76090
                 continue
@@ -268,8 +267,11 @@ class AnnotationsMerger(
     }
 
     private fun mergeMethodOrParameter(
-        item: Element, containingClass: String, classItem: ClassItem,
-        methodName: String, parameterIndex: Int,
+        item: Element,
+        containingClass: String,
+        classItem: ClassItem,
+        methodName: String,
+        parameterIndex: Int,
         parameters: String
     ) {
         @Suppress("NAME_SHADOWING")
@@ -281,8 +283,8 @@ class AnnotationsMerger(
         ) {
             if (listIgnored) {
                 warning(
-                    "Skipping imported element because it is not part of the API file: "
-                            + containingClass + "#" + methodName + "(" + parameters + ")"
+                    "Skipping imported element because it is not part of the API file: " +
+                        containingClass + "#" + methodName + "(" + parameters + ")"
                 )
             }
             return
@@ -319,8 +321,8 @@ class AnnotationsMerger(
         ) {
             if (listIgnored) {
                 warning(
-                    "Skipping imported element because it is not part of the API file: "
-                            + containingClass + "#" + fieldName
+                    "Skipping imported element because it is not part of the API file: " +
+                        containingClass + "#" + fieldName
                 )
             }
         } else {
@@ -437,7 +439,6 @@ class AnnotationsMerger(
                                         while (i < n) {
                                             rank[sorted[i]] = reflectionFields.size + i
                                             i++
-
                                         }
                                     }
                                     var i = 0
@@ -452,7 +453,6 @@ class AnnotationsMerger(
                                         val delta = rank1!! - rank2!!
                                         if (delta != 0) {
                                             return@Comparator delta
-
                                         }
                                         o1.compareTo(o2)
                                     })
@@ -520,9 +520,9 @@ class AnnotationsMerger(
             }
 
             name == STRING_DEF_ANNOTATION ||
-                    name == ANDROID_STRING_DEF ||
-                    name == INT_DEF_ANNOTATION ||
-                    name == ANDROID_INT_DEF -> {
+                name == ANDROID_STRING_DEF ||
+                name == INT_DEF_ANNOTATION ||
+                name == ANDROID_INT_DEF -> {
                 val children = getChildren(annotationElement)
                 var valueElement = children[0]
                 val valName = valueElement.getAttribute(ATTR_NAME)
@@ -632,14 +632,14 @@ class AnnotationsMerger(
 
     private fun isNonNull(name: String): Boolean {
         return name == IDEA_NOTNULL
-                || name == ANDROID_NOTNULL
-                || name == SUPPORT_NOTNULL
+            || name == ANDROID_NOTNULL
+            || name == SUPPORT_NOTNULL
     }
 
     private fun isNullable(name: String): Boolean {
         return name == IDEA_NULLABLE
-                || name == ANDROID_NULLABLE
-                || name == SUPPORT_NULLABLE
+            || name == ANDROID_NULLABLE
+            || name == SUPPORT_NULLABLE
     }
 
     /**

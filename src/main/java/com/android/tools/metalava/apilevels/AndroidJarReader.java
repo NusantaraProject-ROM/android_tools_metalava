@@ -108,7 +108,7 @@ public class AndroidJarReader {
                 reader.accept(classNode, 0 /*flags*/);
 
                 ApiClass theClass = api.addClass(classNode.name, apiLevel,
-                        (classNode.access & Opcodes.ACC_DEPRECATED) != 0);
+                    (classNode.access & Opcodes.ACC_DEPRECATED) != 0);
 
                 // super class
                 if (classNode.superName != null) {
@@ -127,7 +127,7 @@ public class AndroidJarReader {
                         continue;
                     }
                     if (!fieldNode.name.startsWith("this$") &&
-                            !fieldNode.name.equals("$VALUES")) {
+                        !fieldNode.name.equals("$VALUES")) {
                         boolean deprecated = (fieldNode.access & Opcodes.ACC_DEPRECATED) != 0;
                         theClass.addField(fieldNode.name, apiLevel, deprecated);
                     }

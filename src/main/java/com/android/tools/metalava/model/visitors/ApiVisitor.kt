@@ -89,11 +89,9 @@ open class ApiVisitor(
         ApiPredicate(codebase, ignoreShown = true, ignoreRemoved = remove)
     )
 
-
     // The API visitor lazily visits packages only when there's a match within at least one class;
     // this property keeps track of whether we've already visited the current package
     var visitingPackage = false
 
     open fun include(cls: ClassItem): Boolean = cls.emit
 }
-

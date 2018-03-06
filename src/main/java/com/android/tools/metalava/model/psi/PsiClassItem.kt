@@ -165,7 +165,7 @@ open class PsiClassItem(
         if (psiClass.hasTypeParameters()) {
             return PsiTypeParameterList(
                 codebase, psiClass.typeParameterList
-                        ?: return TypeParameterList.NONE
+                    ?: return TypeParameterList.NONE
             )
         } else {
             return TypeParameterList.NONE
@@ -467,13 +467,11 @@ open class PsiClassItem(
                 PsiMethodItem.create(codebase, newClass, it as PsiMethodItem)
             }.toMutableList()
 
-
             newClass.fields = classFilter.fields.asSequence()
                 // Preserve sorting order for enums
                 .sortedBy { it.sortingRank }.map {
                     PsiFieldItem.create(codebase, newClass, it as PsiFieldItem)
                 }.toMutableList()
-
 
             newClass.innerClasses = classFilter.innerClasses.map {
                 val newInnerClass = codebase.findClass(it.cls.qualifiedName) ?: it.create(codebase)
@@ -518,7 +516,8 @@ open class PsiClassItem(
             codebase: PsiBasedCodebase,
             classItem: PsiClassItem,
             psiClass: PsiClass,
-            result: MutableList<PsiMethodItem>, source: String
+            result: MutableList<PsiMethodItem>,
+            source: String
         ) {
             val psiMethod = codebase.createPsiMethod(source, psiClass)
             result.add(PsiMethodItem.create(codebase, classItem, psiMethod))
@@ -542,7 +541,6 @@ open class PsiClassItem(
                         curr.containingClass
                     } else {
                         break
-
                     }
                 }
                 return list.asReversed().asSequence().joinToString(separator = ".") { it }
@@ -684,5 +682,5 @@ fun PsiModifierListOwner.isPrivate(): Boolean = modifierList?.hasExplicitModifie
 fun PsiModifierListOwner.isPackagePrivate(): Boolean {
     val modifiers = modifierList ?: return false
     return !(modifiers.hasModifierProperty(PsiModifier.PUBLIC) ||
-            modifiers.hasModifierProperty(PsiModifier.PROTECTED))
+        modifiers.hasModifierProperty(PsiModifier.PROTECTED))
 }

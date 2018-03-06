@@ -190,5 +190,3 @@ open class TextMethodItem(
             it.type().toSimpleType()
         }})"
 }
-
-
