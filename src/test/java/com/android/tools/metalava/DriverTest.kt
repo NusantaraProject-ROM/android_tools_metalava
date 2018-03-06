@@ -20,7 +20,6 @@ import com.android.SdkConstants
 import com.android.SdkConstants.DOT_JAVA
 import com.android.SdkConstants.DOT_KT
 import com.android.SdkConstants.VALUE_TRUE
-import com.android.annotations.NonNull
 import com.android.ide.common.process.DefaultProcessExecutor
 import com.android.ide.common.process.LoggedProcessOutputHandler
 import com.android.ide.common.process.ProcessException
@@ -208,7 +207,7 @@ abstract class DriverTest {
         if (compatibilityMode && mergeAnnotations != null) {
             fail(
                 "Can't specify both compatibilityMode and mergeAnnotations: there were no " +
-                        "annotations output in doclava1"
+                    "annotations output in doclava1"
             )
         }
 
@@ -652,7 +651,6 @@ abstract class DriverTest {
             }
             val extraAnnotations = gatherSources(listOf(extraAnnotationsDir)).map { it.path }.toList().toTypedArray()
 
-
             if (!runCommand(
                     "${getJdkPath()}/bin/javac", arrayOf(
                         "-d", project.path, *generated,
@@ -668,7 +666,7 @@ abstract class DriverTest {
         if (checkDoclava1 && !CHECK_OLD_DOCLAVA_TOO) {
             println(
                 "This test requested diffing with doclava1, but doclava1 testing was disabled with the " +
-                        "DriverTest#CHECK_OLD_DOCLAVA_TOO = false"
+                    "DriverTest#CHECK_OLD_DOCLAVA_TOO = false"
             )
         }
 
@@ -714,8 +712,8 @@ abstract class DriverTest {
             )
         }
 
-        if (CHECK_OLD_DOCLAVA_TOO && checkDoclava1 && signatureSource == null
-            && removedApi != null && removedApiFile != null
+        if (CHECK_OLD_DOCLAVA_TOO && checkDoclava1 && signatureSource == null &&
+            removedApi != null && removedApiFile != null
         ) {
             removedApiFile.delete()
             checkSignaturesWithDoclava1(
@@ -931,10 +929,8 @@ abstract class DriverTest {
             output.path
         )
 
-
         val message = "\n${args.joinToString(separator = "\n") { "\"$it\"," }}"
         println("Running doclava1 with the following args:\n$message")
-
 
         if (!runCommand(
                 "$jdkPath/bin/java",
@@ -982,7 +978,7 @@ abstract class DriverTest {
         private val sdk: File
             get() = File(
                 System.getenv("ANDROID_HOME")
-                        ?: error("You must set \$ANDROID_HOME before running tests")
+                    ?: error("You must set \$ANDROID_HOME before running tests")
             )
 
         fun getAndroidJar(apiLevel: Int): File? {
@@ -1323,4 +1319,3 @@ val widgetSource: TestFile = java(
     }
     """
 ).indented()
-

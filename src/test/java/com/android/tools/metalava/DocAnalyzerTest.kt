@@ -1045,7 +1045,6 @@ class DocAnalyzerTest : DriverTest() {
         )
     }
 
-
     @Test
     fun `Generate overview html docs`() {
         // If a codebase provides overview.html files in the a public package,

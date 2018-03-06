@@ -104,7 +104,7 @@ class DocAnalyzer(
                 if (findThreadAnnotations(annotations).size > 1) {
                     reporter.warning(
                         item, "Found more than one threading annotation on $item; " +
-                                "the auto-doc feature does not handle this correctly",
+                            "the auto-doc feature does not handle this correctly",
                         Errors.MULTIPLE_THREAD_ANNOTATIONS
                     )
                 }
@@ -141,7 +141,8 @@ class DocAnalyzer(
 
             private fun handleAnnotation(
                 annotation: AnnotationItem,
-                item: Item, depth: Int
+                item: Item,
+                depth: Int
             ) {
                 val name = annotation.qualifiedName()
                 if (name == null || name.startsWith(JAVA_LANG_PREFIX)) {
@@ -225,7 +226,6 @@ class DocAnalyzer(
                                 )
                                 //return
                                 sb.append(value.toSource())
-
                             } else {
                                 if (field.isHiddenOrRemoved()) {
                                     reporter.report(
@@ -265,8 +265,8 @@ class DocAnalyzer(
                 }
 
                 // Document expected constants
-                if (name == "android.support.annotation.IntDef" || name == "android.support.annotation.LongDef"
-                    || name == "android.support.annotation.StringDef"
+                if (name == "android.support.annotation.IntDef" || name == "android.support.annotation.LongDef" ||
+                    name == "android.support.annotation.StringDef"
                 ) {
                     val values = annotation.findAttribute("value")?.leafValues() ?: return
                     val flag = annotation.findAttribute("flag")?.value?.toSource() == "true"
@@ -330,7 +330,6 @@ class DocAnalyzer(
                             "Cannot find feature field for $value required by $item (may be hidden or removed)"
                         )
                         sb.append("{@link ${value.toSource()}}")
-
                     } else {
                         if (field.isHiddenOrRemoved()) {
                             reporter.report(
@@ -357,7 +356,7 @@ class DocAnalyzer(
                     if (depth == 20) { // Temp debugging
                         throw StackOverflowError(
                             "Unbounded recursion, processing annotation " +
-                                    "${annotation.toSource()} in $item in ${item.compilationUnit()} "
+                                "${annotation.toSource()} in $item in ${item.compilationUnit()} "
                         )
                     }
                     handleAnnotation(nested, item, depth + 1)

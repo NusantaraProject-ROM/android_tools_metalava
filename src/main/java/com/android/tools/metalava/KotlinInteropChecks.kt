@@ -79,7 +79,7 @@ class KotlinInteropChecks {
         val doc = method.documentation
         for (exception in exceptions.sortedBy { it.qualifiedName() }) {
             val checked = !(exception.extends("java.lang.RuntimeException") ||
-                    exception.extends("java.lang.Error"))
+                exception.extends("java.lang.Error"))
             if (checked) {
                 val annotation = method.modifiers.findAnnotation("kotlin.jvm.Throws")
                 if (annotation != null) {
@@ -152,7 +152,7 @@ class KotlinInteropChecks {
                             } parameters (such as parameter ${i + 1}, \"${parameter.name()}\", in ${
                             method.containingClass().qualifiedName()}.${method.name()
                             }) should be last to improve Kotlin interoperability; see " +
-                                    "https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions"
+                                "https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions"
                         reporter.report(Errors.SAM_SHOULD_BE_LAST, method, message)
                         break
                     }

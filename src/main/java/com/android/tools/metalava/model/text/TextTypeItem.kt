@@ -129,7 +129,6 @@ class TextTypeItem(
             }
 
             typeParameter
-
         } else {
             null
         }

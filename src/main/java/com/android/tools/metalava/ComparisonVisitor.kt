@@ -83,7 +83,9 @@ class CodebaseComparator {
     }
 
     private fun compare(
-        visitor: ComparisonVisitor, oldList: List<ItemTree>, newList: List<ItemTree>,
+        visitor: ComparisonVisitor,
+        oldList: List<ItemTree>,
+        newList: List<ItemTree>,
         newParent: Item?
     ) {
         // Debugging tip: You can print out a tree like this: ItemTree.prettyPrint(list)
@@ -121,7 +123,6 @@ class CodebaseComparator {
                             index2++
                         }
                     }
-
                 } else {
                     // All the remaining items in oldList have been deleted
                     while (index1 < length1) {

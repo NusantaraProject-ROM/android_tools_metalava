@@ -119,8 +119,7 @@ open class TextClassItem(
         if (typeParameterList().toString().isNotEmpty())
 // TODO: No, handle List<String>[], though this is highly unlikely in a class
             qualifiedName() + "<" + typeParameterList() + ">"
-        else
-            qualifiedName()
+        else qualifiedName()
     )
 
     override fun hasTypeVariables(): Boolean {
@@ -227,7 +226,8 @@ open class TextClassItem(
             }
 
         private fun addStubPackage(
-            name: String, codebase: TextCodebase,
+            name: String,
+            codebase: TextCodebase,
             textClassItem: TextClassItem
         ) {
             val endIndex = name.lastIndexOf('.')

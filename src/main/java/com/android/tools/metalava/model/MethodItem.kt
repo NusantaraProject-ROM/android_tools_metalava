@@ -284,7 +284,6 @@ interface MethodItem : MemberItem {
                     if (pt1.toErasedTypeString() != pt2.toErasedTypeString()) {
                         return false
                     }
-
                 } else {
                     if (pt1 != pt2) {
                         return false

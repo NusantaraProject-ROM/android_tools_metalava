@@ -18,7 +18,6 @@
 
 package com.android.tools.metalava
 
-import com.android.tools.lint.checks.infrastructure.TestFiles.kotlin
 import org.junit.Ignore
 import org.junit.Test
 

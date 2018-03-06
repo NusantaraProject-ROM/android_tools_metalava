@@ -365,8 +365,8 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
     fun dumpStats() {
         options.stdout.println(
             "INTERNAL STATS: Size of classMap=${classMap.size} and size of " +
-                    "methodMap=${methodMap.size} and size of packageMap=${packageMap.size}, and the " +
-                    "typemap size is ${typeMap.size}, and the packageClasses size is ${packageClasses.size} "
+                "methodMap=${methodMap.size} and size of packageMap=${packageMap.size}, and the " +
+                "typemap size is ${typeMap.size}, and the packageClasses size is ${packageClasses.size} "
         )
     }
 
@@ -522,7 +522,6 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
                 inner!! // should be there now
                 return inner
             }
-
         }
 
         return existing ?: return createClass(psiClass)
@@ -644,7 +643,8 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
     private fun getFactory() = JavaPsiFacade.getElementFactory(project)
 
     override fun createAnnotation(
-        @Language("JAVA") source: String, context: Item?,
+        @Language("JAVA") source: String,
+        context: Item?,
         mapName: Boolean
     ): PsiAnnotationItem {
         val psiAnnotation = createPsiAnnotation(source, context?.psi())
@@ -737,7 +737,7 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
                                 reporter.report(
                                     Errors.HIDDEN_SUPERCLASS, originalClass.psiClass,
                                     "$cls has a super class " +
-                                            "that is excluded via filters: $superClassName"
+                                        "that is excluded via filters: $superClassName"
                                 )
                                 null
                             }
@@ -807,8 +807,8 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
                             } else {
                                 reporter.report(
                                     Errors.HIDDEN_SUPERCLASS, psiClass, "$method has a super method " +
-                                            "in a class that is excluded via filters: " +
-                                            "${superConstructor.containingClass().qualifiedName()} "
+                                        "in a class that is excluded via filters: " +
+                                        "${superConstructor.containingClass().qualifiedName()} "
                                 )
                             }
                         } else {
@@ -817,8 +817,8 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
                             if (newSuperConstructor == null) {
                                 reporter.report(
                                     Errors.HIDDEN_SUPERCLASS, psiClass, "$method has a super method " +
-                                            "in a class that is not matched via filters: " +
-                                            "${superConstructor.containingClass().qualifiedName()} "
+                                        "in a class that is not matched via filters: " +
+                                        "${superConstructor.containingClass().qualifiedName()} "
                                 )
                             } else {
                                 val constructorItem = newSuperConstructor as PsiConstructorItem
@@ -849,8 +849,8 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
                                 } else {
                                     reporter.report(
                                         Errors.HIDDEN_SUPERCLASS, psiClass, "$method has a super method " +
-                                                "in a class that is excluded via filters: " +
-                                                "${superMethod.containingClass().qualifiedName()} "
+                                            "in a class that is excluded via filters: " +
+                                            "${superMethod.containingClass().qualifiedName()} "
                                     )
                                 }
                             } else {
@@ -859,8 +859,8 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
                                 if (newSuperMethod == null) {
                                     reporter.report(
                                         Errors.HIDDEN_SUPERCLASS, psiClass, "$method has a super method " +
-                                                "in a class that is not matched via filters: " +
-                                                "${superMethod.containingClass().qualifiedName()} "
+                                            "in a class that is not matched via filters: " +
+                                            "${superMethod.containingClass().qualifiedName()} "
                                     )
                                 } else {
                                     list.add(newSuperMethod)
@@ -889,7 +889,7 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
                                 } else {
                                     reporter.report(
                                         Errors.HIDDEN_SUPERCLASS, psiClass, "$newCls has a throws class " +
-                                                "that is excluded via filters: ${it.qualifiedName()}"
+                                            "that is excluded via filters: ${it.qualifiedName()}"
                                     )
                                 }
                             } else {

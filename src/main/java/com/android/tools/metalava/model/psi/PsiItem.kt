@@ -50,7 +50,7 @@ abstract class PsiItem(
     override var removed = documentation.contains("@removed")
     @Suppress("LeakingThis")
     override var hidden = (documentation.contains("@hide") || documentation.contains("@pending")
-            || modifiers.hasHideAnnotations()) && !modifiers.hasShowAnnotation()
+        || modifiers.hasHideAnnotations()) && !modifiers.hasShowAnnotation()
 
     override fun psi(): PsiElement? = element
 
@@ -137,8 +137,8 @@ abstract class PsiItem(
         }
 
         if (!(documentation.contains("@link") || // includes @linkplain
-                    documentation.contains("@see") ||
-                    documentation.contains("@throws"))
+                documentation.contains("@see") ||
+                documentation.contains("@throws"))
         ) {
             // No relevant tags that need to be expanded/rewritten
             return documentation
@@ -317,7 +317,6 @@ abstract class PsiItem(
                     if (first is KDoc) {
                         return first.text
                     }
-
                 }
             }
 
