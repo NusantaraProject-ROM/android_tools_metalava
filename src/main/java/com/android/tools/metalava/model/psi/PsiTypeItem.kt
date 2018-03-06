@@ -341,7 +341,6 @@ class PsiTypeItem private constructor(private val codebase: PsiBasedCodebase, pr
                     return TextTypeItem.eraseAnnotations(typeString, false, true)
                 }
                 return typeString
-
             } else {
                 return type.canonicalText
             }
@@ -434,9 +433,9 @@ class PsiTypeItem private constructor(private val codebase: PsiBasedCodebase, pr
                             ci--
                         }
                         return typeString.substring(0, ci) +
-                                annotation + " " +
-                                typeString.substring(ci, index + 1) +
-                                typeString.substring(end + 1)
+                            annotation + " " +
+                            typeString.substring(ci, index + 1) +
+                            typeString.substring(end + 1)
                     } else {
                         return typeString.substring(0, index + 1) + typeString.substring(end + 1)
                     }

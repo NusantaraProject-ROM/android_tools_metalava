@@ -78,18 +78,18 @@ class AnnotationStatisticsTest : DriverTest() {
                     "libs/api-usage.jar",
                     base64gzip(
                         "test/pkg/ApiUsage.class", "" +
-                                "H4sIAAAAAAAAAH1Ta28SQRQ9Q4Fd1qW0VPD9KNZKWe0WaH3VmBiTRpKNfqiW" +
-                                "+HGgIw4uu4RdTPzqPzJRSDTxB/ijjHcGWqqlZjNn5945c86du7O/fn//CaCO" +
-                                "xxZyuG7ghoUEbmYIVjNYREmFt0ysqfdtBesK7igoK9hQUDHgGLjLYPQ+7Unh" +
-                                "HzLkvS7/yF2fBx335bDXEoNdhvQTGcj4KcNCeeOAIfk8PBQMOU8GYsJ5zVu+" +
-                                "UJvDNvcP+ECqeJpMxu9lxLDixSKK3f6HjvusL99EvCNIOTVUEwaL9+X+cPCO" +
-                                "tyko/EWdpols7YfDQVvsSSWbPVLZVAXbyGOFTOZsVEv3bGxi2caSgjxcMn4h" +
-                                "fD+0sYWqjRrqNraxY+M+Hth4qHKPUGVYPlUzw9KsQa9aXdGOGYpl79/kbkN1" +
-                                "KtuTUSSDjm4u6RXmEBXP4kEQxjwWirQ+j3Q6xWBO1c8SbswotbOKPMGpK5nG" +
-                                "f522Z9MdrNI9y9ElZDSosYQJGvQdKHOeZl2k9NpWZQxW+YHEW2aOsfAVyW9I" +
-                                "6XCMdN4YwWweRWyETPOLVioQFkkBSNKTIcUUSkjDhUF5wJ5o4wIu6houHft+" +
-                                "Jr6qpHZs6TkTG0frO8wcwWo6hOd0ym7q9ewJ5xJM7WEhSydbJBf6y+iUaxRV" +
-                                "6IxVcivqCrXTtAoLZVzGFaqD4arWuvYH9nECI6kDAAA="
+                            "H4sIAAAAAAAAAH1Ta28SQRQ9Q4Fd1qW0VPD9KNZKWe0WaH3VmBiTRpKNfqiW" +
+                            "+HGgIw4uu4RdTPzqPzJRSDTxB/ijjHcGWqqlZjNn5945c86du7O/fn//CaCO" +
+                            "xxZyuG7ghoUEbmYIVjNYREmFt0ysqfdtBesK7igoK9hQUDHgGLjLYPQ+7Unh" +
+                            "HzLkvS7/yF2fBx335bDXEoNdhvQTGcj4KcNCeeOAIfk8PBQMOU8GYsJ5zVu+" +
+                            "UJvDNvcP+ECqeJpMxu9lxLDixSKK3f6HjvusL99EvCNIOTVUEwaL9+X+cPCO" +
+                            "tyko/EWdpols7YfDQVvsSSWbPVLZVAXbyGOFTOZsVEv3bGxi2caSgjxcMn4h" +
+                            "fD+0sYWqjRrqNraxY+M+Hth4qHKPUGVYPlUzw9KsQa9aXdGOGYpl79/kbkN1" +
+                            "KtuTUSSDjm4u6RXmEBXP4kEQxjwWirQ+j3Q6xWBO1c8SbswotbOKPMGpK5nG" +
+                            "f522Z9MdrNI9y9ElZDSosYQJGvQdKHOeZl2k9NpWZQxW+YHEW2aOsfAVyW9I" +
+                            "6XCMdN4YwWweRWyETPOLVioQFkkBSNKTIcUUSkjDhUF5wJ5o4wIu6houHft+" +
+                            "Jr6qpHZs6TkTG0frO8wcwWo6hOd0ym7q9ewJ5xJM7WEhSydbJBf6y+iUaxRV" +
+                            "6IxVcivqCrXTtAoLZVzGFaqD4arWuvYH9nECI6kDAAA="
                     )
                 )
             ),

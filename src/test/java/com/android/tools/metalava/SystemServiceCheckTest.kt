@@ -221,8 +221,8 @@ class SystemServiceCheckTest : DriverTest() {
     fun `Check SystemService -- must be system permission, not normal`() {
         check(
             warnings = "src/test/pkg/MyTest2.java:6: lint: Method 'test' must be protected with a system " +
-                    "permission; it currently allows non-system callers holding [foo.bar.PERMISSION1, " +
-                    "foo.bar.PERMISSION2] [RequiresPermission:125]",
+                "permission; it currently allows non-system callers holding [foo.bar.PERMISSION1, " +
+                "foo.bar.PERMISSION2] [RequiresPermission:125]",
             compatibilityMode = false,
             includeSystemApiAnnotations = true,
             sourceFiles = *arrayOf(

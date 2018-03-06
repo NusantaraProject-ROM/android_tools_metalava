@@ -118,7 +118,7 @@ open class PsiMethodItem(
         if (psiMethod.hasTypeParameters()) {
             return PsiTypeParameterList(
                 codebase, psiMethod.typeParameterList
-                        ?: return TypeParameterList.NONE
+                    ?: return TypeParameterList.NONE
             )
         } else {
             return TypeParameterList.NONE
@@ -142,7 +142,7 @@ open class PsiMethodItem(
         if (isKotlin()) {
             val ktParameters =
                 ((psiMethod as? KotlinUMethod)?.sourcePsi as? KtNamedFunction)?.valueParameters
-                        ?: return false
+                    ?: return false
             return ktParameters.size < parameters.size
         }
 

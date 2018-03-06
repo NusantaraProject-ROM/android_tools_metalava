@@ -22,4 +22,3 @@ const val JAVA_LANG_STRING = "java.lang.String"
 const val JAVA_LANG_ENUM = "java.lang.Enum"
 const val JAVA_LANG_ANNOTATION = "java.lang.annotation.Annotation"
 const val ANDROID_SUPPORT_ANNOTATION_PREFIX = "android.support.annotation."
-

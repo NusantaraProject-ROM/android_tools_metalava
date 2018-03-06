@@ -133,7 +133,8 @@ class PsiConstructorItem(
 
     companion object {
         fun create(
-            codebase: PsiBasedCodebase, containingClass: PsiClassItem,
+            codebase: PsiBasedCodebase,
+            containingClass: PsiClassItem,
             psiMethod: PsiMethod
         ): PsiConstructorItem {
             assert(psiMethod.isConstructor)

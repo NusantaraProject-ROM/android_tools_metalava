@@ -183,7 +183,7 @@ class ApiAnalyzer(
                     val superConstructor = constructor.superConstructor
                     if (superConstructor == null ||
                         (superConstructor.containingClass() != superClass &&
-                                superConstructor.containingClass() != cls)
+                            superConstructor.containingClass() != cls)
                     ) {
                         constructor.superConstructor = superDefaultConstructor
                     }
@@ -295,8 +295,7 @@ class ApiAnalyzer(
             val nextParameterCount = next.parameters().size
             if (currentParameterCount <= nextParameterCount) {
                 current
-            } else
-                next
+            } else next
         }
     }
 
@@ -321,7 +320,6 @@ class ApiAnalyzer(
 
         addInheritedStubsFrom(cls, hiddenSuperClasses, superClasses, filterEmit, filterReference)
         addInheritedInterfacesFrom(cls, hiddenSuperClasses, filterReference)
-
     }
 
     private fun addInheritedInterfacesFrom(
@@ -338,7 +336,7 @@ class ApiAnalyzer(
                     if (interfaceTypes == null) {
                         interfaceTypes = cls.interfaceTypes().toMutableList()
                         interfaceTypeClasses =
-                                interfaceTypes.asSequence().map { it.asClass() }.filterNotNull().toMutableList()
+                            interfaceTypes.asSequence().map { it.asClass() }.filterNotNull().toMutableList()
                         if (cls.isInterface()) {
                             cls.superClass()?.let { interfaceTypeClasses.add(it) }
                         }
@@ -369,7 +367,8 @@ class ApiAnalyzer(
         cls: ClassItem,
         hiddenSuperClasses: Sequence<ClassItem>,
         superClasses: Sequence<ClassItem>,
-        filterEmit: Predicate<Item>, filterReference: Predicate<Item>
+        filterEmit: Predicate<Item>,
+        filterReference: Predicate<Item>
     ) {
 
         // Also generate stubs for any methods we would have inherited from abstract parents
@@ -781,7 +780,7 @@ class ApiAnalyzer(
                     reporter.report(
                         Errors.REMOVED_FIELD, method,
                         "None of the permissions ${missing.joinToString()} are defined by manifest " +
-                                "${codebase.manifest}."
+                            "${codebase.manifest}."
                     )
                 }
 
@@ -790,8 +789,8 @@ class ApiAnalyzer(
                 } else if (any && !nonSystem.isEmpty() || !any && system.isEmpty()) {
                     reporter.report(
                         Errors.REQUIRES_PERMISSION, method, "Method '" + method.name()
-                                + "' must be protected with a system permission; it currently"
-                                + " allows non-system callers holding " + nonSystem.toString()
+                            + "' must be protected with a system permission; it currently" +
+                            " allows non-system callers holding " + nonSystem.toString()
                     )
                 }
             }
@@ -800,7 +799,7 @@ class ApiAnalyzer(
         if (!hasAnnotation) {
             reporter.report(
                 Errors.REQUIRES_PERMISSION, method, "Method '" + method.name()
-                        + "' must be protected with a system permission."
+                    + "' must be protected with a system permission."
             )
         }
     }
@@ -866,8 +865,8 @@ class ApiAnalyzer(
                         // don't bother reporting deprecated methods
                         // unless they are public
                         reporter.report(
-                            Errors.DEPRECATED, m, "Method " + cl.qualifiedName() + "."
-                                    + m.name() + " is deprecated"
+                            Errors.DEPRECATED, m, "Method " + cl.qualifiedName() + "." +
+                                m.name() + " is deprecated"
                         )
                     }
 
@@ -879,14 +878,14 @@ class ApiAnalyzer(
                             reporter.report(
                                 Errors.UNAVAILABLE_SYMBOL, m,
                                 "Method ${cl.qualifiedName()}.${m.name()} returns unavailable " +
-                                        "type ${hiddenClass.simpleName()}"
+                                    "type ${hiddenClass.simpleName()}"
                             )
                         } else {
                             // Return type contains a generic parameter
                             reporter.report(
                                 Errors.HIDDEN_TYPE_PARAMETER, m,
                                 "Method ${cl.qualifiedName()}.${m.name()} returns unavailable " +
-                                        "type ${hiddenClass.simpleName()} as a type parameter"
+                                    "type ${hiddenClass.simpleName()} as a type parameter"
                             )
                         }
                     }
@@ -992,7 +991,7 @@ class ApiAnalyzer(
                 if (!superClass.isFromClassPath()) {
                     reporter.report(
                         Errors.HIDDEN_SUPERCLASS, cl, "Public class " + cl.qualifiedName()
-                                + " stripped of unavailable superclass " + superClass.qualifiedName()
+                            + " stripped of unavailable superclass " + superClass.qualifiedName()
                     )
                 }
             } else {
@@ -1001,8 +1000,8 @@ class ApiAnalyzer(
                 )
                 if (superClass.isPrivate && !superClass.isFromClassPath()) {
                     reporter.report(
-                        Errors.PRIVATE_SUPERCLASS, cl, "Public class "
-                                + cl.qualifiedName() + " extends private class " + superClass.qualifiedName()
+                        Errors.PRIVATE_SUPERCLASS, cl, "Public class " +
+                            cl.qualifiedName() + " extends private class " + superClass.qualifiedName()
                     )
                 }
             }
@@ -1010,7 +1009,8 @@ class ApiAnalyzer(
     }
 
     private fun cantStripThis(
-        methods: List<MethodItem>, notStrippable: MutableSet<ClassItem>,
+        methods: List<MethodItem>,
+        notStrippable: MutableSet<ClassItem>,
         stubImportPackages: Set<String>?
     ) {
         // for each method, blow open the parameters, throws and return types. also blow open their
@@ -1035,7 +1035,7 @@ class ApiAnalyzer(
                             reporter.report(
                                 Errors.UNAVAILABLE_SYMBOL, method,
                                 "Parameter of hidden type ${tcl.fullName()}" +
-                                        "in ${method.containingClass().qualifiedName()}.${method.name()}()"
+                                    "in ${method.containingClass().qualifiedName()}.${method.name()}()"
                             )
                         } else {
                             cantStripThis(

@@ -134,7 +134,6 @@ class AndroidApiChecks {
                         // found beginning
                         break
                     }
-
                 }
                 begin += tag.length
             }
@@ -152,8 +151,8 @@ class AndroidApiChecks {
             val c = doc[i]
 
             if (c == '@' && (isLinePrefix ||
-                        doc.startsWith("@param", i, true) ||
-                        doc.startsWith("@return", i, true))
+                    doc.startsWith("@param", i, true) ||
+                    doc.startsWith("@return", i, true))
             ) {
                 // Found it
                 end = i
@@ -199,7 +198,7 @@ class AndroidApiChecks {
                             // Why is that a problem? Sometimes you want to describe
                             // particular use cases.
                             Errors.REQUIRES_PERMISSION, method, "Method '" + method.name()
-                                    + "' documentation mentions permissions already declared by @RequiresPermission"
+                                + "' documentation mentions permissions already declared by @RequiresPermission"
                         )
                     }
                 }
@@ -207,7 +206,7 @@ class AndroidApiChecks {
         } else if (text.contains("android.Manifest.permission") || text.contains("android.permission.")) {
             reporter.report(
                 Errors.REQUIRES_PERMISSION, method, "Method '" + method.name()
-                        + "' documentation mentions permissions without declaring @RequiresPermission"
+                    + "' documentation mentions permissions without declaring @RequiresPermission"
             )
         }
     }
@@ -235,7 +234,7 @@ class AndroidApiChecks {
             if (!hasSdkConstant) {
                 reporter.report(
                     Errors.SDK_CONSTANT, field, "Field '" + field.name()
-                            + "' is missing @SdkConstant(SdkConstantType.BROADCAST_INTENT_ACTION)"
+                        + "' is missing @SdkConstant(SdkConstantType.BROADCAST_INTENT_ACTION)"
                 )
             }
         }
@@ -244,7 +243,7 @@ class AndroidApiChecks {
             if (!hasSdkConstant) {
                 reporter.report(
                     Errors.SDK_CONSTANT, field, "Field '" + field.name()
-                            + "' is missing @SdkConstant(SdkConstantType.ACTIVITY_INTENT_ACTION)"
+                        + "' is missing @SdkConstant(SdkConstantType.ACTIVITY_INTENT_ACTION)"
                 )
             }
         }
@@ -293,4 +292,3 @@ class AndroidApiChecks {
         val nullPattern: Pattern = Pattern.compile("\\bnull\\b")
     }
 }
-

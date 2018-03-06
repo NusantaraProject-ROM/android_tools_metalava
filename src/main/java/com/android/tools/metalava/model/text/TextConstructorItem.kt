@@ -48,5 +48,3 @@ class TextConstructorItem(
 
     override fun isConstructor(): Boolean = true
 }
-
-

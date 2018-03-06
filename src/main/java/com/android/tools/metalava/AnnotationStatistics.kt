@@ -147,7 +147,7 @@ class AnnotationStatistics(val api: Codebase) {
         options.stdout.println()
         options.stdout.println(
             "$missingCount methods and fields were missing nullness annotations out of " +
-                    "$referenceCount total API references."
+                "$referenceCount total API references."
         )
         options.stdout.println("API nullness coverage is ${percent(annotatedCount, referenceCount)}%")
         options.stdout.println()
@@ -235,7 +235,8 @@ class AnnotationStatistics(val api: Codebase) {
     }
 
     private fun printMemberTable(
-        sorted: List<MemberItem>, used: HashMap<MemberItem, Int>,
+        sorted: List<MemberItem>,
+        used: HashMap<MemberItem, Int>,
         printer: PrintWriter = options.stdout
     ) {
         // Top APIs
@@ -392,9 +393,9 @@ class AnnotationStatistics(val api: Codebase) {
 
     private fun isSkippableOwner(owner: String) =
         owner.startsWith("java/") ||
-                owner.startsWith("javax/") ||
-                owner.startsWith("kotlin") ||
-                owner.startsWith("kotlinx/")
+            owner.startsWith("javax/") ||
+            owner.startsWith("kotlin") ||
+            owner.startsWith("kotlinx/")
 
     private fun findField(node: FieldInsnNode): FieldItem? {
         val cls = findClass(node.owner) ?: return null

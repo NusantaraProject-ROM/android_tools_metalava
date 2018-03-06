@@ -83,7 +83,7 @@ interface ClassItem : Item {
         }
 
         return curr.containingPackage().qualifiedName().replace('.', '/') + "/" +
-                fullName().replace('.', '$')
+            fullName().replace('.', '$')
     }
 
     /** The super class of this class, if any  */
@@ -447,7 +447,6 @@ interface ClassItem : Item {
         return true
     }
 
-
     /** Returns the corresponding compilation unit, if any */
     fun getCompilationUnit(): CompilationUnit? = null
 
@@ -789,7 +788,7 @@ class VisitCandidate(private val cls: ClassItem, private val visitor: ApiVisitor
             }
         }
 
-        if (visitor.nestInnerClasses) {  // otherwise done below
+        if (visitor.nestInnerClasses) { // otherwise done below
             innerClasses.forEach { it.accept() }
         }
 

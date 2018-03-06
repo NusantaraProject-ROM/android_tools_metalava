@@ -30,8 +30,11 @@ enum class TerminalColor(val value: Int) {
 }
 
 fun terminalAttributes(
-    bold: Boolean = false, underline: Boolean = false, reverse: Boolean = false,
-    foreground: TerminalColor? = null, background: TerminalColor? = null
+    bold: Boolean = false,
+    underline: Boolean = false,
+    reverse: Boolean = false,
+    foreground: TerminalColor? = null,
+    background: TerminalColor? = null
 ): String {
     val sb = StringBuilder()
     sb.append("\u001B[")
@@ -81,8 +84,11 @@ fun bold(string: String): String {
 
 fun PrintWriter.terminalPrint(
     string: String,
-    bold: Boolean = false, underline: Boolean = false, reverse: Boolean = false,
-    foreground: TerminalColor? = null, background: TerminalColor? = null
+    bold: Boolean = false,
+    underline: Boolean = false,
+    reverse: Boolean = false,
+    foreground: TerminalColor? = null,
+    background: TerminalColor? = null
 ) {
     print(
         terminalAttributes(

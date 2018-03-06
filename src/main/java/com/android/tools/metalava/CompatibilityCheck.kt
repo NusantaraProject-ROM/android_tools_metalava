@@ -67,14 +67,14 @@ class CompatibilityCheck : ComparisonVisitor() {
                             Errors.INVALID_NULL_CONVERSION,
                             new,
                             "Attempted to change parameter from @Nullable to @NonNull: " +
-                                    "incompatible change for ${describe(new)}"
+                                "incompatible change for ${describe(new)}"
                         )
                     } else if (!oldNullable && old is MethodItem) {
                         report(
                             Errors.INVALID_NULL_CONVERSION,
                             new,
                             "Attempted to change method return from @NonNull to @Nullable: " +
-                                    "incompatible change for ${describe(new)}"
+                                "incompatible change for ${describe(new)}"
                         )
                     }
                 }
@@ -171,7 +171,6 @@ class CompatibilityCheck : ComparisonVisitor() {
                 )
             }
         }
-
 
         if (!oldModifiers.isSealed() && newModifiers.isSealed()) {
             report(Errors.ADD_SEALED, new, "Cannot add `sealed` modifier to ${describe(new)}: Incompatible change")
@@ -273,8 +272,8 @@ class CompatibilityCheck : ComparisonVisitor() {
             val oldTypeParameter = oldReturnType.asTypeParameter(old)
             val newTypeParameter = newReturnType.asTypeParameter(new)
             var compatible = true
-            if (oldTypeParameter == null
-                && newTypeParameter == null
+            if (oldTypeParameter == null &&
+                newTypeParameter == null
             ) {
                 if (oldReturnType != newReturnType ||
                     oldReturnType.arrayDimensions() != newReturnType.arrayDimensions()
@@ -429,11 +428,11 @@ class CompatibilityCheck : ComparisonVisitor() {
         constraints: List<ClassItem>
     ): String {
         return type.toSimpleType() +
-                if (constraints.isEmpty()) {
-                    " (extends java.lang.Object)"
-                } else {
-                    " (extends ${constraints.joinToString(separator = " & ") { it.qualifiedName() }})"
-                }
+            if (constraints.isEmpty()) {
+                " (extends java.lang.Object)"
+            } else {
+                " (extends ${constraints.joinToString(separator = " & ") { it.qualifiedName() }})"
+            }
     }
 
     override fun compare(old: FieldItem, new: FieldItem) {

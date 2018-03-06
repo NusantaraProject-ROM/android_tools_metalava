@@ -211,7 +211,6 @@ interface TypeItem {
             //  shorten this to <T & java.lang.Comparable
             //return type.replace(" extends java.lang.Object", "")
             return signature.replace(" extends java.lang.Object>", ">")
-
         }
 
         val comparator: Comparator<TypeItem> = Comparator { type1, type2 ->

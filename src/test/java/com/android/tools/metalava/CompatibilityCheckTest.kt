@@ -1302,7 +1302,8 @@ CompatibilityCheckTest : DriverTest() {
                 }
                 """,
             sourceFiles = *arrayOf(
-                kotlin("src/androidx/content/ContentValues.kt",
+                kotlin(
+                    "src/androidx/content/ContentValues.kt",
                     """
                     package androidx.content
 
@@ -1450,8 +1451,8 @@ CompatibilityCheckTest : DriverTest() {
                     "--omit-locations",
                     "--hide",
                     suppressLevels[apiLevel]
-                            ?: "AddedPackage,AddedClass,AddedMethod,AddedInterface,AddedField,ChangedDeprecated,RemovedField,RemovedClass,RemovedDeprecatedClass"
-                            +(if ((apiLevel == 19 || apiLevel == 20) && loadPrevAsSignature) ",ChangedType" else "")
+                        ?: "AddedPackage,AddedClass,AddedMethod,AddedInterface,AddedField,ChangedDeprecated,RemovedField,RemovedClass,RemovedDeprecatedClass" +
+                        (if ((apiLevel == 19 || apiLevel == 20) && loadPrevAsSignature) ",ChangedType" else "")
 
                 ),
                 warnings = expected[apiLevel]?.trimIndent() ?: "",
@@ -1471,7 +1472,6 @@ CompatibilityCheckTest : DriverTest() {
                 }
                 val previousSignatureApi = signatureFile.readText(Charsets.UTF_8)
 
-
                 check(
                     checkDoclava1 = false,
                     checkCompatibility = true,
@@ -1479,7 +1479,7 @@ CompatibilityCheckTest : DriverTest() {
                         "--omit-locations",
                         "--hide",
                         suppressLevels[apiLevel]
-                                ?: "AddedPackage,AddedClass,AddedMethod,AddedInterface,AddedField,ChangedDeprecated,RemovedField,RemovedClass,RemovedDeprecatedClass"
+                            ?: "AddedPackage,AddedClass,AddedMethod,AddedInterface,AddedField,ChangedDeprecated,RemovedField,RemovedClass,RemovedDeprecatedClass"
                     ),
                     warnings = expected[apiLevel]?.trimIndent() ?: "",
                     previousApi = previousSignatureApi,
@@ -1488,7 +1488,6 @@ CompatibilityCheckTest : DriverTest() {
             }
         }
     }
-
 
     // TODO: Check method signatures changing incompatibly (look especially out for adding new overloaded
     // methods and comparator getting confused!)

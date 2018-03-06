@@ -164,8 +164,7 @@ class SignatureWriter(
 
         val superClass = if (preFiltered)
             cls.superClassType()
-        else
-            cls.filteredSuperClassType(filterReference)
+        else cls.filteredSuperClassType(filterReference)
         if (superClass != null && !superClass.isJavaLangObject()) {
             val superClassString =
                 superClass.toTypeString(erased = compatibility.omitTypeParametersInInterfaces)
@@ -185,8 +184,7 @@ class SignatureWriter(
 
         val interfaces = if (preFiltered)
             cls.interfaceTypes().asSequence()
-        else
-            cls.filteredInterfaceTypes(filterReference).asSequence()
+        else cls.filteredInterfaceTypes(filterReference).asSequence()
         val all: Sequence<TypeItem> = if (isInterface && compatibility.extendsForInterfaceSuperClass) {
             val superClassType = cls.superClassType()
             if (superClassType != null && !superClassType.isJavaLangObject()) {
@@ -286,10 +284,9 @@ class SignatureWriter(
     private fun writeThrowsList(method: MethodItem) {
         val throws = if (preFiltered)
             method.throwsTypes().asSequence().sortedWith(ClassItem.fullNameComparator)
-        else
-            method.throwsTypes().asSequence()
-                .filter { filterReference.test(it) }
-                .sortedWith(ClassItem.fullNameComparator)
+        else method.throwsTypes().asSequence()
+            .filter { filterReference.test(it) }
+            .sortedWith(ClassItem.fullNameComparator)
         if (throws.any()) {
             writer.print(" throws ")
             throws.asSequence().forEachIndexed { i, type ->
