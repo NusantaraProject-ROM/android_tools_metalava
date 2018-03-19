@@ -598,7 +598,8 @@ class Options(
                 }
 
             // Unimplemented doclava1 flags (no arguments)
-                "-quiet" -> {
+                "-quiet",
+                "-yamlV2" -> {
                     unimplemented(arg)
                 }
 
