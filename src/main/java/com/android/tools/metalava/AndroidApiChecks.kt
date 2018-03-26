@@ -197,16 +197,16 @@ class AndroidApiChecks {
                         reporter.report(
                             // Why is that a problem? Sometimes you want to describe
                             // particular use cases.
-                            Errors.REQUIRES_PERMISSION, method, "Method '" + method.name()
-                                + "' documentation mentions permissions already declared by @RequiresPermission"
+                            Errors.REQUIRES_PERMISSION, method, "Method '" + method.name() +
+                                "' documentation mentions permissions already declared by @RequiresPermission"
                         )
                     }
                 }
             }
         } else if (text.contains("android.Manifest.permission") || text.contains("android.permission.")) {
             reporter.report(
-                Errors.REQUIRES_PERMISSION, method, "Method '" + method.name()
-                    + "' documentation mentions permissions without declaring @RequiresPermission"
+                Errors.REQUIRES_PERMISSION, method, "Method '" + method.name() +
+                    "' documentation mentions permissions without declaring @RequiresPermission"
             )
         }
     }
@@ -233,8 +233,8 @@ class AndroidApiChecks {
             }
             if (!hasSdkConstant) {
                 reporter.report(
-                    Errors.SDK_CONSTANT, field, "Field '" + field.name()
-                        + "' is missing @SdkConstant(SdkConstantType.BROADCAST_INTENT_ACTION)"
+                    Errors.SDK_CONSTANT, field, "Field '" + field.name() +
+                        "' is missing @SdkConstant(SdkConstantType.BROADCAST_INTENT_ACTION)"
                 )
             }
         }
@@ -242,8 +242,8 @@ class AndroidApiChecks {
         if (text.contains("Activity Action:")) {
             if (!hasSdkConstant) {
                 reporter.report(
-                    Errors.SDK_CONSTANT, field, "Field '" + field.name()
-                        + "' is missing @SdkConstant(SdkConstantType.ACTIVITY_INTENT_ACTION)"
+                    Errors.SDK_CONSTANT, field, "Field '" + field.name() +
+                        "' is missing @SdkConstant(SdkConstantType.ACTIVITY_INTENT_ACTION)"
                 )
             }
         }
