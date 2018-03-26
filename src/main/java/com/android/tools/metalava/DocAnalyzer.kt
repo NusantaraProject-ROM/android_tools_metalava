@@ -182,9 +182,10 @@ class DocAnalyzer(
 
                 // Document required permissions
                 if (item is MemberItem && name == "android.support.annotation.RequiresPermission") {
+                    var values: List<AnnotationAttributeValue>? = null
+                    var any = false
+                    var conditional = false
                     for (attribute in annotation.attributes()) {
-                        var values: List<AnnotationAttributeValue>? = null
-                        var any = false
                         when (attribute.name) {
                             "value", "allOf" -> {
                                 values = attribute.leafValues()
@@ -193,12 +194,13 @@ class DocAnalyzer(
                                 any = true
                                 values = attribute.leafValues()
                             }
+                            "conditional" -> {
+                                conditional = attribute.value.value() == true
+                            }
                         }
+                    }
 
-                        if (values == null || values.isEmpty()) {
-                            continue
-                        }
-
+                    if (values != null && values.isNotEmpty() && !conditional) {
                         // Look at macros_override.cs for the usage of these
                         // tags. In particular, search for def:dump_permission
 
