@@ -317,12 +317,7 @@ class DocAnalyzer(
                     val value = annotation.findAttribute("value")?.leafValues()?.firstOrNull() ?: return
                     val sb = StringBuilder(100)
                     val resolved = value.resolve()
-                    val field = if (resolved is FieldItem)
-                        resolved
-                    else {
-                        val v: Any = value.value() ?: value.toSource()
-                        findPermissionField(codebase, v)
-                    }
+                    val field = resolved as? FieldItem
                     sb.append("Requires the ")
                     if (field == null) {
                         reporter.report(
@@ -345,6 +340,22 @@ class DocAnalyzer(
                     sb.append("{@link android.content.pm.PackageManager#hasSystemFeature(String) ")
                     sb.append("PackageManager.hasSystemFeature(String)}.")
                     appendDocumentation(sb.toString(), item, false)
+                }
+
+                // Required API levels
+                if (name == "android.support.annotation.RequiresApi") {
+                    val level = run {
+                        val api = annotation.findAttribute("api")?.leafValues()?.firstOrNull()?.value()
+                        if (api == null || api == 1) {
+                            annotation.findAttribute("value")?.leafValues()?.firstOrNull()?.value() ?: return
+                        } else {
+                            api
+                        }
+                    }
+
+                    if (level is Int) {
+                        addApiLevelDocumentation(level, item)
+                    }
                 }
 
                 // Thread annotations are ignored here because they're handled as a group afterwards
@@ -497,33 +508,33 @@ class DocAnalyzer(
                 addApiLevelDocumentation(apiLookup.getFieldVersion(psiField), field)
                 addDeprecatedDocumentation(apiLookup.getFieldDeprecatedIn(psiField), field)
             }
-
-            private fun addApiLevelDocumentation(level: Int, item: Item) {
-                if (level > 1) {
-                    appendDocumentation("Requires API level $level", item, false)
-                    // Also add @since tag, unless already manually entered.
-                    // TODO: Override it everywhere in case the existing doc is wrong (we know
-                    // better), and at least for OpenJDK sources we *should* since the since tags
-                    // are talking about language levels rather than API levels!
-                    if (!item.documentation.contains("@since")) {
-                        item.appendDocumentation(describeApiLevel(level), "@since")
-                    }
-                }
-            }
-
-            private fun addDeprecatedDocumentation(level: Int, item: Item) {
-                if (level > 1) {
-                    // TODO: *pre*pend instead!
-                    val description =
-                        "<p class=\"caution\"><strong>This class was deprecated in API level 21.</strong></p>"
-                    item.appendDocumentation(description, "@deprecated", append = false)
-                }
-            }
-
-            private fun describeApiLevel(level: Int): String {
-                return "${SdkVersionInfo.getVersionString(level)} ${SdkVersionInfo.getCodeName(level)} ($level)"
-            }
         })
+    }
+
+    private fun addApiLevelDocumentation(level: Int, item: Item) {
+        if (level > 1) {
+            appendDocumentation("Requires API level $level", item, false)
+            // Also add @since tag, unless already manually entered.
+            // TODO: Override it everywhere in case the existing doc is wrong (we know
+            // better), and at least for OpenJDK sources we *should* since the since tags
+            // are talking about language levels rather than API levels!
+            if (!item.documentation.contains("@since")) {
+                item.appendDocumentation(describeApiLevel(level), "@since")
+            }
+        }
+    }
+
+    private fun addDeprecatedDocumentation(level: Int, item: Item) {
+        if (level > 1) {
+            // TODO: *pre*pend instead!
+            val description =
+                "<p class=\"caution\"><strong>This class was deprecated in API level 21.</strong></p>"
+            item.appendDocumentation(description, "@deprecated", append = false)
+        }
+    }
+
+    private fun describeApiLevel(level: Int): String {
+        return "${SdkVersionInfo.getVersionString(level)} ${SdkVersionInfo.getCodeName(level)} ($level)"
     }
 }
 
