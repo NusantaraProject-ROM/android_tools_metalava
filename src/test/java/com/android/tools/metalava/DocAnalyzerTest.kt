@@ -1123,6 +1123,40 @@ class DocAnalyzerTest : DriverTest() {
     }
 
     @Test
+    fun `Check RequiresApi handling`() {
+        check(
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    import android.support.annotation.RequiresApi;
+                    @RequiresApi(21)
+                    public class MyClass1 {
+                    }
+                    """
+                ),
+
+                requiresApiSource
+            ),
+            checkCompilation = true,
+            checkDoclava1 = false,
+            stubs = arrayOf(
+                """
+                package test.pkg;
+                /**
+                 * Requires API level 21
+                 * @since 5.0 Lollipop (21)
+                 */
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                @android.support.annotation.RequiresApi(21) public class MyClass1 {
+                public MyClass1() { throw new RuntimeException("Stub!"); }
+                }
+                """
+            )
+        )
+    }
+
+    @Test
     fun `Invoke external documentation tool`() {
         val jdkPath = getJdkPath()
         if (jdkPath == null) {

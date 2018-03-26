@@ -1115,6 +1115,21 @@ val requiresFeatureSource: TestFile = java(
             """
 ).indented()
 
+val requiresApiSource: TestFile = java(
+    """
+    package android.support.annotation;
+    import java.lang.annotation.*;
+    import static java.lang.annotation.ElementType.*;
+    import static java.lang.annotation.RetentionPolicy.SOURCE;
+    @Retention(SOURCE)
+    @Target({TYPE,FIELD,METHOD,CONSTRUCTOR})
+    public @interface RequiresApi {
+        int value() default 1;
+        int api() default 1;
+    }
+            """
+).indented()
+
 val sdkConstantSource: TestFile = java(
     """
     package android.annotation;
