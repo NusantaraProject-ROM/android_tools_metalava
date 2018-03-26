@@ -768,8 +768,8 @@ class ApiAnalyzer(
                         )
                         continue
                     }
-                    if (level.contains("normal") || level.contains("dangerous")
-                        || level.contains("ephemeral")
+                    if (level.contains("normal") || level.contains("dangerous") ||
+                        level.contains("ephemeral")
                     ) {
                         nonSystem.add(perm)
                     } else {
@@ -788,8 +788,8 @@ class ApiAnalyzer(
                     hasAnnotation = false
                 } else if (any && !nonSystem.isEmpty() || !any && system.isEmpty()) {
                     reporter.report(
-                        Errors.REQUIRES_PERMISSION, method, "Method '" + method.name()
-                            + "' must be protected with a system permission; it currently" +
+                        Errors.REQUIRES_PERMISSION, method, "Method '" + method.name() +
+                            "' must be protected with a system permission; it currently" +
                             " allows non-system callers holding " + nonSystem.toString()
                     )
                 }
@@ -798,8 +798,8 @@ class ApiAnalyzer(
 
         if (!hasAnnotation) {
             reporter.report(
-                Errors.REQUIRES_PERMISSION, method, "Method '" + method.name()
-                    + "' must be protected with a system permission."
+                Errors.REQUIRES_PERMISSION, method, "Method '" + method.name() +
+                    "' must be protected with a system permission."
             )
         }
     }
@@ -990,8 +990,8 @@ class ApiAnalyzer(
                 cl.setSuperClass(publicSuper)
                 if (!superClass.isFromClassPath()) {
                     reporter.report(
-                        Errors.HIDDEN_SUPERCLASS, cl, "Public class " + cl.qualifiedName()
-                            + " stripped of unavailable superclass " + superClass.qualifiedName()
+                        Errors.HIDDEN_SUPERCLASS, cl, "Public class " + cl.qualifiedName() +
+                            " stripped of unavailable superclass " + superClass.qualifiedName()
                     )
                 }
             } else {

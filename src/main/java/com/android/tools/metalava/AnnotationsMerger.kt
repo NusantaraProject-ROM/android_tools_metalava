@@ -299,8 +299,8 @@ class AnnotationsMerger(
         if (parameterIndex != -1) {
             val parameterItem = methodItem.parameters()[parameterIndex]
 
-            if ("java.util.Calendar" == containingClass && "set" == methodName
-                && parameterIndex > 0
+            if ("java.util.Calendar" == containingClass && "set" == methodName &&
+                parameterIndex > 0
             ) {
                 // Skip the metadata for Calendar.set(int, int, int+); see
                 // https://code.google.com/p/android/issues/detail?id=73982
@@ -631,15 +631,15 @@ class AnnotationsMerger(
     }
 
     private fun isNonNull(name: String): Boolean {
-        return name == IDEA_NOTNULL
-            || name == ANDROID_NOTNULL
-            || name == SUPPORT_NOTNULL
+        return name == IDEA_NOTNULL ||
+            name == ANDROID_NOTNULL ||
+            name == SUPPORT_NOTNULL
     }
 
     private fun isNullable(name: String): Boolean {
-        return name == IDEA_NULLABLE
-            || name == ANDROID_NULLABLE
-            || name == SUPPORT_NULLABLE
+        return name == IDEA_NULLABLE ||
+            name == ANDROID_NULLABLE ||
+            name == SUPPORT_NULLABLE
     }
 
     /**

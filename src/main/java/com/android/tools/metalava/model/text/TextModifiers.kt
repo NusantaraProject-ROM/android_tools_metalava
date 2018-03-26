@@ -144,8 +144,8 @@ class TextModifiers(
 
     override fun owner(): Item = owner!! // Must be set after construction
     override fun isEmpty(): Boolean {
-        return !(public || protected || private || static || abstract || final || native || synchronized
-            || strictfp || transient || volatile || default)
+        return !(public || protected || private || static || abstract || final || native || synchronized ||
+            strictfp || transient || volatile || default)
     }
 
     override fun annotations(): List<AnnotationItem> {
