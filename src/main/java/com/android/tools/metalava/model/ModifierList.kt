@@ -266,11 +266,11 @@ interface ModifierList {
                     (methodItem?.containingClass()?.isInterface() == true &&
                         !list.isDefault() && !list.isStatic())
 
-                if ((compatibility.abstractInInterfaces && isInterface
-                        || list.isAbstract() &&
+                if ((compatibility.abstractInInterfaces && isInterface ||
+                        list.isAbstract() &&
                         (classItem?.isEnum() != true &&
-                            (compatibility.abstractInAnnotations || classItem?.isAnnotationType() != true)))
-                    && (!isInterface || compatibility.abstractInInterfaces)
+                            (compatibility.abstractInAnnotations || classItem?.isAnnotationType() != true))) &&
+                    (!isInterface || compatibility.abstractInInterfaces)
                 ) {
                     writer.write("abstract ")
                 }
@@ -314,11 +314,11 @@ interface ModifierList {
                     (methodItem?.containingClass()?.isInterface() == true &&
                         !list.isDefault() && !list.isStatic())
 
-                if ((compatibility.abstractInInterfaces && isInterface
-                        || list.isAbstract() &&
+                if ((compatibility.abstractInInterfaces && isInterface ||
+                        list.isAbstract() &&
                         (classItem?.isEnum() != true &&
-                            (compatibility.abstractInAnnotations || classItem?.isAnnotationType() != true)))
-                    && (!isInterface || compatibility.abstractInInterfaces)
+                            (compatibility.abstractInAnnotations || classItem?.isAnnotationType() != true))) &&
+                    (!isInterface || compatibility.abstractInInterfaces)
                 ) {
                     writer.write("abstract ")
                 }
