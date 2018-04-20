@@ -155,11 +155,11 @@ class AnnotationsMerger(
 
     internal fun error(message: String) {
         // TODO: Integrate with metalava error facility
-        options.stderr.println("Error: " + message)
+        options.stderr.println("Error: $message")
     }
 
     internal fun warning(message: String) {
-        options.stdout.println("Warning: " + message)
+        options.stdout.println("Warning: $message")
     }
 
     @Suppress("PrivatePropertyName")
@@ -197,7 +197,7 @@ class AnnotationsMerger(
             if (matcher.matches()) {
                 val containingClass = matcher.group(1)
                 if (containingClass == null) {
-                    warning("Could not find class for " + signature)
+                    warning("Could not find class for $signature")
                     continue
                 }
 
@@ -252,7 +252,7 @@ class AnnotationsMerger(
 
                 mergeAnnotations(item, classItem)
             } else {
-                warning("No merge match for signature " + signature)
+                warning("No merge match for signature $signature")
             }
         }
     }
@@ -370,7 +370,7 @@ class AnnotationsMerger(
 
             // Make sure we don't have a conflict between nullable and not nullable
             if (isNonNull(qualifiedName) && haveNullable || isNullable(qualifiedName) && haveNotNull) {
-                warning("Found both @Nullable and @NonNull after import for " + item)
+                warning("Found both @Nullable and @NonNull after import for $item")
                 continue
             }
 
@@ -514,14 +514,16 @@ class AnnotationsMerger(
                 return PsiAnnotationItem.create(
                     codebase, XmlBackedAnnotationItem(
                         codebase,
-                        if (valName == "stringValues") STRING_DEF_ANNOTATION else INT_DEF_ANNOTATION, attributes
+                        if (valName == "stringValues") STRING_DEF_ANNOTATION.oldName() else INT_DEF_ANNOTATION.oldName(), attributes
                     )
                 )
             }
 
-            name == STRING_DEF_ANNOTATION ||
+            name == STRING_DEF_ANNOTATION.oldName() ||
+            name == STRING_DEF_ANNOTATION.newName() ||
                 name == ANDROID_STRING_DEF ||
-                name == INT_DEF_ANNOTATION ||
+                name == INT_DEF_ANNOTATION.oldName() ||
+                name == INT_DEF_ANNOTATION.newName() ||
                 name == ANDROID_INT_DEF -> {
                 val children = getChildren(annotationElement)
                 var valueElement = children[0]
@@ -534,7 +536,9 @@ class AnnotationsMerger(
                     assert(TYPE_DEF_FLAG_ATTRIBUTE == valueElement.getAttribute(ATTR_NAME))
                     flag = VALUE_TRUE == valueElement.getAttribute(ATTR_VAL)
                 }
-                val intDef = INT_DEF_ANNOTATION == name || ANDROID_INT_DEF == name
+                val intDef = INT_DEF_ANNOTATION.oldName() == name ||
+                    INT_DEF_ANNOTATION.newName() == name ||
+                    ANDROID_INT_DEF == name
 
                 val attributes = mutableListOf<XmlBackedAnnotationAttribute>()
                 attributes.add(XmlBackedAnnotationAttribute(TYPE_DEF_VALUE_ATTRIBUTE, value))
@@ -544,7 +548,7 @@ class AnnotationsMerger(
                 return PsiAnnotationItem.create(
                     codebase, XmlBackedAnnotationItem(
                         codebase,
-                        if (intDef) INT_DEF_ANNOTATION else STRING_DEF_ANNOTATION, attributes
+                        if (intDef) INT_DEF_ANNOTATION.oldName() else STRING_DEF_ANNOTATION.oldName(), attributes
                     )
                 )
             }
@@ -623,7 +627,7 @@ class AnnotationsMerger(
                 }
                 sb.append(fqn)
             } else if (listIgnored) {
-                warning("Skipping constant from typedef because it is not part of the SDK: " + fqn)
+                warning("Skipping constant from typedef because it is not part of the SDK: $fqn")
             }
         }
         sb.append('}')
@@ -718,7 +722,7 @@ class XmlBackedAnnotationItem(
         val qualifiedName = qualifiedName() ?: return ""
 
         if (attributes.isEmpty()) {
-            return "@" + qualifiedName
+            return "@$qualifiedName"
         }
 
         val sb = StringBuilder(30)

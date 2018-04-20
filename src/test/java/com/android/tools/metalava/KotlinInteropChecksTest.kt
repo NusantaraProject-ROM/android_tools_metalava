@@ -183,14 +183,14 @@ class KotlinInteropChecksTest : DriverTest() {
                         }
 
                         @Throws(FileNotFoundException::class)
-                        fun ok_hasThrows(x: Int) {
+                        fun ok_hasThrows1(x: Int) {
                             if (x < 0) {
                                 throw java.io.FileNotFoundException("Something")
                             }
                         }
 
                         @Throws(UnsupportedOperationException::class, FileNotFoundException::class)
-                        fun ok_hasThrows(x: Int) {
+                        fun ok_hasThrows2(x: Int) {
                             if (x < 0) {
                                 throw java.io.FileNotFoundException("Something")
                             }
