@@ -288,4 +288,42 @@ class NullnessMigrationTest : DriverTest() {
                 """
         )
     }
+
+    @Test
+    fun `Check androidx package annotation`() {
+        check(
+            outputKotlinStyleNulls = false,
+            compatibilityMode = false,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    import androidx.annotation.Nullable;
+                    import androidx.annotation.NonNull;
+                    import java.util.List;
+                    public class Test {
+                        public @Nullable Integer compute1(@Nullable java.util.List<@Nullable String> list) {
+                            return 5;
+                        }
+                        public @Nullable Integer compute2(@NonNull java.util.List<@NonNull List<?>> list) {
+                            return 5;
+                        }
+                    }
+                    """
+                ),
+                androidxNonNullSource,
+                androidxNullableSource
+            ),
+            extraArguments = arrayOf("--hide-package", "androidx.annotation"),
+            api = """
+                package test.pkg {
+                  public class Test {
+                    ctor public Test();
+                    method @Nullable public Integer compute1(@Nullable java.util.List<@Nullable java.lang.String>);
+                    method @Nullable public Integer compute2(@NonNull java.util.List<@NonNull java.util.List<?>>);
+                  }
+                }
+                """
+        )
+    }
 }

@@ -98,6 +98,8 @@ interface AnnotationItem {
     }
 
     companion object {
+        private const val ANDROIDX_PREFIX = "androidx.annotation."
+
         /** Whether the given annotation name is "significant", e.g. should be included in signature files */
         fun isSignificantAnnotation(qualifiedName: String?): Boolean {
             return qualifiedName?.startsWith(ANDROID_SUPPORT_ANNOTATION_PREFIX) ?: false
@@ -118,62 +120,105 @@ interface AnnotationItem {
 
             when (qualifiedName) {
             // Resource annotations
+                "androidx.annotation.AnimRes",
                 "android.annotation.AnimRes" -> return "android.support.annotation.AnimRes"
+                "androidx.annotation.AnimatorRes",
                 "android.annotation.AnimatorRes" -> return "android.support.annotation.AnimatorRes"
+                "androidx.annotation.AnyRes",
                 "android.annotation.AnyRes" -> return "android.support.annotation.AnyRes"
+                "androidx.annotation.ArrayRes",
                 "android.annotation.ArrayRes" -> return "android.support.annotation.ArrayRes"
+                "androidx.annotation.AttrRes",
                 "android.annotation.AttrRes" -> return "android.support.annotation.AttrRes"
+                "androidx.annotation.BoolRes",
                 "android.annotation.BoolRes" -> return "android.support.annotation.BoolRes"
+                "androidx.annotation.ColorRes",
                 "android.annotation.ColorRes" -> return "android.support.annotation.ColorRes"
+                "androidx.annotation.DimenRes",
                 "android.annotation.DimenRes" -> return "android.support.annotation.DimenRes"
+                "androidx.annotation.DrawableRes",
                 "android.annotation.DrawableRes" -> return "android.support.annotation.DrawableRes"
+                "androidx.annotation.FontRes",
                 "android.annotation.FontRes" -> return "android.support.annotation.FontRes"
+                "androidx.annotation.FractionRes",
                 "android.annotation.FractionRes" -> return "android.support.annotation.FractionRes"
+                "androidx.annotation.IdRes",
                 "android.annotation.IdRes" -> return "android.support.annotation.IdRes"
+                "androidx.annotation.IntegerRes",
                 "android.annotation.IntegerRes" -> return "android.support.annotation.IntegerRes"
+                "androidx.annotation.InterpolatorRes",
                 "android.annotation.InterpolatorRes" -> return "android.support.annotation.InterpolatorRes"
+                "androidx.annotation.LayoutRes",
                 "android.annotation.LayoutRes" -> return "android.support.annotation.LayoutRes"
+                "androidx.annotation.MenuRes",
                 "android.annotation.MenuRes" -> return "android.support.annotation.MenuRes"
+                "androidx.annotation.PluralsRes",
                 "android.annotation.PluralsRes" -> return "android.support.annotation.PluralsRes"
+                "androidx.annotation.RawRes",
                 "android.annotation.RawRes" -> return "android.support.annotation.RawRes"
+                "androidx.annotation.StringRes",
                 "android.annotation.StringRes" -> return "android.support.annotation.StringRes"
+                "androidx.annotation.StyleRes",
                 "android.annotation.StyleRes" -> return "android.support.annotation.StyleRes"
+                "androidx.annotation.StyleableRes",
                 "android.annotation.StyleableRes" -> return "android.support.annotation.StyleableRes"
+                "androidx.annotation.TransitionRes",
                 "android.annotation.TransitionRes" -> return "android.support.annotation.TransitionRes"
+                "androidx.annotation.XmlRes",
                 "android.annotation.XmlRes" -> return "android.support.annotation.XmlRes"
 
             // Threading
+                "androidx.annotation.AnyThread",
                 "android.annotation.AnyThread" -> return "android.support.annotation.AnyThread"
+                "androidx.annotation.BinderThread",
                 "android.annotation.BinderThread" -> return "android.support.annotation.BinderThread"
+                "androidx.annotation.MainThread",
                 "android.annotation.MainThread" -> return "android.support.annotation.MainThread"
+                "androidx.annotation.UiThread",
                 "android.annotation.UiThread" -> return "android.support.annotation.UiThread"
+                "androidx.annotation.WorkerThread",
                 "android.annotation.WorkerThread" -> return "android.support.annotation.WorkerThread"
 
             // Colors
+                "androidx.annotation.ColorInt",
                 "android.annotation.ColorInt" -> return "android.support.annotation.ColorInt"
+                "androidx.annotation.ColorLong",
                 "android.annotation.ColorLong" -> return "android.support.annotation.ColorLong"
+                "androidx.annotation.HalfFloat",
                 "android.annotation.HalfFloat" -> return "android.support.annotation.HalfFloat"
 
             // Ranges and sizes
+                "androidx.annotation.FloatRange",
                 "android.annotation.FloatRange" -> return "android.support.annotation.FloatRange"
+                "androidx.annotation.IntRange",
                 "android.annotation.IntRange" -> return "android.support.annotation.IntRange"
+                "androidx.annotation.Size",
                 "android.annotation.Size" -> return "android.support.annotation.Size"
+                "androidx.annotation.Px",
                 "android.annotation.Px" -> return "android.support.annotation.Px"
+                "androidx.annotation.Dimension",
                 "android.annotation.Dimension" -> return "android.support.annotation.Dimension"
 
             // Null
+                "androidx.annotation.NonNull",
                 "android.annotation.NonNull" -> return "android.support.annotation.NonNull"
+                "androidx.annotation.Nullable",
                 "android.annotation.Nullable" -> return "android.support.annotation.Nullable"
                 "libcore.util.NonNull" -> return "android.support.annotation.NonNull"
                 "libcore.util.Nullable" -> return "android.support.annotation.Nullable"
 
             // Typedefs
+                "androidx.annotation.IntDef",
                 "android.annotation.IntDef" -> return "android.support.annotation.IntDef"
+                "androidx.annotation.StringDef",
                 "android.annotation.StringDef" -> return "android.support.annotation.StringDef"
 
             // Misc
+                "androidx.annotation.CallSuper",
                 "android.annotation.CallSuper" -> return "android.support.annotation.CallSuper"
+                "androidx.annotation.CheckResult",
                 "android.annotation.CheckResult" -> return "android.support.annotation.CheckResult"
+                "androidx.annotation.RequiresPermission",
                 "android.annotation.RequiresPermission" -> return "android.support.annotation.RequiresPermission"
 
             // These aren't support annotations, but could/should be:
@@ -244,6 +289,14 @@ interface AnnotationItem {
                             } else {
                                 null
                             }
+                        }
+
+                        qualifiedName.startsWith(ANDROIDX_PREFIX) -> {
+                            return mapName(
+                                codebase,
+                                ANDROID_SUPPORT_ANNOTATION_PREFIX + qualifiedName.substring(ANDROIDX_PREFIX.length),
+                                filter
+                            )
                         }
 
                         else -> {

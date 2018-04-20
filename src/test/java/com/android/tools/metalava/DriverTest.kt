@@ -1209,6 +1209,34 @@ public @interface Nullable {
                 """
 )
 
+val androidxNonNullSource: TestFile = java(
+    """
+    package androidx.annotation;
+    import java.lang.annotation.*;
+    import static java.lang.annotation.ElementType.*;
+    import static java.lang.annotation.RetentionPolicy.SOURCE;
+    @SuppressWarnings("WeakerAccess")
+    @Retention(SOURCE)
+    @Target({METHOD, PARAMETER, FIELD, TYPE_USE})
+    public @interface NonNull {
+    }
+    """
+).indented()
+
+val androidxNullableSource: TestFile = java(
+    """
+package androidx.annotation;
+import java.lang.annotation.*;
+import static java.lang.annotation.ElementType.*;
+import static java.lang.annotation.RetentionPolicy.SOURCE;
+@SuppressWarnings("WeakerAccess")
+@Retention(SOURCE)
+@Target({METHOD, PARAMETER, FIELD, TYPE_USE})
+public @interface Nullable {
+}
+                """
+)
+
 val supportParameterName: TestFile = java(
     """
     package android.support.annotation;

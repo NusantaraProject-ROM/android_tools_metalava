@@ -260,7 +260,10 @@ class AndroidApiChecks {
             var foundTypeDef = false
             for (annotation in item.modifiers.annotations()) {
                 val cls = annotation.resolve() ?: continue
-                if (cls.modifiers.findAnnotation(SdkConstants.INT_DEF_ANNOTATION) != null) {
+                val modifiers = cls.modifiers
+                if (modifiers.findAnnotation(SdkConstants.INT_DEF_ANNOTATION.oldName()) != null ||
+                    modifiers.findAnnotation(SdkConstants.INT_DEF_ANNOTATION.newName()) != null
+                ) {
                     // TODO: Check that all the constants listed in the documentation are included in the
                     // annotation?
                     foundTypeDef = true
@@ -272,7 +275,7 @@ class AndroidApiChecks {
                 reporter.report(
                     Errors.INT_DEF, item,
                     // TODO: Include source code you can paste right into the code?
-                    ident + " documentation mentions constants without declaring an @IntDef"
+                    "$ident documentation mentions constants without declaring an @IntDef"
                 )
             }
         }
@@ -282,7 +285,7 @@ class AndroidApiChecks {
         ) {
             reporter.report(
                 Errors.NULLABLE, item,
-                ident + " documentation mentions 'null' without declaring @NonNull or @Nullable"
+                "$ident documentation mentions 'null' without declaring @NonNull or @Nullable"
             )
         }
     }
