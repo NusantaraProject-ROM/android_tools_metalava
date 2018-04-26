@@ -43,6 +43,8 @@ abstract class TextItem(
     override val deprecated
         get() = mutableDeprecated
 
+    override fun isCloned(): Boolean = false
+
     fun setDeprecated(deprecated: Boolean) {
         mutableDeprecated = deprecated
     }

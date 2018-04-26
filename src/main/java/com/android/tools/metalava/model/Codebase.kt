@@ -44,6 +44,9 @@ interface Codebase {
     /** Description of what this codebase is (useful during debugging) */
     var description: String
 
+    /** The API level of this codebase, or -1 if not known */
+    var apiLevel: Int
+
     /** The packages in the codebase (may include packages that are not included in the API) */
     fun getPackages(): PackageList
 
@@ -154,6 +157,7 @@ abstract class DefaultCodebase : Codebase {
     override var original: Codebase? = null
     override var supportsStagedNullability: Boolean = false
     override var units: List<PsiFile> = emptyList()
+    override var apiLevel: Int = -1
 
     override fun getPermissionLevel(name: String): String? {
         if (permissions == null) {

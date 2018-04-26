@@ -62,6 +62,8 @@ API sources:
 --show-annotation <annotation class>   Include the given annotation in the API analysis
 --show-unannotated                     Include un-annotated public APIs in the signature
                                        file as well
+--java-source <level>                  Sets the source level for Java source files;
+                                       default is 1.8.
 
 Documentation:
 --public                               Only include elements that are public
