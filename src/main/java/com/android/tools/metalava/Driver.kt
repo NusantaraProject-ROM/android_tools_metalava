@@ -45,6 +45,7 @@ import com.android.utils.StdLogger.Level.ERROR
 import com.google.common.base.Stopwatch
 import com.google.common.collect.Lists
 import com.google.common.io.Files
+import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiClassOwner
 import java.io.File
@@ -145,19 +146,6 @@ private fun exit(exitCode: Int = 0) {
 private fun processFlags() {
     val stopwatch = Stopwatch.createStarted()
 
-    val androidApiLevelXml = options.generateApiLevelXml
-    val apiLevelJars = options.apiLevelJars
-    if (androidApiLevelXml != null && apiLevelJars != null) {
-        ApiGenerator.generate(apiLevelJars, androidApiLevelXml)
-
-        if (options.apiJar == null && options.sources.isEmpty() &&
-            options.sourcePath.isEmpty() && options.previousApi == null
-        ) {
-            // Done
-            return
-        }
-    }
-
     val codebase =
         if (options.sources.size == 1 && options.sources[0].path.endsWith(SdkConstants.DOT_TXT)) {
             loadFromSignatureFiles(
@@ -175,6 +163,25 @@ private fun processFlags() {
 
     if (options.verbose) {
         options.stdout.println("\n$PROGRAM_NAME analyzed API in ${stopwatch.elapsed(TimeUnit.SECONDS)} seconds")
+    }
+
+    val androidApiLevelXml = options.generateApiLevelXml
+    val apiLevelJars = options.apiLevelJars
+    if (androidApiLevelXml != null && apiLevelJars != null) {
+        progress("\nGenerating API levels XML descriptor file, ${androidApiLevelXml.name}: ")
+        ApiGenerator.generate(apiLevelJars, androidApiLevelXml, codebase)
+    }
+
+    if (options.stubsDir != null && codebase.supportsDocumentation()) {
+        progress("\nEnhancing docs: ")
+        val docAnalyzer = DocAnalyzer(codebase)
+        docAnalyzer.enhance()
+
+        val applyApiLevelsXml = options.applyApiLevelsXml
+        if (applyApiLevelsXml != null) {
+            progress("\nApplying API levels")
+            docAnalyzer.applyApiLevels(applyApiLevelsXml)
+        }
     }
 
     val previousApiFile = options.previousApi
@@ -310,6 +317,10 @@ private fun loadFromSignatureFiles(
 private fun loadFromSources(): Codebase {
     val projectEnvironment = createProjectEnvironment()
 
+    // Push language level to PSI handler
+    projectEnvironment.project.getComponent(LanguageLevelProjectExtension::class.java)?.languageLevel =
+        options.javaLanguageLevel
+
     progress("\nProcessing sources: ")
 
     val sources = if (options.sources.isEmpty()) {
@@ -342,6 +353,7 @@ private fun loadFromSources(): Codebase {
     val codebase = PsiBasedCodebase("Codebase loaded from source folders")
     codebase.initialize(project, units, packageDocs)
     codebase.manifest = options.manifest
+    codebase.apiLevel = options.currentApiLevel
 
     progress("\nAnalyzing API: ")
 
@@ -372,16 +384,6 @@ private fun loadFromSources(): Codebase {
     if (options.stubsDir != null) {
         progress("\nInsert missing constructors: ")
         analyzer.addConstructors(filterEmit)
-
-        progress("\nEnhancing docs: ")
-        val docAnalyzer = DocAnalyzer(codebase)
-        docAnalyzer.enhance()
-
-        val applyApiLevelsXml = options.applyApiLevelsXml
-        if (applyApiLevelsXml != null) {
-            progress("\nApplying API levels")
-            docAnalyzer.applyApiLevels(applyApiLevelsXml)
-        }
     }
 
     progress("\nPerforming misc API checks: ")
@@ -390,6 +392,7 @@ private fun loadFromSources(): Codebase {
     return codebase
 }
 
+@Suppress("unused") // Planning to restore for performance optimizations
 private fun filterCodebase(codebase: PsiBasedCodebase): Codebase {
     val ignoreShown = options.showAnnotations.isEmpty()
 
@@ -466,9 +469,22 @@ private fun generateOutputs(codebase: Codebase) {
         })
     }
 
+    options.removedDexApiFile?.let { apiFile ->
+        val unfiltered = codebase.original ?: codebase
+
+        val removedFilter = FilterPredicate(ApiPredicate(codebase, matchRemoved = true))
+        val removedReference = ApiPredicate(codebase, ignoreShown = true, ignoreRemoved = true)
+        val memberIsNotCloned: Predicate<Item> = Predicate { !it.isCloned() }
+        val removedDexEmit = memberIsNotCloned.and(removedFilter)
+
+        createReportFile(unfiltered, apiFile, "removed DEX API",
+            { printWriter -> DexApiWriter(printWriter, removedDexEmit, removedReference) })
+    }
+
     options.privateApiFile?.let { apiFile ->
         val apiFilter = FilterPredicate(ApiPredicate(codebase))
-        val privateEmit = apiFilter.negate()
+        val memberIsNotCloned: Predicate<Item> = Predicate { !it.isCloned() }
+        val privateEmit = memberIsNotCloned.and(apiFilter.negate())
         val privateReference = Predicate<Item> { true }
 
         createReportFile(codebase, apiFile, "private API", { printWriter ->
@@ -481,7 +497,7 @@ private fun generateOutputs(codebase: Codebase) {
         val privateEmit = apiFilter.negate()
         val privateReference = Predicate<Item> { true }
 
-        createReportFile(codebase, apiFile, "DEX API",
+        createReportFile(codebase, apiFile, "private DEX API",
             { printWriter -> DexApiWriter(printWriter, privateEmit, privateReference) })
     }
 

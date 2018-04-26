@@ -15,6 +15,7 @@
  */
 package com.android.tools.metalava.apilevels;
 
+import com.android.annotations.NonNull;
 import com.google.common.collect.Iterables;
 
 import java.io.PrintStream;
@@ -50,6 +51,11 @@ public class ApiClass extends ApiElement {
 
     public void addSuperClass(String superClass, int since) {
         addToArray(mSuperClasses, superClass, since);
+    }
+
+    @NonNull
+    List<ApiElement> getSuperClasses() {
+        return mSuperClasses;
     }
 
     public void addInterface(String interfaceClass, int since) {

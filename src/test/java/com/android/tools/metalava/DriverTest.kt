@@ -123,6 +123,8 @@ abstract class DriverTest {
         exactApi: String? = null,
         /** The removed API (corresponds to --removed-api) */
         removedApi: String? = null,
+        /** The removed dex API (corresponds to --removed-dex-api) */
+        removedDexApi: String? = null,
         /** The private API (corresponds to --private-api) */
         privateApi: String? = null,
         /** The private DEX API (corresponds to --private-dex-api) */
@@ -367,6 +369,14 @@ abstract class DriverTest {
             emptyArray()
         }
 
+        var removedDexApiFile: File? = null
+        val removedDexArgs = if (removedDexApi != null) {
+            removedDexApiFile = temporaryFolder.newFile("removed-dex.txt")
+            arrayOf("--removed-dex-api", removedDexApiFile.path)
+        } else {
+            emptyArray()
+        }
+
         var apiFile: File? = null
         val apiArgs = if (api != null) {
             apiFile = temporaryFolder.newFile("api.txt")
@@ -484,6 +494,7 @@ abstract class DriverTest {
             androidJar.path,
             *kotlinPathArgs,
             *removedArgs,
+            *removedDexArgs,
             *apiArgs,
             *exactApiArgs,
             *privateApiArgs,
@@ -530,6 +541,15 @@ abstract class DriverTest {
             )
             val expectedText = readFile(removedApiFile, stripBlankLines, trim)
             assertEquals(stripComments(removedApi, stripLineComments = false).trimIndent(), expectedText)
+        }
+
+        if (removedDexApi != null && removedDexApiFile != null) {
+            assertTrue(
+                "${removedDexApiFile.path} does not exist even though --removed-dex-api was used",
+                removedDexApiFile.exists()
+            )
+            val expectedText = readFile(removedDexApiFile, stripBlankLines, trim)
+            assertEquals(stripComments(removedDexApi, stripLineComments = false).trimIndent(), expectedText)
         }
 
         if (exactApi != null && exactApiFile != null) {

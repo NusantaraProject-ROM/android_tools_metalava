@@ -57,11 +57,13 @@ abstract class PsiItem(
     // TODO: Consider only doing this in tests!
     override fun isFromClassPath(): Boolean {
         return if (element is UElement) {
-            element.psi is PsiCompiledElement
+            (element.sourcePsi ?: element.javaPsi) is PsiCompiledElement
         } else {
             element is PsiCompiledElement
         }
     }
+
+    override fun isCloned(): Boolean = false
 
     /** Get a mutable version of modifiers for this item */
     override fun mutableModifiers(): MutableModifierList = modifiers
