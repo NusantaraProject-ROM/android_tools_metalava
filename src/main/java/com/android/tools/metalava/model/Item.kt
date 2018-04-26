@@ -121,6 +121,9 @@ interface Item {
 
     override fun hashCode(): Int
 
+    /** Whether this member was cloned in from a super class or interface */
+    fun isCloned(): Boolean
+
     /**
      * Returns true if this item requires nullness information (e.g. for a method
      * where either the return value or any of the parameters are non-primitives.

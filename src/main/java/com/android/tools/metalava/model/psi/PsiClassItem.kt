@@ -409,8 +409,11 @@ open class PsiClassItem(
 
             if (classType == ClassType.INTERFACE) {
                 // All members are implicitly public, fields are implicitly static, non-static methods are abstract
+                // (except in Java 1.9, where they can be private
                 for (method in methods) {
-                    method.mutableModifiers().setPublic(true)
+                    if (!method.isPrivate) {
+                        method.mutableModifiers().setPublic(true)
+                    }
                 }
                 for (method in fields) {
                     val m = method.mutableModifiers()

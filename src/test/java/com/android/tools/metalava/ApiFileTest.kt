@@ -1890,7 +1890,16 @@ class ApiFileTest : DriverTest() {
                     field public int removed;
                   }
                 }
-                """
+                """,
+            removedDexApi = "" +
+                "Ltest/pkg/Bar;-><init>()V\n" +
+                "Ltest/pkg/Bar;->removedMethod()V\n" +
+                "Ltest/pkg/Bar;->removedField:I\n" +
+                "Ltest/pkg/Bar\$Inner;\n" +
+                "Ltest/pkg/Bar\$Inner;-><init>()V\n" +
+                "Ltest/pkg/Bar\$Inner2\$Inner3\$Inner4;\n" +
+                "Ltest/pkg/Bar\$Inner2\$Inner3\$Inner4;-><init>()V\n" +
+                "Ltest/pkg/Bar\$Inner5\$Inner6\$Inner7;->removed:I"
         )
     }
 
@@ -2035,8 +2044,9 @@ class ApiFileTest : DriverTest() {
                     """
                     @file:JvmName("-Foo")
 
-                    package test.pkg;
+                    package test.pkg
 
+                    @Suppress("unused")
                     inline fun String.printHelloWorld() { println("Hello World") }
                     """
                 )
@@ -2162,7 +2172,7 @@ class ApiFileTest : DriverTest() {
                 java(
                     """
                         package test.pkg;
-                        public class Class1 {
+                        public class Class1 implements MyInterface {
                             Class1(int arg) { }
                             /** @hide */
                             public void method1() { }
@@ -2204,11 +2214,22 @@ class ApiFileTest : DriverTest() {
                             public void method5() { }
                         }
                     """
+                ),
+
+                java(
+                    """
+                        package test.pkg;
+                        /** @hide */
+                        @SuppressWarnings("UnnecessaryInterfaceModifier")
+                        public interface MyInterface {
+                            public static final String MY_CONSTANT = 5;
+                        }
+                    """
                 )
             ),
             privateApi = """
                 package test.pkg {
-                  public class Class1 {
+                  public class Class1 implements test.pkg.MyInterface {
                     ctor Class1(int);
                     method public void method1();
                     method void method2();
@@ -2231,6 +2252,9 @@ class ApiFileTest : DriverTest() {
                     ctor Class4();
                     method public void method5();
                   }
+                  public abstract interface MyInterface {
+                    field public static final java.lang.String MY_CONSTANT;
+                  }
                 }
                 """,
             privateDexApi = """
@@ -2252,6 +2276,8 @@ class ApiFileTest : DriverTest() {
                 Ltest/pkg/Class4;
                 Ltest/pkg/Class4;-><init>()V
                 Ltest/pkg/Class4;->method5()V
+                Ltest/pkg/MyInterface;
+                Ltest/pkg/MyInterface;->MY_CONSTANT:Ljava/lang/String;
                 """
         )
     }

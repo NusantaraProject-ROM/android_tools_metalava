@@ -16,6 +16,8 @@
 package com.android.tools.metalava.apilevels;
 
 import com.android.annotations.NonNull;
+import com.android.annotations.Nullable;
+import com.android.tools.metalava.model.Codebase;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import org.objectweb.asm.ClassReader;
@@ -40,16 +42,23 @@ public class AndroidJarReader {
     private File mCurrentJar;
     private List<String> mPatterns;
     private File[] mApiLevels;
+    private Codebase mCodebase;
 
-    AndroidJarReader(@NonNull List<String> patterns, int minApi, @NonNull File currentJar, int currentApi) {
+    AndroidJarReader(@NonNull List<String> patterns,
+                     int minApi,
+                     @NonNull File currentJar,
+                     int currentApi,
+                     @Nullable Codebase codebase) {
         mPatterns = patterns;
         mMinApi = minApi;
         mCurrentJar = currentJar;
         mCurrentApi = currentApi;
+        mCodebase = codebase;
     }
 
-    AndroidJarReader(@NonNull File[] apiLevels) {
+    AndroidJarReader(@NonNull File[] apiLevels, @Nullable Codebase codebase) {
         mApiLevels = apiLevels;
+        mCodebase = codebase;
     }
 
     public Api getApi() throws IOException {
@@ -58,6 +67,12 @@ public class AndroidJarReader {
             for (int apiLevel = 1; apiLevel < mApiLevels.length; apiLevel++) {
                 File jar = getAndroidJarFile(apiLevel);
                 readJar(api, apiLevel, jar);
+            }
+            if (mCodebase != null) {
+                int apiLevel = mCodebase.getApiLevel();
+                if (apiLevel != -1) {
+                    processCodebase(api, apiLevel);
+                }
             }
         } else {
             // Get all the android.jar. They are in platforms-#
@@ -72,7 +87,12 @@ public class AndroidJarReader {
                     jar = getAndroidJarFile(apiLevel);
                 }
                 if (jar == null || !jar.isFile()) {
-                    System.out.println("Last API level found: " + (apiLevel - 1));
+                    if (mCodebase != null) {
+                        processCodebase(api, apiLevel);
+                        System.out.println("Last API level found: " + apiLevel);
+                    } else {
+                        System.out.println("Last API level found: " + (apiLevel - 1));
+                    }
                     break;
                 }
                 System.out.println("Found API " + apiLevel + " at " + jar.getPath());
@@ -84,6 +104,13 @@ public class AndroidJarReader {
         api.removeOverridingMethods();
 
         return api;
+    }
+
+    private void processCodebase(Api api, int apiLevel) {
+        if (mCodebase == null) {
+            return;
+        }
+        AddApisFromCodebaseKt.addApisFromCodebase(api, apiLevel, mCodebase);
     }
 
     private void readJar(Api api, int apiLevel, File jar) throws IOException {
