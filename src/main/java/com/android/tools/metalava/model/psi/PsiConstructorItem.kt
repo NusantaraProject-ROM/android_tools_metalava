@@ -60,6 +60,7 @@ class PsiConstructorItem(
     override fun isImplicitConstructor(): Boolean = implicitConstructor
     override fun isConstructor(): Boolean = true
     override var superConstructor: ConstructorItem? = null
+    override fun isCloned(): Boolean = false
 
     private var _superMethods: List<MethodItem>? = null
     override fun superMethods(): List<MethodItem> {

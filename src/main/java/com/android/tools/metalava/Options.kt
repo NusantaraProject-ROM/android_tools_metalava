@@ -25,6 +25,7 @@ import com.google.common.base.CharMatcher
 import com.google.common.base.Splitter
 import com.google.common.collect.Lists
 import com.google.common.io.Files
+import com.intellij.pom.java.LanguageLevel
 import java.io.File
 import java.io.IOException
 import java.io.OutputStreamWriter
@@ -51,6 +52,7 @@ private const val ARG_PRIVATE_API = "--private-api"
 private const val ARG_PRIVATE_DEX_API = "--private-dex-api"
 private const val ARG_SDK_VALUES = "--sdk-values"
 private const val ARG_REMOVED_API = "--removed-api"
+private const val ARG_REMOVED_DEX_API = "--removed-dex-api"
 private const val ARG_MERGE_ANNOTATIONS = "--merge-annotations"
 private const val ARG_INPUT_API_JAR = "--input-api-jar"
 private const val ARG_EXACT_API = "--exact-api"
@@ -105,6 +107,7 @@ private const val ARG_PRIVATE = "--private"
 private const val ARG_HIDDEN = "--hidden"
 private const val ARG_NO_DOCS = "--no-docs"
 private const val ARG_GENERATE_DOCUMENTATION = "--generate-documentation"
+private const val ARG_JAVA_SOURCE = "--java-source"
 
 class Options(
     args: Array<String>,
@@ -249,8 +252,11 @@ class Options(
     /** A manifest file to read to for example look up available permissions */
     var manifest: File? = null
 
-    /** If set, a file to write an API file to. Corresponds to the --removed-api/-removedApi flag. */
+    /** If set, a file to write a dex API file to. Corresponds to the --removed-dex-api/-removedDexApi flag. */
     var removedApiFile: File? = null
+
+    /** If set, a file to write an API file to. Corresponds to the --removed-api/-removedApi flag. */
+    var removedDexApiFile: File? = null
 
     /** Whether output should be colorized */
     var color = System.getenv("TERM")?.startsWith("xterm") ?: false
@@ -330,6 +336,9 @@ class Options(
      */
     var apiLevelJars: Array<File>? = null
 
+    /** The api level of the codebase, or -1 if not known/specified */
+    var currentApiLevel = -1
+
     /** API level XML file to generate */
     var generateApiLevelXml: File? = null
 
@@ -345,6 +354,11 @@ class Options(
      * test which checks compatibility between signature and API files where the paths vary.
      */
     var omitLocations = false
+
+    /**
+     * The language level to use for Java files, set with [ARG_JAVA_SOURCE]
+     */
+    var javaLanguageLevel: LanguageLevel = LanguageLevel.JDK_1_8
 
     init {
         // Pre-check whether --color/--no-color is present and use that to decide how
@@ -371,7 +385,6 @@ class Options(
 
         val apiFilters = mutableListOf<File>()
         var androidJarPatterns: MutableList<String>? = null
-        var currentApiLevel: Int = -1
         var currentCodeName: String? = null
         var currentJar: File? = null
 
@@ -433,6 +446,7 @@ class Options(
                 ARG_PRIVATE_DEX_API, "-privateDexApi" -> privateDexApiFile = stringToNewFile(getValue(args, ++index))
 
                 ARG_REMOVED_API, "-removedApi" -> removedApiFile = stringToNewFile(getValue(args, ++index))
+                ARG_REMOVED_DEX_API, "-removedDexApi" -> removedDexApiFile = stringToNewFile(getValue(args, ++index))
 
                 ARG_EXACT_API, "-exactApi" -> {
                     unimplemented(arg) // Not yet implemented (because it seems to no longer be hooked up in doclava1)
@@ -576,7 +590,13 @@ class Options(
                     generateApiLevelXml = stringToNewFile(getValue(args, ++index))
                 }
                 ARG_APPLY_API_LEVELS -> {
-                    applyApiLevelsXml = stringToExistingFile(getValue(args, ++index))
+                    applyApiLevelsXml = if (args.contains(ARG_GENERATE_API_LEVELS)) {
+                        // If generating the API file at the same time, it doesn't have
+                        // to already exist
+                        stringToNewFile(getValue(args, ++index))
+                    } else {
+                        stringToExistingFile(getValue(args, ++index))
+                    }
                 }
 
                 ARG_NO_DOCS, "-nodocs" -> noDocs = true
@@ -625,10 +645,13 @@ class Options(
                     }
                 }
 
-                "-source" -> {
+                ARG_JAVA_SOURCE, "-source" -> {
                     val value = getValue(args, ++index)
-                    if (value != "1.8") {
-                        throw DriverException("$value: Only source 1.8 is supported")
+                    val level = LanguageLevel.parse(value)
+                    when {
+                        level == null -> throw DriverException("$value is not a valid or supported Java language level")
+                        level.isLessThan(LanguageLevel.JDK_1_7) -> throw DriverException("$arg must be at least 1.7")
+                        else -> javaLanguageLevel = level
                     }
                 }
 
@@ -782,9 +805,6 @@ class Options(
         }
 
         if (generateApiLevelXml != null) {
-            if (currentJar != null && currentApiLevel == -1 || currentJar == null && currentApiLevel != -1) {
-                throw DriverException("You must specify both --current-jar and --current-version (or neither one)")
-            }
             if (androidJarPatterns == null) {
                 androidJarPatterns = mutableListOf(
                     "prebuilts/tools/common/api-versions/android-%/android.jar",
@@ -910,10 +930,6 @@ class Options(
                     "$ARGS_COMPAT_OUTPUT=yes"
             )
         }
-
-//        if (stubsSourceList != null && stubsDir == null) {
-//            throw OptionsException(stderr = "$ARG_STUBS_SOURCE_LIST should only be used when $ARG_STUBS is set")
-//        }
     }
 
     private fun javadoc(arg: String) {
@@ -1126,28 +1142,29 @@ class Options(
             ARG_NO_COLOR, "Do not attempt to colorize the output",
 
             "", "\nAPI sources:",
-            ARG_SOURCE_FILES + " <files>", "A comma separated list of source files to be parsed. Can also be " +
+            "$ARG_SOURCE_FILES <files>", "A comma separated list of source files to be parsed. Can also be " +
                 "@ followed by a path to a text file containing paths to the full set of files to parse.",
 
-            ARG_SOURCE_PATH + " <paths>", "One or more directories (separated by `${File.pathSeparator}`) " +
+            "$ARG_SOURCE_PATH <paths>", "One or more directories (separated by `${File.pathSeparator}`) " +
                 "containing source files (within a package hierarchy)",
 
-            ARG_CLASS_PATH + " <paths>", "One or more directories or jars (separated by " +
+            "$ARG_CLASS_PATH <paths>", "One or more directories or jars (separated by " +
                 "`${File.pathSeparator}`) containing classes that should be on the classpath when parsing the " +
                 "source files",
 
-            ARG_MERGE_ANNOTATIONS + " <file>", "An external annotations file (using IntelliJ's external " +
+            "$ARG_MERGE_ANNOTATIONS <file>", "An external annotations file (using IntelliJ's external " +
                 "annotations database format) to merge and overlay the sources",
 
-            ARG_INPUT_API_JAR + " <file>", "A .jar file to read APIs from directly",
+            "$ARG_INPUT_API_JAR <file>", "A .jar file to read APIs from directly",
 
-            ARG_MANIFEST + " <file>", "A manifest file, used to for check permissions to cross check APIs",
+            "$ARG_MANIFEST <file>", "A manifest file, used to for check permissions to cross check APIs",
 
-            ARG_HIDE_PACKAGE + " <package>", "Remove the given packages from the API even if they have not been " +
+            "$ARG_HIDE_PACKAGE <package>", "Remove the given packages from the API even if they have not been " +
                 "marked with @hide",
 
-            ARG_SHOW_ANNOTATION + " <annotation class>", "Include the given annotation in the API analysis",
+            "$ARG_SHOW_ANNOTATION <annotation class>", "Include the given annotation in the API analysis",
             ARG_SHOW_UNANNOTATED, "Include un-annotated public APIs in the signature file as well",
+            "$ARG_JAVA_SOURCE <level>", "Sets the source level for Java source files; default is 1.8.",
 
             "", "\nDocumentation:",
             ARG_PUBLIC, "Only include elements that are public",
@@ -1158,35 +1175,35 @@ class Options(
 
             "", "\nExtracting Signature Files:",
             // TODO: Document --show-annotation!
-            ARG_API + " <file>", "Generate a signature descriptor file",
-            ARG_PRIVATE_API + " <file>", "Generate a signature descriptor file listing the exact private APIs",
-            ARG_PRIVATE_DEX_API + " <file>", "Generate a DEX signature descriptor file listing the exact private APIs",
-            ARG_REMOVED_API + " <file>", "Generate a signature descriptor file for APIs that have been removed",
-            ARG_OUTPUT_KOTLIN_NULLS + "[=yes|no]", "Controls whether nullness annotations should be formatted as " +
+            "$ARG_API <file>", "Generate a signature descriptor file",
+            "$ARG_PRIVATE_API <file>", "Generate a signature descriptor file listing the exact private APIs",
+            "$ARG_PRIVATE_DEX_API <file>", "Generate a DEX signature descriptor file listing the exact private APIs",
+            "$ARG_REMOVED_API <file>", "Generate a signature descriptor file for APIs that have been removed",
+            "$ARG_OUTPUT_KOTLIN_NULLS[=yes|no]", "Controls whether nullness annotations should be formatted as " +
                 "in Kotlin (with \"?\" for nullable types, \"\" for non nullable types, and \"!\" for unknown. " +
                 "The default is yes.",
-            ARG_OUTPUT_DEFAULT_VALUES + "[=yes|no]", "Controls whether default values should be included in " +
+            "$ARG_OUTPUT_DEFAULT_VALUES[=yes|no]", "Controls whether default values should be included in " +
                 "signature files. The default is yes.",
-            ARGS_COMPAT_OUTPUT + "=[yes|no]", "Controls whether to keep signature files compatible with the " +
+            "$ARGS_COMPAT_OUTPUT=[yes|no]", "Controls whether to keep signature files compatible with the " +
                 "historical format (with its various quirks) or to generate the new format (which will also include " +
                 "annotations that are part of the API, etc.)",
-            ARG_OMIT_COMMON_PACKAGES + "[=yes|no]", "Skip common package prefixes like java.lang.* and " +
+            "$ARG_OMIT_COMMON_PACKAGES[=yes|no]", "Skip common package prefixes like java.lang.* and " +
                 "kotlin.* in signature files, along with packages for well known annotations like @Nullable and " +
                 "@NonNull.",
 
-            ARG_PROGUARD + " <file>", "Write a ProGuard keep file for the API",
-            ARG_SDK_VALUES + " <dir>", "Write SDK values files to the given directory",
+            "$ARG_PROGUARD <file>", "Write a ProGuard keep file for the API",
+            "$ARG_SDK_VALUES <dir>", "Write SDK values files to the given directory",
 
             "", "\nGenerating Stubs:",
-            ARG_STUBS + " <dir>", "Generate stub source files for the API",
+            "$ARG_STUBS <dir>", "Generate stub source files for the API",
             ARG_EXCLUDE_ANNOTATIONS, "Exclude annotations such as @Nullable from the stub files",
-            ARG_STUBS_SOURCE_LIST + " <file>", "Write the list of generated stub files into the given source " +
+            "$ARG_STUBS_SOURCE_LIST <file>", "Write the list of generated stub files into the given source " +
                 "list file",
 
             "", "\nDiffs and Checks:",
-            ARG_PREVIOUS_API + " <signature file>", "A signature file for the previous version of this " +
+            "$ARG_PREVIOUS_API <signature file>", "A signature file for the previous version of this " +
                 "API to apply diffs with",
-            ARG_INPUT_KOTLIN_NULLS + "[=yes|no]", "Whether the signature file being read should be " +
+            "$ARG_INPUT_KOTLIN_NULLS[=yes|no]", "Whether the signature file being read should be " +
                 "interpreted as having encoded its types using Kotlin style types: a suffix of \"?\" for nullable " +
                 "types, no suffix for non nullable types, and \"!\" for unknown. The default is no.",
             ARG_CHECK_COMPATIBILITY, "Check compatibility with the previous API",
@@ -1196,16 +1213,16 @@ class Options(
                 "annotated APIs as under migration.",
             ARG_WARNINGS_AS_ERRORS, "Promote all warnings to errors",
             ARG_LINTS_AS_ERRORS, "Promote all API lint warnings to errors",
-            ARG_ERROR + " <id>", "Report issues of the given id as errors",
-            ARG_WARNING + " <id>", "Report issues of the given id as warnings",
-            ARG_LINT + " <id>", "Report issues of the given id as having lint-severity",
-            ARG_HIDE + " <id>", "Hide/skip issues of the given id",
+            "$ARG_ERROR <id>", "Report issues of the given id as errors",
+            "$ARG_WARNING <id>", "Report issues of the given id as warnings",
+            "$ARG_LINT <id>", "Report issues of the given id as having lint-severity",
+            "$ARG_HIDE <id>", "Hide/skip issues of the given id",
 
             "", "\nStatistics:",
             ARG_ANNOTATION_COVERAGE_STATS, "Whether $PROGRAM_NAME should emit coverage statistics for " +
                 "annotations, listing the percentage of the API that has been annotated with nullness information.",
 
-            ARG_ANNOTATION_COVERAGE_OF + " <paths>", "One or more jars (separated by `${File.pathSeparator}`) " +
+            "$ARG_ANNOTATION_COVERAGE_OF <paths>", "One or more jars (separated by `${File.pathSeparator}`) " +
                 "containing existing apps that we want to measure annotation coverage statistics for. The set of " +
                 "API usages in those apps are counted up and the most frequently used APIs that are missing " +
                 "annotation metadata are listed in descending order.",
@@ -1214,26 +1231,26 @@ class Options(
                 "narrow the focus down to the Android framework APIs.",
 
             "", "\nExtracting Annotations:",
-            ARG_EXTRACT_ANNOTATIONS + " <zipfile>", "Extracts annotations from the source files and writes them " +
+            "$ARG_EXTRACT_ANNOTATIONS <zipfile>", "Extracts annotations from the source files and writes them " +
                 "into the given zip file",
 
-            ARG_API_FILTER + " <file>", "Applies the given signature file as a filter (which means no classes," +
+            "$ARG_API_FILTER <file>", "Applies the given signature file as a filter (which means no classes," +
                 "methods or fields not found in the filter will be included.)",
             ARG_HIDE_FILTERED, "Omit listing APIs that were skipped because of the $ARG_API_FILTER",
 
             ARG_SKIP_CLASS_RETENTION, "Do not extract annotations that have class file retention",
             ARG_RM_TYPEDEFS, "Delete all the typedef .class files",
-            ARG_TYPEDEF_FILE + " <file>", "Writes an typedef annotation class names into the given file",
+            "$ARG_TYPEDEF_FILE <file>", "Writes an typedef annotation class names into the given file",
 
             "", "\nInjecting API Levels:",
-            ARG_APPLY_API_LEVELS + " <api-versions.xml>", "Reads an XML file containing API level descriptions " +
+            "$ARG_APPLY_API_LEVELS <api-versions.xml>", "Reads an XML file containing API level descriptions " +
                 "and merges the information into the documentation",
 
             "", "\nExtracting API Levels:",
-            ARG_GENERATE_API_LEVELS + " <xmlfile>",
+            "$ARG_GENERATE_API_LEVELS <xmlfile>",
             "Reads android.jar SDK files and generates an XML file recording " +
                 "the API level for each class, method and field",
-            ARG_ANDROID_JAR_PATTERN + " <pattern>", "Patterns to use to locate Android JAR files. The default " +
+            "$ARG_ANDROID_JAR_PATTERN <pattern>", "Patterns to use to locate Android JAR files. The default " +
                 "is \$ANDROID_HOME/platforms/android-%/android.jar.",
             ARG_CURRENT_VERSION, "Sets the current API level of the current source code",
             ARG_CURRENT_CODENAME, "Sets the code name for the current source code",

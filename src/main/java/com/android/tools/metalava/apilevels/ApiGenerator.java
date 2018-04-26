@@ -17,6 +17,8 @@
 package com.android.tools.metalava.apilevels;
 
 import com.android.annotations.NonNull;
+import com.android.annotations.Nullable;
+import com.android.tools.metalava.model.Codebase;
 
 import java.io.File;
 import java.io.IOException;
@@ -134,7 +136,7 @@ public class ApiGenerator {
         }
 
         try {
-            if (!generate(minApi, currentApi, currentJar, patterns, outPath)) {
+            if (!generate(minApi, currentApi, currentJar, patterns, outPath, null)) {
                 System.exit(1);
             }
         } catch (IOException e) {
@@ -147,14 +149,17 @@ public class ApiGenerator {
                                     int currentApi,
                                     @NonNull File currentJar,
                                     @NonNull List<String> patterns,
-                                    @NonNull String outPath) throws IOException {
-        AndroidJarReader reader = new AndroidJarReader(patterns, minApi, currentJar, currentApi);
+                                    @NonNull String outPath,
+                                    @Nullable Codebase codebase) throws IOException {
+        AndroidJarReader reader = new AndroidJarReader(patterns, minApi, currentJar, currentApi, codebase);
         Api api = reader.getApi();
         return createApiFile(new File(outPath), api);
     }
 
-    public static boolean generate(@NonNull File[] apiLevels, @NonNull File outputFile) throws IOException {
-        AndroidJarReader reader = new AndroidJarReader(apiLevels);
+    public static boolean generate(@NonNull File[] apiLevels,
+                                   @NonNull File outputFile,
+                                   @Nullable Codebase codebase) throws IOException {
+        AndroidJarReader reader = new AndroidJarReader(apiLevels, codebase);
         Api api = reader.getApi();
         return createApiFile(outputFile, api);
     }
