@@ -411,21 +411,19 @@ class ApiAnalyzer(
             }
         }
 
-        if (compatibility.includePublicMethodsFromHiddenSuperClasses) {
-            // Also add in any concrete public methods from hidden super classes
-            for (superClass in hiddenSuperClasses) {
-                for (method in superClass.methods()) {
-                    if (method.modifiers.isAbstract()) {
-                        continue
-                    }
-                    val name = method.name()
-                    val list = interfaceNames[name] ?: run {
-                        val list = ArrayList<MethodItem>()
-                        interfaceNames[name] = list
-                        list
-                    }
-                    list.add(method)
+        // Also add in any concrete public methods from hidden super classes
+        for (superClass in hiddenSuperClasses) {
+            for (method in superClass.methods()) {
+                if (method.modifiers.isAbstract()) {
+                    continue
                 }
+                val name = method.name()
+                val list = interfaceNames[name] ?: run {
+                    val list = ArrayList<MethodItem>()
+                    interfaceNames[name] = list
+                    list
+                }
+                list.add(method)
             }
         }
 
@@ -492,9 +490,7 @@ class ApiAnalyzer(
             method.documentation = "// Inlined stub from hidden parent class ${it.containingClass().qualifiedName()}\n" +
                     method.documentation
              */
-            if (it.containingClass().isInterface()) {
-                method.inheritedInterfaceMethod = true
-            }
+            method.inheritedMethod = true
             cls.addMethod(method)
         }
     }

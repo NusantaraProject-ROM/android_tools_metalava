@@ -315,7 +315,7 @@ open class PsiClassItem(
             val stub = method.toStub(replacementMap)
             val psiMethod = codebase.createPsiMethod(stub, psiClass)
             newMethod = PsiMethodItem.create(codebase, this, psiMethod)
-            newMethod.inheritedInterfaceMethod = method.inheritedInterfaceMethod
+            newMethod.inheritedMethod = method.inheritedMethod
             newMethod.documentation = method.documentation
         }
 
