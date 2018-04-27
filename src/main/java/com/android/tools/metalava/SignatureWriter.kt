@@ -23,6 +23,7 @@ import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.ModifierList
 import com.android.tools.metalava.model.PackageItem
+import com.android.tools.metalava.model.ParameterItem
 import com.android.tools.metalava.model.TypeItem
 import com.android.tools.metalava.model.TypeParameterList
 import com.android.tools.metalava.model.javaEscapeString
@@ -70,7 +71,7 @@ class SignatureWriter(
         writer.print(name)
         writer.print(" ")
         writeModifiers(field)
-        writeType(field.type(), field.modifiers)
+        writeType(field, field.type(), field.modifiers)
         writer.print(' ')
         writer.print(field.name())
         field.writeValueWithSemicolon(writer, allowDefaultValue = false, requireInitialValue = false)
@@ -84,7 +85,7 @@ class SignatureWriter(
             return
         }
 
-        if (compatibility.skipInheritedInterfaceMethods && method.inheritedInterfaceMethod) {
+        if (compatibility.skipInheritedMethods && method.inheritedMethod) {
             return
         }
 
@@ -92,7 +93,7 @@ class SignatureWriter(
         writeModifiers(method)
         writeTypeParameterList(method.typeParameterList(), addSpace = true)
 
-        writeType(method.returnType(), method.modifiers)
+        writeType(method, method.returnType(), method.modifiers)
         writer.print(' ')
         writer.print(method.name())
         writeParameterList(method)
@@ -225,7 +226,7 @@ class SignatureWriter(
                 writer.print(", ")
             }
             writeModifiers(parameter)
-            writeType(parameter.type(), parameter.modifiers)
+            writeType(parameter, parameter.type(), parameter.modifiers)
             if (emitParameterNames) {
                 val name = parameter.publicName()
                 if (name != null) {
@@ -248,7 +249,11 @@ class SignatureWriter(
         writer.print(")")
     }
 
-    private fun writeType(type: TypeItem?, modifiers: ModifierList) {
+    private fun writeType(
+        item: Item,
+        type: TypeItem?,
+        modifiers: ModifierList
+    ) {
         type ?: return
 
         var typeString = type.toTypeString(
@@ -260,6 +265,23 @@ class SignatureWriter(
         // Strip java.lang. prefix?
         if (options.omitCommonPackages) {
             typeString = TypeItem.shortenTypes(typeString)
+        }
+
+        if (typeString.endsWith(", ?>") && compatibility.includeExtendsObjectInWildcard && item is ParameterItem) {
+            // This wasn't done universally; just in a few places, so replicate it for those exact places
+            val methodName = item.containingMethod().name()
+            when (methodName) {
+                "computeIfAbsent" -> {
+                    if (typeString == "java.util.function.Function<? super java.lang.Object, ?>") {
+                        typeString = "java.util.function.Function<? super java.lang.Object, ? extends java.lang.Object>"
+                    }
+                }
+                "computeIfPresent", "merge", "replaceAll", "compute" -> {
+                    if (typeString == "java.util.function.BiFunction<? super java.lang.Object, ? super java.lang.Object, ?>") {
+                        typeString = "java.util.function.BiFunction<? super java.lang.Object, ? super java.lang.Object, ? extends java.lang.Object>"
+                    }
+                }
+            }
         }
 
         writer.print(typeString)
