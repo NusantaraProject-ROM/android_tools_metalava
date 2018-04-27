@@ -1865,6 +1865,7 @@ class StubsTest : DriverTest() {
     @Test
     fun `Rewriting type parameters in interfaces from hidden super classes and in throws lists`() {
         checkStubs(
+            extraArguments = arrayOf("--skip-inherited-methods=false"),
             checkDoclava1 = false,
             sourceFiles =
             *arrayOf(
@@ -1955,6 +1956,7 @@ class StubsTest : DriverTest() {
     fun `Rewriting implements class references`() {
         // Checks some more subtle bugs around generics type variable renaming
         checkStubs(
+            extraArguments = arrayOf("--skip-inherited-methods=false"),
             checkDoclava1 = false,
             sourceFiles =
             *arrayOf(

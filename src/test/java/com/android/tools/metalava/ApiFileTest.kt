@@ -1534,7 +1534,7 @@ class ApiFileTest : DriverTest() {
         check(
             checkDoclava1 = false, // doclava1 does not include method2, which it should
             compatibilityMode = true,
-            extraArguments = arrayOf("--include-public-methods-from-hidden-super-classes=true"),
+            extraArguments = arrayOf("--skip-inherited-methods=false"),
             sourceFiles =
             *arrayOf(
                 java(
