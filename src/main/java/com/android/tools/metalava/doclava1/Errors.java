@@ -179,7 +179,7 @@ public class Errors {
 
     // Metalava new warnings (not from doclava)
 
-    public static final Error TYPO = new Error(131, LINT);
+    public static final Error TYPO = new Error(131, WARNING);
     public static final Error MISSING_PERMISSION = new Error(132, LINT);
     public static final Error MULTIPLE_THREAD_ANNOTATIONS = new Error(133, LINT);
     public static final Error UNRESOLVED_CLASS = new Error(134, LINT);

@@ -72,7 +72,7 @@ open class PsiMethodItem(
      */
     internal var source: PsiMethodItem? = null
 
-    override var inheritedInterfaceMethod: Boolean = false
+    override var inheritedMethod: Boolean = false
 
     override fun name(): String = name
     override fun containingClass(): PsiClassItem = containingClass
@@ -355,7 +355,7 @@ open class PsiMethodItem(
             )
             method.modifiers.setOwner(method)
             method.source = original
-            method.inheritedInterfaceMethod = original.inheritedInterfaceMethod
+            method.inheritedMethod = original.inheritedMethod
 
             return method
         }

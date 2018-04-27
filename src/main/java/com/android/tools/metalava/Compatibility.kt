@@ -150,8 +150,11 @@ class Compatibility(
      * included in the stubs etc (since otherwise subclasses would believe they need
      * to implement that method and can't just inherit it). However, doclava1 does not
      * list these methods. This flag controls this compatibility behavior.
+     * Not that this refers only to the signature files, not the stub file generation.
+     *
+     * An example is StringBuilder#setLength.
      */
-    var skipInheritedInterfaceMethods: Boolean = compat
+    var skipInheritedMethods: Boolean = compat
 
     /**
      * Whether to include parameter names in the signature file
@@ -159,12 +162,11 @@ class Compatibility(
     var parameterNames: Boolean = true
 
     /**
-     * Whether we should include public methods from super classes.
-     * Doclava1 did not do this in its signature files, but they
-     * were included in stub files. An example of this scenario
-     * is StringBuilder#setLength.
+     * *Some* signatures for doclava1 wrote "<?>" as "<? extends java.lang.Object>",
+     * which is equivalent. Metalava does not do that. This flags ensures that the
+     * signature files look like the old ones for the specific methods which did this.
      */
-    var includePublicMethodsFromHiddenSuperClasses = !compat
+    var includeExtendsObjectInWildcard = compat
 
     // Other examples: sometimes we sort by qualified name, sometimes by full name
 }

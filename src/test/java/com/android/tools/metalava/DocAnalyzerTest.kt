@@ -124,7 +124,7 @@ class DocAnalyzerTest : DriverTest() {
             ),
             checkCompilation = true,
             checkDoclava1 = false,
-            warnings = "src/test/pkg/Foo.java:2: lint: Replaced Andriod with Android in documentation for class test.pkg.Foo [Typo:131]",
+            warnings = "src/test/pkg/Foo.java:2: warning: Replaced Andriod with Android in documentation for class test.pkg.Foo [Typo:131]",
             stubs = arrayOf(
                 """
                 package test.pkg;

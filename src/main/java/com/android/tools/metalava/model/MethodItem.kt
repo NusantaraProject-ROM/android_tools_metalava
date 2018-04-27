@@ -131,7 +131,7 @@ interface MethodItem : MemberItem {
      * may think the method required and not yet implemented, e.g. the class must be
      * abstract.)
      */
-    var inheritedInterfaceMethod: Boolean
+    var inheritedMethod: Boolean
 
     /**
      * Duplicates this field item. Used when we need to insert inherited fields from
