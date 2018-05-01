@@ -167,7 +167,7 @@ public class ApiGenerator {
     private static void printUsage() {
         System.err.println("\nGenerates a single API file from the content of an SDK.");
         System.err.println("Usage:");
-        System.err.println("\tApiCheck [--min-api=1] OutFile [SdkFolder | --pattern sdk/%/android.jar]+");
+        System.err.println("\tApiCheck [--min-api=1] OutFile [SdkFolder | --pattern sdk/%/public/android.jar]+");
         System.err.println("Options:");
         System.err.println("--min-api <int> : The first API level to consider (>=1).");
         System.err.println("--pattern <pattern>: Path pattern to find per-API android.jar files, where\n" +
