@@ -136,6 +136,9 @@ class StubWriter(
             ModifierList.writeAnnotations(
                 list = pkg.modifiers,
                 separateLines = true,
+                // Some bug in UAST triggers duplicate nullability annotations
+                // here; make sure the are filtered out
+                filterDuplicates = true,
                 writer = writer
             )
             writer.println("package ${pkg.qualifiedName()};")
