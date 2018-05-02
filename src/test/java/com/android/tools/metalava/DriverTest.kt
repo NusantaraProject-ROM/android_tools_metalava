@@ -1002,7 +1002,7 @@ abstract class DriverTest {
             )
 
         fun getAndroidJar(apiLevel: Int): File? {
-            val localFile = File("../../prebuilts/sdk/$apiLevel/android.jar")
+            val localFile = File("../../prebuilts/sdk/$apiLevel/public/android.jar")
             if (localFile.exists()) {
                 return localFile
             }
