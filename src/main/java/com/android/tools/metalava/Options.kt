@@ -808,7 +808,7 @@ class Options(
             if (androidJarPatterns == null) {
                 androidJarPatterns = mutableListOf(
                     "prebuilts/tools/common/api-versions/android-%/android.jar",
-                    "prebuilts/sdk/%/android.jar"
+                    "prebuilts/sdk/%/public/android.jar"
                 )
             }
             apiLevelJars = findAndroidJars(androidJarPatterns!!, currentApiLevel, currentCodeName, currentJar)
