@@ -1465,7 +1465,7 @@ CompatibilityCheckTest : DriverTest() {
                 // Check signature file checks. We have .txt files for API level 14 and up, but there are a
                 // BUNCH of problems in older signature files that make the comparisons not work --
                 // missing type variables in class declarations, missing generics in method signatures, etc.
-                val signatureFile = File("../../prebuilts/sdk/api/${apiLevel - 1}.txt")
+                val signatureFile = File("../../prebuilts/sdk/${apiLevel - 1}/public/api/android.txt")
                 if (!(signatureFile.isFile)) {
                     println("Couldn't find $signatureFile: Check that pwd for test is correct. Skipping this test.")
                     return
