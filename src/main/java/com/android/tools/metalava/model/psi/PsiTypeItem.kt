@@ -16,7 +16,7 @@
 
 package com.android.tools.metalava.model.psi
 
-import com.android.tools.lint.detector.api.LintUtils
+import com.android.tools.lint.detector.api.getInternalName
 import com.android.tools.metalava.compatibility
 import com.android.tools.metalava.doclava1.ApiPredicate
 import com.android.tools.metalava.model.AnnotationItem
@@ -310,7 +310,7 @@ class PsiTypeItem private constructor(private val codebase: PsiBasedCodebase, pr
             signature: StringBuilder,
             outerClass: PsiClass
         ): Boolean {
-            val className = LintUtils.getInternalName(outerClass) ?: return false
+            val className = getInternalName(outerClass) ?: return false
             signature.append('L').append(className).append(';')
             return true
         }

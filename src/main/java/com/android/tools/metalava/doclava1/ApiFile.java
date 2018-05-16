@@ -994,9 +994,6 @@ public class ApiFile {
     }
 
     private static boolean isIdent(char c) {
-        if (c == '"' || isSeparator(c, true)) {
-            return false;
-        }
-        return true;
+        return c != '"' && !isSeparator(c, true);
     }
 }

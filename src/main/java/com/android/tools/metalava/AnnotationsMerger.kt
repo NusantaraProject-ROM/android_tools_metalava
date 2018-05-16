@@ -45,7 +45,7 @@ import com.android.tools.lint.annotations.Extractor.IDEA_NOTNULL
 import com.android.tools.lint.annotations.Extractor.IDEA_NULLABLE
 import com.android.tools.lint.annotations.Extractor.SUPPORT_NOTNULL
 import com.android.tools.lint.annotations.Extractor.SUPPORT_NULLABLE
-import com.android.tools.lint.detector.api.LintUtils.getChildren
+import com.android.tools.lint.detector.api.getChildren
 import com.android.tools.metalava.model.AnnotationAttribute
 import com.android.tools.metalava.model.AnnotationAttributeValue
 import com.android.tools.metalava.model.AnnotationItem
@@ -165,7 +165,7 @@ class AnnotationsMerger(
     @Suppress("PrivatePropertyName")
     private val XML_SIGNATURE: Pattern = Pattern.compile(
         // Class (FieldName | Type? Name(ArgList) Argnum?)
-        //"(\\S+) (\\S+|(.*)\\s+(\\S+)\\((.*)\\)( \\d+)?)");
+        // "(\\S+) (\\S+|(.*)\\s+(\\S+)\\((.*)\\)( \\d+)?)");
         "(\\S+) (\\S+|((.*)\\s+)?(\\S+)\\((.*)\\)( \\d+)?)"
     )
 
@@ -514,13 +514,14 @@ class AnnotationsMerger(
                 return PsiAnnotationItem.create(
                     codebase, XmlBackedAnnotationItem(
                         codebase,
-                        if (valName == "stringValues") STRING_DEF_ANNOTATION.oldName() else INT_DEF_ANNOTATION.oldName(), attributes
+                        if (valName == "stringValues") STRING_DEF_ANNOTATION.oldName() else INT_DEF_ANNOTATION.oldName(),
+                        attributes
                     )
                 )
             }
 
             name == STRING_DEF_ANNOTATION.oldName() ||
-            name == STRING_DEF_ANNOTATION.newName() ||
+                name == STRING_DEF_ANNOTATION.newName() ||
                 name == ANDROID_STRING_DEF ||
                 name == INT_DEF_ANNOTATION.oldName() ||
                 name == INT_DEF_ANNOTATION.newName() ||

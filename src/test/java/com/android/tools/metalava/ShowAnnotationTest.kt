@@ -124,4 +124,43 @@ class ShowAnnotationTest : DriverTest() {
                 """
         )
     }
+
+    @Test
+    fun `Check @TestApi handling`() {
+        check(
+            includeSystemApiAnnotations = true,
+            checkDoclava1 = true,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    import android.annotation.TestApi;
+
+                    /**
+                     * Blah blah blah
+                     * @hide
+                     */
+                    @TestApi
+                    public class Bar {
+                    }
+                    """
+                ),
+                testApiSource
+            ),
+
+            extraArguments = arrayOf(
+                "--show-annotation", "android.annotation.TestApi",
+                "--hide-package", "android.annotation",
+                "--hide-package", "android.support.annotation"
+            ),
+
+            api = """
+                package test.pkg {
+                  public class Bar {
+                    ctor public Bar();
+                  }
+                }
+                """
+        )
+    }
 }

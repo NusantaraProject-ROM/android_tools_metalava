@@ -323,7 +323,7 @@ fun javaUnescapeString(str: String): String {
         }
     }
     if (state != START) {
-        throw IllegalArgumentException("unfinished escape sequence: " + str)
+        throw IllegalArgumentException("unfinished escape sequence: $str")
     }
     return buf.toString()
 }

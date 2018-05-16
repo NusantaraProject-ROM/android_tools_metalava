@@ -209,7 +209,7 @@ interface TypeItem {
             // <T extends java.lang.Object> is the same as <T>
             //  but NOT for <T extends Object & java.lang.Comparable> -- you can't
             //  shorten this to <T & java.lang.Comparable
-            //return type.replace(" extends java.lang.Object", "")
+            // return type.replace(" extends java.lang.Object", "")
             return signature.replace(" extends java.lang.Object>", ">")
         }
 

@@ -55,7 +55,7 @@ class PsiAnnotationItem private constructor(
 
         val attributes = psiAnnotation.parameterList.attributes
         if (attributes.isEmpty()) {
-            return "@" + qualifiedName
+            return "@$qualifiedName"
         }
 
         val sb = StringBuilder(30)

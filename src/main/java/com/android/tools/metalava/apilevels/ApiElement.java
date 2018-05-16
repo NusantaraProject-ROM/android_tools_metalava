@@ -182,7 +182,7 @@ public class ApiElement implements Comparable<ApiElement> {
     }
 
     private <T extends ApiElement> List<T> sortedList(Collection<T> elements) {
-        List<T> list = new ArrayList<T>(elements);
+        List<T> list = new ArrayList<>(elements);
         Collections.sort(list);
         return list;
     }

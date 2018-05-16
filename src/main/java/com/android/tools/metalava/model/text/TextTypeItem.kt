@@ -40,7 +40,7 @@ class TextTypeItem(
         innerAnnotations: Boolean,
         erased: Boolean
     ): String {
-        return Companion.toTypeString(type, outerAnnotations, innerAnnotations, erased)
+        return toTypeString(type, outerAnnotations, innerAnnotations, erased)
     }
 
     override fun asClass(): ClassItem? {

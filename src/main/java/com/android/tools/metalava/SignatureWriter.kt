@@ -58,7 +58,7 @@ class SignatureWriter(
         writer.print("    ctor ")
         writeModifiers(constructor)
         // Note - we don't write out the type parameter list (constructor.typeParameterList()) in signature files!
-        //writeTypeParameterList(constructor.typeParameterList(), addSpace = true)
+        // writeTypeParameterList(constructor.typeParameterList(), addSpace = true)
         writer.print(constructor.containingClass().fullName())
         writeParameterList(constructor)
         writeThrowsList(constructor)
@@ -278,7 +278,8 @@ class SignatureWriter(
                 }
                 "computeIfPresent", "merge", "replaceAll", "compute" -> {
                     if (typeString == "java.util.function.BiFunction<? super java.lang.Object, ? super java.lang.Object, ?>") {
-                        typeString = "java.util.function.BiFunction<? super java.lang.Object, ? super java.lang.Object, ? extends java.lang.Object>"
+                        typeString =
+                            "java.util.function.BiFunction<? super java.lang.Object, ? super java.lang.Object, ? extends java.lang.Object>"
                     }
                 }
             }
@@ -304,14 +305,14 @@ class SignatureWriter(
     }
 
     private fun writeThrowsList(method: MethodItem) {
-        val throws = if (preFiltered)
-            method.throwsTypes().asSequence().sortedWith(ClassItem.fullNameComparator)
-        else method.throwsTypes().asSequence()
-            .filter { filterReference.test(it) }
-            .sortedWith(ClassItem.fullNameComparator)
+        val throws = when {
+            preFiltered -> method.throwsTypes().asSequence()
+            compatibility.filterThrowsClasses -> method.filteredThrowsTypes(filterReference).asSequence()
+            else -> method.throwsTypes().asSequence()
+        }
         if (throws.any()) {
             writer.print(" throws ")
-            throws.asSequence().forEachIndexed { i, type ->
+            throws.asSequence().sortedWith(ClassItem.fullNameComparator).forEachIndexed { i, type ->
                 if (i > 0) {
                     writer.print(", ")
                 }
