@@ -303,24 +303,24 @@ class AnnotationStatistics(val api: Codebase) {
     private fun recordUsages(used: MutableMap<MemberItem, Int>, file: File, path: String) {
         when {
             file.name.endsWith(SdkConstants.DOT_JAR) -> try {
-                ZipFile(file).use({ jar ->
+                ZipFile(file).use { jar ->
                     val enumeration = jar.entries()
                     while (enumeration.hasMoreElements()) {
                         val entry = enumeration.nextElement()
                         if (entry.name.endsWith(SdkConstants.DOT_CLASS)) {
                             try {
-                                jar.getInputStream(entry).use({ `is` ->
+                                jar.getInputStream(entry).use { `is` ->
                                     val bytes = ByteStreams.toByteArray(`is`)
                                     if (bytes != null) {
                                         recordUsages(used, bytes, path + ":" + entry.name)
                                     }
-                                })
+                                }
                             } catch (e: Exception) {
                                 options.stdout.println("Could not read jar file entry ${entry.name} from $file: $e")
                             }
                         }
                     }
-                })
+                }
             } catch (e: IOException) {
                 options.stdout.println("Could not read jar file contents from $file: $e")
             }

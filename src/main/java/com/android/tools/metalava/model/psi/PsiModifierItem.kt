@@ -222,8 +222,8 @@ class PsiModifierItem(
 
             // Skipping the "default" flag
             // TODO: Compatibility: skipNativeModifier and skipStrictFpModifier modifier flags!
-            //if (!compatibility.skipNativeModifier && isNative() != other.isNative()) return false
-            //if (!compatibility.skipStrictFpModifier && isStrictFp() != other.isStrictFp()) return false
+            // if (!compatibility.skipNativeModifier && isNative() != other.isNative()) return false
+            // if (!compatibility.skipStrictFpModifier && isStrictFp() != other.isStrictFp()) return false
             return flags and mask == flags2 and mask
         }
         return false

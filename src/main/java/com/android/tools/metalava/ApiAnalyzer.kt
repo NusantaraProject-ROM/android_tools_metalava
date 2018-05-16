@@ -526,15 +526,12 @@ class ApiAnalyzer(
      */
     private fun propagateHiddenRemovedAndDocOnly(includingFields: Boolean) {
         packages.accept(object : ItemVisitor(visitConstructorsAsMethods = true, nestInnerClasses = true) {
-            override fun visitItem(item: Item) {
-                if (item.modifiers.hasShowAnnotation()) {
-                    item.hidden = false
-                } else if (item.modifiers.hasHideAnnotations()) {
-                    item.hidden = true
-                }
-            }
-
             override fun visitPackage(pkg: PackageItem) {
+                if (pkg.modifiers.hasShowAnnotation()) {
+                    pkg.hidden = false
+                } else if (pkg.modifiers.hasHideAnnotations()) {
+                    pkg.hidden = true
+                }
                 val containingPackage = pkg.containingPackage()
                 if (containingPackage != null) {
                     if (containingPackage.hidden) {
@@ -548,7 +545,14 @@ class ApiAnalyzer(
 
             override fun visitClass(cls: ClassItem) {
                 val containingClass = cls.containingClass()
-                if (containingClass != null) {
+                if (cls.modifiers.hasShowAnnotation()) {
+                    cls.hidden = false
+                    // Make containing package non-hidden if it contains a show-annotation
+                    // class. Doclava does this in PackageInfo.isHidden().
+                    cls.containingPackage().hidden = false
+                } else if (cls.modifiers.hasShowAnnotation()) {
+                    cls.hidden = true
+                } else if (containingClass != null) {
                     if (containingClass.hidden) {
                         cls.hidden = true
                     }
@@ -573,34 +577,46 @@ class ApiAnalyzer(
             }
 
             override fun visitMethod(method: MethodItem) {
-                val containingClass = method.containingClass()
-                if (containingClass.hidden) {
+                if (method.modifiers.hasShowAnnotation()) {
+                    method.hidden = false
+                } else if (method.modifiers.hasHideAnnotations()) {
                     method.hidden = true
-                }
-                if (containingClass.docOnly) {
-                    method.docOnly = true
-                }
-                if (containingClass.removed) {
-                    method.removed = true
+                } else {
+                    val containingClass = method.containingClass()
+                    if (containingClass.hidden) {
+                        method.hidden = true
+                    }
+                    if (containingClass.docOnly) {
+                        method.docOnly = true
+                    }
+                    if (containingClass.removed) {
+                        method.removed = true
+                    }
                 }
             }
 
             override fun visitField(field: FieldItem) {
-                val containingClass = field.containingClass()
-                /* We don't always propagate field visibility down to the fields
-                   because we sometimes move fields around, and in that
-                   case we don't want to carry forward the "hidden" attribute
-                   from the field that wasn't marked on the field but its
-                   container interface.
-                */
-                if (includingFields && containingClass.hidden) {
+                if (field.modifiers.hasShowAnnotation()) {
+                    field.hidden = false
+                } else if (field.modifiers.hasHideAnnotations()) {
                     field.hidden = true
-                }
-                if (containingClass.docOnly) {
-                    field.docOnly = true
-                }
-                if (containingClass.removed) {
-                    field.removed = true
+                } else {
+                    val containingClass = field.containingClass()
+                    /* We don't always propagate field visibility down to the fields
+                       because we sometimes move fields around, and in that
+                       case we don't want to carry forward the "hidden" attribute
+                       from the field that wasn't marked on the field but its
+                       container interface.
+                    */
+                    if (includingFields && containingClass.hidden) {
+                        field.hidden = true
+                    }
+                    if (containingClass.docOnly) {
+                        field.docOnly = true
+                    }
+                    if (containingClass.removed) {
+                        field.removed = true
+                    }
                 }
             }
         })
@@ -827,7 +843,7 @@ class ApiAnalyzer(
 
     fun handleStripping() {
         // TODO: Switch to visitor iteration
-        //val stubPackages = options.stubPackages
+        // val stubPackages = options.stubPackages
         val stubImportPackages = options.stubImportPackages
         handleStripping(stubImportPackages)
     }

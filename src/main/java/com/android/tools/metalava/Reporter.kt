@@ -188,7 +188,7 @@ open class Reporter(private val rootFolder: File? = null) {
             path
         } else {
             val lineNumber = getLineNumber(psiFile.text, range.startOffset) + 1
-            path + ":" + lineNumber
+            "$path:$lineNumber"
         }
     }
 

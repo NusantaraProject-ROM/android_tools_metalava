@@ -190,7 +190,7 @@ class AndroidApiChecks {
                 }
 
                 for (value in values) {
-                    //var perm = String.valueOf(value.value())
+                    // var perm = String.valueOf(value.value())
                     var perm = value.toSource()
                     if (perm.indexOf('.') >= 0) perm = perm.substring(perm.lastIndexOf('.') + 1)
                     if (text.contains(perm)) {

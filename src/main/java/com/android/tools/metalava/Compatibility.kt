@@ -89,6 +89,13 @@ class Compatibility(
     var useErasureInThrows: Boolean = compat
 
     /**
+     * Whether throws classes in methods should be filtered. This should definitely
+     * be the case, but doclava1 doesn't. Note that this only applies to signature
+     * files, not stub files.
+     */
+    var filterThrowsClasses: Boolean = !compat
+
+    /**
      * Include a single space in front of package private classes with no other modifiers
      * (this doesn't align well, but is supported to make the output 100% identical to the
      * doclava1 format

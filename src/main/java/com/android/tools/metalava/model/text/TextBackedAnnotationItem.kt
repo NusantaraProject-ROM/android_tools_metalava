@@ -39,7 +39,7 @@ class TextBackedAnnotationItem(
         qualifiedName = if (mapName) AnnotationItem.mapName(codebase, annotationClass) else annotationClass
         full = when {
             qualifiedName == null -> ""
-            index == -1 -> "@" + qualifiedName
+            index == -1 -> "@$qualifiedName"
             else -> "@" + qualifiedName + source.substring(index)
         }
 

@@ -711,7 +711,7 @@ class StubsTest : DriverTest() {
         checkStubs(
             // Note that doclava1 includes fields here that it doesn't include in the
             // signature file.
-            //checkDoclava1 = true,
+            // checkDoclava1 = true,
             compatibilityMode = false,
             sourceFiles =
             *arrayOf(
@@ -1915,7 +1915,7 @@ class StubsTest : DriverTest() {
                       }
                       public class Generics.MyClass<X, Y extends java.lang.Number> extends test.pkg.Generics.PublicParent implements test.pkg.Generics.PublicInterface {
                         ctor public Generics.MyClass();
-                        method public java.util.Map<X, java.util.Map<Y, java.lang.String>> createMap(java.util.List<X>);
+                        method public java.util.Map<X, java.util.Map<Y, java.lang.String>> createMap(java.util.List<X>) throws test.pkg.Generics.MyThrowable;
                         method public java.util.List<X> foo();
                       }
                       public static abstract interface Generics.PublicInterface<A, B> {
@@ -1936,7 +1936,98 @@ class StubsTest : DriverTest() {
                     public class MyClass<X, Y extends java.lang.Number> extends test.pkg.Generics.PublicParent<X,Y> implements test.pkg.Generics.PublicInterface<X,Y> {
                     public MyClass() { throw new RuntimeException("Stub!"); }
                     public java.util.List<X> foo() { throw new RuntimeException("Stub!"); }
-                    public java.util.Map<X,java.util.Map<Y,java.lang.String>> createMap(java.util.List<X> list) { throw new RuntimeException("Stub!"); }
+                    public java.util.Map<X,java.util.Map<Y,java.lang.String>> createMap(java.util.List<X> list) throws java.io.IOException { throw new RuntimeException("Stub!"); }
+                    }
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public static interface PublicInterface<A, B> {
+                    public java.util.Map<A,java.util.Map<B,java.lang.String>> createMap(java.util.List<A> list) throws java.io.IOException;
+                    }
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public abstract class PublicParent<A, B extends java.lang.Number> {
+                    public PublicParent() { throw new RuntimeException("Stub!"); }
+                    protected abstract java.util.List<A> foo();
+                    }
+                    }
+                    """
+        )
+    }
+
+    @Test
+    fun `Picking super class throwables`() {
+        // Like previous test, but without compatibility mode: ensures that we
+        // use super classes of filtered throwables
+        checkStubs(
+            compatibilityMode = false,
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+
+                    import java.io.IOException;
+                    import java.util.List;
+                    import java.util.Map;
+
+                    @SuppressWarnings({"RedundantThrows", "WeakerAccess"})
+                    public class Generics {
+                        public class MyClass<X, Y extends Number> extends HiddenParent<X, Y> implements PublicInterface<X, Y> {
+                        }
+
+                        class HiddenParent<M, N extends Number> extends PublicParent<M, N> {
+                            public Map<M, Map<N, String>> createMap(List<M> list) throws MyThrowable {
+                                return null;
+                            }
+
+                            protected List<M> foo() {
+                                return null;
+                            }
+
+                        }
+
+                        class MyThrowable extends IOException {
+                        }
+
+                        public abstract class PublicParent<A, B extends Number> {
+                            protected abstract List<A> foo();
+                        }
+
+                        public interface PublicInterface<A, B> {
+                            Map<A, Map<B, String>> createMap(List<A> list) throws IOException;
+                        }
+                    }
+                    """
+                )
+            ),
+            warnings = "",
+            api = """
+                package test.pkg {
+                  public class Generics {
+                    ctor public Generics();
+                  }
+                  public class Generics.MyClass<X, Y extends java.lang.Number> extends test.pkg.Generics.PublicParent<X,Y> implements test.pkg.Generics.PublicInterface<X,Y> {
+                    ctor public Generics.MyClass();
+                    method public java.util.Map<X,java.util.Map<Y,java.lang.String>>! createMap(java.util.List<X>!) throws java.io.IOException;
+                    method public java.util.List<X>! foo();
+                  }
+                  public static interface Generics.PublicInterface<A, B> {
+                    method public java.util.Map<A,java.util.Map<B,java.lang.String>>! createMap(java.util.List<A>!) throws java.io.IOException;
+                  }
+                  public abstract class Generics.PublicParent<A, B extends java.lang.Number> {
+                    ctor public Generics.PublicParent();
+                    method protected abstract java.util.List<A>! foo();
+                  }
+                }
+                    """,
+            source = """
+                    package test.pkg;
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class Generics {
+                    public Generics() { throw new RuntimeException("Stub!"); }
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class MyClass<X, Y extends java.lang.Number> extends test.pkg.Generics.PublicParent<X,Y> implements test.pkg.Generics.PublicInterface<X,Y> {
+                    public MyClass() { throw new RuntimeException("Stub!"); }
+                    public java.util.List<X> foo() { throw new RuntimeException("Stub!"); }
+                    public java.util.Map<X,java.util.Map<Y,java.lang.String>> createMap(java.util.List<X> list) throws java.io.IOException { throw new RuntimeException("Stub!"); }
                     }
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public static interface PublicInterface<A, B> {
@@ -2075,6 +2166,7 @@ class StubsTest : DriverTest() {
                     import android.util.AttributeSet;
                     import org.xmlpull.v1.XmlPullParser;
 
+                    @SuppressWarnings("UnnecessaryInterfaceModifier")
                     public interface XmlResourceParser extends XmlPullParser, AttributeSet, AutoCloseable {
                         public void close();
                     }
@@ -2172,9 +2264,11 @@ class StubsTest : DriverTest() {
                             public abstract FileDescriptor getFileDescriptor();
                         }
 
+                        @SuppressWarnings("UnnecessaryInterfaceModifier")
                         public static interface Closeable extends AutoCloseable {
                         }
 
+                        @SuppressWarnings("UnnecessaryInterfaceModifier")
                         public static interface AutoCloseable {
                         }
 

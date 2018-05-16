@@ -161,8 +161,9 @@ abstract class DefaultCodebase : Codebase {
 
     override fun getPermissionLevel(name: String): String? {
         if (permissions == null) {
-            assert(manifest != null,
-                { "This method should only be called when a manifest has been configured on the codebase" })
+            assert(manifest != null) {
+                "This method should only be called when a manifest has been configured on the codebase"
+            }
             try {
                 val map = HashMap<String, String>(600)
                 val doc = XmlUtils.parseDocument(manifest?.readText(UTF_8), true)

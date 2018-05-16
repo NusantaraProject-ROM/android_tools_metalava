@@ -23,7 +23,7 @@ import java.util.Map;
  * Represents the whole Android API.
  */
 public class Api extends ApiElement {
-    private final Map<String, ApiClass> mClasses = new HashMap<String, ApiClass>();
+    private final Map<String, ApiClass> mClasses = new HashMap<>();
 
     public Api() {
         // Pretend that API started from version 0 to make sure that classes existed in the first version

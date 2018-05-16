@@ -187,26 +187,20 @@ public class ApiGenerator {
      * @param api     the api to write
      */
     private static boolean createApiFile(File outFile, Api api) {
-        PrintStream stream = null;
-        try {
-            File parentFile = outFile.getParentFile();
-            if (!parentFile.exists()) {
-                boolean ok = parentFile.mkdirs();
-                if (!ok) {
-                    System.err.println("Could not create directory " + parentFile);
-                    return false;
-                }
+        File parentFile = outFile.getParentFile();
+        if (!parentFile.exists()) {
+            boolean ok = parentFile.mkdirs();
+            if (!ok) {
+                System.err.println("Could not create directory " + parentFile);
+                return false;
             }
-            stream = new PrintStream(outFile, "UTF-8");
+        }
+        try (PrintStream stream = new PrintStream(outFile, "UTF-8")) {
             stream.println("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
             api.print(stream);
         } catch (Exception e) {
             e.printStackTrace();
             return false;
-        } finally {
-            if (stream != null) {
-                stream.close();
-            }
         }
 
         return true;
