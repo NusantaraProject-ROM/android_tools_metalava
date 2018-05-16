@@ -75,7 +75,7 @@ interface ModifierList {
         if (isVolatile() != other.isVolatile()) return false
 
         // Default does not require an override to "remove" it
-        //if (isDefault() != other.isDefault()) return false
+        // if (isDefault() != other.isDefault()) return false
 
         return true
     }

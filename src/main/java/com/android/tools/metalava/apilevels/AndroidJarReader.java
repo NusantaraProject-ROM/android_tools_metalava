@@ -42,7 +42,7 @@ public class AndroidJarReader {
     private File mCurrentJar;
     private List<String> mPatterns;
     private File[] mApiLevels;
-    private Codebase mCodebase;
+    private final Codebase mCodebase;
 
     AndroidJarReader(@NonNull List<String> patterns,
                      int minApi,

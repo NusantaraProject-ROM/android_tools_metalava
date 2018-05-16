@@ -496,8 +496,8 @@ interface ClassItem : Item {
         val methods = LinkedHashSet<MethodItem>()
         for (method in methods()) {
             if (predicate.test(method) || method.findPredicateSuperMethod(predicate) != null) {
-                //val duplicated = method.duplicate(this)
-                //methods.add(duplicated)
+                // val duplicated = method.duplicate(this)
+                // methods.add(duplicated)
                 methods.remove(method)
                 methods.add(method)
             }
@@ -691,10 +691,10 @@ class VisitCandidate(private val cls: ClassItem, private val visitor: ApiVisitor
             }
         if (cls.isEnum()) {
             fields = fieldSequence
-                .filter({ !it.isEnumConstant() })
+                .filter { !it.isEnumConstant() }
                 .sortedWith(FieldItem.comparator)
             enums = fieldSequence
-                .filter({ it.isEnumConstant() })
+                .filter { it.isEnumConstant() }
                 .filter { filterEmit.test(it) }
                 .sortedWith(FieldItem.comparator)
         } else {
@@ -743,8 +743,7 @@ class VisitCandidate(private val cls: ClassItem, private val visitor: ApiVisitor
             return
         }
 
-        val emitClass = emitClass()
-
+        val emitClass = if (visitor.includeEmptyOuterClasses) emit() else emitClass()
         if (emitClass) {
             if (!visitor.visitingPackage) {
                 visitor.visitingPackage = true

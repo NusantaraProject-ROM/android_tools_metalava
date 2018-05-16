@@ -49,7 +49,8 @@ interface MethodItem : MemberItem {
         // Non-static inner classes get an implicit constructor parameter for the
         // outer type
         if (isConstructor() && containingClass().containingClass() != null &&
-            !containingClass().modifiers.isStatic()) {
+            !containingClass().modifiers.isStatic()
+        ) {
             sb.append(containingClass().containingClass()?.toType()?.internalName() ?: "")
         }
 
@@ -97,6 +98,9 @@ interface MethodItem : MemberItem {
     }
 
     fun filteredThrowsTypes(predicate: Predicate<Item>): Collection<ClassItem> {
+        if (throwsTypes().isEmpty()) {
+            return emptyList()
+        }
         return filteredThrowsTypes(predicate, LinkedHashSet())
     }
 
@@ -112,7 +116,7 @@ interface MethodItem : MemberItem {
                 // Excluded, but it may have super class throwables that are included; if so, include those
                 var curr = cls.publicSuperClass()
                 while (curr != null) {
-                    if (predicate.test(cls)) {
+                    if (predicate.test(curr)) {
                         classes.add(curr)
                         break
                     }

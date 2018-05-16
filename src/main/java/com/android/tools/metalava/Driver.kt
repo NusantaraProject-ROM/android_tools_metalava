@@ -28,6 +28,7 @@ import com.android.tools.lint.KotlinLintAnalyzerFacade
 import com.android.tools.lint.LintCoreApplicationEnvironment
 import com.android.tools.lint.LintCoreProjectEnvironment
 import com.android.tools.lint.annotations.Extractor
+import com.android.tools.lint.checks.infrastructure.ClassName
 import com.android.tools.metalava.apilevels.ApiGenerator
 import com.android.tools.metalava.doclava1.ApiFile
 import com.android.tools.metalava.doclava1.ApiParseException
@@ -55,7 +56,6 @@ import java.io.PrintWriter
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeUnit.SECONDS
 import java.util.function.Predicate
-import java.util.regex.Pattern
 import kotlin.text.Charsets.UTF_8
 
 const val PROGRAM_NAME = "metalava"
@@ -435,11 +435,9 @@ private fun createProjectEnvironment(): LintCoreProjectEnvironment {
 }
 
 private fun ensurePsiFileCapacity() {
-    //noinspection SpellCheckingInspection
     val fileSize = System.getProperty("idea.max.intellisense.filesize")
     if (fileSize == null) {
         // Ensure we can handle large compilation units like android.R
-        //noinspection SpellCheckingInspection
         System.setProperty("idea.max.intellisense.filesize", "100000")
     }
 }
@@ -451,10 +449,10 @@ private fun generateOutputs(codebase: Codebase) {
         val apiReference = ApiPredicate(codebase, ignoreShown = true)
         val apiEmit = apiFilter.and(ElidingPredicate(apiReference))
 
-        createReportFile(codebase, apiFile, "API", { printWriter ->
+        createReportFile(codebase, apiFile, "API") { printWriter ->
             val preFiltered = codebase.original != null
             SignatureWriter(printWriter, apiEmit, apiReference, preFiltered)
-        })
+        }
     }
 
     options.removedApiFile?.let { apiFile ->
@@ -464,9 +462,9 @@ private fun generateOutputs(codebase: Codebase) {
         val removedReference = ApiPredicate(codebase, ignoreShown = true, ignoreRemoved = true)
         val removedEmit = removedFilter.and(ElidingPredicate(removedReference))
 
-        createReportFile(unfiltered, apiFile, "removed API", { printWriter ->
+        createReportFile(unfiltered, apiFile, "removed API") { printWriter ->
             SignatureWriter(printWriter, removedEmit, removedReference, codebase.original != null)
-        })
+        }
     }
 
     options.removedDexApiFile?.let { apiFile ->
@@ -477,8 +475,9 @@ private fun generateOutputs(codebase: Codebase) {
         val memberIsNotCloned: Predicate<Item> = Predicate { !it.isCloned() }
         val removedDexEmit = memberIsNotCloned.and(removedFilter)
 
-        createReportFile(unfiltered, apiFile, "removed DEX API",
-            { printWriter -> DexApiWriter(printWriter, removedDexEmit, removedReference) })
+        createReportFile(
+            unfiltered, apiFile, "removed DEX API"
+        ) { printWriter -> DexApiWriter(printWriter, removedDexEmit, removedReference) }
     }
 
     options.privateApiFile?.let { apiFile ->
@@ -487,9 +486,9 @@ private fun generateOutputs(codebase: Codebase) {
         val privateEmit = memberIsNotCloned.and(apiFilter.negate())
         val privateReference = Predicate<Item> { true }
 
-        createReportFile(codebase, apiFile, "private API", { printWriter ->
+        createReportFile(codebase, apiFile, "private API") { printWriter ->
             SignatureWriter(printWriter, privateEmit, privateReference, codebase.original != null)
-        })
+        }
     }
 
     options.privateDexApiFile?.let { apiFile ->
@@ -497,15 +496,17 @@ private fun generateOutputs(codebase: Codebase) {
         val privateEmit = apiFilter.negate()
         val privateReference = Predicate<Item> { true }
 
-        createReportFile(codebase, apiFile, "private DEX API",
-            { printWriter -> DexApiWriter(printWriter, privateEmit, privateReference) })
+        createReportFile(
+            codebase, apiFile, "private DEX API"
+        ) { printWriter -> DexApiWriter(printWriter, privateEmit, privateReference) }
     }
 
     options.proguard?.let { proguard ->
         val apiEmit = FilterPredicate(ApiPredicate(codebase))
         val apiReference = ApiPredicate(codebase, ignoreShown = true)
-        createReportFile(codebase, proguard, "Proguard file",
-            { printWriter -> ProguardWriter(printWriter, apiEmit, apiReference) })
+        createReportFile(
+            codebase, proguard, "Proguard file"
+        ) { printWriter -> ProguardWriter(printWriter, apiEmit, apiReference) }
     }
 
     options.sdkValueDir?.let { dir ->
@@ -555,9 +556,9 @@ private fun createStubFiles(stubDir: File, codebase: Codebase) {
     val localTimer = Stopwatch.createStarted()
     val prevCompatibility = compatibility
     if (compatibility.compat) {
-        //if (!options.quiet) {
+        // if (!options.quiet) {
         //    options.stderr.println("Warning: Turning off compat mode when generating stubs")
-        //}
+        // }
         compatibility = Compatibility(false)
         // But preserve the setting for whether we want to erase throws signatures (to ensure the API
         // stays compatible)
@@ -752,7 +753,13 @@ private fun findRoot(file: File): File? {
     if (path.endsWith(DOT_JAVA) || path.endsWith(DOT_KT)) {
         val pkg = findPackage(file) ?: return null
         val parent = file.parentFile ?: return null
-        return File(path.substring(0, parent.path.length - pkg.length))
+        val endIndex = parent.path.length - pkg.length
+        val before = path[endIndex - 1]
+        if (before == '/' || before == '\\') {
+            return File(path.substring(0, endIndex))
+        } else {
+            reporter.report(Errors.IO_ERROR, file, "$PROGRAM_NAME was unable to determine the package name")
+        }
     }
 
     return null
@@ -764,16 +771,7 @@ fun findPackage(file: File): String? {
     return findPackage(source)
 }
 
-@Suppress("PrivatePropertyName")
-private val PACKAGE_PATTERN = Pattern.compile("package\\s+([\\S&&[^;]]*)")
-
 /** Finds the package of the given Java/Kotlin source code, if possible */
 fun findPackage(source: String): String? {
-    val matcher = PACKAGE_PATTERN.matcher(source)
-    val foundPackage = matcher.find()
-    return if (foundPackage) {
-        matcher.group(1).trim { it <= ' ' }
-    } else {
-        null
-    }
+    return ClassName(source).packageName
 }

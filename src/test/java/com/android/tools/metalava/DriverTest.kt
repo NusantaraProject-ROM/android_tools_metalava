@@ -234,7 +234,7 @@ abstract class DriverTest {
         val sourceList =
             if (signatureSource != null) {
                 sourcePathDir.mkdirs()
-                assert(sourceFiles.isEmpty(), { "Shouldn't combine sources with signature file loads" })
+                assert(sourceFiles.isEmpty()) { "Shouldn't combine sources with signature file loads" }
                 val signatureFile = File(project, "load-api.txt")
                 Files.asCharSink(signatureFile, Charsets.UTF_8).write(signatureSource.trimIndent())
                 if (includeStrippedSuperclassWarnings) {
@@ -248,7 +248,7 @@ abstract class DriverTest {
                 }
             } else if (apiJar != null) {
                 sourcePathDir.mkdirs()
-                assert(sourceFiles.isEmpty(), { "Shouldn't combine sources with API jar file loads" })
+                assert(sourceFiles.isEmpty()) { "Shouldn't combine sources with API jar file loads" }
                 arrayOf(apiJar.path)
             } else {
                 sourceFiles.asSequence().map { File(project, it.targetPath).path }.toList().toTypedArray()
@@ -348,6 +348,10 @@ abstract class DriverTest {
             if (includeSystemApiAnnotations && !args.contains("android.annotation.SystemApi")) {
                 args.add("--show-annotation")
                 args.add("android.annotation.SystemApi")
+            }
+            if (includeSystemApiAnnotations && !args.contains("android.annotation.SystemService")) {
+                args.add("--show-annotation")
+                args.add("android.annotation.SystemService")
             }
             args.toTypedArray()
         } else {
@@ -481,7 +485,7 @@ abstract class DriverTest {
             // For the tests we want to treat references to APIs like java.io.Closeable
             // as a class that is part of the API surface, not as a hidden class as would
             // be the case when analyzing a complete API surface
-            //"--unhide-classpath-classes",
+            // "--unhide-classpath-classes",
             "--allow-referencing-unknown-classes",
 
             // Annotation generation temporarily turned off by default while integrating with
@@ -1158,7 +1162,7 @@ val sdkConstantSource: TestFile = java(
     @Retention(RetentionPolicy.SOURCE)
     public @interface SdkConstant {
         enum SdkConstantType {
-            ACTIVITY_INTENT_ACTION, BROADCAST_INTENT_ACTION, SERVICE_ACTION, INTENT_CATEGORY, FEATURE;
+            ACTIVITY_INTENT_ACTION, BROADCAST_INTENT_ACTION, SERVICE_ACTION, INTENT_CATEGORY, FEATURE
         }
         SdkConstantType value();
     }
@@ -1368,6 +1372,18 @@ val systemApiSource: TestFile = java(
     @Target({TYPE, FIELD, METHOD, CONSTRUCTOR, ANNOTATION_TYPE, PACKAGE})
     @Retention(RetentionPolicy.SOURCE)
     public @interface SystemApi {
+    }
+    """
+).indented()
+
+val testApiSource: TestFile = java(
+    """
+    package android.annotation;
+    import static java.lang.annotation.ElementType.*;
+    import java.lang.annotation.*;
+    @Target({TYPE, FIELD, METHOD, CONSTRUCTOR, ANNOTATION_TYPE, PACKAGE})
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface TestApi {
     }
     """
 ).indented()

@@ -1136,7 +1136,7 @@ class DocAnalyzerTest : DriverTest() {
                     """
                     package test.pkg;
                     import android.support.annotation.RequiresApi;
-                    @RequiresApi(21)
+                    @RequiresApi(value = 21)
                     public class MyClass1 {
                     }
                     """

@@ -54,7 +54,7 @@ class NullnessMigration : ComparisonVisitor() {
                 modifiers.removeAnnotation(migration)
 
                 // Don't map annotation names - this would turn newly non null back into non null
-                modifiers.addAnnotation(new.codebase.createAnnotation("@" + annotation, new, mapName = false))
+                modifiers.addAnnotation(new.codebase.createAnnotation("@$annotation", new, mapName = false))
             } else if (hasMigrationAnnotation(old)) {
                 // Already marked migration before: Now we can promote it to
                 // no longer migrated!
