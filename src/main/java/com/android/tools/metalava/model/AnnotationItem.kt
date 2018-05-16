@@ -434,8 +434,9 @@ class DefaultAnnotationAttribute(
         fun createList(source: String): List<AnnotationAttribute> {
             val list = mutableListOf<AnnotationAttribute>()
             if (source.contains("{")) {
-                assert(source.indexOf('{', source.indexOf('{', source.indexOf('{') + 1) + 1) != -1,
-                    { "Multiple arrays not supported: $source" })
+                assert(
+                    source.indexOf('{', source.indexOf('{', source.indexOf('{') + 1) + 1) != -1
+                ) { "Multiple arrays not supported: $source" }
                 val split = source.indexOf('=')
                 val name: String
                 val value: String
@@ -509,7 +510,7 @@ class DefaultAnnotationSingleAttributeValue(override val valueSource: String) : 
 class DefaultAnnotationArrayAttributeValue(val value: String) : DefaultAnnotationValue(),
     AnnotationArrayAttributeValue {
     init {
-        assert(value.startsWith("{") && value.endsWith("}"), { value })
+        assert(value.startsWith("{") && value.endsWith("}")) { value }
     }
 
     override val values = value.substring(1, value.length - 1).split(",").map {

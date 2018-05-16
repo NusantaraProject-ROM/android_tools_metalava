@@ -287,7 +287,7 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
         val topLevelClasses = ArrayList<ClassItem>(CLASS_ESTIMATE)
 
         try {
-            ZipFile(jarFile).use({ jar ->
+            ZipFile(jarFile).use { jar ->
                 val enumeration = jar.entries()
                 while (enumeration.hasMoreElements()) {
                     val entry = enumeration.nextElement()
@@ -324,7 +324,7 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
                         }
                     }
                 }
-            })
+            }
         } catch (e: IOException) {
             reporter.report(Errors.IO_ERROR, jarFile, e.message ?: e.toString())
         }
@@ -451,9 +451,9 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
             val pkgName = getPackageName(clz)
             val pkg = findPackage(pkgName)
             if (pkg == null) {
-                //val packageHtml: String? = packageDocs?.packageDocs!![pkgName]
+                // val packageHtml: String? = packageDocs?.packageDocs!![pkgName]
                 // dynamically discovered packages should NOT be included
-                //val packageHtml = "/** @hide */"
+                // val packageHtml = "/** @hide */"
                 val packageHtml = null
                 val psiPackage = JavaPsiFacade.getInstance(project).findPackage(pkgName)
                 if (psiPackage != null) {
@@ -949,7 +949,7 @@ class FilteredClassView(
     init {
         constructors = cls.constructors().asSequence().filter { filterEmit.test(it) }
         methods = cls.methods().asSequence().filter { filterEmit.test(it) }
-        //fields = cls.fields().asSequence().filter { filterEmit.test(it) }
+        // fields = cls.fields().asSequence().filter { filterEmit.test(it) }
 
         fields = cls.filteredFields(filterEmit).asSequence()
         innerClasses = cls.innerClasses()
@@ -987,8 +987,8 @@ class FilteredClassView(
 
 class LockedPsiBasedCodebase(description: String = "Unknown") : PsiBasedCodebase(description) {
     // Not yet locked
-    //override fun findClass(psiClass: PsiClass): PsiClassItem {
+    // override fun findClass(psiClass: PsiClass): PsiClassItem {
     //    val qualifiedName: String = psiClass.qualifiedName ?: psiClass.name!!
     //    return classMap[qualifiedName] ?: error("Attempted to register ${psiClass.name} in locked codebase")
-    //}
+    // }
 }

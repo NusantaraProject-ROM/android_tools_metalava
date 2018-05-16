@@ -52,7 +52,6 @@ class DocAnalyzer(
         // insertMissingDocFromHiddenSuperclasses()
     }
 
-    //noinspection SpellCheckingInspection
     val mentionsNull: Pattern = Pattern.compile("\\bnull\\b")
 
     /** Hide packages explicitly listed in [Options.hidePackages] */
@@ -226,7 +225,6 @@ class DocAnalyzer(
                                     Errors.MISSING_PERMISSION, item,
                                     "Cannot find permission field for $value required by $item (may be hidden or removed)"
                                 )
-                                //return
                                 sb.append(value.toSource())
                             } else {
                                 if (field.isHiddenOrRemoved()) {
@@ -408,7 +406,7 @@ class DocAnalyzer(
 
         val documentation = cls.findTagDocumentation(tag)
         if (documentation != null) {
-            assert(documentation.startsWith("@$tag"), { documentation })
+            assert(documentation.startsWith("@$tag")) { documentation }
             // TODO: Insert it in the right place (@return or @param)
             val section = when {
                 documentation.startsWith("@returnDoc") -> "@return"
@@ -433,7 +431,6 @@ class DocAnalyzer(
 
     /** Replacements to perform in documentation */
     val typos = mapOf(
-        //noinspection SpellCheckingInspection
         "Andriod" to "Android",
         "Kitkat" to "KitKat",
         "LemonMeringuePie" to "Lollipop",

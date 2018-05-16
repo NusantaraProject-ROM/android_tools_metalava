@@ -449,6 +449,7 @@ class Options(
                 ARG_REMOVED_DEX_API, "-removedDexApi" -> removedDexApiFile = stringToNewFile(getValue(args, ++index))
 
                 ARG_EXACT_API, "-exactApi" -> {
+                    getValue(args, ++index) // prevent next arg from tripping up parser
                     unimplemented(arg) // Not yet implemented (because it seems to no longer be hooked up in doclava1)
                 }
 
