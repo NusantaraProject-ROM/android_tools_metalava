@@ -378,16 +378,36 @@ interface ModifierList {
             skipNullnessAnnotations: Boolean = false,
             omitCommonPackages: Boolean = false,
             separateLines: Boolean = false,
+            filterDuplicates: Boolean = false,
             writer: Writer
         ) {
-            if (list.annotations().isNotEmpty()) {
-                for (annotation in list.annotations()) {
+            val annotations = list.annotations()
+            if (annotations.isNotEmpty()) {
+                var index = -1
+                for (annotation in annotations) {
+                    index++
                     if ((annotation.isNonNull() || annotation.isNullable())) {
                         if (skipNullnessAnnotations) {
                             continue
                         }
                     } else if (!annotation.isSignificant()) {
                         continue
+                    }
+
+                    // Optionally filter out duplicates
+                    if (index > 0 && filterDuplicates) {
+                        val qualifiedName = annotation.qualifiedName()
+                        var found = false
+                        for (i in 0 until index) {
+                            val prev = annotations[i]
+                            if (prev.qualifiedName() == qualifiedName) {
+                                found = true
+                                break
+                            }
+                        }
+                        if (found) {
+                            continue
+                        }
                     }
 
                     val source = annotation.toSource()

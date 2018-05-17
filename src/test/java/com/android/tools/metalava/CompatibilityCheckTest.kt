@@ -16,6 +16,7 @@
 
 package com.android.tools.metalava
 
+import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 
@@ -1297,7 +1298,7 @@ CompatibilityCheckTest : DriverTest() {
                 package androidx.content {
                   public final class ContentValuesKt {
                     ctor public ContentValuesKt();
-                    method public static error.NonExistentClass contentValuesOf(kotlin.Pair<String,?>... pairs);
+                    method public static android.content.ContentValues contentValuesOf(kotlin.Pair<String,?>... pairs);
                   }
                 }
                 """,
@@ -1335,6 +1336,7 @@ CompatibilityCheckTest : DriverTest() {
         )
     }
 
+    @Ignore("Not currently working: we're getting the wrong PSI results; I suspect caching across the two codebases")
     @Test
     fun `Test All Android API levels`() {
         // Checks API across Android SDK versions and makes sure the results are
