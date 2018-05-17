@@ -18,7 +18,6 @@
 
 package com.android.tools.metalava
 
-import org.junit.Ignore
 import org.junit.Test
 
 class ApiFileTest : DriverTest() {
@@ -257,7 +256,6 @@ class ApiFileTest : DriverTest() {
         )
     }
 
-    @Ignore("Still broken: UAST is missing reified methods, and some missing symbol resolution")
     @Test
     fun `Kotlin Reified Methods`() {
         check(
@@ -291,7 +289,7 @@ class ApiFileTest : DriverTest() {
                   }
                   public final class _java_Kt {
                     ctor public _java_Kt();
-                    method public static final error.NonExistentClass systemService2(test.pkg.Context);
+                    method public static java.lang.String systemService2(test.pkg.Context);
                   }
                 }
                 """,
