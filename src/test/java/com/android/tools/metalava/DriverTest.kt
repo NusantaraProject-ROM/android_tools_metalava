@@ -133,6 +133,9 @@ abstract class DriverTest {
         @Language("JAVA") stubs: Array<String> = emptyArray(),
         /** Stub source file list generated */
         stubsSourceList: String? = null,
+        /** Whether the stubs should be written as documentation stubs instead of plain stubs. Decides
+         * whether the stubs include @doconly elements, uses rewritten/migration annotations, etc */
+        docStubs: Boolean = false,
         /** Whether to run in doclava1 compat mode */
         compatibilityMode: Boolean = true,
         /** Whether to trim the output (leading/trailing whitespace removal) */
@@ -416,7 +419,11 @@ abstract class DriverTest {
         var stubsDir: File? = null
         val stubsArgs = if (stubs.isNotEmpty()) {
             stubsDir = temporaryFolder.newFolder("stubs")
-            arrayOf("--stubs", stubsDir.path)
+            if (docStubs) {
+                arrayOf("--doc-stubs", stubsDir.path)
+            } else {
+                arrayOf("--stubs", stubsDir.path)
+            }
         } else {
             emptyArray()
         }
@@ -1108,6 +1115,37 @@ val nonNullSource: TestFile = java(
     """
 ).indented()
 
+val libcoreNonNullSource: TestFile = DriverTest.java(
+    """
+    package libcore.util;
+    import static java.lang.annotation.ElementType.*;
+    import static java.lang.annotation.RetentionPolicy.SOURCE;
+    import java.lang.annotation.*;
+    @Documented
+    @Retention(SOURCE)
+    @Target({TYPE_USE})
+    public @interface NonNull {
+       int from() default Integer.MIN_VALUE;
+       int to() default Integer.MAX_VALUE;
+    }
+    """
+).indented()
+
+val libcoreNullableSource: TestFile = DriverTest.java(
+    """
+    package libcore.util;
+    import static java.lang.annotation.ElementType.*;
+    import static java.lang.annotation.RetentionPolicy.SOURCE;
+    import java.lang.annotation.*;
+    @Documented
+    @Retention(SOURCE)
+    @Target({TYPE_USE})
+    public @interface Nullable {
+       int from() default Integer.MIN_VALUE;
+       int to() default Integer.MAX_VALUE;
+    }
+    """
+).indented()
 val requiresPermissionSource: TestFile = java(
     """
     package android.annotation;
@@ -1141,7 +1179,7 @@ val requiresFeatureSource: TestFile = java(
 
 val requiresApiSource: TestFile = java(
     """
-    package android.support.annotation;
+    package androidx.annotation;
     import java.lang.annotation.*;
     import static java.lang.annotation.ElementType.*;
     import static java.lang.annotation.RetentionPolicy.SOURCE;
@@ -1207,7 +1245,7 @@ val nullableSource: TestFile = java(
 
 val supportNonNullSource: TestFile = java(
     """
-    package android.support.annotation;
+    package androidx.annotation;
     import java.lang.annotation.*;
     import static java.lang.annotation.ElementType.*;
     import static java.lang.annotation.RetentionPolicy.SOURCE;
@@ -1221,7 +1259,7 @@ val supportNonNullSource: TestFile = java(
 
 val supportNullableSource: TestFile = java(
     """
-package android.support.annotation;
+package androidx.annotation;
 import java.lang.annotation.*;
 import static java.lang.annotation.ElementType.*;
 import static java.lang.annotation.RetentionPolicy.SOURCE;
@@ -1263,7 +1301,7 @@ public @interface Nullable {
 
 val supportParameterName: TestFile = java(
     """
-    package android.support.annotation;
+    package androidx.annotation;
     import java.lang.annotation.*;
     import static java.lang.annotation.ElementType.*;
     import static java.lang.annotation.RetentionPolicy.SOURCE;
@@ -1278,7 +1316,7 @@ val supportParameterName: TestFile = java(
 
 val supportDefaultValue: TestFile = java(
     """
-    package android.support.annotation;
+    package androidx.annotation;
     import java.lang.annotation.*;
     import static java.lang.annotation.ElementType.*;
     import static java.lang.annotation.RetentionPolicy.SOURCE;
@@ -1293,7 +1331,7 @@ val supportDefaultValue: TestFile = java(
 
 val uiThreadSource: TestFile = java(
     """
-    package android.support.annotation;
+    package androidx.annotation;
     import java.lang.annotation.*;
     import static java.lang.annotation.ElementType.*;
     import static java.lang.annotation.RetentionPolicy.SOURCE;
@@ -1317,7 +1355,7 @@ val uiThreadSource: TestFile = java(
 
 val workerThreadSource: TestFile = java(
     """
-    package android.support.annotation;
+    package androidx.annotation;
     import java.lang.annotation.*;
     import static java.lang.annotation.ElementType.*;
     import static java.lang.annotation.RetentionPolicy.SOURCE;

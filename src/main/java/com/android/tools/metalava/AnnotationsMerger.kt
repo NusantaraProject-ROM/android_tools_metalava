@@ -159,7 +159,9 @@ class AnnotationsMerger(
     }
 
     internal fun warning(message: String) {
-        options.stdout.println("Warning: $message")
+        if (options.verbose) {
+            options.stdout.println("Warning: $message")
+        }
     }
 
     @Suppress("PrivatePropertyName")
@@ -213,7 +215,13 @@ class AnnotationsMerger(
 
                 val classItem = codebase.findClass(containingClass)
                 if (classItem == null) {
-                    warning("Could not find class $containingClass; omitting annotations merge")
+                    // Well known exceptions from IntelliJ's external annotations
+                    // we won't complain loudly about
+                    if (wellKnownIgnoredImport(containingClass)) {
+                        continue
+                    }
+
+                    warning("Could not find class $containingClass; omitting annotation from merge")
                     continue
                 }
 
@@ -246,7 +254,11 @@ class AnnotationsMerger(
 
                 val classItem = codebase.findClass(containingClass)
                 if (classItem == null) {
-                    warning("Could not find class $containingClass; omitting annotations merge")
+                    if (wellKnownIgnoredImport(containingClass)) {
+                        continue
+                    }
+
+                    warning("Could not find class $containingClass; omitting annotation from merge")
                     continue
                 }
 
@@ -255,6 +267,17 @@ class AnnotationsMerger(
                 warning("No merge match for signature $signature")
             }
         }
+    }
+
+    private fun wellKnownIgnoredImport(containingClass: String): Boolean {
+        if (containingClass.startsWith("javax.swing.") ||
+            containingClass.startsWith("javax.naming.") ||
+            containingClass.startsWith("java.awt.") ||
+            containingClass.startsWith("org.jdom.")
+        ) {
+            return true
+        }
+        return false
     }
 
     // The parameter declaration used in XML files should not have duplicated spaces,
@@ -292,7 +315,11 @@ class AnnotationsMerger(
 
         val methodItem: MethodItem? = classItem.findMethod(methodName, parameters)
         if (methodItem == null) {
-            warning("Could not find class $methodName($parameters) in $containingClass; omitting annotations merge")
+            if (wellKnownIgnoredImport(containingClass)) {
+                return
+            }
+
+            warning("Could not find method $methodName($parameters) in $containingClass; omitting annotation from merge")
             return
         }
 
@@ -328,7 +355,11 @@ class AnnotationsMerger(
         } else {
             val fieldItem = classItem.findField(fieldName)
             if (fieldItem == null) {
-                warning("Could not find field $fieldName in $containingClass; omitting annotations merge")
+                if (wellKnownIgnoredImport(containingClass)) {
+                    return
+                }
+
+                warning("Could not find field $fieldName in $containingClass; omitting annotation from merge")
                 return
             }
 
@@ -349,7 +380,7 @@ class AnnotationsMerger(
         var count = 0
 
         loop@ for (annotationElement in getChildren(xmlElement)) {
-            val qualifiedName = getAnnotationName(annotationElement)
+            val qualifiedName = AnnotationItem.mapName(codebase, getAnnotationName(annotationElement)) ?: continue
             if (!AnnotationItem.isSignificantAnnotation(qualifiedName)) {
                 continue
             }
@@ -579,9 +610,9 @@ class AnnotationsMerger(
                 }
             }
 
-            isNonNull(name) -> return codebase.createAnnotation("@$SUPPORT_NOTNULL")
+            isNonNull(name) -> return codebase.createAnnotation("@$ANDROIDX_NOTNULL")
 
-            isNullable(name) -> return codebase.createAnnotation("@$SUPPORT_NULLABLE")
+            isNullable(name) -> return codebase.createAnnotation("@$ANDROIDX_NULLABLE")
 
             else -> {
                 val children = getChildren(annotationElement)
@@ -638,12 +669,14 @@ class AnnotationsMerger(
     private fun isNonNull(name: String): Boolean {
         return name == IDEA_NOTNULL ||
             name == ANDROID_NOTNULL ||
+            name == ANDROIDX_NOTNULL ||
             name == SUPPORT_NOTNULL
     }
 
     private fun isNullable(name: String): Boolean {
         return name == IDEA_NULLABLE ||
             name == ANDROID_NULLABLE ||
+            name == ANDROIDX_NULLABLE ||
             name == SUPPORT_NULLABLE
     }
 

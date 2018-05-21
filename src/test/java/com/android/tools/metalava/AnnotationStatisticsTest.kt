@@ -22,14 +22,46 @@ import org.junit.Test
 
 class AnnotationStatisticsTest : DriverTest() {
     @Test
-
     fun `Test emitting annotation statistics`() {
         check(
             extraArguments = arrayOf("--annotation-coverage-stats"),
             expectedOutput = """
                 Nullness Annotation Coverage Statistics:
-                4 out of 6 methods were annotated (66%)
-                0 out of 0 fields were annotated (0%)
+                0 out of 0 methods were annotated (100%)
+                0 out of 1 fields were annotated (0%)
+                0 out of 0 parameters were annotated (100%)
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+
+                    @SuppressWarnings("ALL")
+                    public class Foo {
+                        public final static String foo1 = "constant";
+                        public final static String foo2 = System.getProperty("not.constant");
+                        public void test() {
+                            String foo1 = foo1();
+                            String foo2 = foo2();
+                            test();
+
+                        }
+                    }
+                    """
+                )
+            ),
+            compatibilityMode = false
+        )
+    }
+
+    @Test
+    fun `Static final initialized fields are not nullable`() {
+        check(
+            extraArguments = arrayOf("--annotation-coverage-stats"),
+            expectedOutput = """
+                Nullness Annotation Coverage Statistics:
+                4 out of 5 methods were annotated (80%)
+                0 out of 0 fields were annotated (100%)
                 4 out of 5 parameters were annotated (80%)
                 """,
             compatibilityMode = false,
@@ -38,10 +70,10 @@ class AnnotationStatisticsTest : DriverTest() {
                   public class MyTest {
                     ctor public MyTest();
                     method public java.lang.Double convert0(java.lang.Float);
-                    method @android.support.annotation.Nullable public java.lang.Double convert1(@android.support.annotation.NonNull java.lang.Float);
-                    method @android.support.annotation.Nullable public java.lang.Double convert2(@android.support.annotation.NonNull java.lang.Float);
-                    method @android.support.annotation.Nullable public java.lang.Double convert3(@android.support.annotation.NonNull java.lang.Float);
-                    method @android.support.annotation.Nullable public java.lang.Double convert4(@android.support.annotation.NonNull java.lang.Float);
+                    method @androidx.annotation.Nullable public java.lang.Double convert1(@androidx.annotation.NonNull java.lang.Float);
+                    method @androidx.annotation.Nullable public java.lang.Double convert2(@androidx.annotation.NonNull java.lang.Float);
+                    method @androidx.annotation.Nullable public java.lang.Double convert3(@androidx.annotation.NonNull java.lang.Float);
+                    method @androidx.annotation.Nullable public java.lang.Double convert4(@androidx.annotation.NonNull java.lang.Float);
                   }
                 }
                 """
@@ -98,8 +130,8 @@ class AnnotationStatisticsTest : DriverTest() {
                     """
                     package test.pkg;
 
-                    import android.support.annotation.NonNull;
-                    import android.support.annotation.Nullable;
+                    import androidx.annotation.NonNull;
+                    import androidx.annotation.Nullable;
 
                     public class ApiSurface {
                         ApiSurface(Object param) {
@@ -135,8 +167,11 @@ class AnnotationStatisticsTest : DriverTest() {
                 supportNullableSource
             ),
             expectedOutput = """
-                6 methods and fields were missing nullness annotations out of 7 total API references.
-                API nullness coverage is 14%
+                6 methods and fields were missing nullness annotations out of 8 total API references.
+                API nullness coverage is 25%
+
+
+                Top referenced un-annotated classes:
 
                 | Qualified Class Name                                         |      Usage Count |
                 |--------------------------------------------------------------|-----------------:|

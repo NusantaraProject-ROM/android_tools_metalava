@@ -32,7 +32,7 @@ class KotlinInteropChecksTest : DriverTest() {
                 java(
                     """
                     package test.pkg;
-                    import android.support.annotation.ParameterName;
+                    import androidx.annotation.ParameterName;
 
                     public class Test {
                         public void fun() { }
