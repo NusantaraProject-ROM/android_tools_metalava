@@ -545,7 +545,7 @@ class AnnotationsMerger(
                 return PsiAnnotationItem.create(
                     codebase, XmlBackedAnnotationItem(
                         codebase,
-                        if (valName == "stringValues") STRING_DEF_ANNOTATION.oldName() else INT_DEF_ANNOTATION.oldName(),
+                        if (valName == "stringValues") STRING_DEF_ANNOTATION.newName() else INT_DEF_ANNOTATION.newName(),
                         attributes
                     )
                 )
@@ -580,7 +580,7 @@ class AnnotationsMerger(
                 return PsiAnnotationItem.create(
                     codebase, XmlBackedAnnotationItem(
                         codebase,
-                        if (intDef) INT_DEF_ANNOTATION.oldName() else STRING_DEF_ANNOTATION.oldName(), attributes
+                        if (intDef) INT_DEF_ANNOTATION.newName() else STRING_DEF_ANNOTATION.newName(), attributes
                     )
                 )
             }
