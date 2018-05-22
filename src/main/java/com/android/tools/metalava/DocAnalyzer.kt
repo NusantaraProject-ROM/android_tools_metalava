@@ -113,7 +113,9 @@ class DocAnalyzer(
                 var result: MutableList<String>? = null
                 for (annotation in annotations) {
                     val name = annotation.qualifiedName()
-                    if (name != null && name.endsWith("Thread") && name.startsWith(ANDROID_SUPPORT_ANNOTATION_PREFIX)) {
+                    if (name != null && name.endsWith("Thread") &&
+                        (name.startsWith(ANDROID_SUPPORT_ANNOTATION_PREFIX) ||
+                            name.startsWith(ANDROIDX_ANNOTATION_PREFIX))) {
                         if (result == null) {
                             result = mutableListOf()
                         }
@@ -180,7 +182,7 @@ class DocAnalyzer(
                 }
 
                 // Document required permissions
-                if (item is MemberItem && name == "android.support.annotation.RequiresPermission") {
+                if (item is MemberItem && name == "androidx.annotation.RequiresPermission") {
                     var values: List<AnnotationAttributeValue>? = null
                     var any = false
                     var conditional = false
@@ -242,7 +244,7 @@ class DocAnalyzer(
                 }
 
                 // Document value ranges
-                if (name == "android.support.annotation.IntRange" || name == "android.support.annotation.FloatRange") {
+                if (name == "androidx.annotation.IntRange" || name == "androidx.annotation.FloatRange") {
                     val from: String? = annotation.findAttribute("from")?.value?.toSource()
                     val to: String? = annotation.findAttribute("to")?.value?.toSource()
                     // TODO: inclusive/exclusive attributes on FloatRange!
@@ -265,8 +267,8 @@ class DocAnalyzer(
                 }
 
                 // Document expected constants
-                if (name == "android.support.annotation.IntDef" || name == "android.support.annotation.LongDef" ||
-                    name == "android.support.annotation.StringDef"
+                if (name == "androidx.annotation.IntDef" || name == "androidx.annotation.LongDef" ||
+                    name == "androidx.annotation.StringDef"
                 ) {
                     val values = annotation.findAttribute("value")?.leafValues() ?: return
                     val flag = annotation.findAttribute("flag")?.value?.toSource() == "true"
@@ -343,7 +345,7 @@ class DocAnalyzer(
                 }
 
                 // Required API levels
-                if (name == "android.support.annotation.RequiresApi") {
+                if (name == "androidx.annotation.RequiresApi") {
                     val level = run {
                         val api = annotation.findAttribute("api")?.leafValues()?.firstOrNull()?.value()
                         if (api == null || api == 1) {

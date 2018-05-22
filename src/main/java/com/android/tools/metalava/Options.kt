@@ -57,6 +57,7 @@ private const val ARG_MERGE_ANNOTATIONS = "--merge-annotations"
 private const val ARG_INPUT_API_JAR = "--input-api-jar"
 private const val ARG_EXACT_API = "--exact-api"
 private const val ARG_STUBS = "--stubs"
+private const val ARG_DOC_STUBS = "--doc-stubs"
 private const val ARG_STUBS_SOURCE_LIST = "--write-stubs-source-list"
 private const val ARG_PROGUARD = "--proguard"
 private const val ARG_EXTRACT_ANNOTATIONS = "--extract-annotations"
@@ -76,6 +77,8 @@ private const val ARG_OUTPUT_KOTLIN_NULLS = "--output-kotlin-nulls"
 private const val ARG_OUTPUT_DEFAULT_VALUES = "--output-default-values"
 private const val ARG_ANNOTATION_COVERAGE_STATS = "--annotation-coverage-stats"
 private const val ARG_ANNOTATION_COVERAGE_OF = "--annotation-coverage-of"
+private const val ARG_WRITE_CLASS_COVERAGE_TO = "--write-class-coverage-to"
+private const val ARG_WRITE_MEMBER_COVERAGE_TO = "--write-member-coverage-to"
 private const val ARG_WARNINGS_AS_ERRORS = "--warnings-as-errors"
 private const val ARG_LINTS_AS_ERRORS = "--lints-as-errors"
 private const val ARG_SHOW_ANNOTATION = "--show-annotation"
@@ -92,7 +95,6 @@ private const val ARG_HIDE = "--hide"
 private const val ARG_UNHIDE_CLASSPATH_CLASSES = "--unhide-classpath-classes"
 private const val ARG_ALLOW_REFERENCING_UNKNOWN_CLASSES = "--allow-referencing-unknown-classes"
 private const val ARG_NO_UNKNOWN_CLASSES = "--no-unknown-classes"
-private const val ARG_INCLUDE_DOC_ONLY = "--include-doconly"
 private const val ARG_APPLY_API_LEVELS = "--apply-api-levels"
 private const val ARG_GENERATE_API_LEVELS = "--generate-api-levels"
 private const val ARG_ANDROID_JAR_PATTERN = "--android-jar-pattern"
@@ -227,6 +229,9 @@ class Options(
     /** If set, a directory to write stub files to. Corresponds to the --stubs/-stubs flag. */
     var stubsDir: File? = null
 
+    /** If set, a directory to write documentation stub files to. Corresponds to the --stubs/-stubs flag. */
+    var docStubsDir: File? = null
+
     /** If set, a source file to write the stub index (list of source files) to. Can be passed to
      * other tools like javac/javadoc using the special @-syntax. */
     var stubsSourceList: File? = null
@@ -262,10 +267,7 @@ class Options(
     var color = System.getenv("TERM")?.startsWith("xterm") ?: false
 
     /** Whether to omit Java and Kotlin runtime library packages from annotation coverage stats */
-    var omitRuntimePackageStats = true
-
-    /** Whether to include doc-only-marked items */
-    var includeDocOnly = false
+    var omitRuntimePackageStats = false
 
     /** Whether to generate annotations into the stubs */
     var generateAnnotations = true
@@ -287,6 +289,16 @@ class Options(
 
     /** Set of jars and class files for existing apps that we want to measure coverage of */
     var annotationCoverageOf: List<File> = mutableAnnotationCoverageOf
+
+    /** File to write the annotation class coverage report to, if any */
+    var annotationCoverageClassReport: File? = null
+
+    /** File to write the annotation member coverage report to, if any */
+    var annotationCoverageMemberReport: File? = null
+
+    /** When generating coverage reports, don't report any members with fewer
+     * references than this */
+    var annotationCoverageThreshold: Int = 10
 
     /** Framework API definition to restrict included APIs to */
     var apiFilter: ApiDatabase? = null
@@ -467,6 +479,7 @@ class Options(
                 "--hideAnnotations", "-hideAnnotation" -> mutableHideAnnotations.add(getValue(args, ++index))
 
                 ARG_STUBS, "-stubs" -> stubsDir = stringToNewDir(getValue(args, ++index))
+                ARG_DOC_STUBS -> docStubsDir = stringToNewDir(getValue(args, ++index))
                 ARG_STUBS_SOURCE_LIST -> stubsSourceList = stringToNewFile(getValue(args, ++index))
 
                 ARG_EXCLUDE_ANNOTATIONS -> generateAnnotations = false
@@ -526,11 +539,17 @@ class Options(
                 }
 
                 ARG_ANNOTATION_COVERAGE_STATS -> dumpAnnotationStatistics = true
-                ARG_ANNOTATION_COVERAGE_OF -> mutableAnnotationCoverageOf.add(
-                    stringToExistingFileOrDir(
+                ARG_ANNOTATION_COVERAGE_OF -> mutableAnnotationCoverageOf.addAll(
+                    stringToExistingDirsOrJars(
                         getValue(args, ++index)
                     )
                 )
+                ARG_WRITE_CLASS_COVERAGE_TO -> {
+                    annotationCoverageClassReport = stringToNewFile(getValue(args, ++index))
+                }
+                ARG_WRITE_MEMBER_COVERAGE_TO -> {
+                    annotationCoverageMemberReport = stringToNewFile(getValue(args, ++index))
+                }
 
                 ARG_ERROR, "-error" -> Errors.setErrorLevel(getValue(args, ++index), Severity.ERROR)
                 ARG_WARNING, "-warning" -> Errors.setErrorLevel(getValue(args, ++index), Severity.WARNING)
@@ -556,8 +575,6 @@ class Options(
                 ARG_UNHIDE_CLASSPATH_CLASSES -> hideClasspathClasses = false
                 ARG_ALLOW_REFERENCING_UNKNOWN_CLASSES -> allowReferencingUnknownClasses = true
                 ARG_NO_UNKNOWN_CLASSES -> noUnknownClasses = true
-
-                ARG_INCLUDE_DOC_ONLY -> includeDocOnly = true
 
             // Annotation extraction flags
                 ARG_API_FILTER -> apiFilters.add(stringToExistingFile(getValue(args, ++index)))
@@ -606,7 +623,9 @@ class Options(
                     // Digest all the remaining arguments.
                     // Allow "STUBS_DIR" to reference the stubs directory.
                     invokeDocumentationToolArguments = args.slice(++index until args.size).mapNotNull {
-                        if (it == "STUBS_DIR" && stubsDir != null) {
+                        if (it == "STUBS_DIR" && docStubsDir != null) {
+                            docStubsDir?.path
+                        } else if (it == "STUBS_DIR" && stubsDir != null) {
                             stubsDir?.path
                         } else if (it == "STUBS_SOURCE_LIST" && stubsSourceList != null) {
                             "@${stubsSourceList?.path}"
@@ -1197,9 +1216,16 @@ class Options(
 
             "", "\nGenerating Stubs:",
             "$ARG_STUBS <dir>", "Generate stub source files for the API",
+            "$ARG_DOC_STUBS <dir>", "Generate documentation stub source files for the API. Documentation stub " +
+                "files are similar to regular stub files, but there are some differences. For example, in " +
+                "the stub files, we'll use special annotations like @RecentlyNonNull instead of @NonNull to " +
+                "indicate that an element is recently marked as non null, whereas in the documentation stubs we'll " +
+                "just list this as @NonNull. Another difference is that @doconly elements are included in " +
+                "documentation stubs, but not regular stubs, etc.",
             ARG_EXCLUDE_ANNOTATIONS, "Exclude annotations such as @Nullable from the stub files",
             "$ARG_STUBS_SOURCE_LIST <file>", "Write the list of generated stub files into the given source " +
-                "list file",
+                "list file. If generating documentation stubs, this list will refer to the documentation stubs; " +
+                "otherwise it's the non-documentation stubs.",
 
             "", "\nDiffs and Checks:",
             "$ARG_PREVIOUS_API <signature file>", "A signature file for the previous version of this " +
@@ -1230,6 +1256,11 @@ class Options(
 
             ARG_SKIP_JAVA_IN_COVERAGE_REPORT, "In the coverage annotation report, skip java.** and kotlin.** to " +
                 "narrow the focus down to the Android framework APIs.",
+
+            "$ARG_WRITE_CLASS_COVERAGE_TO <path>", "Specifies a file to write the annotation " +
+                "coverage report for classes to.",
+            "$ARG_WRITE_MEMBER_COVERAGE_TO <path>", "Specifies a file to write the annotation " +
+                "coverage report for members to.",
 
             "", "\nExtracting Annotations:",
             "$ARG_EXTRACT_ANNOTATIONS <zipfile>", "Extracts annotations from the source files and writes them " +

@@ -102,10 +102,23 @@ Extracting Signature Files:
 
 Generating Stubs:
 --stubs <dir>                          Generate stub source files for the API
+--doc-stubs <dir>                      Generate documentation stub source files for the
+                                       API. Documentation stub files are similar to
+                                       regular stub files, but there are some differences.
+                                       For example, in the stub files, we'll use special
+                                       annotations like @RecentlyNonNull instead of
+                                       @NonNull to indicate that an element is recently
+                                       marked as non null, whereas in the documentation
+                                       stubs we'll just list this as @NonNull. Another
+                                       difference is that @doconly elements are included
+                                       in documentation stubs, but not regular stubs,
+                                       etc.
 --exclude-annotations                  Exclude annotations such as @Nullable from the stub
                                        files
 --write-stubs-source-list <file>       Write the list of generated stub files into the
-                                       given source list file
+                                       given source list file. If generating documentation
+                                       stubs, this list will refer to the documentation
+                                       stubs; otherwise it's the non-documentation stubs.
 
 Diffs and Checks:
 --previous-api <signature file>        A signature file for the previous version of this
@@ -141,6 +154,10 @@ Statistics:
 --skip-java-in-coverage-report         In the coverage annotation report, skip java.** and
                                        kotlin.** to narrow the focus down to the Android
                                        framework APIs.
+--write-class-coverage-to <path>       Specifies a file to write the annotation coverage
+                                       report for classes to.
+--write-member-coverage-to <path>      Specifies a file to write the annotation coverage
+                                       report for members to.
 
 Extracting Annotations:
 --extract-annotations <zipfile>        Extracts annotations from the source files and
