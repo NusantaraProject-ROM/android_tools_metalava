@@ -35,14 +35,17 @@ import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.MethodNode
+import java.io.BufferedWriter
 import java.io.File
+import java.io.FileWriter
 import java.io.IOException
 import java.io.PrintWriter
 import java.util.zip.ZipFile
 
 const val CLASS_COLUMN_WIDTH = 60
 const val COUNT_COLUMN_WIDTH = 16
-const val USAGE_REPORT_MAX_ROWS = 15
+const val USAGE_REPORT_MAX_ROWS = 3000
+
 /** Sadly gitiles' markdown support doesn't handle tables with top/bottom horizontal edges */
 const val INCLUDE_HORIZONTAL_EDGES = false
 
@@ -74,6 +77,9 @@ class AnnotationStatistics(val api: Codebase) {
             }
 
             override fun visitParameter(parameter: ParameterItem) {
+                if (!parameter.requiresNullnessInfo()) {
+                    return
+                }
                 allParameters++
                 if (parameter.modifiers.annotations().any { it.isNonNull() || it.isNullable() }) {
                     annotatedParameters++
@@ -81,6 +87,9 @@ class AnnotationStatistics(val api: Codebase) {
             }
 
             override fun visitField(field: FieldItem) {
+                if (!field.requiresNullnessInfo()) {
+                    return
+                }
                 allFields++
                 if (field.modifiers.annotations().any { it.isNonNull() || it.isNullable() }) {
                     annotatedFields++
@@ -88,6 +97,9 @@ class AnnotationStatistics(val api: Codebase) {
             }
 
             override fun visitMethod(method: MethodItem) {
+                if (!method.requiresNullnessInfo()) {
+                    return
+                }
                 allMethods++
                 if (method.modifiers.annotations().any { it.isNonNull() || it.isNullable() }) {
                     annotatedMethods++
@@ -111,7 +123,7 @@ class AnnotationStatistics(val api: Codebase) {
 
     private fun percent(numerator: Int, denominator: Int): Int {
         return if (denominator == 0) {
-            0
+            100
         } else {
             numerator * 100 / denominator
         }
@@ -227,18 +239,44 @@ class AnnotationStatistics(val api: Codebase) {
     }
 
     private fun printClassTable(classes: List<Item>, classCount: MutableMap<Item, Int>) {
+        val reportFile = options.annotationCoverageClassReport
+        val printer =
+            if (reportFile != null) {
+                reportFile.parentFile?.mkdirs()
+                PrintWriter(BufferedWriter(FileWriter(reportFile)))
+            } else {
+                options.stdout
+            }
+
+        // Top APIs
+        printer.println("\nTop referenced un-annotated classes:\n")
+
         printTable("Qualified Class Name",
             "Usage Count",
             classes,
             { (it as ClassItem).qualifiedName() },
-            { classCount[it]!! })
+            { classCount[it]!! },
+            printer)
+
+        if (reportFile != null) {
+            printer.close()
+            progress("\n$PROGRAM_NAME wrote class annotation coverage report to $reportFile")
+        }
     }
 
     private fun printMemberTable(
         sorted: List<MemberItem>,
-        used: HashMap<MemberItem, Int>,
-        printer: PrintWriter = options.stdout
+        used: HashMap<MemberItem, Int>
     ) {
+        val reportFile = options.annotationCoverageMemberReport
+        val printer =
+            if (reportFile != null) {
+                reportFile.parentFile?.mkdirs()
+                PrintWriter(BufferedWriter(FileWriter(reportFile)))
+            } else {
+                options.stdout
+            }
+
         // Top APIs
         printer.println("\nTop referenced un-annotated members:\n")
 
@@ -255,6 +293,11 @@ class AnnotationStatistics(val api: Codebase) {
             { used[it]!! },
             printer
         )
+
+        if (reportFile != null) {
+            printer.close()
+            progress("\n$PROGRAM_NAME wrote member annotation coverage report to $reportFile")
+        }
     }
 
     private fun dashes(printer: PrintWriter, max: Int) {

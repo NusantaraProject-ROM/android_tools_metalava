@@ -18,7 +18,6 @@
 package com.android.tools.metalava
 
 import com.android.SdkConstants
-import com.android.SdkConstants.DOT_JAR
 import com.android.SdkConstants.DOT_JAVA
 import com.android.SdkConstants.DOT_KT
 import com.android.ide.common.process.CachedProcessOutputHandler
@@ -172,7 +171,7 @@ private fun processFlags() {
         ApiGenerator.generate(apiLevelJars, androidApiLevelXml, codebase)
     }
 
-    if (options.stubsDir != null && codebase.supportsDocumentation()) {
+    if ((options.stubsDir != null || options.docStubsDir != null) && codebase.supportsDocumentation()) {
         progress("\nEnhancing docs: ")
         val docAnalyzer = DocAnalyzer(codebase)
         docAnalyzer.enhance()
@@ -184,10 +183,13 @@ private fun processFlags() {
         }
     }
 
+    // Generate the documentation stubs *before* we migrate nullness information.
+    options.docStubsDir?.let { createStubFiles(it, codebase, docStubs = true, writeStubList = true) }
+
     val previousApiFile = options.previousApi
     if (previousApiFile != null) {
         val previous =
-            if (previousApiFile.path.endsWith(DOT_JAR)) {
+            if (previousApiFile.path.endsWith(SdkConstants.DOT_JAR)) {
                 loadFromJarFile(previousApiFile)
             } else {
                 loadFromSignatureFiles(
@@ -212,7 +214,102 @@ private fun processFlags() {
 
     // Based on the input flags, generates various output files such
     // as signature files and/or stubs files
-    generateOutputs(codebase)
+    options.apiFile?.let { apiFile ->
+        val apiFilter = FilterPredicate(ApiPredicate(codebase))
+        val apiReference = ApiPredicate(codebase, ignoreShown = true)
+        val apiEmit = apiFilter.and(ElidingPredicate(apiReference))
+
+        createReportFile(codebase, apiFile, "API") { printWriter ->
+            val preFiltered = codebase.original != null
+            SignatureWriter(printWriter, apiEmit, apiReference, preFiltered)
+        }
+    }
+
+    options.removedApiFile?.let { apiFile ->
+        val unfiltered = codebase.original ?: codebase
+
+        val removedFilter = FilterPredicate(ApiPredicate(codebase, matchRemoved = true))
+        val removedReference = ApiPredicate(codebase, ignoreShown = true, ignoreRemoved = true)
+        val removedEmit = removedFilter.and(ElidingPredicate(removedReference))
+
+        createReportFile(unfiltered, apiFile, "removed API") { printWriter ->
+            SignatureWriter(printWriter, removedEmit, removedReference, codebase.original != null)
+        }
+    }
+
+    options.removedDexApiFile?.let { apiFile ->
+        val unfiltered = codebase.original ?: codebase
+
+        val removedFilter = FilterPredicate(ApiPredicate(codebase, matchRemoved = true))
+        val removedReference = ApiPredicate(codebase, ignoreShown = true, ignoreRemoved = true)
+        val memberIsNotCloned: Predicate<Item> = Predicate { !it.isCloned() }
+        val removedDexEmit = memberIsNotCloned.and(removedFilter)
+
+        createReportFile(
+            unfiltered, apiFile, "removed DEX API"
+        ) { printWriter -> DexApiWriter(printWriter, removedDexEmit, removedReference) }
+    }
+
+    options.privateApiFile?.let { apiFile ->
+        val apiFilter = FilterPredicate(ApiPredicate(codebase))
+        val memberIsNotCloned: Predicate<Item> = Predicate { !it.isCloned() }
+        val privateEmit = memberIsNotCloned.and(apiFilter.negate())
+        val privateReference = Predicate<Item> { true }
+
+        createReportFile(codebase, apiFile, "private API") { printWriter ->
+            SignatureWriter(printWriter, privateEmit, privateReference, codebase.original != null)
+        }
+    }
+
+    options.privateDexApiFile?.let { apiFile ->
+        val apiFilter = FilterPredicate(ApiPredicate(codebase))
+        val privateEmit = apiFilter.negate()
+        val privateReference = Predicate<Item> { true }
+
+        createReportFile(
+            codebase, apiFile, "private DEX API"
+        ) { printWriter -> DexApiWriter(printWriter, privateEmit, privateReference) }
+    }
+
+    options.proguard?.let { proguard ->
+        val apiEmit = FilterPredicate(ApiPredicate(codebase))
+        val apiReference = ApiPredicate(codebase, ignoreShown = true)
+        createReportFile(
+            codebase, proguard, "Proguard file"
+        ) { printWriter -> ProguardWriter(printWriter, apiEmit, apiReference) }
+    }
+
+    options.sdkValueDir?.let { dir ->
+        dir.mkdirs()
+        SdkFileWriter(codebase, dir).generate()
+    }
+
+    // Now that we've migrated nullness information we can proceed to write non-doc stubs, if any.
+
+    options.stubsDir?.let {
+        createStubFiles(
+            it, codebase, docStubs = false,
+            writeStubList = options.docStubsDir == null
+        )
+    }
+    if (options.docStubsDir == null && options.stubsDir == null) {
+        options.stubsSourceList?.let { file ->
+            val root = File("").absoluteFile
+            val sources = options.sources
+            val rootPath = root.path
+            val contents = sources.joinToString(" ") {
+                val path = it.path
+                if (path.startsWith(rootPath)) {
+                    path.substring(rootPath.length)
+                } else {
+                    path
+                }
+            }
+            Files.asCharSink(file, UTF_8).write(contents)
+        }
+    }
+    options.externalAnnotations?.let { extractAnnotations(codebase, it) }
+    progress("\n")
 
     // Coverage stats?
     if (options.dumpAnnotationStatistics) {
@@ -278,15 +375,18 @@ fun invokeDocumentationTool() {
 
 private fun migrateNulls(codebase: Codebase, previous: Codebase) {
     if (options.migrateNulls) {
-        val prev = previous.supportsStagedNullability
+        val codebaseSupportsNullability = previous.supportsStagedNullability
+        val prevSupportsNullability = previous.supportsStagedNullability
         try {
             previous.supportsStagedNullability = true
+            codebase.supportsStagedNullability = true
             previous.compareWith(
                 NullnessMigration(), codebase,
                 ApiPredicate(codebase)
             )
         } finally {
-            previous.supportsStagedNullability = prev
+            previous.supportsStagedNullability = prevSupportsNullability
+            codebase.supportsStagedNullability = codebaseSupportsNullability
         }
     }
 }
@@ -381,7 +481,7 @@ private fun loadFromSources(): Codebase {
 
     // Compute default constructors (and add missing package private constructors
     // to make stubs compilable if necessary)
-    if (options.stubsDir != null) {
+    if (options.stubsDir != null || options.docStubsDir != null) {
         progress("\nInsert missing constructors: ")
         analyzer.addConstructors(filterEmit)
     }
@@ -442,100 +542,6 @@ private fun ensurePsiFileCapacity() {
     }
 }
 
-private fun generateOutputs(codebase: Codebase) {
-
-    options.apiFile?.let { apiFile ->
-        val apiFilter = FilterPredicate(ApiPredicate(codebase))
-        val apiReference = ApiPredicate(codebase, ignoreShown = true)
-        val apiEmit = apiFilter.and(ElidingPredicate(apiReference))
-
-        createReportFile(codebase, apiFile, "API") { printWriter ->
-            val preFiltered = codebase.original != null
-            SignatureWriter(printWriter, apiEmit, apiReference, preFiltered)
-        }
-    }
-
-    options.removedApiFile?.let { apiFile ->
-        val unfiltered = codebase.original ?: codebase
-
-        val removedFilter = FilterPredicate(ApiPredicate(codebase, matchRemoved = true))
-        val removedReference = ApiPredicate(codebase, ignoreShown = true, ignoreRemoved = true)
-        val removedEmit = removedFilter.and(ElidingPredicate(removedReference))
-
-        createReportFile(unfiltered, apiFile, "removed API") { printWriter ->
-            SignatureWriter(printWriter, removedEmit, removedReference, codebase.original != null)
-        }
-    }
-
-    options.removedDexApiFile?.let { apiFile ->
-        val unfiltered = codebase.original ?: codebase
-
-        val removedFilter = FilterPredicate(ApiPredicate(codebase, matchRemoved = true))
-        val removedReference = ApiPredicate(codebase, ignoreShown = true, ignoreRemoved = true)
-        val memberIsNotCloned: Predicate<Item> = Predicate { !it.isCloned() }
-        val removedDexEmit = memberIsNotCloned.and(removedFilter)
-
-        createReportFile(
-            unfiltered, apiFile, "removed DEX API"
-        ) { printWriter -> DexApiWriter(printWriter, removedDexEmit, removedReference) }
-    }
-
-    options.privateApiFile?.let { apiFile ->
-        val apiFilter = FilterPredicate(ApiPredicate(codebase))
-        val memberIsNotCloned: Predicate<Item> = Predicate { !it.isCloned() }
-        val privateEmit = memberIsNotCloned.and(apiFilter.negate())
-        val privateReference = Predicate<Item> { true }
-
-        createReportFile(codebase, apiFile, "private API") { printWriter ->
-            SignatureWriter(printWriter, privateEmit, privateReference, codebase.original != null)
-        }
-    }
-
-    options.privateDexApiFile?.let { apiFile ->
-        val apiFilter = FilterPredicate(ApiPredicate(codebase))
-        val privateEmit = apiFilter.negate()
-        val privateReference = Predicate<Item> { true }
-
-        createReportFile(
-            codebase, apiFile, "private DEX API"
-        ) { printWriter -> DexApiWriter(printWriter, privateEmit, privateReference) }
-    }
-
-    options.proguard?.let { proguard ->
-        val apiEmit = FilterPredicate(ApiPredicate(codebase))
-        val apiReference = ApiPredicate(codebase, ignoreShown = true)
-        createReportFile(
-            codebase, proguard, "Proguard file"
-        ) { printWriter -> ProguardWriter(printWriter, apiEmit, apiReference) }
-    }
-
-    options.sdkValueDir?.let { dir ->
-        dir.mkdirs()
-        SdkFileWriter(codebase, dir).generate()
-    }
-
-    options.stubsDir?.let { createStubFiles(it, codebase) }
-    // Otherwise, if we've asked to write out a file list, write out the
-    // input file list instead
-        ?: options.stubsSourceList?.let { file ->
-            val root = File("").absoluteFile
-            val sources = options.sources
-            val rootPath = root.path
-            val contents = sources.joinToString(" ") {
-                val path = it.path
-                if (path.startsWith(rootPath)) {
-                    path.substring(rootPath.length)
-                } else {
-                    path
-                }
-            }
-            Files.asCharSink(file, UTF_8).write(contents)
-        }
-
-    options.externalAnnotations?.let { extractAnnotations(codebase, it) }
-    progress("\n")
-}
-
 private fun extractAnnotations(codebase: Codebase, file: File) {
     val localTimer = Stopwatch.createStarted()
     val units = codebase.units
@@ -548,11 +554,16 @@ private fun extractAnnotations(codebase: Codebase, file: File) {
     }
 }
 
-private fun createStubFiles(stubDir: File, codebase: Codebase) {
+private fun createStubFiles(stubDir: File, codebase: Codebase, docStubs: Boolean, writeStubList: Boolean) {
     // Generating stubs from a sig-file-based codebase is problematic
     assert(codebase.supportsDocumentation())
 
-    progress("\nGenerating stub files: ")
+    if (docStubs) {
+        progress("\nGenerating documentation stub files: ")
+    } else {
+        progress("\nGenerating stub files: ")
+    }
+
     val localTimer = Stopwatch.createStarted()
     val prevCompatibility = compatibility
     if (compatibility.compat) {
@@ -567,56 +578,32 @@ private fun createStubFiles(stubDir: File, codebase: Codebase) {
 
     val stubWriter =
         StubWriter(
-            codebase = codebase, stubsDir = stubDir, generateAnnotations = options.generateAnnotations,
-            preFiltered = codebase.original != null
+            codebase = codebase,
+            stubsDir = stubDir,
+            generateAnnotations = options.generateAnnotations,
+            preFiltered = codebase.original != null,
+            docStubs = docStubs
         )
     codebase.accept(stubWriter)
 
-    // Optionally also write out a list of source files that were generated; used
-    // for example to point javadoc to the stubs output to generate documentation
-    options.stubsSourceList?.let {
-        val root = File("").absoluteFile
-        stubWriter.writeSourceList(it, root)
+    if (writeStubList) {
+        // Optionally also write out a list of source files that were generated; used
+        // for example to point javadoc to the stubs output to generate documentation
+        options.stubsSourceList?.let {
+            val root = File("").absoluteFile
+            stubWriter.writeSourceList(it, root)
+        }
     }
-
-    /*
-    // Temporary hack: Also write out annotations to make stub compilation work. This is
-    // just temporary: the Makefiles for the platform should be updated to supply a
-    // boot classpath instead.
-    val nullable = File(stubDir, "android/support/annotation/Nullable.java")
-    val nonnull = File(stubDir, "android/support/annotation/NonNull.java")
-    nullable.parentFile.mkdirs()
-    nonnull.parentFile.mkdirs()
-    Files.asCharSink(nullable, UTF_8).write(
-        "package android.support.annotation;\n" +
-                "import java.lang.annotation.*;\n" +
-                "import static java.lang.annotation.ElementType.*;\n" +
-                "import static java.lang.annotation.RetentionPolicy.SOURCE;\n" +
-                "@SuppressWarnings(\"WeakerAccess\")\n" +
-                "@Retention(SOURCE)\n" +
-                "@Target({METHOD, PARAMETER, FIELD})\n" +
-                "public @interface Nullable {\n" +
-                "}\n"
-    )
-    Files.asCharSink(nonnull, UTF_8).write(
-        "package android.support.annotation;\n" +
-                "import java.lang.annotation.*;\n" +
-                "import static java.lang.annotation.ElementType.*;\n" +
-                "import static java.lang.annotation.RetentionPolicy.SOURCE;\n" +
-                "@SuppressWarnings(\"WeakerAccess\")\n" +
-                "@Retention(SOURCE)\n" +
-                "@Target({METHOD, PARAMETER, FIELD})\n" +
-                "public @interface NonNull {\n" +
-                "}\n"
-    )
-    */
 
     compatibility = prevCompatibility
 
-    progress("\n$PROGRAM_NAME wrote stubs directory $stubDir in ${localTimer.elapsed(SECONDS)} seconds")
+    progress(
+        "\n$PROGRAM_NAME wrote ${if (docStubs) "documentation" else ""} stubs directory $stubDir in ${
+        localTimer.elapsed(SECONDS)} seconds"
+    )
 }
 
-private fun progress(message: String) {
+fun progress(message: String) {
     if (options.verbose) {
         options.stdout.print(message)
         options.stdout.flush()
@@ -657,6 +644,9 @@ fun resetTicker() {
 fun tick() {
     tick++
     if (tick % 100 == 0) {
+        if (!options.verbose) {
+            return
+        }
         options.stdout.print(".")
         options.stdout.flush()
     }

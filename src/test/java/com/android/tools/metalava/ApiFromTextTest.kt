@@ -44,7 +44,6 @@ class ApiFromTextTest : DriverTest() {
 
     @Test
     fun `Infer fully qualified names from shorter names`() {
-
         check(
             compatibilityMode = true,
             extraArguments = arrayOf("--annotations-in-signatures"),
@@ -62,7 +61,7 @@ class ApiFromTextTest : DriverTest() {
                   public class MyTest {
                     ctor public MyTest();
                     method public int clamp(int);
-                    method public double convert(@android.support.annotation.Nullable java.lang.Float, byte[], java.lang.Iterable<java.io.File>);
+                    method public double convert(@androidx.annotation.Nullable java.lang.Float, byte[], java.lang.Iterable<java.io.File>);
                   }
                 }
                 """
@@ -224,9 +223,9 @@ class ApiFromTextTest : DriverTest() {
         @Language("TEXT")
         val source = """
                 package test.pkg {
-                  @android.support.annotation.UiThread public class MyTest {
+                  @androidx.annotation.UiThread public class MyTest {
                     ctor public MyTest();
-                    method @android.support.annotation.IntRange(from=10, to=20) public int clamp(int);
+                    method @androidx.annotation.IntRange(from=10, to=20) public int clamp(int);
                     method public java.lang.Double? convert(java.lang.Float myPublicName);
                     field public java.lang.Number? myNumber;
                   }

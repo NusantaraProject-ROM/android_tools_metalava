@@ -143,6 +143,8 @@ class TextTypeItem(
         return TextTypeItem(codebase, convertTypeString(replacementMap))
     }
 
+    override fun markRecent() = codebase.unsupported()
+
     companion object {
         // heuristic to guess if a given type parameter is a type variable
         fun isLikelyTypeParameter(typeString: String): Boolean {

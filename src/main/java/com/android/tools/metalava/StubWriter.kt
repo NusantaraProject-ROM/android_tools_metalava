@@ -44,7 +44,8 @@ class StubWriter(
     private val codebase: Codebase,
     private val stubsDir: File,
     private val generateAnnotations: Boolean = false,
-    private val preFiltered: Boolean = true
+    private val preFiltered: Boolean = true,
+    docStubs: Boolean
 ) : ApiVisitor(
     visitConstructorsAsMethods = false,
     nestInnerClasses = true,
@@ -53,8 +54,8 @@ class StubWriter(
     // Methods are by default sorted in source order in stubs, to encourage methods
     // that are near each other in the source to show up near each other in the documentation
     methodComparator = MethodItem.sourceOrderComparator,
-    filterEmit = FilterPredicate(ApiPredicate(codebase)),
-    filterReference = ApiPredicate(codebase, ignoreShown = true),
+    filterEmit = FilterPredicate(ApiPredicate(codebase, includeDocOnly = docStubs)),
+    filterReference = ApiPredicate(codebase, ignoreShown = true, includeDocOnly = docStubs),
     includeEmptyOuterClasses = true
 ) {
 

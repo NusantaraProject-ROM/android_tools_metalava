@@ -244,7 +244,7 @@ CompatibilityCheckTest : DriverTest() {
                     """
                     @Suppress("all")
                     package test.pkg;
-                    import android.support.annotation.ParameterName;
+                    import androidx.annotation.ParameterName;
 
                     public class JavaClass {
                         public String method1(String newName) { return null; }
@@ -254,7 +254,7 @@ CompatibilityCheckTest : DriverTest() {
                 ),
                 supportParameterName
             ),
-            extraArguments = arrayOf("--hide-package", "android.support.annotation")
+            extraArguments = arrayOf("--hide-package", "androidx.annotation")
         )
     }
 

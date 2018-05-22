@@ -16,7 +16,6 @@
 
 package com.android.tools.metalava.doclava1;
 
-import com.android.tools.lint.annotations.Extractor;
 import com.android.tools.lint.checks.infrastructure.ClassNameKt;
 import com.android.tools.metalava.model.AnnotationItem;
 import com.android.tools.metalava.model.TypeParameterList;
@@ -38,6 +37,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.android.tools.metalava.ConstantsKt.ANDROIDX_NOTNULL;
+import static com.android.tools.metalava.ConstantsKt.ANDROIDX_NULLABLE;
 import static com.android.tools.metalava.ConstantsKt.JAVA_LANG_ANNOTATION;
 import static com.android.tools.metalava.ConstantsKt.JAVA_LANG_ENUM;
 import static com.android.tools.metalava.ConstantsKt.JAVA_LANG_STRING;
@@ -282,12 +283,12 @@ public class ApiFile {
         if (api.getKotlinStyleNulls()) {
             if (token.endsWith("?")) {
                 token = token.substring(0, token.length() - 1);
-                annotations = mergeAnnotations(annotations, Extractor.SUPPORT_NULLABLE);
+                annotations = mergeAnnotations(annotations, ANDROIDX_NULLABLE);
             } else if (token.endsWith("!")) {
                 token = token.substring(0, token.length() - 1);
             } else if (!token.endsWith("!")) {
                 if (!TextTypeItem.Companion.isPrimitive(token)) { // Don't add nullness on primitive types like void
-                    annotations = mergeAnnotations(annotations, Extractor.SUPPORT_NOTNULL);
+                    annotations = mergeAnnotations(annotations, ANDROIDX_NOTNULL);
                 }
             }
         } else if (token.endsWith("?") || token.endsWith("!")) {
@@ -542,7 +543,7 @@ public class ApiFile {
         }
         // Reverse effect of TypeItem.shortenTypes(...)
         String qualifiedName = annotation.indexOf('.') == -1
-            ? "@android.support.annotation" + annotation
+            ? "@androidx.annotation" + annotation
             : "@" + annotation;
 
         annotations.add(qualifiedName);

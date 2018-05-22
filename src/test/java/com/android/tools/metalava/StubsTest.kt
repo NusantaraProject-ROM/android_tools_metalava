@@ -34,6 +34,7 @@ class StubsTest : DriverTest() {
         checkDoclava1: Boolean = false,
         api: String? = null,
         extraArguments: Array<String> = emptyArray(),
+        docStubs: Boolean = false,
         vararg sourceFiles: TestFile
     ) {
         check(
@@ -44,7 +45,8 @@ class StubsTest : DriverTest() {
             checkDoclava1 = checkDoclava1,
             checkCompilation = true,
             api = api,
-            extraArguments = extraArguments
+            extraArguments = extraArguments,
+            docStubs = docStubs
         )
     }
 
@@ -1041,7 +1043,7 @@ class StubsTest : DriverTest() {
                      * @param size Value is between 0 and (1 << MeasureSpec.MODE_SHIFT) - 1 inclusive
                      * @param mode Value is {@link android.view.View.View.MeasureSpec#UNSPECIFIED}, {@link android.view.View.View.MeasureSpec#EXACTLY}, or {@link android.view.View.View.MeasureSpec#AT_MOST}
                      */
-                    public static int makeMeasureSpec(@android.support.annotation.IntRange(from=0, to=0x40000000 - 1) int size, int mode) { throw new RuntimeException("Stub!"); }
+                    public static int makeMeasureSpec(@androidx.annotation.IntRange(from=0, to=0x40000000 - 1) int size, int mode) { throw new RuntimeException("Stub!"); }
                     public static final int AT_MOST = -2147483648; // 0x80000000
                     public static final int EXACTLY = 1073741824; // 0x40000000
                     public static final int UNSPECIFIED = 0; // 0x0
@@ -1127,7 +1129,7 @@ class StubsTest : DriverTest() {
                     /**
                      * Requires {@link android.Manifest.permission#INTERACT_ACROSS_USERS} and {@link android.Manifest.permission#BROADCAST_STICKY}
                      */
-                    @android.support.annotation.RequiresPermission(allOf={"android.permission.INTERACT_ACROSS_USERS", android.Manifest.permission.BROADCAST_STICKY}) public abstract void removeStickyBroadcast(@android.support.annotation.RequiresPermission java.lang.Object intent);
+                    @androidx.annotation.RequiresPermission(allOf={"android.permission.INTERACT_ACROSS_USERS", android.Manifest.permission.BROADCAST_STICKY}) public abstract void removeStickyBroadcast(@androidx.annotation.RequiresPermission java.lang.Object intent);
                     }
                 """
         )
@@ -1260,15 +1262,15 @@ class StubsTest : DriverTest() {
                     /** My class doc */
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public final class Kotlin extends test.pkg.Parent {
-                    public Kotlin(@android.support.annotation.NonNull java.lang.String property1, int arg2) { throw new RuntimeException("Stub!"); }
-                    @android.support.annotation.NonNull public java.lang.String method() { throw new RuntimeException("Stub!"); }
+                    public Kotlin(@androidx.annotation.NonNull java.lang.String property1, int arg2) { throw new RuntimeException("Stub!"); }
+                    @androidx.annotation.NonNull public java.lang.String method() { throw new RuntimeException("Stub!"); }
                     /** My method doc */
                     public void otherMethod(boolean ok, int times) { throw new RuntimeException("Stub!"); }
                     /** property doc */
-                    @android.support.annotation.Nullable public java.lang.String getProperty2() { throw new RuntimeException("Stub!"); }
+                    @androidx.annotation.Nullable public java.lang.String getProperty2() { throw new RuntimeException("Stub!"); }
                     /** property doc */
-                    public void setProperty2(@android.support.annotation.Nullable java.lang.String p) { throw new RuntimeException("Stub!"); }
-                    @android.support.annotation.NonNull public java.lang.String getProperty1() { throw new RuntimeException("Stub!"); }
+                    public void setProperty2(@androidx.annotation.Nullable java.lang.String p) { throw new RuntimeException("Stub!"); }
+                    @androidx.annotation.NonNull public java.lang.String getProperty1() { throw new RuntimeException("Stub!"); }
                     public int someField2;
                     }
                 """,
@@ -1285,7 +1287,7 @@ class StubsTest : DriverTest() {
                 java(
                     """
                     package test.pkg;
-                    import android.support.annotation.ParameterName;
+                    import androidx.annotation.ParameterName;
 
                     public class Foo {
                         public void foo(int javaParameter1, @ParameterName("publicParameterName") int javaParameter2) {
@@ -1447,7 +1449,7 @@ class StubsTest : DriverTest() {
     @Test
     fun `DocOnly members should be omitted`() {
         // When marked @doconly don't include in stubs or signature files
-        // unless specifically asked for (which we do when generating docs).
+        // unless specifically asked for (which we do when generating docs-stubs).
         checkStubs(
             sourceFiles =
             *arrayOf(
@@ -1502,7 +1504,7 @@ class StubsTest : DriverTest() {
         // When marked @doconly don't include in stubs or signature files
         // unless specifically asked for (which we do when generating docs).
         checkStubs(
-            extraArguments = arrayOf("--include-doconly"),
+            docStubs = true,
             sourceFiles =
             *arrayOf(
                 java(
@@ -1683,7 +1685,7 @@ class StubsTest : DriverTest() {
                 package my.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class String {
-                public String(char @android.support.annotation.NonNull [] value) { throw new RuntimeException("Stub!"); }
+                public String(char @androidx.annotation.NonNull [] value) { throw new RuntimeException("Stub!"); }
                 }
                 """
             )
@@ -2879,7 +2881,7 @@ class StubsTest : DriverTest() {
             *arrayOf(
                 java(
                     """
-                    @android.support.annotation.Nullable
+                    @androidx.annotation.Nullable
                     package test.pkg;
                     """
                 ),
@@ -2904,10 +2906,10 @@ class StubsTest : DriverTest() {
                 }
             """, // WRONG: I should include package annotations!
             source = """
-                @android.support.annotation.Nullable
+                @androidx.annotation.Nullable
                 package test.pkg;
                 """,
-            extraArguments = arrayOf("--hide-package", "android.support.annotation")
+            extraArguments = arrayOf("--hide-package", "androidx.annotation")
         )
     }
 
