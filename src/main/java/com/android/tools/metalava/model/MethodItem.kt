@@ -378,6 +378,10 @@ interface MethodItem : MemberItem {
     }
 
     override fun hasNullnessInfo(): Boolean {
+        if (!requiresNullnessInfo()) {
+            return true
+        }
+
         if (!isConstructor() && returnType()?.primitive != true) {
             if (!modifiers.hasNullnessInfo()) {
                 return false

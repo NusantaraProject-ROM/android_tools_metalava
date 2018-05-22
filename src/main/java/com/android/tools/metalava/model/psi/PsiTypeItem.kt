@@ -265,6 +265,11 @@ class PsiTypeItem private constructor(private val codebase: PsiBasedCodebase, pr
 
     override fun hasTypeArguments(): Boolean = psiType is PsiClassType && psiType.hasParameters()
 
+    override fun markRecent() {
+        toAnnotatedString = toTypeString(false, true, false).replace(".NonNull", ".RecentlyNonNull")
+        toInnerAnnotatedString = toTypeString(true, true, false).replace(".NonNull", ".RecentlyNonNull")
+    }
+
     companion object {
         private fun getPrimitiveSignature(typeName: String): String? = when (typeName) {
             "boolean" -> "Z"

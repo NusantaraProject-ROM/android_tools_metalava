@@ -88,7 +88,7 @@ class ApiFileTest : DriverTest() {
                 java(
                     """
                     package test.pkg;
-                    import android.support.annotation.ParameterName;
+                    import androidx.annotation.ParameterName;
 
                     public class Foo {
                         public void foo(int javaParameter1, @ParameterName("publicParameterName") int javaParameter2) {
@@ -106,7 +106,7 @@ class ApiFileTest : DriverTest() {
                       }
                     }
                  """,
-            extraArguments = arrayOf("--hide-package", "android.support.annotation"),
+            extraArguments = arrayOf("--hide-package", "androidx.annotation"),
             checkDoclava1 = false /* doesn't support parameter names */
         )
     }
@@ -120,7 +120,7 @@ class ApiFileTest : DriverTest() {
                 java(
                     """
                     package test.pkg;
-                    import android.support.annotation.DefaultValue;
+                    import androidx.annotation.DefaultValue;
 
                     public class Foo {
                         public void foo(
@@ -141,7 +141,7 @@ class ApiFileTest : DriverTest() {
                   }
                 }
                  """,
-            extraArguments = arrayOf("--hide-package", "android.support.annotation"),
+            extraArguments = arrayOf("--hide-package", "androidx.annotation"),
             checkDoclava1 = false /* doesn't support default Values */
         )
     }
@@ -170,7 +170,7 @@ class ApiFileTest : DriverTest() {
                   }
                 }
                 """,
-            extraArguments = arrayOf("--hide-package", "android.support.annotation"),
+            extraArguments = arrayOf("--hide-package", "androidx.annotation"),
             checkDoclava1 = false /* doesn't support default Values */
         )
     }
@@ -339,8 +339,8 @@ class ApiFileTest : DriverTest() {
                     """
                     // Platform nullability Pair in Java
                     package androidx.util;
-                    import android.support.annotation.NonNull;
-                    import android.support.annotation.Nullable;
+                    import androidx.annotation.NonNull;
+                    import androidx.annotation.Nullable;
 
                     @SuppressWarnings("WeakerAccess")
                     public class NullableJavaPair<F, S> {
@@ -359,7 +359,7 @@ class ApiFileTest : DriverTest() {
                     // Platform nullability Pair in Java
                     package androidx.util;
 
-                    import android.support.annotation.NonNull;
+                    import androidx.annotation.NonNull;
 
                     @SuppressWarnings("WeakerAccess")
                     public class NonNullableJavaPair<F, S> {
@@ -417,7 +417,7 @@ class ApiFileTest : DriverTest() {
                   }
                 }
                 """,
-            extraArguments = arrayOf("--hide-package", "android.support.annotation"),
+            extraArguments = arrayOf("--hide-package", "androidx.annotation"),
             checkDoclava1 = false /* doesn't support Kotlin... */
         )
     }
@@ -469,7 +469,7 @@ class ApiFileTest : DriverTest() {
                   }
                 }
                 """,
-            extraArguments = arrayOf("--hide-package", "android.support.annotation"),
+            extraArguments = arrayOf("--hide-package", "androidx.annotation"),
             checkDoclava1 = false /* doesn't support default Values */
         )
     }

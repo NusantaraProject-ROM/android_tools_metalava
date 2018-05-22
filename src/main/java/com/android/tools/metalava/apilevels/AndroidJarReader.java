@@ -89,13 +89,9 @@ public class AndroidJarReader {
                 if (jar == null || !jar.isFile()) {
                     if (mCodebase != null) {
                         processCodebase(api, apiLevel);
-                        System.out.println("Last API level found: " + apiLevel);
-                    } else {
-                        System.out.println("Last API level found: " + (apiLevel - 1));
                     }
                     break;
                 }
-                System.out.println("Found API " + apiLevel + " at " + jar.getPath());
                 readJar(api, apiLevel, jar);
             }
         }
