@@ -75,6 +75,7 @@ open class PsiClassItem(
     }
 
     override var defaultConstructor: ConstructorItem? = null
+    override var artifact: String? = null
 
     private var containingClass: PsiClassItem? = null
     override fun containingClass(): PsiClassItem? = containingClass
