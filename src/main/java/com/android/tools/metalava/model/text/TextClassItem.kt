@@ -64,6 +64,8 @@ open class TextClassItem(
 
     override val isTypeParameter: Boolean = false
 
+    override var artifact: String? = null
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is ClassItem) return false

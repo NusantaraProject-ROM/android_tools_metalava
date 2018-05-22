@@ -110,6 +110,7 @@ private const val ARG_HIDDEN = "--hidden"
 private const val ARG_NO_DOCS = "--no-docs"
 private const val ARG_GENERATE_DOCUMENTATION = "--generate-documentation"
 private const val ARG_JAVA_SOURCE = "--java-source"
+private const val ARG_REGISTER_ARTIFACT = "--register-artifact"
 
 class Options(
     args: Array<String>,
@@ -371,6 +372,9 @@ class Options(
      * The language level to use for Java files, set with [ARG_JAVA_SOURCE]
      */
     var javaLanguageLevel: LanguageLevel = LanguageLevel.JDK_1_8
+
+    /** Map from XML API descriptor file to corresponding artifact id name */
+    val artifactRegistrations = ArtifactTagger()
 
     init {
         // Pre-check whether --color/--no-color is present and use that to decide how
@@ -637,6 +641,12 @@ class Options(
                     index = args.size // jump to end of argument loop
                 }
 
+                ARG_REGISTER_ARTIFACT, "-artifact" -> {
+                    val descriptor = stringToExistingFile(getValue(args, ++index))
+                    val artifactId = getValue(args, ++index)
+                    artifactRegistrations.register(artifactId, descriptor)
+                }
+
             // Unimplemented doclava1 flags (no arguments)
                 "-quiet",
                 "-yamlV2" -> {
@@ -724,7 +734,6 @@ class Options(
             // doclava1 flags with two arguments
                 "-federate",
                 "-federationapi",
-                "-artifact",
                 "-htmldir2" -> {
                     javadoc(arg)
                     index += 2
@@ -1226,6 +1235,9 @@ class Options(
             "$ARG_STUBS_SOURCE_LIST <file>", "Write the list of generated stub files into the given source " +
                 "list file. If generating documentation stubs, this list will refer to the documentation stubs; " +
                 "otherwise it's the non-documentation stubs.",
+            "$ARG_REGISTER_ARTIFACT <api-file> <id>", "Registers the given id for the packages found in " +
+                "the given signature file. $PROGRAM_NAME will inject an @artifactId <id> tag into every top " +
+                "level stub class in that API.",
 
             "", "\nDiffs and Checks:",
             "$ARG_PREVIOUS_API <signature file>", "A signature file for the previous version of this " +
