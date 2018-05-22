@@ -205,7 +205,9 @@ abstract class DriverTest {
         /** Corresponds to SDK constants file features.txt */
         sdk_features: String? = null,
         /** Corresponds to SDK constants file widgets.txt */
-        sdk_widgets: String? = null
+        sdk_widgets: String? = null,
+        /** Map from artifact id to artifact descriptor */
+        artifacts: Map<String, String>? = null
     ) {
         System.setProperty("METALAVA_TESTS_RUNNING", VALUE_TRUE)
 
@@ -485,6 +487,23 @@ abstract class DriverTest {
             sdkFilesDir = null
         }
 
+        val artifactArgs = if (artifacts != null) {
+            val args = mutableListOf<String>()
+            var index = 1
+            for ((artifactId, signatures) in artifacts) {
+                val signatureFile = temporaryFolder.newFile("signature-file-$index.txt")
+                Files.asCharSink(signatureFile, Charsets.UTF_8).write(signatures.trimIndent())
+                index++
+
+                args.add("--register-artifact")
+                args.add(signatureFile.path)
+                args.add(artifactId)
+            }
+            args.toTypedArray()
+        } else {
+            emptyArray()
+        }
+
         val actualOutput = runDriver(
             "--no-color",
             "--no-banner",
@@ -530,6 +549,7 @@ abstract class DriverTest {
             *sdkFilesArgs,
             *importedPackageArgs.toTypedArray(),
             *skipEmitPackagesArgs.toTypedArray(),
+            *artifactArgs,
             *sourceList,
             *extraArguments,
             expectedFail = expectedFail

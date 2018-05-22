@@ -216,6 +216,12 @@ interface ClassItem : Item {
 
     var hasPrivateConstructor: Boolean
 
+    /**
+     * Maven artifact of this class, if any. (Not used for the Android SDK, but used in
+     * for example support libraries.
+     */
+    var artifact: String?
+
     override fun accept(visitor: ItemVisitor) {
         if (visitor is ApiVisitor) {
             accept(visitor)

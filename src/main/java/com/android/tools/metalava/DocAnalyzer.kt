@@ -48,8 +48,27 @@ class DocAnalyzer(
 
         tweakGrammar()
 
+        injectArtifactIds()
+
         // TODO:
         // insertMissingDocFromHiddenSuperclasses()
+    }
+
+    private fun injectArtifactIds() {
+        val artifacts = options.artifactRegistrations
+        if (!artifacts.any()) {
+            return
+        }
+
+        artifacts.tag(codebase)
+
+        codebase.accept(object : VisibleItemVisitor() {
+            override fun visitClass(cls: ClassItem) {
+                cls.artifact?.let {
+                    cls.appendDocumentation(it, "@artifactId")
+                }
+            }
+        })
     }
 
     val mentionsNull: Pattern = Pattern.compile("\\bnull\\b")
@@ -115,7 +134,8 @@ class DocAnalyzer(
                     val name = annotation.qualifiedName()
                     if (name != null && name.endsWith("Thread") &&
                         (name.startsWith(ANDROID_SUPPORT_ANNOTATION_PREFIX) ||
-                            name.startsWith(ANDROIDX_ANNOTATION_PREFIX))) {
+                            name.startsWith(ANDROIDX_ANNOTATION_PREFIX))
+                    ) {
                         if (result == null) {
                             result = mutableListOf()
                         }
