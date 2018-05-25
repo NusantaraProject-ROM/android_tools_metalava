@@ -164,18 +164,8 @@ Statistics:
                                        report for members to.
 
 Extracting Annotations:
---extract-annotations <zipfile>        Extracts annotations from the source files and
-                                       writes them into the given zip file
---api-filter <file>                    Applies the given signature file as a filter (which
-                                       means no classes,methods or fields not found in the
-                                       filter will be included.)
---hide-filtered                        Omit listing APIs that were skipped because of the
-                                       --api-filter
---skip-class-retention                 Do not extract annotations that have class file
-                                       retention
---rmtypedefs                           Delete all the typedef .class files
---typedef-file <file>                  Writes an typedef annotation class names into the
-                                       given file
+--extract-annotations <zipfile>        Extracts source annotations from the source files
+                                       and writes them into the given zip file
 
 Injecting API Levels:
 --apply-api-levels <api-versions.xml>  Reads an XML file containing API level descriptions

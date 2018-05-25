@@ -32,7 +32,6 @@ import com.android.SdkConstants.TYPE_DEF_FLAG_ATTRIBUTE
 import com.android.SdkConstants.TYPE_DEF_VALUE_ATTRIBUTE
 import com.android.SdkConstants.VALUE_TRUE
 import com.android.annotations.NonNull
-import com.android.tools.lint.annotations.ApiDatabase
 import com.android.tools.lint.annotations.Extractor.ANDROID_INT_DEF
 import com.android.tools.lint.annotations.Extractor.ANDROID_NOTNULL
 import com.android.tools.lint.annotations.Extractor.ANDROID_NULLABLE
@@ -45,6 +44,7 @@ import com.android.tools.lint.annotations.Extractor.IDEA_NOTNULL
 import com.android.tools.lint.annotations.Extractor.IDEA_NULLABLE
 import com.android.tools.lint.annotations.Extractor.SUPPORT_NOTNULL
 import com.android.tools.lint.annotations.Extractor.SUPPORT_NULLABLE
+import com.android.tools.lint.checks.AnnotationDetector
 import com.android.tools.lint.detector.api.getChildren
 import com.android.tools.metalava.model.AnnotationAttribute
 import com.android.tools.metalava.model.AnnotationAttributeValue
@@ -57,32 +57,23 @@ import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.psi.PsiAnnotationItem
 import com.android.utils.XmlUtils
 import com.google.common.base.Charsets
-import com.google.common.base.Splitter
-import com.google.common.collect.ImmutableSet
 import com.google.common.io.ByteStreams
 import com.google.common.io.Closeables
 import com.google.common.io.Files
-import com.google.common.xml.XmlEscapers
 import org.w3c.dom.Document
 import org.w3c.dom.Element
-import org.w3c.dom.Node
 import org.xml.sax.SAXParseException
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
 import java.lang.reflect.Field
-import java.util.ArrayList
-import java.util.HashMap
 import java.util.jar.JarInputStream
 import java.util.regex.Pattern
 import java.util.zip.ZipEntry
-import kotlin.Comparator
 
 /** Merges annotations into classes already registered in the given [Codebase] */
 class AnnotationsMerger(
-    private val codebase: Codebase,
-    private val apiFilter: ApiDatabase?,
-    private val listIgnored: Boolean = true
+    private val codebase: Codebase
 ) {
     fun merge(mergeAnnotations: List<File>) {
         mergeAnnotations.forEach { mergeExisting(it) }
@@ -203,16 +194,6 @@ class AnnotationsMerger(
                     continue
                 }
 
-                if (apiFilter != null &&
-                    !hasHistoricData(item) &&
-                    !apiFilter.hasClass(containingClass)
-                ) {
-                    if (listIgnored) {
-                        warning("Skipping imported element because it is not part of the API file: $containingClass")
-                    }
-                    continue
-                }
-
                 val classItem = codebase.findClass(containingClass)
                 if (classItem == null) {
                     // Well known exceptions from IntelliJ's external annotations
@@ -242,16 +223,6 @@ class AnnotationsMerger(
             } else if (signature.indexOf(' ') == -1 && signature.indexOf('.') != -1) {
                 // Must be just a class
                 val containingClass = signature
-                if (apiFilter != null &&
-                    !hasHistoricData(item) &&
-                    !apiFilter.hasClass(containingClass)
-                ) {
-                    if (listIgnored) {
-                        warning("Skipping imported element because it is not part of the API file: $containingClass")
-                    }
-                    continue
-                }
-
                 val classItem = codebase.findClass(containingClass)
                 if (classItem == null) {
                     if (wellKnownIgnoredImport(containingClass)) {
@@ -300,19 +271,6 @@ class AnnotationsMerger(
         @Suppress("NAME_SHADOWING")
         val parameters = fixParameterString(parameters)
 
-        if (apiFilter != null &&
-            !hasHistoricData(item) &&
-            !apiFilter.hasMethod(containingClass, methodName, parameters)
-        ) {
-            if (listIgnored) {
-                warning(
-                    "Skipping imported element because it is not part of the API file: " +
-                        containingClass + "#" + methodName + "(" + parameters + ")"
-                )
-            }
-            return
-        }
-
         val methodItem: MethodItem? = classItem.findMethod(methodName, parameters)
         if (methodItem == null) {
             if (wellKnownIgnoredImport(containingClass)) {
@@ -342,29 +300,18 @@ class AnnotationsMerger(
     }
 
     private fun mergeField(item: Element, containingClass: String, classItem: ClassItem, fieldName: String) {
-        if (apiFilter != null &&
-            !hasHistoricData(item) &&
-            !apiFilter.hasField(containingClass, fieldName)
-        ) {
-            if (listIgnored) {
-                warning(
-                    "Skipping imported element because it is not part of the API file: " +
-                        containingClass + "#" + fieldName
-                )
-            }
-        } else {
-            val fieldItem = classItem.findField(fieldName)
-            if (fieldItem == null) {
-                if (wellKnownIgnoredImport(containingClass)) {
-                    return
-                }
 
-                warning("Could not find field $fieldName in $containingClass; omitting annotation from merge")
+        val fieldItem = classItem.findField(fieldName)
+        if (fieldItem == null) {
+            if (wellKnownIgnoredImport(containingClass)) {
                 return
             }
 
-            mergeAnnotations(item, fieldItem)
+            warning("Could not find field $fieldName in $containingClass; omitting annotation from merge")
+            return
         }
+
+        mergeAnnotations(item, fieldItem)
     }
 
     private fun getAnnotationName(element: Element): String {
@@ -380,10 +327,8 @@ class AnnotationsMerger(
         var count = 0
 
         loop@ for (annotationElement in getChildren(xmlElement)) {
-            val qualifiedName = AnnotationItem.mapName(codebase, getAnnotationName(annotationElement)) ?: continue
-            if (!AnnotationItem.isSignificantAnnotation(qualifiedName)) {
-                continue
-            }
+            val originalName = getAnnotationName(annotationElement)
+            val qualifiedName = AnnotationItem.mapName(codebase, originalName) ?: originalName
             var haveNullable = false
             var haveNotNull = false
             for (existing in item.modifiers.annotations()) {
@@ -406,6 +351,11 @@ class AnnotationsMerger(
             }
 
             val annotationItem = createAnnotation(annotationElement) ?: continue
+
+            if (!AnnotationItem.isSignificantAnnotation(annotationItem.qualifiedName())) {
+                continue
+            }
+
             item.mutableModifiers().addAnnotation(annotationItem)
             count++
         }
@@ -415,14 +365,36 @@ class AnnotationsMerger(
 
     /** Reads in annotation data from an XML item (using IntelliJ IDE's external annotations XML format) and
      * creates a corresponding [AnnotationItem], performing some "translations" in the process (e.g. mapping
-     * from IntelliJ annotations like `org.jetbrains.annotations.Nullable` to `android.support.annotation.Nullable`,
-     * as well as dropping constants from typedefs that aren't included according to the [apiFilter]. */
+     * from IntelliJ annotations like `org.jetbrains.annotations.Nullable` to `android.support.annotation.Nullable`. */
     private fun createAnnotation(annotationElement: Element): AnnotationItem? {
         val tagName = annotationElement.tagName
         assert(tagName == "annotation") { tagName }
         val name = annotationElement.getAttribute(ATTR_NAME)
         assert(name != null && !name.isEmpty())
         when {
+            name == "org.jetbrains.annotations.Range" -> {
+                val children = getChildren(annotationElement)
+                assert(children.size == 2) { children.size }
+                val valueElement1 = children[0]
+                val valueElement2 = children[1]
+                val valName1 = valueElement1.getAttribute(ATTR_NAME)
+                val value1 = valueElement1.getAttribute(ATTR_VAL)
+                val valName2 = valueElement2.getAttribute(ATTR_NAME)
+                val value2 = valueElement2.getAttribute(ATTR_VAL)
+                return PsiAnnotationItem.create(
+                    codebase, XmlBackedAnnotationItem(
+                        codebase, AnnotationDetector.INT_RANGE_ANNOTATION.newName(),
+                        listOf(
+                            // Add "L" suffix to ensure that we don't for example interpret "-1" as
+                            // an integer -1 and then end up recording it as "ffffffff" instead of -1L
+                            XmlBackedAnnotationAttribute(valName1,
+                                value1 + (if (value1.last().isDigit()) "L" else "")),
+                            XmlBackedAnnotationAttribute(valName2,
+                                value2 + (if (value2.last().isDigit()) "L" else ""))
+                        )
+                    )
+                )
+            }
             name == IDEA_MAGIC -> {
                 val children = getChildren(annotationElement)
                 assert(children.size == 1) { children.size }
@@ -448,60 +420,8 @@ class AnnotationsMerger(
                             // It's mainly used for sorting anyway.
                         }
 
-                        if (apiFilter != null) {
-                            // Search in API database
-                            var fields: Set<String>? = apiFilter.getDeclaredIntFields(clsName)
-                            if ("java.util.zip.ZipEntry" == clsName) {
-                                // The metadata says valuesFromClass ZipEntry, and unfortunately
-                                // that class implements ZipConstants and therefore imports a large
-                                // number of irrelevant constants that aren't valid here. Instead,
-                                // only allow these two:
-                                fields = ImmutableSet.of("STORED", "DEFLATED")
-                            }
-
-                            if (fields != null) {
-                                val sorted = ArrayList(fields)
-                                sorted.sort()
-                                if (reflectionFields != null) {
-                                    val rank = HashMap<String, Int>()
-                                    run {
-                                        var i = 0
-                                        val n = sorted.size
-                                        while (i < n) {
-                                            rank[sorted[i]] = reflectionFields.size + i
-                                            i++
-                                        }
-                                    }
-                                    var i = 0
-                                    val n = reflectionFields.size
-                                    while (i < n) {
-                                        rank[reflectionFields[i].name] = i
-                                        i++
-                                    }
-                                    sorted.sortWith(Comparator { o1, o2 ->
-                                        val rank1 = rank[o1]
-                                        val rank2 = rank[o2]
-                                        val delta = rank1!! - rank2!!
-                                        if (delta != 0) {
-                                            return@Comparator delta
-                                        }
-                                        o1.compareTo(o2)
-                                    })
-                                }
-                                var first = true
-                                for (field in sorted) {
-                                    if (first) {
-                                        first = false
-                                    } else {
-                                        sb.append(',').append(' ')
-                                    }
-                                    sb.append(clsName).append('.').append(field)
-                                }
-                                found = true
-                            }
-                        }
                         // Attempt to sort in reflection order
-                        if (!found && reflectionFields != null && (apiFilter == null || apiFilter.hasClass(clsName))) {
+                        if (!found && reflectionFields != null) {
                             // Attempt with reflection
                             var first = true
                             for (field in reflectionFields) {
@@ -524,16 +444,6 @@ class AnnotationsMerger(
 
                     if (!found) {
                         return null
-                    }
-                }
-
-                if (apiFilter != null) {
-                    value = removeFiltered(value)
-                    while (value.contains(", ,")) {
-                        value = value.replace(", ,", ",")
-                    }
-                    if (value.startsWith(", ")) {
-                        value = value.substring(2)
                     }
                 }
 
@@ -633,39 +543,6 @@ class AnnotationsMerger(
         }
     }
 
-    private fun removeFiltered(originalValue: String): String {
-        var value = originalValue
-        assert(apiFilter != null)
-        if (value.startsWith("{")) {
-            value = value.substring(1)
-        }
-        if (value.endsWith("}")) {
-            value = value.substring(0, value.length - 1)
-        }
-        value = value.trim { it <= ' ' }
-        val sb = StringBuilder(value.length)
-        sb.append('{')
-        for (escaped in Splitter.on(',').omitEmptyStrings().trimResults().split(value)) {
-            val fqn = unescapeXml(escaped)
-            if (fqn.startsWith("\"")) {
-                continue
-            }
-            val index = fqn.lastIndexOf('.')
-            val cls = fqn.substring(0, index)
-            val field = fqn.substring(index + 1)
-            if (apiFilter?.hasField(cls, field) != false) {
-                if (sb.length > 1) { // 0: '{'
-                    sb.append(", ")
-                }
-                sb.append(fqn)
-            } else if (listIgnored) {
-                warning("Skipping constant from typedef because it is not part of the SDK: $fqn")
-            }
-        }
-        sb.append('}')
-        return escapeXml(sb.toString())
-    }
-
     private fun isNonNull(name: String): Boolean {
         return name == IDEA_NOTNULL ||
             name == ANDROID_NOTNULL ||
@@ -678,44 +555,6 @@ class AnnotationsMerger(
             name == ANDROID_NULLABLE ||
             name == ANDROIDX_NULLABLE ||
             name == SUPPORT_NULLABLE
-    }
-
-    /**
-     * Returns true if this XML entry contains historic metadata, e.g. has
-     * an api attribute which designates that this API may no longer be in the SDK,
-     * but the annotations should be preserved for older API levels
-     */
-    private fun hasHistoricData(@NonNull item: Element): Boolean {
-        var curr: Node? = item.firstChild
-        while (curr != null) {
-            // Example:
-            // <item name="android.provider.Browser BOOKMARKS_URI">
-            //   <annotation name="android.support.annotation.RequiresPermission.Read">
-            //     <val name="value" val="&quot;com.android.browser.permission.READ_HISTORY_BOOKMARKS&quot;" />
-            //     <val name="apis" val="&quot;..22&quot;" />
-            //   </annotation>
-            //   ..
-            if (curr.nodeType == Node.ELEMENT_NODE && "annotation" == curr.nodeName) {
-                var inner: Node? = curr.firstChild
-                while (inner != null) {
-                    if (inner.nodeType == Node.ELEMENT_NODE &&
-                        "val" == inner.nodeName &&
-                        "apis" == (inner as Element).getAttribute("name")
-                    ) {
-                        return true
-                    }
-                    inner = inner.nextSibling
-                }
-            }
-            curr = curr.nextSibling
-        }
-
-        return false
-    }
-
-    @NonNull
-    private fun escapeXml(@NonNull unescaped: String): String {
-        return XmlEscapers.xmlAttributeEscaper().escape(unescaped)
     }
 
     @NonNull

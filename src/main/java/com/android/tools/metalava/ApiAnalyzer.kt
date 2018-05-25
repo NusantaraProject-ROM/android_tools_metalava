@@ -30,7 +30,6 @@ import com.android.tools.metalava.model.ParameterItem
 import com.android.tools.metalava.model.TypeItem
 import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.android.tools.metalava.model.visitors.ItemVisitor
-import com.android.tools.metalava.model.visitors.VisibleItemVisitor
 import java.util.ArrayList
 import java.util.HashMap
 import java.util.HashSet
@@ -516,7 +515,7 @@ class ApiAnalyzer(
     fun mergeExternalAnnotations() {
         val mergeAnnotations = options.mergeAnnotations
         if (!mergeAnnotations.isEmpty()) {
-            AnnotationsMerger(codebase, options.apiFilter).merge(mergeAnnotations)
+            AnnotationsMerger(codebase).merge(mergeAnnotations)
         }
     }
 
@@ -620,41 +619,6 @@ class ApiAnalyzer(
                 }
             }
         })
-    }
-
-    private fun applyApiFilter() {
-        options.apiFilter?.let { filter ->
-            packages.accept(object : VisibleItemVisitor() {
-
-                override fun visitPackage(pkg: PackageItem) {
-                    if (!filter.hasPackage(pkg.qualifiedName())) {
-                        pkg.included = false
-                    }
-                }
-
-                override fun visitClass(cls: ClassItem) {
-                    if (!filter.hasClass(cls.qualifiedName())) {
-                        cls.included = false
-                    }
-                }
-
-                override fun visitMethod(method: MethodItem) {
-                    if (!filter.hasMethod(
-                            method.containingClass().qualifiedName(), method.name(),
-                            method.formatParameters()
-                        )
-                    ) {
-                        method.included = false
-                    }
-                }
-
-                override fun visitField(field: FieldItem) {
-                    if (!filter.hasField(field.containingClass().qualifiedName(), field.name())) {
-                        field.included = false
-                    }
-                }
-            })
-        }
     }
 
     private fun checkHiddenTypes() {
