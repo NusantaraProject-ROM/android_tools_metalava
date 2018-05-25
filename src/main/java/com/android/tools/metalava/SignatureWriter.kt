@@ -149,7 +149,8 @@ class SignatureWriter(
             includeDeprecated = true,
             includeAnnotations = compatibility.annotationsInSignatures,
             skipNullnessAnnotations = options.outputKotlinStyleNulls,
-            omitCommonPackages = options.omitCommonPackages
+            omitCommonPackages = options.omitCommonPackages,
+            onlyIncludeSignatureAnnotations = true
         )
     }
 

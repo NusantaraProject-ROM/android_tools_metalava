@@ -75,9 +75,9 @@ class ExtractAnnotations(
     private val annotationLookup = AnnotationLookup()
 
     private data class AnnotationHolder(
-        val annotationClass: ClassItem,
+        val annotationClass: ClassItem?,
         val annotationItem: AnnotationItem,
-        val uAnnotation: UAnnotation
+        val uAnnotation: UAnnotation?
     )
 
     private val classToAnnotationHolder = mutableMapOf<String, AnnotationHolder>()
@@ -175,6 +175,11 @@ class ExtractAnnotations(
                 qualifiedName.startsWith(ANDROID_ANNOTATION_PREFIX) ||
                 qualifiedName.startsWith(ANDROID_SUPPORT_ANNOTATION_PREFIX)
             ) {
+                if (annotation.isTypeDefAnnotation()) {
+                    // Imported typedef
+                    return AnnotationHolder(null, annotation, null)
+                }
+
                 continue
             }
 
@@ -358,7 +363,6 @@ class ExtractAnnotations(
             is ParameterItem -> {
                 return containingMethod().getExternalAnnotationSignature() + ' '.toString() + this.parameterIndex
             }
-
         }
 
         return null
@@ -369,10 +373,8 @@ class ExtractAnnotations(
         item: Item,
         annotationHolder: AnnotationHolder
     ) {
-        val uAnnotation = annotationHolder.uAnnotation
         val annotationItem = annotationHolder.annotationItem
         val qualifiedName = annotationItem.qualifiedName()
-        var attributes = uAnnotation.attributeValues
 
         writer.mark()
         writer.print("    <annotation name=\"")
@@ -381,92 +383,103 @@ class ExtractAnnotations(
         writer.print("\">")
         writer.println()
 
-        //noinspection PointlessBooleanExpression,ConstantConditions
-        if (attributes.size > 1 && sortAnnotations) {
-            // Ensure mutable
-            attributes = ArrayList(attributes)
+        val uAnnotation = annotationHolder.uAnnotation
+            ?: if (annotationItem is PsiAnnotationItem) {
+                // Imported annotation
+                JavaUAnnotation.wrap(annotationItem.psiAnnotation)
+            } else {
+                null
+            }
+        if (uAnnotation != null) {
+            var attributes = uAnnotation.attributeValues
 
-            // Ensure that the value attribute is written first
-            attributes.sortedWith(object : Comparator<UNamedExpression> {
-                private fun getName(pair: UNamedExpression): String {
-                    val name = pair.name
-                    return name ?: SdkConstants.ATTR_VALUE
-                }
+            // noinspection PointlessBooleanExpression,ConstantConditions
+            if (attributes.size > 1 && sortAnnotations) {
+                // Ensure mutable
+                attributes = ArrayList(attributes)
 
-                private fun rank(pair: UNamedExpression): Int {
-                    return if (SdkConstants.ATTR_VALUE == getName(pair)) -1 else 0
-                }
+                // Ensure that the value attribute is written first
+                attributes.sortedWith(object : Comparator<UNamedExpression> {
+                    private fun getName(pair: UNamedExpression): String {
+                        val name = pair.name
+                        return name ?: SdkConstants.ATTR_VALUE
+                    }
 
-                override fun compare(o1: UNamedExpression, o2: UNamedExpression): Int {
-                    val r1 = rank(o1)
-                    val r2 = rank(o2)
-                    val delta = r1 - r2
-                    return if (delta != 0) {
-                        delta
-                    } else getName(o1).compareTo(getName(o2))
-                }
-            })
-        }
+                    private fun rank(pair: UNamedExpression): Int {
+                        return if (SdkConstants.ATTR_VALUE == getName(pair)) -1 else 0
+                    }
 
-        if (attributes.size == 1 && Extractor.REQUIRES_PERMISSION.isPrefix(qualifiedName, true)) {
-            val expression = attributes[0].expression
-            if (expression is UAnnotation) {
-                // The external annotations format does not allow for nested/complex annotations.
-                // However, these special annotations (@RequiresPermission.Read,
-                // @RequiresPermission.Write, etc) are known to only be simple containers with a
-                // single permission child, so instead we "inline" the content:
-                //  @Read(@RequiresPermission(allOf={P1,P2},conditional=true)
-                //     =>
-                //      @RequiresPermission.Read(allOf({P1,P2},conditional=true)
-                // That's setting attributes that don't actually exist on the container permission,
-                // but we'll counteract that on the read-annotations side.
-                val annotation = expression as UAnnotation
-                attributes = annotation.attributeValues
-            } else if (expression is JavaUAnnotationCallExpression) {
-                val annotation = expression.uAnnotation
-                attributes = annotation.attributeValues
-            } else if (expression is UastEmptyExpression && attributes[0].psi is PsiNameValuePair) {
-                val memberValue = (attributes[0].psi as PsiNameValuePair).value
-                if (memberValue is PsiAnnotation) {
-                    val annotation = JavaUAnnotation.wrap(memberValue)
+                    override fun compare(o1: UNamedExpression, o2: UNamedExpression): Int {
+                        val r1 = rank(o1)
+                        val r2 = rank(o2)
+                        val delta = r1 - r2
+                        return if (delta != 0) {
+                            delta
+                        } else getName(o1).compareTo(getName(o2))
+                    }
+                })
+            }
+
+            if (attributes.size == 1 && Extractor.REQUIRES_PERMISSION.isPrefix(qualifiedName, true)) {
+                val expression = attributes[0].expression
+                if (expression is UAnnotation) {
+                    // The external annotations format does not allow for nested/complex annotations.
+                    // However, these special annotations (@RequiresPermission.Read,
+                    // @RequiresPermission.Write, etc) are known to only be simple containers with a
+                    // single permission child, so instead we "inline" the content:
+                    //  @Read(@RequiresPermission(allOf={P1,P2},conditional=true)
+                    //     =>
+                    //      @RequiresPermission.Read(allOf({P1,P2},conditional=true)
+                    // That's setting attributes that don't actually exist on the container permission,
+                    // but we'll counteract that on the read-annotations side.
+                    val annotation = expression as UAnnotation
                     attributes = annotation.attributeValues
+                } else if (expression is JavaUAnnotationCallExpression) {
+                    val annotation = expression.uAnnotation
+                    attributes = annotation.attributeValues
+                } else if (expression is UastEmptyExpression && attributes[0].psi is PsiNameValuePair) {
+                    val memberValue = (attributes[0].psi as PsiNameValuePair).value
+                    if (memberValue is PsiAnnotation) {
+                        val annotation = JavaUAnnotation.wrap(memberValue)
+                        attributes = annotation.attributeValues
+                    }
                 }
             }
-        }
 
-        val inlineConstants = isInlinedConstant(annotationItem)
-        var empty = true
-        for (pair in attributes) {
-            val expression = pair.expression
-            val value = attributeString(expression, inlineConstants) ?: continue
-            empty = false
-            var name = pair.name
-            if (name == null) {
-                name = SdkConstants.ATTR_VALUE // default name
+            val inlineConstants = isInlinedConstant(annotationItem)
+            var empty = true
+            for (pair in attributes) {
+                val expression = pair.expression
+                val value = attributeString(expression, inlineConstants) ?: continue
+                empty = false
+                var name = pair.name
+                if (name == null) {
+                    name = SdkConstants.ATTR_VALUE // default name
+                }
+
+                // Platform typedef annotations now declare a prefix attribute for
+                // documentation generation purposes; this should not be part of the
+                // extracted metadata.
+                if (("prefix" == name || "suffix" == name) && annotationItem.isTypeDefAnnotation()) {
+                    reporter.report(
+                        Errors.SUPERFLUOUS_PREFIX, item,
+                        "Superfluous $name attribute on typedef"
+                    )
+                    continue
+                }
+
+                writer.print("      <val name=\"")
+                writer.print(name)
+                writer.print("\" val=\"")
+                writer.print(escapeXml(value))
+                writer.println("\" />")
             }
 
-            // Platform typedef annotations now declare a prefix attribute for
-            // documentation generation purposes; this should not be part of the
-            // extracted metadata.
-            if (("prefix" == name || "suffix" == name) && annotationItem.isTypeDefAnnotation()) {
-                reporter.report(
-                    Errors.SUPERFLUOUS_PREFIX, item,
-                    "Superfluous $name attribute on typedef"
-                )
-                continue
+            if (empty) {
+                // All items were filtered out: don't write the annotation at all
+                writer.reset()
+                return
             }
-
-            writer.print("      <val name=\"")
-            writer.print(name)
-            writer.print("\" val=\"")
-            writer.print(escapeXml(value))
-            writer.println("\" />")
-        }
-
-        if (empty) {
-            // All items were filtered out: don't write the annotation at all
-            writer.reset()
-            return
         }
 
         writer.println("    </annotation>")
@@ -483,7 +496,9 @@ class ExtractAnnotations(
     }
 
     private fun appendExpression(
-        sb: StringBuilder, expression: UExpression, inlineConstants: Boolean
+        sb: StringBuilder,
+        expression: UExpression,
+        inlineConstants: Boolean
     ): Boolean {
         if (expression.isArrayInitializer()) {
             val call = expression as UCallExpression
@@ -550,7 +565,7 @@ class ExtractAnnotations(
                 }
                 return false
             } else {
-                warning("Unexpected reference to " + resolved!!)
+                warning("Unexpected reference to $expression")
                 return false
             }
         } else if (expression is ULiteralExpression) {
@@ -574,12 +589,7 @@ class ExtractAnnotations(
             }
         }
 
-        warning(
-            ("Unexpected annotation expression of type "
-                + expression.javaClass
-                + " and is "
-                + expression)
-        )
+        warning("Unexpected annotation expression of type ${expression.javaClass} and is $expression")
 
         return false
     }
