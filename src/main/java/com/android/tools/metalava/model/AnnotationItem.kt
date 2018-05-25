@@ -18,6 +18,12 @@ package com.android.tools.metalava.model
 
 import com.android.SdkConstants
 import com.android.SdkConstants.ATTR_VALUE
+import com.android.SdkConstants.INT_DEF_ANNOTATION
+import com.android.SdkConstants.LONG_DEF_ANNOTATION
+import com.android.SdkConstants.STRING_DEF_ANNOTATION
+import com.android.tools.lint.annotations.Extractor.ANDROID_INT_DEF
+import com.android.tools.lint.annotations.Extractor.ANDROID_LONG_DEF
+import com.android.tools.lint.annotations.Extractor.ANDROID_STRING_DEF
 import com.android.tools.metalava.ANDROIDX_ANNOTATION_PREFIX
 import com.android.tools.metalava.ANDROID_SUPPORT_ANNOTATION_PREFIX
 import com.android.tools.metalava.JAVA_LANG_PREFIX
@@ -69,6 +75,17 @@ interface AnnotationItem {
         return isNonNullAnnotation(qualifiedName() ?: return false)
     }
 
+    /** True if this annotation represents @IntDef, @LongDef or @StringDef */
+    fun isTypeDefAnnotation(): Boolean {
+        val name = qualifiedName() ?: return false
+        return (INT_DEF_ANNOTATION.isEquals(name)
+            || STRING_DEF_ANNOTATION.isEquals(name)
+            || LONG_DEF_ANNOTATION.isEquals(name)
+            || ANDROID_INT_DEF == name
+            || ANDROID_STRING_DEF == name
+            || ANDROID_LONG_DEF == name)
+    }
+
     /**
      * True if this annotation represents a @ParameterName annotation (or some synonymous annotation).
      * The parameter name should be the default attribute or "value".
@@ -101,7 +118,8 @@ interface AnnotationItem {
         fun isSignificantAnnotation(qualifiedName: String?): Boolean {
             qualifiedName ?: return false
             if (qualifiedName.startsWith(ANDROID_SUPPORT_ANNOTATION_PREFIX) ||
-                qualifiedName.startsWith(ANDROIDX_ANNOTATION_PREFIX)) {
+                qualifiedName.startsWith(ANDROIDX_ANNOTATION_PREFIX)
+            ) {
 
                 // Don't include typedefs in the stub files.
                 if (qualifiedName.endsWith("IntDef") || qualifiedName.endsWith("StringDef")) {
@@ -222,6 +240,8 @@ interface AnnotationItem {
                 "android.annotation.IntDef" -> return "androidx.annotation.IntDef"
                 "android.support.annotation.StringDef",
                 "android.annotation.StringDef" -> return "androidx.annotation.StringDef"
+                "android.support.annotation.LongDef",
+                "android.annotation.LongDef" -> return "androidx.annotation.LongDef"
 
             // Misc
                 "android.support.annotation.CallSuper",

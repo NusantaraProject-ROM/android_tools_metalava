@@ -111,13 +111,19 @@ class AnnotationsMergerTest : DriverTest() {
                       <val name="to" val="20" />
                     </annotation>
                   </item>
+                  <item name="test.pkg.MyTest int clamp(int) 0">
+                    <annotation name='org.jetbrains.annotations.Range'>
+                      <val name="from" val="-1"/>
+                      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+                    </annotation>
+                  </item>
                   </root>
                 """,
             api = """
                 package test.pkg {
                   @androidx.annotation.UiThread public class MyTest {
                     ctor public MyTest();
-                    method @androidx.annotation.IntRange(from=10, to=20) public int clamp(int);
+                    method @androidx.annotation.IntRange(from=10, to=20) public int clamp(@androidx.annotation.IntRange(from=-1L, to=java.lang.Integer.MAX_VALUE) int);
                     method @androidx.annotation.Nullable public java.lang.Double convert(@androidx.annotation.NonNull java.lang.Float);
                     field @androidx.annotation.Nullable public java.lang.Number myNumber;
                   }
