@@ -47,7 +47,6 @@ import com.google.common.collect.Lists
 import com.google.common.io.Files
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.util.Disposer
-import com.intellij.psi.PsiClassOwner
 import java.io.File
 import java.io.IOException
 import java.io.OutputStreamWriter
@@ -546,11 +545,16 @@ private fun extractAnnotations(codebase: Codebase, file: File) {
     val localTimer = Stopwatch.createStarted()
     val units = codebase.units
 
-    @Suppress("UNCHECKED_CAST")
-    ExtractAnnotations().extractAnnotations(units.asSequence().filter { it is PsiClassOwner }.toList() as List<PsiClassOwner>)
-    if (options.verbose) {
-        options.stdout.print("\n$PROGRAM_NAME extracted annotations into $file in $localTimer")
-        options.stdout.flush()
+    options.externalAnnotations?.let { outputFile ->
+        @Suppress("UNCHECKED_CAST")
+        ExtractAnnotations(
+            codebase,
+            outputFile
+        ).extractAnnotations()
+        if (options.verbose) {
+            options.stdout.print("\n$PROGRAM_NAME extracted annotations into $file in $localTimer")
+            options.stdout.flush()
+        }
     }
 }
 

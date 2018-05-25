@@ -18,12 +18,10 @@ package com.android.tools.metalava
 
 import com.android.SdkConstants
 import com.android.sdklib.SdkVersionInfo
-import com.android.tools.lint.annotations.ApiDatabase
 import com.android.tools.metalava.doclava1.Errors
 import com.android.utils.SdkUtils.wrap
 import com.google.common.base.CharMatcher
 import com.google.common.base.Splitter
-import com.google.common.collect.Lists
 import com.google.common.io.Files
 import com.intellij.pom.java.LanguageLevel
 import java.io.File
@@ -62,11 +60,6 @@ private const val ARG_STUBS_SOURCE_LIST = "--write-stubs-source-list"
 private const val ARG_PROGUARD = "--proguard"
 private const val ARG_EXTRACT_ANNOTATIONS = "--extract-annotations"
 private const val ARG_EXCLUDE_ANNOTATIONS = "--exclude-annotations"
-private const val ARG_API_FILTER = "--api-filter"
-private const val ARG_RM_TYPEDEFS = "--rmtypedefs"
-private const val ARG_TYPEDEF_FILE = "--typedef-file"
-private const val ARG_SKIP_CLASS_RETENTION = "--skip-class-retention"
-private const val ARG_HIDE_FILTERED = "--hide-filtered"
 private const val ARG_HIDE_PACKAGE = "--hide-package"
 private const val ARG_MANIFEST = "--manifest"
 private const val ARG_PREVIOUS_API = "--previous-api"
@@ -296,25 +289,6 @@ class Options(
 
     /** File to write the annotation member coverage report to, if any */
     var annotationCoverageMemberReport: File? = null
-
-    /** When generating coverage reports, don't report any members with fewer
-     * references than this */
-    var annotationCoverageThreshold: Int = 10
-
-    /** Framework API definition to restrict included APIs to */
-    var apiFilter: ApiDatabase? = null
-
-    /** If filtering out non-APIs, supply this flag to hide listing matches */
-    var hideFiltered: Boolean = false
-
-    /** Don't extract annotations that have class retention */
-    var skipClassRetention: Boolean = false
-
-    /** Remove typedef classes found in the given folder */
-    var rmTypeDefs: File? = null
-
-    /** Framework API definition to restrict included APIs to */
-    var typedefFile: File? = null
 
     /** An optional <b>jar</b> file to load classes from instead of from source.
      * This is similar to the [classpath] attribute except we're explicitly saying
@@ -580,13 +554,6 @@ class Options(
                 ARG_ALLOW_REFERENCING_UNKNOWN_CLASSES -> allowReferencingUnknownClasses = true
                 ARG_NO_UNKNOWN_CLASSES -> noUnknownClasses = true
 
-            // Annotation extraction flags
-                ARG_API_FILTER -> apiFilters.add(stringToExistingFile(getValue(args, ++index)))
-                ARG_RM_TYPEDEFS -> rmTypeDefs = stringToExistingDir(getValue(args, ++index))
-                ARG_TYPEDEF_FILE -> typedefFile = stringToNewFile(getValue(args, ++index))
-                ARG_HIDE_FILTERED -> hideFiltered = true
-                ARG_SKIP_CLASS_RETENTION -> skipClassRetention = true
-
             // Extracting API levels
                 ARG_ANDROID_JAR_PATTERN -> {
                     val list = androidJarPatterns ?: run {
@@ -819,18 +786,6 @@ class Options(
             }
 
             ++index
-        }
-
-        if (!apiFilters.isEmpty()) {
-            apiFilter = try {
-                val lines = Lists.newArrayList<String>()
-                for (file in apiFilters) {
-                    lines.addAll(Files.readLines(file, com.google.common.base.Charsets.UTF_8))
-                }
-                ApiDatabase(lines)
-            } catch (e: IOException) {
-                throw DriverException("Could not open API database $apiFilters: ${e.localizedMessage}")
-            }
         }
 
         if (generateApiLevelXml != null) {
@@ -1275,16 +1230,8 @@ class Options(
                 "coverage report for members to.",
 
             "", "\nExtracting Annotations:",
-            "$ARG_EXTRACT_ANNOTATIONS <zipfile>", "Extracts annotations from the source files and writes them " +
-                "into the given zip file",
-
-            "$ARG_API_FILTER <file>", "Applies the given signature file as a filter (which means no classes," +
-                "methods or fields not found in the filter will be included.)",
-            ARG_HIDE_FILTERED, "Omit listing APIs that were skipped because of the $ARG_API_FILTER",
-
-            ARG_SKIP_CLASS_RETENTION, "Do not extract annotations that have class file retention",
-            ARG_RM_TYPEDEFS, "Delete all the typedef .class files",
-            "$ARG_TYPEDEF_FILE <file>", "Writes an typedef annotation class names into the given file",
+            "$ARG_EXTRACT_ANNOTATIONS <zipfile>", "Extracts source annotations from the source files and writes " +
+                "them into the given zip file",
 
             "", "\nInjecting API Levels:",
             "$ARG_APPLY_API_LEVELS <api-versions.xml>", "Reads an XML file containing API level descriptions " +

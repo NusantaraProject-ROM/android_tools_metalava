@@ -32,8 +32,11 @@ import com.android.tools.lint.checks.infrastructure.TestFiles.java
 import com.android.tools.lint.checks.infrastructure.stripComments
 import com.android.tools.metalava.doclava1.Errors
 import com.android.utils.FileUtils
+import com.android.utils.SdkUtils
 import com.android.utils.StdLogger
 import com.google.common.base.Charsets
+import com.google.common.io.ByteStreams
+import com.google.common.io.Closeables
 import com.google.common.io.Files
 import org.intellij.lang.annotations.Language
 import org.junit.Assert.assertEquals
@@ -45,6 +48,7 @@ import org.junit.rules.TemporaryFolder
 import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.net.URL
 
 const val CHECK_OLD_DOCLAVA_TOO = false
 const val CHECK_STUB_COMPILATION = false
@@ -207,7 +211,9 @@ abstract class DriverTest {
         /** Corresponds to SDK constants file widgets.txt */
         sdk_widgets: String? = null,
         /** Map from artifact id to artifact descriptor */
-        artifacts: Map<String, String>? = null
+        artifacts: Map<String, String>? = null,
+        /** Extract annotations and check that the given packages contain the given extracted XML files */
+        extractAnnotations: Map<String,String>? = null
     ) {
         System.setProperty("METALAVA_TESTS_RUNNING", VALUE_TRUE)
 
@@ -504,6 +510,15 @@ abstract class DriverTest {
             emptyArray()
         }
 
+        val extractedAnnotationsZip: File?
+        val extractAnnotationsArgs = if (extractAnnotations != null) {
+            extractedAnnotationsZip = temporaryFolder.newFile("extracted-annotations.zip")
+            arrayOf("--extract-annotations", extractedAnnotationsZip.path)
+        } else {
+            extractedAnnotationsZip = null
+            emptyArray()
+        }
+
         val actualOutput = runDriver(
             "--no-color",
             "--no-banner",
@@ -550,6 +565,7 @@ abstract class DriverTest {
             *importedPackageArgs.toTypedArray(),
             *skipEmitPackagesArgs.toTypedArray(),
             *artifactArgs,
+            *extractAnnotationsArgs,
             *sourceList,
             *extraArguments,
             expectedFail = expectedFail
@@ -657,6 +673,14 @@ abstract class DriverTest {
                     "TESTROOT"
                 ).trim()
             )
+        }
+
+        if (extractAnnotations != null && extractedAnnotationsZip != null) {
+            assertTrue("Using --extract-annotations but $extractedAnnotationsZip was not created",
+                extractedAnnotationsZip.isFile)
+            for ((pkg,xml) in extractAnnotations) {
+                 assertPackageXml(pkg, extractedAnnotationsZip, xml)
+            }
         }
 
         if (stubs.isNotEmpty() && stubsDir != null) {
@@ -867,6 +891,25 @@ abstract class DriverTest {
                 extraArguments = arrayOf("-api", File(privateDexApiFile.parentFile, "dummy-api.txt").path),
                 showUnannotated = showUnannotated
             )
+        }
+    }
+
+    /** Checks that the given zip annotations file contains the given XML package contents */
+    private fun assertPackageXml(pkg: String, output: File, @Language("XML") expected: String) {
+        assertNotNull(output)
+        assertTrue(output.exists())
+        val url = URL(
+            "jar:" + SdkUtils.fileToUrlString(output) + "!/" + pkg.replace('.', '/') +
+                "/annotations.xml"
+        )
+        val stream = url.openStream()
+        try {
+            val bytes = ByteStreams.toByteArray(stream)
+            assertNotNull(bytes)
+            val xml = String(bytes, Charsets.UTF_8).replace("\r\n", "\n")
+            assertEquals(expected.trimIndent().trim(), xml.trimIndent().trim())
+        } finally {
+            Closeables.closeQuietly(stream)
         }
     }
 
@@ -1105,6 +1148,23 @@ val intDefAnnotationSource: TestFile = java(
     @Retention(SOURCE)
     @Target({ANNOTATION_TYPE})
     public @interface IntDef {
+        int[] value() default {};
+        boolean flag() default false;
+    }
+    """
+).indented()
+
+val longDefAnnotationSource: TestFile = java(
+    """
+    package android.annotation;
+    import java.lang.annotation.Retention;
+    import java.lang.annotation.RetentionPolicy;
+    import java.lang.annotation.Target;
+    import static java.lang.annotation.ElementType.*;
+    import static java.lang.annotation.RetentionPolicy.SOURCE;
+    @Retention(SOURCE)
+    @Target({ANNOTATION_TYPE})
+    public @interface LongDef {
         long[] value() default {};
         boolean flag() default false;
     }
