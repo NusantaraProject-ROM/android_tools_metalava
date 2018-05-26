@@ -249,7 +249,8 @@ open class PsiMethodItem(
         val modifierString = StringWriter()
         ModifierList.write(
             modifierString, method.modifiers, method, removeAbstract = false,
-            removeFinal = false, addPublic = true
+            removeFinal = false, addPublic = true,
+            onlyIncludeSignatureAnnotations = true
         )
         sb.append(modifierString.toString())
 

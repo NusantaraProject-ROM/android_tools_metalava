@@ -183,7 +183,9 @@ interface ModifierList {
             omitCommonPackages: Boolean = false,
             removeAbstract: Boolean = false,
             removeFinal: Boolean = false,
-            addPublic: Boolean = false
+            addPublic: Boolean = false,
+            onlyIncludeSignatureAnnotations: Boolean = true
+
         ) {
 
             val list = if (removeAbstract || removeFinal || addPublic) {
@@ -379,7 +381,8 @@ interface ModifierList {
             omitCommonPackages: Boolean = false,
             separateLines: Boolean = false,
             filterDuplicates: Boolean = false,
-            writer: Writer
+            writer: Writer,
+            onlyIncludeSignatureAnnotations: Boolean = true
         ) {
             val annotations = list.annotations()
             if (annotations.isNotEmpty()) {
@@ -390,7 +393,7 @@ interface ModifierList {
                         if (skipNullnessAnnotations) {
                             continue
                         }
-                    } else if (!annotation.isSignificant()) {
+                    } else if (onlyIncludeSignatureAnnotations && !annotation.isSignificant()) {
                         continue
                     }
 
