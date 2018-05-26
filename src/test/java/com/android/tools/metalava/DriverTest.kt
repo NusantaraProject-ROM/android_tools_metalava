@@ -213,7 +213,7 @@ abstract class DriverTest {
         /** Map from artifact id to artifact descriptor */
         artifacts: Map<String, String>? = null,
         /** Extract annotations and check that the given packages contain the given extracted XML files */
-        extractAnnotations: Map<String,String>? = null
+        extractAnnotations: Map<String, String>? = null
     ) {
         System.setProperty("METALAVA_TESTS_RUNNING", VALUE_TRUE)
 
@@ -678,8 +678,8 @@ abstract class DriverTest {
         if (extractAnnotations != null && extractedAnnotationsZip != null) {
             assertTrue("Using --extract-annotations but $extractedAnnotationsZip was not created",
                 extractedAnnotationsZip.isFile)
-            for ((pkg,xml) in extractAnnotations) {
-                 assertPackageXml(pkg, extractedAnnotationsZip, xml)
+            for ((pkg, xml) in extractAnnotations) {
+                assertPackageXml(pkg, extractedAnnotationsZip, xml)
             }
         }
 

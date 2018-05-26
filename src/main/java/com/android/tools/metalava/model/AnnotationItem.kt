@@ -54,7 +54,7 @@ interface AnnotationItem {
 
     /** Whether this annotation is significant and should be included in signature files, stubs, etc */
     fun isSignificant(): Boolean {
-        return isSignificantAnnotation(qualifiedName() ?: return false)
+        return includeInSignatures(qualifiedName() ?: return false)
     }
 
     /** Attributes of the annotation (may be empty) */
@@ -78,12 +78,12 @@ interface AnnotationItem {
     /** True if this annotation represents @IntDef, @LongDef or @StringDef */
     fun isTypeDefAnnotation(): Boolean {
         val name = qualifiedName() ?: return false
-        return (INT_DEF_ANNOTATION.isEquals(name)
-            || STRING_DEF_ANNOTATION.isEquals(name)
-            || LONG_DEF_ANNOTATION.isEquals(name)
-            || ANDROID_INT_DEF == name
-            || ANDROID_STRING_DEF == name
-            || ANDROID_LONG_DEF == name)
+        return (INT_DEF_ANNOTATION.isEquals(name) ||
+            STRING_DEF_ANNOTATION.isEquals(name) ||
+            LONG_DEF_ANNOTATION.isEquals(name) ||
+            ANDROID_INT_DEF == name ||
+            ANDROID_STRING_DEF == name ||
+            ANDROID_LONG_DEF == name)
     }
 
     /**
@@ -115,7 +115,7 @@ interface AnnotationItem {
 
     companion object {
         /** Whether the given annotation name is "significant", e.g. should be included in signature files */
-        fun isSignificantAnnotation(qualifiedName: String?): Boolean {
+        fun includeInSignatures(qualifiedName: String?): Boolean {
             qualifiedName ?: return false
             if (qualifiedName.startsWith(ANDROID_SUPPORT_ANNOTATION_PREFIX) ||
                 qualifiedName.startsWith(ANDROIDX_ANNOTATION_PREFIX)
