@@ -55,6 +55,7 @@ import com.android.tools.metalava.model.DefaultAnnotationValue
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.psi.PsiAnnotationItem
+import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.android.utils.XmlUtils
 import com.google.common.base.Charsets
 import com.google.common.io.ByteStreams
@@ -351,11 +352,6 @@ class AnnotationsMerger(
             }
 
             val annotationItem = createAnnotation(annotationElement) ?: continue
-
-            if (!AnnotationItem.isSignificantAnnotation(annotationItem.qualifiedName())) {
-                continue
-            }
-
             item.mutableModifiers().addAnnotation(annotationItem)
             count++
         }
@@ -422,10 +418,18 @@ class AnnotationsMerger(
 
                         // Attempt to sort in reflection order
                         if (!found && reflectionFields != null) {
+                            val filterEmit = ApiVisitor(codebase).filterEmit
+
                             // Attempt with reflection
                             var first = true
                             for (field in reflectionFields) {
                                 if (field.type == Integer.TYPE || field.type == Int::class.javaPrimitiveType) {
+                                    // Make sure this field is included in our API too
+                                    val fieldItem = codebase.findClass(clsName)?.findField(field.name)
+                                    if (fieldItem == null || !filterEmit.test(fieldItem)) {
+                                        continue
+                                    }
+
                                     if (first) {
                                         first = false
                                     } else {

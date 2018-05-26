@@ -16,6 +16,7 @@
 
 package com.android.tools.metalava
 
+import org.junit.Ignore
 import org.junit.Test
 
 @SuppressWarnings("ALL") // Sample code
@@ -117,7 +118,7 @@ class ExtractAnnotationsTest : DriverTest() {
                     const val STYLE_NO_FRAME = 2L
                     const val STYLE_NO_INPUT = 3L
                     const val UNRELATED = 3L
-                    private val HIDDEN = 4
+                    private const val HIDDEN = 4
 
                     const val TYPE_1 = "type1"
                     const val TYPE_2 = "type2"
@@ -168,6 +169,48 @@ class ExtractAnnotationsTest : DriverTest() {
                     <annotation name="androidx.annotation.LongDef">
                       <val name="flag" val="true" />
                       <val name="value" val="{test.pkg.LongDefTestKt.STYLE_NORMAL, test.pkg.LongDefTestKt.STYLE_NO_TITLE, test.pkg.LongDefTestKt.STYLE_NO_FRAME, test.pkg.LongDefTestKt.STYLE_NO_INPUT, 3, 4}" />
+                    </annotation>
+                  </item>
+                </root>
+                """
+            )
+        )
+    }
+
+    @Ignore("Not working reliably")
+    @Test
+    fun `Include merged annotations in exported source annotations`() {
+        check(
+            compatibilityMode = false,
+            outputKotlinStyleNulls = false,
+            includeSystemApiAnnotations = false,
+            omitCommonPackages = false,
+            warnings = "error: Unexpected reference to Nonexistent.Field [AnnotationExtraction:146]",
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+
+                    public class MyTest {
+                        public void test(int arg) { }
+                    }"""
+                )
+            ),
+            mergeAnnotations = """<?xml version="1.0" encoding="UTF-8"?>
+                <root>
+                  <item name="test.pkg.MyTest void test(int) 0">
+                    <annotation name="org.intellij.lang.annotations.MagicConstant">
+                      <val name="intValues" val="{java.util.Calendar.ERA, java.util.Calendar.YEAR, java.util.Calendar.MONTH, java.util.Calendar.WEEK_OF_YEAR, Nonexistent.Field}" />
+                    </annotation>
+                  </item>
+                </root>
+                """,
+            extractAnnotations = mapOf("test.pkg" to """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <root>
+                  <item name="test.pkg.MyTest void test(int) 0">
+                    <annotation name="androidx.annotation.IntDef">
+                      <val name="value" val="{java.util.Calendar.ERA, java.util.Calendar.YEAR, java.util.Calendar.MONTH, java.util.Calendar.WEEK_OF_YEAR}" />
                     </annotation>
                   </item>
                 </root>
