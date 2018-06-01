@@ -31,7 +31,6 @@ import com.android.SdkConstants.STRING_DEF_ANNOTATION
 import com.android.SdkConstants.TYPE_DEF_FLAG_ATTRIBUTE
 import com.android.SdkConstants.TYPE_DEF_VALUE_ATTRIBUTE
 import com.android.SdkConstants.VALUE_TRUE
-import com.android.annotations.NonNull
 import com.android.tools.lint.annotations.Extractor.ANDROID_INT_DEF
 import com.android.tools.lint.annotations.Extractor.ANDROID_NOTNULL
 import com.android.tools.lint.annotations.Extractor.ANDROID_NULLABLE
@@ -54,6 +53,7 @@ import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.DefaultAnnotationValue
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
+import com.android.tools.metalava.model.PackageItem
 import com.android.tools.metalava.model.psi.PsiAnnotationItem
 import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.android.utils.XmlUtils
@@ -80,7 +80,7 @@ class AnnotationsMerger(
         mergeAnnotations.forEach { mergeExisting(it) }
     }
 
-    private fun mergeExisting(@NonNull file: File) {
+    private fun mergeExisting(file: File) {
         if (file.isDirectory) {
             val files = file.listFiles()
             if (files != null) {
@@ -98,11 +98,18 @@ class AnnotationsMerger(
                 } catch (e: IOException) {
                     error("Aborting: I/O problem during transform: " + e.toString())
                 }
+            } else if (file.path.endsWith(".jaif")) {
+                try {
+                    val jaif = Files.asCharSource(file, Charsets.UTF_8).read()
+                    mergeAnnotationsJaif(file.path, jaif)
+                } catch (e: IOException) {
+                    error("Aborting: I/O problem during transform: " + e.toString())
+                }
             }
         }
     }
 
-    private fun mergeFromJar(@NonNull jar: File) {
+    private fun mergeFromJar(jar: File) {
         // Reads in an existing annotations jar and merges in entries found there
         // with the annotations analyzed from source.
         var zis: JarInputStream? = null
@@ -129,7 +136,7 @@ class AnnotationsMerger(
         }
     }
 
-    private fun mergeAnnotationsXml(@NonNull path: String, @NonNull xml: String) {
+    private fun mergeAnnotationsXml(path: String, xml: String) {
         try {
             val document = XmlUtils.parseDocument(xml, false)
             mergeDocument(document)
@@ -143,6 +150,103 @@ class AnnotationsMerger(
                 e.printStackTrace()
             }
         }
+    }
+
+    private fun mergeAnnotationsJaif(path: String, jaif: String) {
+        var pkgItem: PackageItem? = null
+        var clsItem: ClassItem? = null
+        var methodItem: MethodItem? = null
+        var curr: Item? = null
+
+        for (rawLine in jaif.split("\n")) {
+            val line = rawLine.trim()
+            if (line.isEmpty()) {
+                continue
+            }
+            if (line.startsWith("//")) {
+                continue
+            }
+            if (line.startsWith("package ")) {
+                val pkg = line.substring("package ".length, line.length - 1)
+                pkgItem = codebase.findPackage(pkg)
+                curr = pkgItem
+            } else if (line.startsWith("class ")) {
+                val cls = line.substring("class ".length, line.length - 1)
+                clsItem = if (pkgItem != null)
+                    codebase.findClass(pkgItem.qualifiedName() + "." + cls)
+                else
+                    null
+                curr = clsItem
+            } else if (line.startsWith("annotation ")) {
+                val cls = line.substring("annotation ".length, line.length - 1)
+                clsItem = if (pkgItem != null)
+                    codebase.findClass(pkgItem.qualifiedName() + "." + cls)
+                else
+                    null
+                curr = clsItem
+            } else if (line.startsWith("method ")) {
+                val method = line.substring("method ".length, line.length - 1)
+                methodItem = null
+                if (clsItem != null) {
+                    val index = method.indexOf('(')
+                    if (index != -1) {
+                        val name = method.substring(0, index)
+                        val desc = method.substring(index)
+                        methodItem = clsItem.findMethodByDesc(name, desc, true, true)
+                    }
+                }
+                curr = methodItem
+            } else if (line.startsWith("field ")) {
+                val field = line.substring("field ".length, line.length - 1)
+                val fieldItem = clsItem?.findField(field, true, true)
+                curr = fieldItem
+            } else if (line.startsWith("parameter #")) {
+                val parameterIndex = line.substring("parameter #".length, line.length - 1).toInt()
+                val parameterItem = if (methodItem != null) {
+                    methodItem.parameters()[parameterIndex]
+                } else {
+                    null
+                }
+                curr = parameterItem
+            } else if (line.startsWith("type: ")) {
+                val typeAnnotation = line.substring("type: ".length)
+                if (curr != null) {
+                    mergeJaifAnnotation(path, curr, typeAnnotation)
+                }
+            } else if (line.startsWith("return: ")) {
+                val annotation = line.substring("return: ".length)
+                if (methodItem != null) {
+                    mergeJaifAnnotation(path, methodItem, annotation)
+                }
+            } else if (line.startsWith("inner-type")) {
+                warning("$path: Skipping inner-type annotations for now ($line)")
+            } else if (line.startsWith("int ")) {
+                // warning("Skipping int attribute definitions for annotations now ($line)")
+            }
+        }
+    }
+
+    private fun mergeJaifAnnotation(
+        path: String,
+        item: Item,
+        annotationSource: String
+    ) {
+        if (annotationSource.isEmpty()) {
+            return
+        }
+
+        if (annotationSource.contains("(")) {
+            warning("$path: Can't merge complex annotations from jaif yet: $annotationSource")
+            return
+        }
+        val originalName = annotationSource.substring(1) // remove "@"
+        val qualifiedName = AnnotationItem.mapName(codebase, originalName) ?: originalName
+        if (hasNullnessConflicts(item, qualifiedName)) {
+            return
+        }
+
+        val annotationItem = codebase.createAnnotation("@$qualifiedName")
+        item.mutableModifiers().addAnnotation(annotationItem)
     }
 
     internal fun error(message: String) {
@@ -163,7 +267,7 @@ class AnnotationsMerger(
         "(\\S+) (\\S+|((.*)\\s+)?(\\S+)\\((.*)\\)( \\d+)?)"
     )
 
-    private fun mergeDocument(@NonNull document: Document) {
+    private fun mergeDocument(document: Document) {
 
         val root = document.documentElement
         val rootTag = root.tagName
@@ -324,39 +428,44 @@ class AnnotationsMerger(
         return qualifiedName
     }
 
-    private fun mergeAnnotations(xmlElement: Element, item: Item): Int {
-        var count = 0
-
+    private fun mergeAnnotations(xmlElement: Element, item: Item) {
         loop@ for (annotationElement in getChildren(xmlElement)) {
             val originalName = getAnnotationName(annotationElement)
             val qualifiedName = AnnotationItem.mapName(codebase, originalName) ?: originalName
-            var haveNullable = false
-            var haveNotNull = false
-            for (existing in item.modifiers.annotations()) {
-                val name = existing.qualifiedName() ?: continue
-                if (isNonNull(name)) {
-                    haveNotNull = true
-                }
-                if (isNullable(name)) {
-                    haveNullable = true
-                }
-                if (name == qualifiedName) {
-                    continue@loop
-                }
-            }
-
-            // Make sure we don't have a conflict between nullable and not nullable
-            if (isNonNull(qualifiedName) && haveNullable || isNullable(qualifiedName) && haveNotNull) {
-                warning("Found both @Nullable and @NonNull after import for $item")
-                continue
+            if (hasNullnessConflicts(item, qualifiedName)) {
+                continue@loop
             }
 
             val annotationItem = createAnnotation(annotationElement) ?: continue
             item.mutableModifiers().addAnnotation(annotationItem)
-            count++
+        }
+    }
+
+    private fun hasNullnessConflicts(
+        item: Item,
+        qualifiedName: String
+    ): Boolean {
+        var haveNullable = false
+        var haveNotNull = false
+        for (existing in item.modifiers.annotations()) {
+            val name = existing.qualifiedName() ?: continue
+            if (isNonNull(name)) {
+                haveNotNull = true
+            }
+            if (isNullable(name)) {
+                haveNullable = true
+            }
+            if (name == qualifiedName) {
+                return true
+            }
         }
 
-        return count
+        // Make sure we don't have a conflict between nullable and not nullable
+        if (isNonNull(qualifiedName) && haveNullable || isNullable(qualifiedName) && haveNotNull) {
+            warning("Found both @Nullable and @NonNull after import for $item")
+            return true
+        }
+        return false
     }
 
     /** Reads in annotation data from an XML item (using IntelliJ IDE's external annotations XML format) and
@@ -561,8 +670,7 @@ class AnnotationsMerger(
             name == SUPPORT_NULLABLE
     }
 
-    @NonNull
-    private fun unescapeXml(@NonNull escaped: String): String {
+    private fun unescapeXml(escaped: String): String {
         var workingString = escaped.replace(QUOT_ENTITY, "\"")
         workingString = workingString.replace(LT_ENTITY, "<")
         workingString = workingString.replace(GT_ENTITY, ">")

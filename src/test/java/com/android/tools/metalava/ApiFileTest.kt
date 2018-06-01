@@ -2027,7 +2027,15 @@ class ApiFileTest : DriverTest() {
                         ctor public Parent();
                       }
                     }
-                    """
+                    """,
+            dexApi = """
+                Ltest/pkg/Child;
+                Ltest/pkg/Child;-><init>()V
+                Ltest/pkg/Child;->toString()Ljava/lang/String;
+                Ltest/pkg/Parent;
+                Ltest/pkg/Parent;-><init>()V
+                Ltest/pkg/Parent;->toString()Ljava/lang/String;
+            """
         )
     }
 
