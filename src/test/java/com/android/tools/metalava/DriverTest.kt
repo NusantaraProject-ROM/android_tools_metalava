@@ -133,6 +133,8 @@ abstract class DriverTest {
         privateApi: String? = null,
         /** The private DEX API (corresponds to --private-dex-api) */
         privateDexApi: String? = null,
+        /** The DEX API (corresponds to --dex-api) */
+        dexApi: String? = null,
         /** Expected stubs (corresponds to --stubs) */
         @Language("JAVA") stubs: Array<String> = emptyArray(),
         /** Stub source file list generated */
@@ -153,6 +155,8 @@ abstract class DriverTest {
         checkCompilation: Boolean = false,
         /** Annotations to merge in */
         @Language("XML") mergeAnnotations: String? = null,
+        /** Annotations to merge in */
+        @Language("TEXT") mergeJaifAnnotations: String? = null,
         /** An optional API signature file content to load **instead** of Java/Kotlin source files */
         @Language("TEXT") signatureSource: String? = null,
         /** An optional API jar file content to load **instead** of Java/Kotlin source files */
@@ -223,6 +227,12 @@ abstract class DriverTest {
                     "annotations output in doclava1"
             )
         }
+        if (compatibilityMode && mergeJaifAnnotations != null) {
+            fail(
+                "Can't specify both compatibilityMode and mergeJaifAnnotations: there were no " +
+                    "annotations output in doclava1"
+            )
+        }
 
         Errors.resetLevels()
 
@@ -275,6 +285,14 @@ abstract class DriverTest {
         val mergeAnnotationsArgs = if (mergeAnnotations != null) {
             val merged = File(project, "merged-annotations.xml")
             Files.asCharSink(merged, Charsets.UTF_8).write(mergeAnnotations.trimIndent())
+            arrayOf("--merge-annotations", merged.path)
+        } else {
+            emptyArray()
+        }
+
+        val jaifAnnotationsArgs = if (mergeJaifAnnotations != null) {
+            val merged = File(project, "merged-annotations.jaif")
+            Files.asCharSink(merged, Charsets.UTF_8).write(mergeJaifAnnotations.trimIndent())
             arrayOf("--merge-annotations", merged.path)
         } else {
             emptyArray()
@@ -394,7 +412,7 @@ abstract class DriverTest {
 
         var apiFile: File? = null
         val apiArgs = if (api != null) {
-            apiFile = temporaryFolder.newFile("api.txt")
+            apiFile = temporaryFolder.newFile("public-api.txt")
             arrayOf("--api", apiFile.path)
         } else {
             emptyArray()
@@ -412,6 +430,14 @@ abstract class DriverTest {
         val privateApiArgs = if (privateApi != null) {
             privateApiFile = temporaryFolder.newFile("private.txt")
             arrayOf("--private-api", privateApiFile.path)
+        } else {
+            emptyArray()
+        }
+
+        var dexApiFile: File? = null
+        val dexApiArgs = if (dexApi != null) {
+            dexApiFile = temporaryFolder.newFile("public-dex.txt")
+            arrayOf("--dex-api", dexApiFile.path)
         } else {
             emptyArray()
         }
@@ -543,6 +569,7 @@ abstract class DriverTest {
             *apiArgs,
             *exactApiArgs,
             *privateApiArgs,
+            *dexApiArgs,
             *privateDexApiArgs,
             *stubsArgs,
             *stubsSourceListArgs,
@@ -553,6 +580,7 @@ abstract class DriverTest {
             *coverageStats,
             *quiet,
             *mergeAnnotationsArgs,
+            *jaifAnnotationsArgs,
             *previousApiArgs,
             *migrateNullsArguments,
             *checkCompatibilityArguments,
@@ -615,6 +643,15 @@ abstract class DriverTest {
             )
             val expectedText = readFile(privateApiFile, stripBlankLines, trim)
             assertEquals(stripComments(privateApi, stripLineComments = false).trimIndent(), expectedText)
+        }
+
+        if (dexApi != null && dexApiFile != null) {
+            assertTrue(
+                "${dexApiFile.path} does not exist even though --dex-api was used",
+                dexApiFile.exists()
+            )
+            val expectedText = readFile(dexApiFile, stripBlankLines, trim)
+            assertEquals(stripComments(dexApi, stripLineComments = false).trimIndent(), expectedText)
         }
 
         if (privateDexApi != null && privateDexApiFile != null) {
@@ -889,6 +926,29 @@ abstract class DriverTest {
                 stubImportPackages = importedPackages,
                 // Workaround: -privateDexApi is a no-op if you don't also provide -api
                 extraArguments = arrayOf("-api", File(privateDexApiFile.parentFile, "dummy-api.txt").path),
+                showUnannotated = showUnannotated
+            )
+        }
+
+        if (CHECK_OLD_DOCLAVA_TOO && checkDoclava1 && signatureSource == null &&
+            dexApi != null && dexApiFile != null
+        ) {
+            dexApiFile.delete()
+            checkSignaturesWithDoclava1(
+                api = dexApi,
+                argument = "-dexApi",
+                output = dexApiFile,
+                expected = dexApiFile,
+                sourceList = sourceList,
+                sourcePath = sourcePath,
+                packages = packages,
+                androidJar = androidJar,
+                trim = trim,
+                stripBlankLines = stripBlankLines,
+                showAnnotationArgs = showAnnotationArguments,
+                stubImportPackages = importedPackages,
+                // Workaround: -dexApi is a no-op if you don't also provide -api
+                extraArguments = arrayOf("-api", File(dexApiFile.parentFile, "dummy-api.txt").path),
                 showUnannotated = showUnannotated
             )
         }

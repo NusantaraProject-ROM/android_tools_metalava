@@ -185,6 +185,23 @@ private fun processFlags() {
     // Generate the documentation stubs *before* we migrate nullness information.
     options.docStubsDir?.let { createStubFiles(it, codebase, docStubs = true, writeStubList = true) }
 
+    val currentApiFile = options.currentApi
+    if (currentApiFile != null && options.checkCompatibility) {
+        val current =
+            if (currentApiFile.path.endsWith(SdkConstants.DOT_JAR)) {
+                loadFromJarFile(currentApiFile)
+            } else {
+                loadFromSignatureFiles(
+                    currentApiFile, options.inputKotlinStyleNulls,
+                    supportsStagedNullability = true
+                )
+            }
+
+        // If configured, compares the new API with the previous API and reports
+        // any incompatibilities.
+        CompatibilityCheck.checkCompatibility(codebase, current)
+    }
+
     val previousApiFile = options.previousApi
     if (previousApiFile != null) {
         val previous =
@@ -199,7 +216,7 @@ private fun processFlags() {
 
         // If configured, compares the new API with the previous API and reports
         // any incompatibilities.
-        if (options.checkCompatibility) {
+        if (options.checkCompatibility && options.currentApi == null) { // otherwise checked against currentApi above
             CompatibilityCheck.checkCompatibility(codebase, previous)
         }
 
@@ -222,6 +239,17 @@ private fun processFlags() {
             val preFiltered = codebase.original != null
             SignatureWriter(printWriter, apiEmit, apiReference, preFiltered)
         }
+    }
+
+    options.dexApiFile?.let { apiFile ->
+        val apiFilter = FilterPredicate(ApiPredicate(codebase))
+        val memberIsNotCloned: Predicate<Item> = Predicate { !it.isCloned() }
+        val apiReference = ApiPredicate(codebase, ignoreShown = true)
+        val dexApiEmit = memberIsNotCloned.and(apiFilter)
+
+        createReportFile(
+            codebase, apiFile, "DEX API"
+        ) { printWriter -> DexApiWriter(printWriter, dexApiEmit, apiReference) }
     }
 
     options.removedApiFile?.let { apiFile ->
@@ -543,7 +571,6 @@ private fun ensurePsiFileCapacity() {
 
 private fun extractAnnotations(codebase: Codebase, file: File) {
     val localTimer = Stopwatch.createStarted()
-    val units = codebase.units
 
     options.externalAnnotations?.let { outputFile ->
         @Suppress("UNCHECKED_CAST")
