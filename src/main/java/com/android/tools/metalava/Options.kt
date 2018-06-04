@@ -47,6 +47,7 @@ private const val ARG_SOURCE_PATH = "--source-path"
 private const val ARG_SOURCE_FILES = "--source-files"
 private const val ARG_API = "--api"
 private const val ARG_PRIVATE_API = "--private-api"
+private const val ARG_DEX_API = "--dex-api"
 private const val ARG_PRIVATE_DEX_API = "--private-dex-api"
 private const val ARG_SDK_VALUES = "--sdk-values"
 private const val ARG_REMOVED_API = "--removed-api"
@@ -63,6 +64,7 @@ private const val ARG_EXCLUDE_ANNOTATIONS = "--exclude-annotations"
 private const val ARG_HIDE_PACKAGE = "--hide-package"
 private const val ARG_MANIFEST = "--manifest"
 private const val ARG_PREVIOUS_API = "--previous-api"
+private const val ARG_CURRENT_API = "--current-api"
 private const val ARG_MIGRATE_NULLNESS = "--migrate-nullness"
 private const val ARG_CHECK_COMPATIBILITY = "--check-compatibility"
 private const val ARG_INPUT_KOTLIN_NULLS = "--input-kotlin-nulls"
@@ -239,6 +241,9 @@ class Options(
     /** If set, a file to write the private API file to. Corresponds to the --private-api/-privateApi flag. */
     var privateApiFile: File? = null
 
+    /** If set, a file to write the DEX signatures to. Corresponds to --dex-api. */
+    var dexApiFile: File? = null
+
     /** If set, a file to write the private DEX signatures to. Corresponds to --private-dex-api. */
     var privateDexApiFile: File? = null
 
@@ -267,10 +272,15 @@ class Options(
     var generateAnnotations = true
 
     /**
-     * A signature file for the previous version of this API (for compatibility checks, nullness
-     * migration, etc.)
+     * A signature file for the previous version of this API (for nullness
+     * migration, possibly for compatibility checking (if [currentApi] is not defined), etc.)
      */
     var previousApi: File? = null
+
+    /**
+     * A signature file for the current version of this API (for compatibility checks).
+     */
+    var currentApi: File? = null
 
     /** Whether we should check API compatibility based on the previous API in [previousApi] */
     var checkCompatibility: Boolean = false
@@ -373,7 +383,6 @@ class Options(
         stdout.println()
         stdout.flush()
 
-        val apiFilters = mutableListOf<File>()
         var androidJarPatterns: MutableList<String>? = null
         var currentCodeName: String? = null
         var currentJar: File? = null
@@ -431,6 +440,7 @@ class Options(
                 "-sdkvalues", ARG_SDK_VALUES -> sdkValueDir = stringToNewDir(getValue(args, ++index))
 
                 ARG_API, "-api" -> apiFile = stringToNewFile(getValue(args, ++index))
+                ARG_DEX_API, "-dexApi" -> dexApiFile = stringToNewFile(getValue(args, ++index))
 
                 ARG_PRIVATE_API, "-privateApi" -> privateApiFile = stringToNewFile(getValue(args, ++index))
                 ARG_PRIVATE_DEX_API, "-privateDexApi" -> privateDexApiFile = stringToNewFile(getValue(args, ++index))
@@ -509,6 +519,7 @@ class Options(
                 ARG_EXTRACT_ANNOTATIONS -> externalAnnotations = stringToNewFile(getValue(args, ++index))
 
                 ARG_PREVIOUS_API -> previousApi = stringToExistingFile(getValue(args, ++index))
+                ARG_CURRENT_API -> currentApi = stringToExistingFile(getValue(args, ++index))
 
                 ARG_MIGRATE_NULLNESS -> migrateNulls = true
 
@@ -889,8 +900,8 @@ class Options(
 
     /** Makes sure that the flag combinations make sense */
     private fun checkFlagConsistency() {
-        if (checkCompatibility && previousApi == null) {
-            throw DriverException(stderr = "$ARG_CHECK_COMPATIBILITY requires $ARG_PREVIOUS_API")
+        if (checkCompatibility && currentApi == null && previousApi == null) {
+            throw DriverException(stderr = "$ARG_CHECK_COMPATIBILITY requires $ARG_CURRENT_API")
         }
 
         if (migrateNulls && previousApi == null) {
@@ -1137,7 +1148,8 @@ class Options(
                 "source files",
 
             "$ARG_MERGE_ANNOTATIONS <file>", "An external annotations file (using IntelliJ's external " +
-                "annotations database format) to merge and overlay the sources",
+                "annotations database format) to merge and overlay the sources. A subset of .jaif files " +
+                "is also supported.",
 
             "$ARG_INPUT_API_JAR <file>", "A .jar file to read APIs from directly",
 
@@ -1161,6 +1173,7 @@ class Options(
             // TODO: Document --show-annotation!
             "$ARG_API <file>", "Generate a signature descriptor file",
             "$ARG_PRIVATE_API <file>", "Generate a signature descriptor file listing the exact private APIs",
+            "$ARG_DEX_API <file>", "Generate a DEX signature descriptor file listing the APIs",
             "$ARG_PRIVATE_DEX_API <file>", "Generate a DEX signature descriptor file listing the exact private APIs",
             "$ARG_REMOVED_API <file>", "Generate a signature descriptor file for APIs that have been removed",
             "$ARG_OUTPUT_KOTLIN_NULLS[=yes|no]", "Controls whether nullness annotations should be formatted as " +
@@ -1203,6 +1216,9 @@ class Options(
             ARG_CHECK_COMPATIBILITY, "Check compatibility with the previous API",
             ARG_CHECK_KOTLIN_INTEROP, "Check API intended to be used from both Kotlin and Java for interoperability " +
                 "issues",
+            "$ARG_CURRENT_API <signature file>", "A signature file for the current version of this " +
+                "API to check compatibility with. If not specified, $ARG_PREVIOUS_API will be used " +
+                "instead.",
             ARG_MIGRATE_NULLNESS, "Compare nullness information with the previous API and mark newly " +
                 "annotated APIs as under migration.",
             ARG_WARNINGS_AS_ERRORS, "Promote all warnings to errors",

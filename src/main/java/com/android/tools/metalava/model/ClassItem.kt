@@ -387,6 +387,37 @@ interface ClassItem : Item {
         return null
     }
 
+    /** Finds a given method in this class matching the VM name signature */
+    fun findMethodByDesc(
+        name: String,
+        desc: String,
+        includeSuperClasses: Boolean = false,
+        includeInterfaces: Boolean = false
+    ): MethodItem? {
+        if (desc.startsWith("<init>")) {
+            constructors().asSequence()
+                .filter { it.internalDesc() == desc }
+                .forEach { return it }
+            return null
+        } else {
+            methods().asSequence()
+                .filter { it.name() == name && it.internalDesc() == desc }
+                .forEach { return it }
+        }
+
+        if (includeSuperClasses) {
+            superClass()?.findMethodByDesc(name, desc, true, includeInterfaces)?.let { return it }
+        }
+
+        if (includeInterfaces) {
+            for (itf in interfaceTypes()) {
+                val cls = itf.asClass() ?: continue
+                cls.findMethodByDesc(name, desc, includeSuperClasses, true)?.let { return it }
+            }
+        }
+        return null
+    }
+
     fun findConstructor(template: ConstructorItem): ConstructorItem? {
         constructors().asSequence()
             .filter { it.matches(template) }

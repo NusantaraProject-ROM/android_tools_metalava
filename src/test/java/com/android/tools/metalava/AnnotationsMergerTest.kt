@@ -131,4 +131,43 @@ class AnnotationsMergerTest : DriverTest() {
                 """
         )
     }
+
+    @Test
+    fun `Merge jaif files`() {
+        check(
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+
+                    public interface Appendable {
+                        Appendable append(CharSequence csq) throws IOException;
+                    }
+                    """
+                )
+            ),
+            compatibilityMode = false,
+            outputKotlinStyleNulls = false,
+            omitCommonPackages = false,
+            mergeJaifAnnotations = """
+                //
+                // Copyright (C) 2017 The Android Open Source Project
+                //
+                package test.pkg:
+                class Appendable:
+                    method append(Ljava/lang/CharSequence;)Ltest/pkg/Appendable;:
+                        parameter #0:
+                          type: @libcore.util.Nullable
+                        // Is expected to return self
+                        return: @libcore.util.NonNull
+                """,
+            api = """
+                package test.pkg {
+                  public interface Appendable {
+                    method @androidx.annotation.NonNull public test.pkg.Appendable append(@androidx.annotation.Nullable java.lang.CharSequence);
+                  }
+                }
+                """
+        )
+    }
 }
