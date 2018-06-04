@@ -16,7 +16,6 @@
 
 package com.android.tools.metalava.doclava1
 
-import com.android.annotations.NonNull
 import com.android.tools.metalava.CodebaseComparator
 import com.android.tools.metalava.ComparisonVisitor
 import com.android.tools.metalava.JAVA_LANG_ANNOTATION
@@ -70,7 +69,7 @@ class TextCodebase : DefaultCodebase() {
         return mPackages.size
     }
 
-    override fun findClass(@NonNull className: String): TextClassItem? {
+    override fun findClass(className: String): TextClassItem? {
         return mAllClasses[className]
     }
 

@@ -53,7 +53,8 @@ API sources:
                                        when parsing the source files
 --merge-annotations <file>             An external annotations file (using IntelliJ's
                                        external annotations database format) to merge and
-                                       overlay the sources
+                                       overlay the sources. A subset of .jaif files is
+                                       also supported.
 --input-api-jar <file>                 A .jar file to read APIs from directly
 --manifest <file>                      A manifest file, used to for check permissions to
                                        cross check APIs
@@ -78,6 +79,8 @@ Extracting Signature Files:
 --api <file>                           Generate a signature descriptor file
 --private-api <file>                   Generate a signature descriptor file listing the
                                        exact private APIs
+--dex-api <file>                       Generate a DEX signature descriptor file listing
+                                       the APIs
 --private-dex-api <file>               Generate a DEX signature descriptor file listing
                                        the exact private APIs
 --removed-api <file>                   Generate a signature descriptor file for APIs that
@@ -135,6 +138,9 @@ Diffs and Checks:
 --check-compatibility                  Check compatibility with the previous API
 --check-kotlin-interop                 Check API intended to be used from both Kotlin and
                                        Java for interoperability issues
+--current-api <signature file>         A signature file for the current version of this
+                                       API to check compatibility with. If not specified,
+                                       --previous-api will be used instead.
 --migrate-nullness                     Compare nullness information with the previous API
                                        and mark newly annotated APIs as under migration.
 --warnings-as-errors                   Promote all warnings to errors

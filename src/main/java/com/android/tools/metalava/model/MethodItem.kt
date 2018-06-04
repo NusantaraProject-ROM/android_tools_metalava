@@ -42,7 +42,7 @@ interface MethodItem : MemberItem {
      * e.g. for the method "void create(int x, int y)" the internal name of
      * the constructor is "create" and the desc is "(II)V"
      */
-    fun internalDesc(voidConstructorTypes: Boolean): String {
+    fun internalDesc(voidConstructorTypes: Boolean = false): String {
         val sb = StringBuilder()
         sb.append("(")
 
