@@ -15,11 +15,11 @@
  */
 package com.android.tools.metalava.apilevels;
 
-import com.android.annotations.NonNull;
-import com.android.annotations.Nullable;
 import com.android.tools.metalava.model.Codebase;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
@@ -44,9 +44,9 @@ public class AndroidJarReader {
     private File[] mApiLevels;
     private final Codebase mCodebase;
 
-    AndroidJarReader(@NonNull List<String> patterns,
+    AndroidJarReader(@NotNull List<String> patterns,
                      int minApi,
-                     @NonNull File currentJar,
+                     @NotNull File currentJar,
                      int currentApi,
                      @Nullable Codebase codebase) {
         mPatterns = patterns;
@@ -56,7 +56,7 @@ public class AndroidJarReader {
         mCodebase = codebase;
     }
 
-    AndroidJarReader(@NonNull File[] apiLevels, @Nullable Codebase codebase) {
+    AndroidJarReader(@NotNull File[] apiLevels, @Nullable Codebase codebase) {
         mApiLevels = apiLevels;
         mCodebase = codebase;
     }
