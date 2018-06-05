@@ -15,8 +15,8 @@
  */
 package com.android.tools.metalava.apilevels;
 
-import com.android.annotations.NonNull;
 import com.google.common.collect.Iterables;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -53,7 +53,7 @@ public class ApiClass extends ApiElement {
         addToArray(mSuperClasses, superClass, since);
     }
 
-    @NonNull
+    @NotNull
     List<ApiElement> getSuperClasses() {
         return mSuperClasses;
     }
