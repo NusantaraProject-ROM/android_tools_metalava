@@ -65,6 +65,9 @@ class Compatibility(
     /** Include spaces after commas in type strings */
     var spacesAfterCommas: Boolean = compat
 
+    /** Use two spaces after type for package private elements in signature files */
+    var doubleSpaceForPackagePrivate: Boolean = compat
+
     /**
      * In signature files, whether interfaces should also be described as "abstract"
      */

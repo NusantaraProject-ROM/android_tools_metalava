@@ -17,6 +17,7 @@ package androidx.annotation;
 
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PACKAGE;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.ElementType.TYPE_PARAMETER;
 import static java.lang.annotation.ElementType.TYPE_USE;
@@ -27,5 +28,5 @@ import java.lang.annotation.Target;
 
 /** Stub only annotation. Do not use directly. */
 @Retention(CLASS)
-@Target({METHOD, PARAMETER, FIELD, TYPE_PARAMETER, TYPE_USE})
+@Target({METHOD, PARAMETER, FIELD, PACKAGE, TYPE_PARAMETER, TYPE_USE})
 public @interface Nullable {}

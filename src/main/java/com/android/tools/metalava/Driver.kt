@@ -295,7 +295,11 @@ private fun processFlags() {
 
         createReportFile(
             codebase, apiFile, "private DEX API"
-        ) { printWriter -> DexApiWriter(printWriter, privateEmit, privateReference) }
+        ) { printWriter ->
+            DexApiWriter(
+                printWriter, privateEmit, privateReference, inlineInheritedFields = false
+            )
+        }
     }
 
     options.proguard?.let { proguard ->

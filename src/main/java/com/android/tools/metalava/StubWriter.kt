@@ -54,7 +54,7 @@ class StubWriter(
     // Methods are by default sorted in source order in stubs, to encourage methods
     // that are near each other in the source to show up near each other in the documentation
     methodComparator = MethodItem.sourceOrderComparator,
-    filterEmit = FilterPredicate(ApiPredicate(codebase, includeDocOnly = docStubs)),
+    filterEmit = FilterPredicate(ApiPredicate(codebase, ignoreShown = true, includeDocOnly = docStubs)),
     filterReference = ApiPredicate(codebase, ignoreShown = true, includeDocOnly = docStubs),
     includeEmptyOuterClasses = true
 ) {
