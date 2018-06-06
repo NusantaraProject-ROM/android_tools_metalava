@@ -196,7 +196,7 @@ class ExtractAnnotationsTest : DriverTest() {
                     }"""
                 )
             ),
-            mergeAnnotations = """<?xml version="1.0" encoding="UTF-8"?>
+            mergeXmlAnnotations = """<?xml version="1.0" encoding="UTF-8"?>
                 <root>
                   <item name="test.pkg.MyTest void test(int) 0">
                     <annotation name="org.intellij.lang.annotations.MagicConstant">

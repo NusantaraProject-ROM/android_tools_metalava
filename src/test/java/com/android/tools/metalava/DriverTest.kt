@@ -153,10 +153,12 @@ abstract class DriverTest {
         /** Whether to run doclava1 on the test output and assert that the output is identical */
         checkDoclava1: Boolean = compatibilityMode,
         checkCompilation: Boolean = false,
-        /** Annotations to merge in */
-        @Language("XML") mergeAnnotations: String? = null,
-        /** Annotations to merge in */
+        /** Annotations to merge in (in .xml format) */
+        @Language("XML") mergeXmlAnnotations: String? = null,
+        /** Annotations to merge in (in .jaif format) */
         @Language("TEXT") mergeJaifAnnotations: String? = null,
+        /** Annotations to merge in (in .txt/.signature format) */
+        @Language("TEXT") mergeSignatureAnnotations: String? = null,
         /** An optional API signature file content to load **instead** of Java/Kotlin source files */
         @Language("TEXT") signatureSource: String? = null,
         /** An optional API jar file content to load **instead** of Java/Kotlin source files */
@@ -221,7 +223,7 @@ abstract class DriverTest {
     ) {
         System.setProperty("METALAVA_TESTS_RUNNING", VALUE_TRUE)
 
-        if (compatibilityMode && mergeAnnotations != null) {
+        if (compatibilityMode && mergeXmlAnnotations != null) {
             fail(
                 "Can't specify both compatibilityMode and mergeAnnotations: there were no " +
                     "annotations output in doclava1"
@@ -234,6 +236,12 @@ abstract class DriverTest {
             )
         }
 
+        if (compatibilityMode && mergeSignatureAnnotations != null) {
+            fail(
+                "Can't specify both compatibilityMode and mergeSignatureAnnotations: there were no " +
+                    "annotations output in doclava1"
+            )
+        }
         Errors.resetLevels()
 
         /** Expected output if exiting with an error code */
@@ -282,9 +290,9 @@ abstract class DriverTest {
             }
         }
 
-        val mergeAnnotationsArgs = if (mergeAnnotations != null) {
+        val mergeAnnotationsArgs = if (mergeXmlAnnotations != null) {
             val merged = File(project, "merged-annotations.xml")
-            Files.asCharSink(merged, Charsets.UTF_8).write(mergeAnnotations.trimIndent())
+            Files.asCharSink(merged, Charsets.UTF_8).write(mergeXmlAnnotations.trimIndent())
             arrayOf("--merge-annotations", merged.path)
         } else {
             emptyArray()
@@ -293,6 +301,14 @@ abstract class DriverTest {
         val jaifAnnotationsArgs = if (mergeJaifAnnotations != null) {
             val merged = File(project, "merged-annotations.jaif")
             Files.asCharSink(merged, Charsets.UTF_8).write(mergeJaifAnnotations.trimIndent())
+            arrayOf("--merge-annotations", merged.path)
+        } else {
+            emptyArray()
+        }
+
+        val signatureAnnotationsArgs = if (mergeSignatureAnnotations != null) {
+            val merged = File(project, "merged-annotations.txt")
+            Files.asCharSink(merged, Charsets.UTF_8).write(mergeSignatureAnnotations.trimIndent())
             arrayOf("--merge-annotations", merged.path)
         } else {
             emptyArray()
@@ -581,6 +597,7 @@ abstract class DriverTest {
             *quiet,
             *mergeAnnotationsArgs,
             *jaifAnnotationsArgs,
+            *signatureAnnotationsArgs,
             *previousApiArgs,
             *migrateNullsArguments,
             *checkCompatibilityArguments,
