@@ -15,9 +15,9 @@
  */
 package com.android.tools.metalava.doclava1;
 
-import com.android.annotations.Nullable;
 import com.android.tools.metalava.Severity;
 import com.google.common.base.Splitter;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
