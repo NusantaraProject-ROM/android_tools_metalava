@@ -55,14 +55,14 @@ class NullnessMigration : ComparisonVisitor(visitAddedItemsRecursively = true) {
     }
 
     override fun compare(old: FieldItem, new: FieldItem) {
-        val newType = new.type() ?: return
-        val oldType = old.type() ?: return
+        val newType = new.type()
+        val oldType = old.type()
         checkType(oldType, newType)
     }
 
     override fun compare(old: ParameterItem, new: ParameterItem) {
-        val newType = new.type() ?: return
-        val oldType = old.type() ?: return
+        val newType = new.type()
+        val oldType = old.type()
         checkType(oldType, newType)
     }
 

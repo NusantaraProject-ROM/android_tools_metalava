@@ -91,7 +91,7 @@ class AnnotationsMergerTest : DriverTest() {
             compatibilityMode = false,
             outputKotlinStyleNulls = false,
             omitCommonPackages = false,
-            mergeAnnotations = """<?xml version="1.0" encoding="UTF-8"?>
+            mergeXmlAnnotations = """<?xml version="1.0" encoding="UTF-8"?>
                 <root>
                   <item name="test.pkg.MyTest">
                     <annotation name="android.support.annotation.UiThread" />
@@ -142,6 +142,7 @@ class AnnotationsMergerTest : DriverTest() {
 
                     public interface Appendable {
                         Appendable append(CharSequence csq) throws IOException;
+                        String reverse(String s);
                     }
                     """
                 )
@@ -160,6 +161,46 @@ class AnnotationsMergerTest : DriverTest() {
                           type: @libcore.util.Nullable
                         // Is expected to return self
                         return: @libcore.util.NonNull
+                """,
+            api = """
+                package test.pkg {
+                  public interface Appendable {
+                    method @androidx.annotation.NonNull public test.pkg.Appendable append(@androidx.annotation.Nullable java.lang.CharSequence);
+                    method public java.lang.String reverse(java.lang.String);
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
+    fun `Merge signature files`() {
+        check(
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+
+                    public interface Appendable {
+                        Appendable append(CharSequence csq) throws IOException;
+                    }
+                    """
+                )
+            ),
+            compatibilityMode = false,
+            outputKotlinStyleNulls = false,
+            omitCommonPackages = false,
+            mergeSignatureAnnotations = """
+                package test.pkg {
+                  public interface Appendable {
+                    method public test.pkg.Appendable append(java.lang.CharSequence?);
+                    method public test.pkg.Appendable append2(java.lang.CharSequence?);
+                    method public java.lang.String! reverse(java.lang.String!);
+                  }
+                  public interface RandomClass {
+                    method public test.pkg.Appendable append(java.lang.CharSequence);
+                  }
+                }
                 """,
             api = """
                 package test.pkg {
