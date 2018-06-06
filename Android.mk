@@ -16,3 +16,5 @@
 LOCAL_PATH := $(call my-dir)
 
 $(call dist-for-goals,sdk,$(HOST_OUT_JAVA_LIBRARIES)/metalava.jar)
+
+$(call dist-for-goals,sdk,$(HOST_OUT_JAVA_LIBRARIES)/stub-annotations.jar)
