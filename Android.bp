@@ -20,6 +20,7 @@ java_binary_host {
     ],
     java_resources: ["src/main/resources/**/*"],
     static_libs: [
+        "kotlin-reflect",
         "metalava-tools-common-m2-deps",
         "metalava-gradle-plugin-deps",
     ],
