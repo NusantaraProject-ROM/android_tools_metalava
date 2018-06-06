@@ -632,6 +632,9 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
     fun createPsiMethod(s: String, parent: PsiElement? = null): PsiMethod =
         getFactory().createMethodFromText(s, parent)
 
+    fun createConstructor(s: String, parent: PsiElement? = null): PsiMethod =
+        getFactory().createConstructor(s, parent)
+
     fun createPsiType(s: String, parent: PsiElement? = null): PsiType =
         getFactory().createTypeFromText(s, parent)
 
