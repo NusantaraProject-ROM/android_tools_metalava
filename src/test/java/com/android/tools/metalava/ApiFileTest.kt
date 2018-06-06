@@ -246,7 +246,7 @@ class ApiFileTest : DriverTest() {
                   public static final class Kotlin.Companion {
                     ctor private Kotlin.Companion();
                   }
-                   internal static final class Kotlin.myHiddenClass extends kotlin.Unit {
+                  internal static final class Kotlin.myHiddenClass extends kotlin.Unit {
                     ctor public Kotlin.myHiddenClass();
                     method internal test.pkg.Kotlin.myHiddenClass copy();
                   }
@@ -2228,7 +2228,7 @@ class ApiFileTest : DriverTest() {
                         /** @hide */
                         @SuppressWarnings("UnnecessaryInterfaceModifier")
                         public interface MyInterface {
-                            public static final String MY_CONSTANT = 5;
+                            public static final String MY_CONSTANT = "5";
                         }
                     """
                 )
@@ -2236,18 +2236,18 @@ class ApiFileTest : DriverTest() {
             privateApi = """
                 package test.pkg {
                   public class Class1 implements test.pkg.MyInterface {
-                    ctor Class1(int);
+                    ctor  Class1(int);
                     method public void method1();
-                    method void method2();
+                    method  void method2();
                     method private void method3();
-                    method void myVarargsMethod(int, java.lang.String...);
-                    field int field3;
-                    field float[][] field4;
-                    field long[] field5;
+                    method  void myVarargsMethod(int, java.lang.String...);
+                    field  int field3;
+                    field  float[][] field4;
+                    field  long[] field5;
                     field private int field6;
                   }
                    class Class2 {
-                    ctor Class2();
+                    ctor  Class2();
                     method public void method4();
                   }
                   private class Class2.Class3 {
@@ -2255,11 +2255,11 @@ class ApiFileTest : DriverTest() {
                     method public void method5();
                   }
                    class Class4 {
-                    ctor Class4();
+                    ctor  Class4();
                     method public void method5();
                   }
                   public abstract interface MyInterface {
-                    field public static final java.lang.String MY_CONSTANT;
+                    field public static final java.lang.String MY_CONSTANT = "5";
                   }
                 }
                 """,
@@ -2284,6 +2284,110 @@ class ApiFileTest : DriverTest() {
                 Ltest/pkg/Class4;->method5()V
                 Ltest/pkg/MyInterface;
                 Ltest/pkg/MyInterface;->MY_CONSTANT:Ljava/lang/String;
+                """
+        )
+    }
+
+    @Test
+    fun `Private API signature corner cases`() {
+        // Some corner case scenarios exposed by differences in output from doclava and metalava
+        check(
+            checkDoclava1 = false,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                        package test.pkg;
+                        import android.os.Parcel;
+                        import android.os.Parcelable;
+                        import java.util.concurrent.FutureTask;
+
+                        public class Class1 extends PrivateParent implements MyInterface {
+                            Class1(int arg) { }
+
+                            @Override public String toString() {
+                                return "Class1";
+                            }
+
+                            private abstract class AmsTask extends FutureTask<String> {
+                                @Override
+                                protected void set(String bundle) {
+                                    super.set(bundle);
+                                }
+                            }
+
+                            /** @hide */
+                            public abstract static class TouchPoint implements Parcelable {
+                            }
+                        }
+                    """
+                ),
+
+                java(
+                    """
+                        package test.pkg;
+                        class PrivateParent {
+                            final String getValue() {
+                                return "";
+                            }
+                        }
+                    """
+                ),
+
+                java(
+                    """
+                        package test.pkg;
+                        /** @hide */
+                        public enum MyEnum {
+                            FOO, BAR
+                        }
+                    """
+                ),
+
+                java(
+                    """
+                        package test.pkg;
+                        @SuppressWarnings("UnnecessaryInterfaceModifier")
+                        public interface MyInterface {
+                            public static final String MY_CONSTANT = "5";
+                        }
+                    """
+                )
+            ),
+            privateApi = """
+                package test.pkg {
+                  public class Class1 extends test.pkg.PrivateParent implements test.pkg.MyInterface {
+                    ctor  Class1(int);
+                  }
+                  private abstract class Class1.AmsTask extends java.util.concurrent.FutureTask {
+                  }
+                  public static abstract class Class1.TouchPoint implements android.os.Parcelable {
+                    ctor public Class1.TouchPoint();
+                  }
+                  public final class MyEnum extends java.lang.Enum {
+                    ctor private MyEnum();
+                    enum_constant public static final test.pkg.MyEnum BAR;
+                    enum_constant public static final test.pkg.MyEnum FOO;
+                  }
+                   class PrivateParent {
+                    ctor  PrivateParent();
+                    method  final java.lang.String getValue();
+                  }
+                }
+                """,
+            privateDexApi = """
+                Ltest/pkg/Class1;-><init>(I)V
+                Ltest/pkg/Class1${"$"}AmsTask;
+                Ltest/pkg/Class1${"$"}TouchPoint;
+                Ltest/pkg/Class1${"$"}TouchPoint;-><init>()V
+                Ltest/pkg/MyEnum;
+                Ltest/pkg/MyEnum;-><init>()V
+                Ltest/pkg/MyEnum;->valueOf(Ljava/lang/String;)Ltest/pkg/MyEnum;
+                Ltest/pkg/MyEnum;->values()[Ltest/pkg/MyEnum;
+                Ltest/pkg/MyEnum;->BAR:Ltest/pkg/MyEnum;
+                Ltest/pkg/MyEnum;->FOO:Ltest/pkg/MyEnum;
+                Ltest/pkg/PrivateParent;
+                Ltest/pkg/PrivateParent;-><init>()V
+                Ltest/pkg/PrivateParent;->getValue()Ljava/lang/String;
                 """
         )
     }
