@@ -513,6 +513,9 @@ open class PsiClassItem(
                     psiClass, result,
                     "public static final ${psiClass.qualifiedName}[] values() { return null; }"
                 )
+                // Also add a private constructor; used when emitting the private API
+                val psiMethod = codebase.createConstructor("private ${psiClass.name}", psiClass)
+                result.add(PsiConstructorItem.create(codebase, classItem, psiMethod))
             }
         }
 

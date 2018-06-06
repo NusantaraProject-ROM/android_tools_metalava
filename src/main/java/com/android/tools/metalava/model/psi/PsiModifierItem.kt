@@ -207,11 +207,11 @@ class PsiModifierItem(
     }
 
     override fun isPackagePrivate(): Boolean {
-        return flags and (PUBLIC or PROTECTED or PRIVATE) == 0
+        return flags and (PUBLIC or PROTECTED or PRIVATE or INTERNAL) == 0
     }
 
     fun getAccessFlags(): Int {
-        return flags and (PUBLIC or PROTECTED or PRIVATE)
+        return flags and (PUBLIC or PROTECTED or PRIVATE or INTERNAL)
     }
 
     // Rename? It's not a full equality, it's whether an override's modifier set is significant

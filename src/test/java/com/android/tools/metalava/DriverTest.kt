@@ -713,8 +713,10 @@ abstract class DriverTest {
         }
 
         if (extractAnnotations != null && extractedAnnotationsZip != null) {
-            assertTrue("Using --extract-annotations but $extractedAnnotationsZip was not created",
-                extractedAnnotationsZip.isFile)
+            assertTrue(
+                "Using --extract-annotations but $extractedAnnotationsZip was not created",
+                extractedAnnotationsZip.isFile
+            )
             for ((pkg, xml) in extractAnnotations) {
                 assertPackageXml(pkg, extractedAnnotationsZip, xml)
             }
@@ -749,13 +751,6 @@ abstract class DriverTest {
             val generated = gatherSources(listOf(stubsDir)).map { it.path }.toList().toTypedArray()
 
             // Also need to include on the compile path annotation classes referenced in the stubs
-            val supportAnnotationsDir = File("../../frameworks/support/annotations/src/main/java/")
-            if (!supportAnnotationsDir.isDirectory) {
-                fail("Couldn't find $supportAnnotationsDir: Is the pwd set to the root of the metalava source code?")
-            }
-            val supportAnnotations =
-                gatherSources(listOf(supportAnnotationsDir)).map { it.path }.toList().toTypedArray()
-
             val extraAnnotationsDir = File("stub-annotations/src/main/java")
             if (!extraAnnotationsDir.isDirectory) {
                 fail("Couldn't find $extraAnnotationsDir: Is the pwd set to the root of the metalava source code?")
@@ -765,8 +760,7 @@ abstract class DriverTest {
 
             if (!runCommand(
                     "${getJdkPath()}/bin/javac", arrayOf(
-                        "-d", project.path, *generated,
-                        *supportAnnotations, *extraAnnotations
+                        "-d", project.path, *generated, *extraAnnotations
                     )
                 )
             ) {
