@@ -725,6 +725,7 @@ class VisitCandidate(private val cls: ClassItem, private val visitor: ApiVisitor
                 cls.filteredFields(filterEmit).asSequence()
             } else {
                 cls.fields().asSequence()
+                    .filter { filterEmit.test(it) }
             }
         if (cls.isEnum()) {
             fields = fieldSequence

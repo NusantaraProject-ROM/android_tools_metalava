@@ -217,6 +217,10 @@ interface ModifierList {
                 )
             }
 
+            if (compatibility.doubleSpaceForPackagePrivate && item.isPackagePrivate && item is MemberItem) {
+                writer.write(" ")
+            }
+
             // Kotlin order:
             //   https://kotlinlang.org/docs/reference/coding-conventions.html#modifiers
 
