@@ -22,7 +22,6 @@ import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.FieldItem
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
-import com.android.tools.metalava.options
 import java.util.function.Predicate
 
 open class ApiVisitor(
@@ -79,7 +78,8 @@ open class ApiVisitor(
         nestInnerClasses: Boolean = false,
 
         /** Whether to ignore APIs with annotations in the --show-annotations list */
-        ignoreShown: Boolean = options.showUnannotated,
+//        ignoreShown: Boolean = options.showUnannotated,
+        ignoreShown: Boolean = true,
 
         /** Whether to match APIs marked for removal instead of the normal API */
         remove: Boolean = false,

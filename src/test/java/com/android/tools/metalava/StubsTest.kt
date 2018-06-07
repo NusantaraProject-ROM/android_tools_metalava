@@ -35,10 +35,12 @@ class StubsTest : DriverTest() {
         api: String? = null,
         extraArguments: Array<String> = emptyArray(),
         docStubs: Boolean = false,
+        showAnnotations: Array<String> = emptyArray(),
         vararg sourceFiles: TestFile
     ) {
         check(
             *sourceFiles,
+            showAnnotations = showAnnotations,
             stubs = arrayOf(source),
             compatibilityMode = compatibilityMode,
             warnings = warnings,
@@ -1367,6 +1369,88 @@ class StubsTest : DriverTest() {
     fun `Arguments to super constructors`() {
         // When overriding constructors we have to supply arguments
         checkStubs(
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+
+                    @SuppressWarnings("WeakerAccess")
+                    public class Constructors {
+                        public class Parent {
+                            public Parent(String s, int i, long l, boolean b, short sh) {
+                            }
+                        }
+
+                        public class Child extends Parent {
+                            public Child(String s, int i, long l, boolean b, short sh) {
+                                super(s, i, l, b, sh);
+                            }
+
+                            private Child(String s) {
+                                super(s, 0, 0, false, 0);
+                            }
+                        }
+
+                        public class Child2 extends Parent {
+                            Child2(String s) {
+                                super(s, 0, 0, false, 0);
+                            }
+                        }
+
+                        public class Child3 extends Child2 {
+                            private Child3(String s) {
+                                super("something");
+                            }
+                        }
+
+                        public class Child4 extends Parent {
+                            Child4(String s, HiddenClass hidden) {
+                                super(s, 0, 0, true, 0);
+                            }
+                        }
+                        /** @hide */
+                        public class HiddenClass {
+                        }
+                    }
+                    """
+                )
+            ),
+            source = """
+                    package test.pkg;
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class Constructors {
+                    public Constructors() { throw new RuntimeException("Stub!"); }
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class Child extends test.pkg.Constructors.Parent {
+                    public Child(java.lang.String s, int i, long l, boolean b, short sh) { super(null, 0, 0, false, (short)0); throw new RuntimeException("Stub!"); }
+                    }
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class Child2 extends test.pkg.Constructors.Parent {
+                    Child2(java.lang.String s) { super(null, 0, 0, false, (short)0); throw new RuntimeException("Stub!"); }
+                    }
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class Child3 extends test.pkg.Constructors.Child2 {
+                    Child3(java.lang.String s) { super(null); throw new RuntimeException("Stub!"); }
+                    }
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class Child4 extends test.pkg.Constructors.Parent {
+                    Child4() { super(null, 0, 0, false, (short)0); throw new RuntimeException("Stub!"); }
+                    }
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class Parent {
+                    public Parent(java.lang.String s, int i, long l, boolean b, short sh) { throw new RuntimeException("Stub!"); }
+                    }
+                    }
+                    """
+        )
+    }
+
+    @Test
+    fun `Arguments to super constructors with showAnnotations`() {
+        // When overriding constructors we have to supply arguments
+        checkStubs(
+            showAnnotations = arrayOf("android.annotation.SystemApi"),
             sourceFiles =
             *arrayOf(
                 java(
