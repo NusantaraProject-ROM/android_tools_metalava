@@ -26,3 +26,10 @@ java_binary_host {
     ],
     manifest: "manifest.txt",
 }
+
+java_library_host {
+    name: "stub-annotations",
+    srcs: [
+        "stub-annotations/src/main/java/**/*.java",
+    ],
+}
