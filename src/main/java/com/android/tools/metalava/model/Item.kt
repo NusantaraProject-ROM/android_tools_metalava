@@ -121,15 +121,23 @@ interface Item {
 
     override fun hashCode(): Int
 
+    /** Whether this member was cloned in from a super class or interface */
+    fun isCloned(): Boolean
+
     /**
      * Returns true if this item requires nullness information (e.g. for a method
      * where either the return value or any of the parameters are non-primitives.
      * Note that it doesn't consider whether it already has nullness annotations;
      * for that see [hasNullnessInfo].
      */
-    fun requiresNullnessInfo(): Boolean {
-        return false
-    }
+    fun requiresNullnessInfo(): Boolean = false
+
+    /**
+     * Returns true if this item requires nullness information and supplies it
+     * (for all items, e.g. if a method is partially annotated this method would
+     * still return false)
+     */
+    fun hasNullnessInfo(): Boolean = false
 
     /**
      * Whether this item was loaded from the classpath (e.g. jar dependencies)
@@ -137,40 +145,11 @@ interface Item {
      */
     fun isFromClassPath(): Boolean = false
 
-
     /** Is this element declared in Java (rather than Kotlin) ? */
     fun isJava(): Boolean = true
 
     /** Is this element declared in Kotlin (rather than Java) ? */
     fun isKotlin() = !isJava()
-
-    /**
-     * Returns true if this item requires nullness information and supplies it
-     * (for all items, e.g. if a method is partially annotated this method would
-     * still return false)
-     */
-    fun hasNullnessInfo(): Boolean {
-        when (this) {
-            is ParameterItem -> {
-                return !type().primitive
-            }
-
-            is MethodItem -> {
-                val returnType = returnType()
-                if (returnType != null && !returnType.primitive) {
-                    return true
-                }
-                for (parameter in parameters()) {
-                    if (!parameter.type().primitive) {
-                        return true
-                    }
-                }
-                return false
-            }
-        }
-
-        return false
-    }
 
     fun hasShowAnnotation(): Boolean = modifiers.hasShowAnnotation()
     fun hasHideAnnotation(): Boolean = modifiers.hasHideAnnotations()

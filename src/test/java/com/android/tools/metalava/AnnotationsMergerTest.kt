@@ -36,10 +36,10 @@ class AnnotationsMergerTest : DriverTest() {
                     """
                     package test.pkg;
 
-                    import android.support.annotation.NonNull;
-                    import android.support.annotation.Nullable;
+                    import androidx.annotation.NonNull;
+                    import androidx.annotation.Nullable;
                     import android.annotation.IntRange;
-                    import android.support.annotation.UiThread;
+                    import androidx.annotation.UiThread;
 
                     @UiThread
                     public class MyTest {
@@ -56,15 +56,16 @@ class AnnotationsMergerTest : DriverTest() {
             // Skip the annotations themselves from the output
             extraArguments = arrayOf(
                 "--hide-package", "android.annotation",
+                "--hide-package", "androidx.annotation",
                 "--hide-package", "android.support.annotation"
             ),
             api = """
                 package test.pkg {
-                  @android.support.annotation.UiThread public class MyTest {
+                  @androidx.annotation.UiThread public class MyTest {
                     ctor public MyTest();
-                    method @android.support.annotation.IntRange(from=10, to=20) public int clamp(int);
-                    method @android.support.annotation.Nullable public java.lang.Double convert(@android.support.annotation.NonNull java.lang.Float);
-                    field @android.support.annotation.Nullable public java.lang.Number myNumber;
+                    method @androidx.annotation.IntRange(from=10, to=20) public int clamp(int);
+                    method @androidx.annotation.Nullable public java.lang.Double convert(@androidx.annotation.NonNull java.lang.Float);
+                    field @androidx.annotation.Nullable public java.lang.Number myNumber;
                   }
                 }
                 """
@@ -90,7 +91,7 @@ class AnnotationsMergerTest : DriverTest() {
             compatibilityMode = false,
             outputKotlinStyleNulls = false,
             omitCommonPackages = false,
-            mergeAnnotations = """<?xml version="1.0" encoding="UTF-8"?>
+            mergeXmlAnnotations = """<?xml version="1.0" encoding="UTF-8"?>
                 <root>
                   <item name="test.pkg.MyTest">
                     <annotation name="android.support.annotation.UiThread" />
@@ -110,15 +111,101 @@ class AnnotationsMergerTest : DriverTest() {
                       <val name="to" val="20" />
                     </annotation>
                   </item>
+                  <item name="test.pkg.MyTest int clamp(int) 0">
+                    <annotation name='org.jetbrains.annotations.Range'>
+                      <val name="from" val="-1"/>
+                      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+                    </annotation>
+                  </item>
                   </root>
                 """,
             api = """
                 package test.pkg {
-                  @android.support.annotation.UiThread public class MyTest {
+                  @androidx.annotation.UiThread public class MyTest {
                     ctor public MyTest();
-                    method @android.support.annotation.IntRange(from=10, to=20) public int clamp(int);
-                    method @android.support.annotation.Nullable public java.lang.Double convert(@android.support.annotation.NonNull java.lang.Float);
-                    field @android.support.annotation.Nullable public java.lang.Number myNumber;
+                    method @androidx.annotation.IntRange(from=10, to=20) public int clamp(@androidx.annotation.IntRange(from=-1L, to=java.lang.Integer.MAX_VALUE) int);
+                    method @androidx.annotation.Nullable public java.lang.Double convert(@androidx.annotation.NonNull java.lang.Float);
+                    field @androidx.annotation.Nullable public java.lang.Number myNumber;
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
+    fun `Merge jaif files`() {
+        check(
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+
+                    public interface Appendable {
+                        Appendable append(CharSequence csq) throws IOException;
+                        String reverse(String s);
+                    }
+                    """
+                )
+            ),
+            compatibilityMode = false,
+            outputKotlinStyleNulls = false,
+            omitCommonPackages = false,
+            mergeJaifAnnotations = """
+                //
+                // Copyright (C) 2017 The Android Open Source Project
+                //
+                package test.pkg:
+                class Appendable:
+                    method append(Ljava/lang/CharSequence;)Ltest/pkg/Appendable;:
+                        parameter #0:
+                          type: @libcore.util.Nullable
+                        // Is expected to return self
+                        return: @libcore.util.NonNull
+                """,
+            api = """
+                package test.pkg {
+                  public interface Appendable {
+                    method @androidx.annotation.NonNull public test.pkg.Appendable append(@androidx.annotation.Nullable java.lang.CharSequence);
+                    method public java.lang.String reverse(java.lang.String);
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
+    fun `Merge signature files`() {
+        check(
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+
+                    public interface Appendable {
+                        Appendable append(CharSequence csq) throws IOException;
+                    }
+                    """
+                )
+            ),
+            compatibilityMode = false,
+            outputKotlinStyleNulls = false,
+            omitCommonPackages = false,
+            mergeSignatureAnnotations = """
+                package test.pkg {
+                  public interface Appendable {
+                    method public test.pkg.Appendable append(java.lang.CharSequence?);
+                    method public test.pkg.Appendable append2(java.lang.CharSequence?);
+                    method public java.lang.String! reverse(java.lang.String!);
+                  }
+                  public interface RandomClass {
+                    method public test.pkg.Appendable append(java.lang.CharSequence);
+                  }
+                }
+                """,
+            api = """
+                package test.pkg {
+                  public interface Appendable {
+                    method @androidx.annotation.NonNull public test.pkg.Appendable append(@androidx.annotation.Nullable java.lang.CharSequence);
                   }
                 }
                 """

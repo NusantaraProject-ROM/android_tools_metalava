@@ -15,9 +15,11 @@
  */
 package com.android.tools.metalava.apilevels;
 
-import com.android.annotations.NonNull;
+import com.android.tools.metalava.model.Codebase;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
@@ -40,16 +42,23 @@ public class AndroidJarReader {
     private File mCurrentJar;
     private List<String> mPatterns;
     private File[] mApiLevels;
+    private final Codebase mCodebase;
 
-    AndroidJarReader(@NonNull List<String> patterns, int minApi, @NonNull File currentJar, int currentApi) {
+    AndroidJarReader(@NotNull List<String> patterns,
+                     int minApi,
+                     @NotNull File currentJar,
+                     int currentApi,
+                     @Nullable Codebase codebase) {
         mPatterns = patterns;
         mMinApi = minApi;
         mCurrentJar = currentJar;
         mCurrentApi = currentApi;
+        mCodebase = codebase;
     }
 
-    AndroidJarReader(@NonNull File[] apiLevels) {
+    AndroidJarReader(@NotNull File[] apiLevels, @Nullable Codebase codebase) {
         mApiLevels = apiLevels;
+        mCodebase = codebase;
     }
 
     public Api getApi() throws IOException {
@@ -58,6 +67,12 @@ public class AndroidJarReader {
             for (int apiLevel = 1; apiLevel < mApiLevels.length; apiLevel++) {
                 File jar = getAndroidJarFile(apiLevel);
                 readJar(api, apiLevel, jar);
+            }
+            if (mCodebase != null) {
+                int apiLevel = mCodebase.getApiLevel();
+                if (apiLevel != -1) {
+                    processCodebase(api, apiLevel);
+                }
             }
         } else {
             // Get all the android.jar. They are in platforms-#
@@ -72,10 +87,11 @@ public class AndroidJarReader {
                     jar = getAndroidJarFile(apiLevel);
                 }
                 if (jar == null || !jar.isFile()) {
-                    System.out.println("Last API level found: " + (apiLevel - 1));
+                    if (mCodebase != null) {
+                        processCodebase(api, apiLevel);
+                    }
                     break;
                 }
-                System.out.println("Found API " + apiLevel + " at " + jar.getPath());
                 readJar(api, apiLevel, jar);
             }
         }
@@ -84,6 +100,13 @@ public class AndroidJarReader {
         api.removeOverridingMethods();
 
         return api;
+    }
+
+    private void processCodebase(Api api, int apiLevel) {
+        if (mCodebase == null) {
+            return;
+        }
+        AddApisFromCodebaseKt.addApisFromCodebase(api, apiLevel, mCodebase);
     }
 
     private void readJar(Api api, int apiLevel, File jar) throws IOException {
@@ -108,7 +131,7 @@ public class AndroidJarReader {
                 reader.accept(classNode, 0 /*flags*/);
 
                 ApiClass theClass = api.addClass(classNode.name, apiLevel,
-                        (classNode.access & Opcodes.ACC_DEPRECATED) != 0);
+                    (classNode.access & Opcodes.ACC_DEPRECATED) != 0);
 
                 // super class
                 if (classNode.superName != null) {
@@ -127,7 +150,7 @@ public class AndroidJarReader {
                         continue;
                     }
                     if (!fieldNode.name.startsWith("this$") &&
-                            !fieldNode.name.equals("$VALUES")) {
+                        !fieldNode.name.equals("$VALUES")) {
                         boolean deprecated = (fieldNode.access & Opcodes.ACC_DEPRECATED) != 0;
                         theClass.addField(fieldNode.name, apiLevel, deprecated);
                     }

@@ -75,6 +75,7 @@ open class PsiClassItem(
     }
 
     override var defaultConstructor: ConstructorItem? = null
+    override var artifact: String? = null
 
     private var containingClass: PsiClassItem? = null
     override fun containingClass(): PsiClassItem? = containingClass
@@ -165,7 +166,7 @@ open class PsiClassItem(
         if (psiClass.hasTypeParameters()) {
             return PsiTypeParameterList(
                 codebase, psiClass.typeParameterList
-                        ?: return TypeParameterList.NONE
+                    ?: return TypeParameterList.NONE
             )
         } else {
             return TypeParameterList.NONE
@@ -315,7 +316,7 @@ open class PsiClassItem(
             val stub = method.toStub(replacementMap)
             val psiMethod = codebase.createPsiMethod(stub, psiClass)
             newMethod = PsiMethodItem.create(codebase, this, psiMethod)
-            newMethod.inheritedInterfaceMethod = method.inheritedInterfaceMethod
+            newMethod.inheritedMethod = method.inheritedMethod
             newMethod.documentation = method.documentation
         }
 
@@ -409,8 +410,11 @@ open class PsiClassItem(
 
             if (classType == ClassType.INTERFACE) {
                 // All members are implicitly public, fields are implicitly static, non-static methods are abstract
+                // (except in Java 1.9, where they can be private
                 for (method in methods) {
-                    method.mutableModifiers().setPublic(true)
+                    if (!method.isPrivate) {
+                        method.mutableModifiers().setPublic(true)
+                    }
                 }
                 for (method in fields) {
                     val m = method.mutableModifiers()
@@ -467,13 +471,11 @@ open class PsiClassItem(
                 PsiMethodItem.create(codebase, newClass, it as PsiMethodItem)
             }.toMutableList()
 
-
             newClass.fields = classFilter.fields.asSequence()
                 // Preserve sorting order for enums
                 .sortedBy { it.sortingRank }.map {
                     PsiFieldItem.create(codebase, newClass, it as PsiFieldItem)
                 }.toMutableList()
-
 
             newClass.innerClasses = classFilter.innerClasses.map {
                 val newInnerClass = codebase.findClass(it.cls.qualifiedName) ?: it.create(codebase)
@@ -511,6 +513,9 @@ open class PsiClassItem(
                     psiClass, result,
                     "public static final ${psiClass.qualifiedName}[] values() { return null; }"
                 )
+                // Also add a private constructor; used when emitting the private API
+                val psiMethod = codebase.createConstructor("private ${psiClass.name}", psiClass)
+                result.add(PsiConstructorItem.create(codebase, classItem, psiMethod))
             }
         }
 
@@ -518,7 +523,8 @@ open class PsiClassItem(
             codebase: PsiBasedCodebase,
             classItem: PsiClassItem,
             psiClass: PsiClass,
-            result: MutableList<PsiMethodItem>, source: String
+            result: MutableList<PsiMethodItem>,
+            source: String
         ) {
             val psiMethod = codebase.createPsiMethod(source, psiClass)
             result.add(PsiMethodItem.create(codebase, classItem, psiMethod))
@@ -542,7 +548,6 @@ open class PsiClassItem(
                         curr.containingClass
                     } else {
                         break
-
                     }
                 }
                 return list.asReversed().asSequence().joinToString(separator = ".") { it }
@@ -684,5 +689,5 @@ fun PsiModifierListOwner.isPrivate(): Boolean = modifierList?.hasExplicitModifie
 fun PsiModifierListOwner.isPackagePrivate(): Boolean {
     val modifiers = modifierList ?: return false
     return !(modifiers.hasModifierProperty(PsiModifier.PUBLIC) ||
-            modifiers.hasModifierProperty(PsiModifier.PROTECTED))
+        modifiers.hasModifierProperty(PsiModifier.PROTECTED))
 }

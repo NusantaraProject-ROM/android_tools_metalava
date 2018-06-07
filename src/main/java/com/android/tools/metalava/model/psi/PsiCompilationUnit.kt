@@ -84,9 +84,7 @@ class PsiCompilationUnit(val codebase: PsiBasedCodebase, containingFile: PsiFile
             for (psiClass in file.classes) {
                 val classItem = codebase.findClass(psiClass) ?: continue
                 if (predicate.test(classItem)) {
-
                 }
-
             }
         } else if (file is KtFile) {
             for (importDirective in file.importDirectives) {

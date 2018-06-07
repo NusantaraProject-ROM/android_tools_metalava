@@ -34,17 +34,21 @@ class StubsTest : DriverTest() {
         checkDoclava1: Boolean = false,
         api: String? = null,
         extraArguments: Array<String> = emptyArray(),
+        docStubs: Boolean = false,
+        showAnnotations: Array<String> = emptyArray(),
         vararg sourceFiles: TestFile
     ) {
         check(
             *sourceFiles,
+            showAnnotations = showAnnotations,
             stubs = arrayOf(source),
             compatibilityMode = compatibilityMode,
             warnings = warnings,
             checkDoclava1 = checkDoclava1,
             checkCompilation = true,
             api = api,
-            extraArguments = extraArguments
+            extraArguments = extraArguments,
+            docStubs = docStubs
         )
     }
 
@@ -711,7 +715,7 @@ class StubsTest : DriverTest() {
         checkStubs(
             // Note that doclava1 includes fields here that it doesn't include in the
             // signature file.
-            //checkDoclava1 = true,
+            // checkDoclava1 = true,
             compatibilityMode = false,
             sourceFiles =
             *arrayOf(
@@ -1041,7 +1045,7 @@ class StubsTest : DriverTest() {
                      * @param size Value is between 0 and (1 << MeasureSpec.MODE_SHIFT) - 1 inclusive
                      * @param mode Value is {@link android.view.View.View.MeasureSpec#UNSPECIFIED}, {@link android.view.View.View.MeasureSpec#EXACTLY}, or {@link android.view.View.View.MeasureSpec#AT_MOST}
                      */
-                    public static int makeMeasureSpec(@android.support.annotation.IntRange(from=0, to=0x40000000 - 1) int size, int mode) { throw new RuntimeException("Stub!"); }
+                    public static int makeMeasureSpec(@androidx.annotation.IntRange(from=0, to=0x40000000 - 1) int size, int mode) { throw new RuntimeException("Stub!"); }
                     public static final int AT_MOST = -2147483648; // 0x80000000
                     public static final int EXACTLY = 1073741824; // 0x40000000
                     public static final int UNSPECIFIED = 0; // 0x0
@@ -1127,7 +1131,7 @@ class StubsTest : DriverTest() {
                     /**
                      * Requires {@link android.Manifest.permission#INTERACT_ACROSS_USERS} and {@link android.Manifest.permission#BROADCAST_STICKY}
                      */
-                    @android.support.annotation.RequiresPermission(allOf={"android.permission.INTERACT_ACROSS_USERS", android.Manifest.permission.BROADCAST_STICKY}) public abstract void removeStickyBroadcast(@android.support.annotation.RequiresPermission java.lang.Object intent);
+                    @androidx.annotation.RequiresPermission(allOf={"android.permission.INTERACT_ACROSS_USERS", android.Manifest.permission.BROADCAST_STICKY}) public abstract void removeStickyBroadcast(@androidx.annotation.RequiresPermission java.lang.Object intent);
                     }
                 """
         )
@@ -1260,15 +1264,15 @@ class StubsTest : DriverTest() {
                     /** My class doc */
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public final class Kotlin extends test.pkg.Parent {
-                    public Kotlin(@android.support.annotation.NonNull java.lang.String property1, int arg2) { throw new RuntimeException("Stub!"); }
-                    @android.support.annotation.NonNull public java.lang.String method() { throw new RuntimeException("Stub!"); }
+                    public Kotlin(@androidx.annotation.NonNull java.lang.String property1, int arg2) { throw new RuntimeException("Stub!"); }
+                    @androidx.annotation.NonNull public java.lang.String method() { throw new RuntimeException("Stub!"); }
                     /** My method doc */
                     public void otherMethod(boolean ok, int times) { throw new RuntimeException("Stub!"); }
                     /** property doc */
-                    @android.support.annotation.Nullable public java.lang.String getProperty2() { throw new RuntimeException("Stub!"); }
+                    @androidx.annotation.Nullable public java.lang.String getProperty2() { throw new RuntimeException("Stub!"); }
                     /** property doc */
-                    public void setProperty2(@android.support.annotation.Nullable java.lang.String p) { throw new RuntimeException("Stub!"); }
-                    @android.support.annotation.NonNull public java.lang.String getProperty1() { throw new RuntimeException("Stub!"); }
+                    public void setProperty2(@androidx.annotation.Nullable java.lang.String p) { throw new RuntimeException("Stub!"); }
+                    @androidx.annotation.NonNull public java.lang.String getProperty1() { throw new RuntimeException("Stub!"); }
                     public int someField2;
                     }
                 """,
@@ -1285,7 +1289,7 @@ class StubsTest : DriverTest() {
                 java(
                     """
                     package test.pkg;
-                    import android.support.annotation.ParameterName;
+                    import androidx.annotation.ParameterName;
 
                     public class Foo {
                         public void foo(int javaParameter1, @ParameterName("publicParameterName") int javaParameter2) {
@@ -1442,12 +1446,94 @@ class StubsTest : DriverTest() {
         )
     }
 
+    @Test
+    fun `Arguments to super constructors with showAnnotations`() {
+        // When overriding constructors we have to supply arguments
+        checkStubs(
+            showAnnotations = arrayOf("android.annotation.SystemApi"),
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+
+                    @SuppressWarnings("WeakerAccess")
+                    public class Constructors {
+                        public class Parent {
+                            public Parent(String s, int i, long l, boolean b, short sh) {
+                            }
+                        }
+
+                        public class Child extends Parent {
+                            public Child(String s, int i, long l, boolean b, short sh) {
+                                super(s, i, l, b, sh);
+                            }
+
+                            private Child(String s) {
+                                super(s, 0, 0, false, 0);
+                            }
+                        }
+
+                        public class Child2 extends Parent {
+                            Child2(String s) {
+                                super(s, 0, 0, false, 0);
+                            }
+                        }
+
+                        public class Child3 extends Child2 {
+                            private Child3(String s) {
+                                super("something");
+                            }
+                        }
+
+                        public class Child4 extends Parent {
+                            Child4(String s, HiddenClass hidden) {
+                                super(s, 0, 0, true, 0);
+                            }
+                        }
+                        /** @hide */
+                        public class HiddenClass {
+                        }
+                    }
+                    """
+                )
+            ),
+            source = """
+                    package test.pkg;
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class Constructors {
+                    public Constructors() { throw new RuntimeException("Stub!"); }
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class Child extends test.pkg.Constructors.Parent {
+                    public Child(java.lang.String s, int i, long l, boolean b, short sh) { super(null, 0, 0, false, (short)0); throw new RuntimeException("Stub!"); }
+                    }
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class Child2 extends test.pkg.Constructors.Parent {
+                    Child2(java.lang.String s) { super(null, 0, 0, false, (short)0); throw new RuntimeException("Stub!"); }
+                    }
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class Child3 extends test.pkg.Constructors.Child2 {
+                    Child3(java.lang.String s) { super(null); throw new RuntimeException("Stub!"); }
+                    }
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class Child4 extends test.pkg.Constructors.Parent {
+                    Child4() { super(null, 0, 0, false, (short)0); throw new RuntimeException("Stub!"); }
+                    }
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class Parent {
+                    public Parent(java.lang.String s, int i, long l, boolean b, short sh) { throw new RuntimeException("Stub!"); }
+                    }
+                    }
+                    """
+        )
+    }
+
     // TODO: Add test to see what happens if I have Child4 in a different package which can't access the package private constructor of child3?
 
     @Test
     fun `DocOnly members should be omitted`() {
         // When marked @doconly don't include in stubs or signature files
-        // unless specifically asked for (which we do when generating docs).
+        // unless specifically asked for (which we do when generating docs-stubs).
         checkStubs(
             sourceFiles =
             *arrayOf(
@@ -1502,7 +1588,7 @@ class StubsTest : DriverTest() {
         // When marked @doconly don't include in stubs or signature files
         // unless specifically asked for (which we do when generating docs).
         checkStubs(
-            extraArguments = arrayOf("--include-doconly"),
+            docStubs = true,
             sourceFiles =
             *arrayOf(
                 java(
@@ -1665,9 +1751,9 @@ class StubsTest : DriverTest() {
             sourceFiles = *arrayOf(
                 java(
                     "package my.pkg;\n" +
-                            "public class String {\n" +
-                            "public String(char @libcore.util.NonNull [] value) { throw new RuntimeException(\"Stub!\"); }\n" +
-                            "}\n"
+                        "public class String {\n" +
+                        "public String(char @libcore.util.NonNull [] value) { throw new RuntimeException(\"Stub!\"); }\n" +
+                        "}\n"
                 )
             ),
             warnings = "",
@@ -1683,7 +1769,7 @@ class StubsTest : DriverTest() {
                 package my.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class String {
-                public String(char @android.support.annotation.NonNull [] value) { throw new RuntimeException("Stub!"); }
+                public String(char @androidx.annotation.NonNull [] value) { throw new RuntimeException("Stub!"); }
                 }
                 """
             )
@@ -1865,6 +1951,7 @@ class StubsTest : DriverTest() {
     @Test
     fun `Rewriting type parameters in interfaces from hidden super classes and in throws lists`() {
         checkStubs(
+            extraArguments = arrayOf("--skip-inherited-methods=false"),
             checkDoclava1 = false,
             sourceFiles =
             *arrayOf(
@@ -1914,7 +2001,7 @@ class StubsTest : DriverTest() {
                       }
                       public class Generics.MyClass<X, Y extends java.lang.Number> extends test.pkg.Generics.PublicParent implements test.pkg.Generics.PublicInterface {
                         ctor public Generics.MyClass();
-                        method public java.util.Map<X, java.util.Map<Y, java.lang.String>> createMap(java.util.List<X>);
+                        method public java.util.Map<X, java.util.Map<Y, java.lang.String>> createMap(java.util.List<X>) throws test.pkg.Generics.MyThrowable;
                         method public java.util.List<X> foo();
                       }
                       public static abstract interface Generics.PublicInterface<A, B> {
@@ -1935,7 +2022,98 @@ class StubsTest : DriverTest() {
                     public class MyClass<X, Y extends java.lang.Number> extends test.pkg.Generics.PublicParent<X,Y> implements test.pkg.Generics.PublicInterface<X,Y> {
                     public MyClass() { throw new RuntimeException("Stub!"); }
                     public java.util.List<X> foo() { throw new RuntimeException("Stub!"); }
-                    public java.util.Map<X,java.util.Map<Y,java.lang.String>> createMap(java.util.List<X> list) { throw new RuntimeException("Stub!"); }
+                    public java.util.Map<X,java.util.Map<Y,java.lang.String>> createMap(java.util.List<X> list) throws java.io.IOException { throw new RuntimeException("Stub!"); }
+                    }
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public static interface PublicInterface<A, B> {
+                    public java.util.Map<A,java.util.Map<B,java.lang.String>> createMap(java.util.List<A> list) throws java.io.IOException;
+                    }
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public abstract class PublicParent<A, B extends java.lang.Number> {
+                    public PublicParent() { throw new RuntimeException("Stub!"); }
+                    protected abstract java.util.List<A> foo();
+                    }
+                    }
+                    """
+        )
+    }
+
+    @Test
+    fun `Picking super class throwables`() {
+        // Like previous test, but without compatibility mode: ensures that we
+        // use super classes of filtered throwables
+        checkStubs(
+            compatibilityMode = false,
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+
+                    import java.io.IOException;
+                    import java.util.List;
+                    import java.util.Map;
+
+                    @SuppressWarnings({"RedundantThrows", "WeakerAccess"})
+                    public class Generics {
+                        public class MyClass<X, Y extends Number> extends HiddenParent<X, Y> implements PublicInterface<X, Y> {
+                        }
+
+                        class HiddenParent<M, N extends Number> extends PublicParent<M, N> {
+                            public Map<M, Map<N, String>> createMap(List<M> list) throws MyThrowable {
+                                return null;
+                            }
+
+                            protected List<M> foo() {
+                                return null;
+                            }
+
+                        }
+
+                        class MyThrowable extends IOException {
+                        }
+
+                        public abstract class PublicParent<A, B extends Number> {
+                            protected abstract List<A> foo();
+                        }
+
+                        public interface PublicInterface<A, B> {
+                            Map<A, Map<B, String>> createMap(List<A> list) throws IOException;
+                        }
+                    }
+                    """
+                )
+            ),
+            warnings = "",
+            api = """
+                package test.pkg {
+                  public class Generics {
+                    ctor public Generics();
+                  }
+                  public class Generics.MyClass<X, Y extends java.lang.Number> extends test.pkg.Generics.PublicParent<X,Y> implements test.pkg.Generics.PublicInterface<X,Y> {
+                    ctor public Generics.MyClass();
+                    method public java.util.Map<X,java.util.Map<Y,java.lang.String>>! createMap(java.util.List<X>!) throws java.io.IOException;
+                    method public java.util.List<X>! foo();
+                  }
+                  public static interface Generics.PublicInterface<A, B> {
+                    method public java.util.Map<A,java.util.Map<B,java.lang.String>>! createMap(java.util.List<A>!) throws java.io.IOException;
+                  }
+                  public abstract class Generics.PublicParent<A, B extends java.lang.Number> {
+                    ctor public Generics.PublicParent();
+                    method protected abstract java.util.List<A>! foo();
+                  }
+                }
+                    """,
+            source = """
+                    package test.pkg;
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class Generics {
+                    public Generics() { throw new RuntimeException("Stub!"); }
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class MyClass<X, Y extends java.lang.Number> extends test.pkg.Generics.PublicParent<X,Y> implements test.pkg.Generics.PublicInterface<X,Y> {
+                    public MyClass() { throw new RuntimeException("Stub!"); }
+                    public java.util.List<X> foo() { throw new RuntimeException("Stub!"); }
+                    public java.util.Map<X,java.util.Map<Y,java.lang.String>> createMap(java.util.List<X> list) throws java.io.IOException { throw new RuntimeException("Stub!"); }
                     }
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public static interface PublicInterface<A, B> {
@@ -1955,6 +2133,7 @@ class StubsTest : DriverTest() {
     fun `Rewriting implements class references`() {
         // Checks some more subtle bugs around generics type variable renaming
         checkStubs(
+            extraArguments = arrayOf("--skip-inherited-methods=false"),
             checkDoclava1 = false,
             sourceFiles =
             *arrayOf(
@@ -2073,6 +2252,7 @@ class StubsTest : DriverTest() {
                     import android.util.AttributeSet;
                     import org.xmlpull.v1.XmlPullParser;
 
+                    @SuppressWarnings("UnnecessaryInterfaceModifier")
                     public interface XmlResourceParser extends XmlPullParser, AttributeSet, AutoCloseable {
                         public void close();
                     }
@@ -2170,9 +2350,11 @@ class StubsTest : DriverTest() {
                             public abstract FileDescriptor getFileDescriptor();
                         }
 
+                        @SuppressWarnings("UnnecessaryInterfaceModifier")
                         public static interface Closeable extends AutoCloseable {
                         }
 
+                        @SuppressWarnings("UnnecessaryInterfaceModifier")
                         public static interface AutoCloseable {
                         }
 
@@ -2783,7 +2965,7 @@ class StubsTest : DriverTest() {
             *arrayOf(
                 java(
                     """
-                    @android.support.annotation.Nullable
+                    @androidx.annotation.Nullable
                     package test.pkg;
                     """
                 ),
@@ -2808,10 +2990,10 @@ class StubsTest : DriverTest() {
                 }
             """, // WRONG: I should include package annotations!
             source = """
-                @android.support.annotation.Nullable
+                @androidx.annotation.Nullable
                 package test.pkg;
                 """,
-            extraArguments = arrayOf("--hide-package", "android.support.annotation")
+            extraArguments = arrayOf("--hide-package", "androidx.annotation")
         )
     }
 

@@ -67,14 +67,14 @@ class CompatibilityCheck : ComparisonVisitor() {
                             Errors.INVALID_NULL_CONVERSION,
                             new,
                             "Attempted to change parameter from @Nullable to @NonNull: " +
-                                    "incompatible change for ${describe(new)}"
+                                "incompatible change for ${describe(new)}"
                         )
                     } else if (!oldNullable && old is MethodItem) {
                         report(
                             Errors.INVALID_NULL_CONVERSION,
                             new,
                             "Attempted to change method return from @NonNull to @Nullable: " +
-                                    "incompatible change for ${describe(new)}"
+                                "incompatible change for ${describe(new)}"
                         )
                     }
                 }
@@ -171,7 +171,6 @@ class CompatibilityCheck : ComparisonVisitor() {
                 )
             }
         }
-
 
         if (!oldModifiers.isSealed() && newModifiers.isSealed()) {
             report(Errors.ADD_SEALED, new, "Cannot add `sealed` modifier to ${describe(new)}: Incompatible change")
@@ -273,8 +272,8 @@ class CompatibilityCheck : ComparisonVisitor() {
             val oldTypeParameter = oldReturnType.asTypeParameter(old)
             val newTypeParameter = newReturnType.asTypeParameter(new)
             var compatible = true
-            if (oldTypeParameter == null
-                && newTypeParameter == null
+            if (oldTypeParameter == null &&
+                newTypeParameter == null
             ) {
                 if (oldReturnType != newReturnType ||
                     oldReturnType.arrayDimensions() != newReturnType.arrayDimensions()
@@ -429,11 +428,11 @@ class CompatibilityCheck : ComparisonVisitor() {
         constraints: List<ClassItem>
     ): String {
         return type.toSimpleType() +
-                if (constraints.isEmpty()) {
-                    " (extends java.lang.Object)"
-                } else {
-                    " (extends ${constraints.joinToString(separator = " & ") { it.qualifiedName() }})"
-                }
+            if (constraints.isEmpty()) {
+                " (extends java.lang.Object)"
+            } else {
+                " (extends ${constraints.joinToString(separator = " & ") { it.qualifiedName() }})"
+            }
     }
 
     override fun compare(old: FieldItem, new: FieldItem) {
@@ -527,23 +526,23 @@ class CompatibilityCheck : ComparisonVisitor() {
         report(error, item, "Removed ${if (item.deprecated) "deprecated " else ""}${describe(item)}")
     }
 
-    override fun added(item: PackageItem) {
-        handleAdded(Errors.ADDED_PACKAGE, item)
+    override fun added(new: PackageItem) {
+        handleAdded(Errors.ADDED_PACKAGE, new)
     }
 
-    override fun added(item: ClassItem) {
-        val error = if (item.isInterface()) {
+    override fun added(new: ClassItem) {
+        val error = if (new.isInterface()) {
             Errors.ADDED_INTERFACE
         } else {
             Errors.ADDED_CLASS
         }
-        handleAdded(error, item)
+        handleAdded(error, new)
     }
 
-    override fun added(item: MethodItem) {
+    override fun added(new: MethodItem) {
         // *Overriding* methods from super classes that are outside the
         // API is OK (e.g. overriding toString() from java.lang.Object)
-        val superMethods = item.superMethods()
+        val superMethods = new.superMethods()
         for (superMethod in superMethods) {
             if (superMethod.isFromClassPath()) {
                 return
@@ -554,64 +553,64 @@ class CompatibilityCheck : ComparisonVisitor() {
         // existing superclass method, but we should fail if this is overriding
         // an abstract method, because method's abstractness affects how users use it.
         // See if there's a member from inherited class
-        val inherited = if (item.isConstructor()) {
+        val inherited = if (new.isConstructor()) {
             null
         } else {
-            item.containingClass().findMethod(
-                item,
+            new.containingClass().findMethod(
+                new,
                 includeSuperClasses = true,
                 includeInterfaces = false
             )
         }
         if (inherited != null && !inherited.modifiers.isAbstract()) {
-            val error = if (item.modifiers.isAbstract()) Errors.ADDED_ABSTRACT_METHOD else Errors.ADDED_METHOD
-            handleAdded(error, item)
+            val error = if (new.modifiers.isAbstract()) Errors.ADDED_ABSTRACT_METHOD else Errors.ADDED_METHOD
+            handleAdded(error, new)
         }
     }
 
-    override fun added(item: FieldItem) {
-        handleAdded(Errors.ADDED_FIELD, item)
+    override fun added(new: FieldItem) {
+        handleAdded(Errors.ADDED_FIELD, new)
     }
 
-    override fun removed(item: PackageItem, from: Item?) {
-        handleRemoved(Errors.REMOVED_PACKAGE, item)
+    override fun removed(old: PackageItem, from: Item?) {
+        handleRemoved(Errors.REMOVED_PACKAGE, old)
     }
 
-    override fun removed(item: ClassItem, from: Item?) {
+    override fun removed(old: ClassItem, from: Item?) {
         val error = when {
-            item.isInterface() -> Errors.REMOVED_INTERFACE
-            item.deprecated -> Errors.REMOVED_DEPRECATED_CLASS
+            old.isInterface() -> Errors.REMOVED_INTERFACE
+            old.deprecated -> Errors.REMOVED_DEPRECATED_CLASS
             else -> Errors.REMOVED_CLASS
         }
-        handleRemoved(error, item)
+        handleRemoved(error, old)
     }
 
-    override fun removed(item: MethodItem, from: ClassItem?) {
+    override fun removed(old: MethodItem, from: ClassItem?) {
         // See if there's a member from inherited class
-        val inherited = if (item.isConstructor()) {
+        val inherited = if (old.isConstructor()) {
             null
         } else {
             from?.findMethod(
-                item,
+                old,
                 includeSuperClasses = true,
                 includeInterfaces = from.isInterface()
             )
         }
         if (inherited == null) {
-            val error = if (item.deprecated) Errors.REMOVED_DEPRECATED_METHOD else Errors.REMOVED_METHOD
-            handleRemoved(error, item)
+            val error = if (old.deprecated) Errors.REMOVED_DEPRECATED_METHOD else Errors.REMOVED_METHOD
+            handleRemoved(error, old)
         }
     }
 
-    override fun removed(item: FieldItem, from: ClassItem?) {
+    override fun removed(old: FieldItem, from: ClassItem?) {
         val inherited = from?.findField(
-            item.name(),
+            old.name(),
             includeSuperClasses = true,
             includeInterfaces = from.isInterface()
         )
         if (inherited == null) {
-            val error = if (item.deprecated) Errors.REMOVED_DEPRECATED_FIELD else Errors.REMOVED_FIELD
-            handleRemoved(error, item)
+            val error = if (old.deprecated) Errors.REMOVED_DEPRECATED_FIELD else Errors.REMOVED_FIELD
+            handleRemoved(error, old)
         }
     }
 

@@ -23,12 +23,14 @@ import com.android.tools.metalava.model.ModifierList
 import com.android.tools.metalava.model.ParameterItem
 import com.android.tools.metalava.model.TypeItem
 import com.android.tools.metalava.model.TypeParameterList
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.TypeConversionUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.UThrowExpression
@@ -70,7 +72,7 @@ open class PsiMethodItem(
      */
     internal var source: PsiMethodItem? = null
 
-    override var inheritedInterfaceMethod: Boolean = false
+    override var inheritedMethod: Boolean = false
 
     override fun name(): String = name
     override fun containingClass(): PsiClassItem = containingClass
@@ -118,7 +120,7 @@ open class PsiMethodItem(
         if (psiMethod.hasTypeParameters()) {
             return PsiTypeParameterList(
                 codebase, psiMethod.typeParameterList
-                        ?: return TypeParameterList.NONE
+                    ?: return TypeParameterList.NONE
             )
         } else {
             return TypeParameterList.NONE
@@ -138,11 +140,23 @@ open class PsiMethodItem(
 
     override fun throwsTypes(): List<ClassItem> = throwsTypes
 
+    override fun isCloned(): Boolean {
+        val psiClass = run {
+            val p = containingClass().psi() as? PsiClass ?: return false
+            if (p is UClass) {
+                p.sourcePsi as? PsiClass ?: return false
+            } else {
+                p
+            }
+        }
+        return psiMethod.containingClass != psiClass
+    }
+
     override fun isExtensionMethod(): Boolean {
         if (isKotlin()) {
             val ktParameters =
                 ((psiMethod as? KotlinUMethod)?.sourcePsi as? KtNamedFunction)?.valueParameters
-                        ?: return false
+                    ?: return false
             return ktParameters.size < parameters.size
         }
 
@@ -235,7 +249,8 @@ open class PsiMethodItem(
         val modifierString = StringWriter()
         ModifierList.write(
             modifierString, method.modifiers, method, removeAbstract = false,
-            removeFinal = false, addPublic = true
+            removeFinal = false, addPublic = true,
+            onlyIncludeSignatureAnnotations = true
         )
         sb.append(modifierString.toString())
 
@@ -341,7 +356,7 @@ open class PsiMethodItem(
             )
             method.modifiers.setOwner(method)
             method.source = original
-            method.inheritedInterfaceMethod = original.inheritedInterfaceMethod
+            method.inheritedMethod = original.inheritedMethod
 
             return method
         }

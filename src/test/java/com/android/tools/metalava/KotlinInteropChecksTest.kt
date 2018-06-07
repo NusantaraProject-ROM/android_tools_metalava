@@ -32,7 +32,7 @@ class KotlinInteropChecksTest : DriverTest() {
                 java(
                     """
                     package test.pkg;
-                    import android.support.annotation.ParameterName;
+                    import androidx.annotation.ParameterName;
 
                     public class Test {
                         public void fun() { }
@@ -183,14 +183,14 @@ class KotlinInteropChecksTest : DriverTest() {
                         }
 
                         @Throws(FileNotFoundException::class)
-                        fun ok_hasThrows(x: Int) {
+                        fun ok_hasThrows1(x: Int) {
                             if (x < 0) {
                                 throw java.io.FileNotFoundException("Something")
                             }
                         }
 
                         @Throws(UnsupportedOperationException::class, FileNotFoundException::class)
-                        fun ok_hasThrows(x: Int) {
+                        fun ok_hasThrows2(x: Int) {
                             if (x < 0) {
                                 throw java.io.FileNotFoundException("Something")
                             }

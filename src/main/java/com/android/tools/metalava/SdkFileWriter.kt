@@ -80,7 +80,7 @@ class SdkFileWriter(val codebase: Codebase, private val outputDir: java.io.File)
                     if (SDK_CONSTANT_ANNOTATION == annotation.qualifiedName()) {
                         val resolved =
                             annotation.findAttribute(null)?.leafValues()?.firstOrNull()?.resolve() as? FieldItem
-                                    ?: continue
+                                ?: continue
                         val type = resolved.containingClass().qualifiedName() + "." + resolved.name()
                         when {
                             SDK_CONSTANT_TYPE_ACTIVITY_ACTION == type -> activityActions.add(value.toString())

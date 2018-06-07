@@ -188,7 +188,7 @@ open class Reporter(private val rootFolder: File? = null) {
             path
         } else {
             val lineNumber = getLineNumber(psiFile.text, range.startOffset) + 1
-            path + ":" + lineNumber
+            "$path:$lineNumber"
         }
     }
 
@@ -214,7 +214,10 @@ open class Reporter(private val rootFolder: File? = null) {
     }
 
     open fun report(
-        severity: Severity, location: String?, message: String, id: Errors.Error? = null,
+        severity: Severity,
+        location: String?,
+        message: String,
+        id: Errors.Error? = null,
         color: Boolean = options.color
     ) {
         if (severity == HIDDEN) {

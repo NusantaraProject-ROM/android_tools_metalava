@@ -20,7 +20,6 @@ import com.android.SdkConstants
 import com.android.SdkConstants.DOT_JAVA
 import com.android.SdkConstants.DOT_KT
 import com.android.SdkConstants.VALUE_TRUE
-import com.android.annotations.NonNull
 import com.android.ide.common.process.DefaultProcessExecutor
 import com.android.ide.common.process.LoggedProcessOutputHandler
 import com.android.ide.common.process.ProcessException
@@ -33,8 +32,11 @@ import com.android.tools.lint.checks.infrastructure.TestFiles.java
 import com.android.tools.lint.checks.infrastructure.stripComments
 import com.android.tools.metalava.doclava1.Errors
 import com.android.utils.FileUtils
+import com.android.utils.SdkUtils
 import com.android.utils.StdLogger
 import com.google.common.base.Charsets
+import com.google.common.io.ByteStreams
+import com.google.common.io.Closeables
 import com.google.common.io.Files
 import org.intellij.lang.annotations.Language
 import org.junit.Assert.assertEquals
@@ -46,6 +48,7 @@ import org.junit.rules.TemporaryFolder
 import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.net.URL
 
 const val CHECK_OLD_DOCLAVA_TOO = false
 const val CHECK_STUB_COMPILATION = false
@@ -124,14 +127,21 @@ abstract class DriverTest {
         exactApi: String? = null,
         /** The removed API (corresponds to --removed-api) */
         removedApi: String? = null,
+        /** The removed dex API (corresponds to --removed-dex-api) */
+        removedDexApi: String? = null,
         /** The private API (corresponds to --private-api) */
         privateApi: String? = null,
         /** The private DEX API (corresponds to --private-dex-api) */
         privateDexApi: String? = null,
+        /** The DEX API (corresponds to --dex-api) */
+        dexApi: String? = null,
         /** Expected stubs (corresponds to --stubs) */
         @Language("JAVA") stubs: Array<String> = emptyArray(),
         /** Stub source file list generated */
         stubsSourceList: String? = null,
+        /** Whether the stubs should be written as documentation stubs instead of plain stubs. Decides
+         * whether the stubs include @doconly elements, uses rewritten/migration annotations, etc */
+        docStubs: Boolean = false,
         /** Whether to run in doclava1 compat mode */
         compatibilityMode: Boolean = true,
         /** Whether to trim the output (leading/trailing whitespace removal) */
@@ -143,8 +153,12 @@ abstract class DriverTest {
         /** Whether to run doclava1 on the test output and assert that the output is identical */
         checkDoclava1: Boolean = compatibilityMode,
         checkCompilation: Boolean = false,
-        /** Annotations to merge in */
-        @Language("XML") mergeAnnotations: String? = null,
+        /** Annotations to merge in (in .xml format) */
+        @Language("XML") mergeXmlAnnotations: String? = null,
+        /** Annotations to merge in (in .jaif format) */
+        @Language("TEXT") mergeJaifAnnotations: String? = null,
+        /** Annotations to merge in (in .txt/.signature format) */
+        @Language("TEXT") mergeSignatureAnnotations: String? = null,
         /** An optional API signature file content to load **instead** of Java/Kotlin source files */
         @Language("TEXT") signatureSource: String? = null,
         /** An optional API jar file content to load **instead** of Java/Kotlin source files */
@@ -201,17 +215,33 @@ abstract class DriverTest {
         /** Corresponds to SDK constants file features.txt */
         sdk_features: String? = null,
         /** Corresponds to SDK constants file widgets.txt */
-        sdk_widgets: String? = null
+        sdk_widgets: String? = null,
+        /** Map from artifact id to artifact descriptor */
+        artifacts: Map<String, String>? = null,
+        /** Extract annotations and check that the given packages contain the given extracted XML files */
+        extractAnnotations: Map<String, String>? = null
     ) {
         System.setProperty("METALAVA_TESTS_RUNNING", VALUE_TRUE)
 
-        if (compatibilityMode && mergeAnnotations != null) {
+        if (compatibilityMode && mergeXmlAnnotations != null) {
             fail(
                 "Can't specify both compatibilityMode and mergeAnnotations: there were no " +
-                        "annotations output in doclava1"
+                    "annotations output in doclava1"
+            )
+        }
+        if (compatibilityMode && mergeJaifAnnotations != null) {
+            fail(
+                "Can't specify both compatibilityMode and mergeJaifAnnotations: there were no " +
+                    "annotations output in doclava1"
             )
         }
 
+        if (compatibilityMode && mergeSignatureAnnotations != null) {
+            fail(
+                "Can't specify both compatibilityMode and mergeSignatureAnnotations: there were no " +
+                    "annotations output in doclava1"
+            )
+        }
         Errors.resetLevels()
 
         /** Expected output if exiting with an error code */
@@ -233,7 +263,7 @@ abstract class DriverTest {
         val sourceList =
             if (signatureSource != null) {
                 sourcePathDir.mkdirs()
-                assert(sourceFiles.isEmpty(), { "Shouldn't combine sources with signature file loads" })
+                assert(sourceFiles.isEmpty()) { "Shouldn't combine sources with signature file loads" }
                 val signatureFile = File(project, "load-api.txt")
                 Files.asCharSink(signatureFile, Charsets.UTF_8).write(signatureSource.trimIndent())
                 if (includeStrippedSuperclassWarnings) {
@@ -247,7 +277,7 @@ abstract class DriverTest {
                 }
             } else if (apiJar != null) {
                 sourcePathDir.mkdirs()
-                assert(sourceFiles.isEmpty(), { "Shouldn't combine sources with API jar file loads" })
+                assert(sourceFiles.isEmpty()) { "Shouldn't combine sources with API jar file loads" }
                 arrayOf(apiJar.path)
             } else {
                 sourceFiles.asSequence().map { File(project, it.targetPath).path }.toList().toTypedArray()
@@ -260,9 +290,25 @@ abstract class DriverTest {
             }
         }
 
-        val mergeAnnotationsArgs = if (mergeAnnotations != null) {
+        val mergeAnnotationsArgs = if (mergeXmlAnnotations != null) {
             val merged = File(project, "merged-annotations.xml")
-            Files.asCharSink(merged, Charsets.UTF_8).write(mergeAnnotations.trimIndent())
+            Files.asCharSink(merged, Charsets.UTF_8).write(mergeXmlAnnotations.trimIndent())
+            arrayOf("--merge-annotations", merged.path)
+        } else {
+            emptyArray()
+        }
+
+        val jaifAnnotationsArgs = if (mergeJaifAnnotations != null) {
+            val merged = File(project, "merged-annotations.jaif")
+            Files.asCharSink(merged, Charsets.UTF_8).write(mergeJaifAnnotations.trimIndent())
+            arrayOf("--merge-annotations", merged.path)
+        } else {
+            emptyArray()
+        }
+
+        val signatureAnnotationsArgs = if (mergeSignatureAnnotations != null) {
+            val merged = File(project, "merged-annotations.txt")
+            Files.asCharSink(merged, Charsets.UTF_8).write(mergeSignatureAnnotations.trimIndent())
             arrayOf("--merge-annotations", merged.path)
         } else {
             emptyArray()
@@ -348,6 +394,10 @@ abstract class DriverTest {
                 args.add("--show-annotation")
                 args.add("android.annotation.SystemApi")
             }
+            if (includeSystemApiAnnotations && !args.contains("android.annotation.SystemService")) {
+                args.add("--show-annotation")
+                args.add("android.annotation.SystemService")
+            }
             args.toTypedArray()
         } else {
             emptyArray()
@@ -368,9 +418,17 @@ abstract class DriverTest {
             emptyArray()
         }
 
+        var removedDexApiFile: File? = null
+        val removedDexArgs = if (removedDexApi != null) {
+            removedDexApiFile = temporaryFolder.newFile("removed-dex.txt")
+            arrayOf("--removed-dex-api", removedDexApiFile.path)
+        } else {
+            emptyArray()
+        }
+
         var apiFile: File? = null
         val apiArgs = if (api != null) {
-            apiFile = temporaryFolder.newFile("api.txt")
+            apiFile = temporaryFolder.newFile("public-api.txt")
             arrayOf("--api", apiFile.path)
         } else {
             emptyArray()
@@ -392,6 +450,14 @@ abstract class DriverTest {
             emptyArray()
         }
 
+        var dexApiFile: File? = null
+        val dexApiArgs = if (dexApi != null) {
+            dexApiFile = temporaryFolder.newFile("public-dex.txt")
+            arrayOf("--dex-api", dexApiFile.path)
+        } else {
+            emptyArray()
+        }
+
         var privateDexApiFile: File? = null
         val privateDexApiArgs = if (privateDexApi != null) {
             privateDexApiFile = temporaryFolder.newFile("private-dex.txt")
@@ -403,7 +469,11 @@ abstract class DriverTest {
         var stubsDir: File? = null
         val stubsArgs = if (stubs.isNotEmpty()) {
             stubsDir = temporaryFolder.newFolder("stubs")
-            arrayOf("--stubs", stubsDir.path)
+            if (docStubs) {
+                arrayOf("--doc-stubs", stubsDir.path)
+            } else {
+                arrayOf("--stubs", stubsDir.path)
+            }
         } else {
             emptyArray()
         }
@@ -465,6 +535,32 @@ abstract class DriverTest {
             sdkFilesDir = null
         }
 
+        val artifactArgs = if (artifacts != null) {
+            val args = mutableListOf<String>()
+            var index = 1
+            for ((artifactId, signatures) in artifacts) {
+                val signatureFile = temporaryFolder.newFile("signature-file-$index.txt")
+                Files.asCharSink(signatureFile, Charsets.UTF_8).write(signatures.trimIndent())
+                index++
+
+                args.add("--register-artifact")
+                args.add(signatureFile.path)
+                args.add(artifactId)
+            }
+            args.toTypedArray()
+        } else {
+            emptyArray()
+        }
+
+        val extractedAnnotationsZip: File?
+        val extractAnnotationsArgs = if (extractAnnotations != null) {
+            extractedAnnotationsZip = temporaryFolder.newFile("extracted-annotations.zip")
+            arrayOf("--extract-annotations", extractedAnnotationsZip.path)
+        } else {
+            extractedAnnotationsZip = null
+            emptyArray()
+        }
+
         val actualOutput = runDriver(
             "--no-color",
             "--no-banner",
@@ -472,7 +568,7 @@ abstract class DriverTest {
             // For the tests we want to treat references to APIs like java.io.Closeable
             // as a class that is part of the API surface, not as a hidden class as would
             // be the case when analyzing a complete API surface
-            //"--unhide-classpath-classes",
+            // "--unhide-classpath-classes",
             "--allow-referencing-unknown-classes",
 
             // Annotation generation temporarily turned off by default while integrating with
@@ -485,9 +581,11 @@ abstract class DriverTest {
             androidJar.path,
             *kotlinPathArgs,
             *removedArgs,
+            *removedDexArgs,
             *apiArgs,
             *exactApiArgs,
             *privateApiArgs,
+            *dexApiArgs,
             *privateDexApiArgs,
             *stubsArgs,
             *stubsSourceListArgs,
@@ -498,6 +596,8 @@ abstract class DriverTest {
             *coverageStats,
             *quiet,
             *mergeAnnotationsArgs,
+            *jaifAnnotationsArgs,
+            *signatureAnnotationsArgs,
             *previousApiArgs,
             *migrateNullsArguments,
             *checkCompatibilityArguments,
@@ -509,6 +609,8 @@ abstract class DriverTest {
             *sdkFilesArgs,
             *importedPackageArgs.toTypedArray(),
             *skipEmitPackagesArgs.toTypedArray(),
+            *artifactArgs,
+            *extractAnnotationsArgs,
             *sourceList,
             *extraArguments,
             expectedFail = expectedFail
@@ -533,6 +635,15 @@ abstract class DriverTest {
             assertEquals(stripComments(removedApi, stripLineComments = false).trimIndent(), expectedText)
         }
 
+        if (removedDexApi != null && removedDexApiFile != null) {
+            assertTrue(
+                "${removedDexApiFile.path} does not exist even though --removed-dex-api was used",
+                removedDexApiFile.exists()
+            )
+            val expectedText = readFile(removedDexApiFile, stripBlankLines, trim)
+            assertEquals(stripComments(removedDexApi, stripLineComments = false).trimIndent(), expectedText)
+        }
+
         if (exactApi != null && exactApiFile != null) {
             assertTrue(
                 "${exactApiFile.path} does not exist even though --exact-api was used",
@@ -549,6 +660,15 @@ abstract class DriverTest {
             )
             val expectedText = readFile(privateApiFile, stripBlankLines, trim)
             assertEquals(stripComments(privateApi, stripLineComments = false).trimIndent(), expectedText)
+        }
+
+        if (dexApi != null && dexApiFile != null) {
+            assertTrue(
+                "${dexApiFile.path} does not exist even though --dex-api was used",
+                dexApiFile.exists()
+            )
+            val expectedText = readFile(dexApiFile, stripBlankLines, trim)
+            assertEquals(stripComments(dexApi, stripLineComments = false).trimIndent(), expectedText)
         }
 
         if (privateDexApi != null && privateDexApiFile != null) {
@@ -609,6 +729,16 @@ abstract class DriverTest {
             )
         }
 
+        if (extractAnnotations != null && extractedAnnotationsZip != null) {
+            assertTrue(
+                "Using --extract-annotations but $extractedAnnotationsZip was not created",
+                extractedAnnotationsZip.isFile
+            )
+            for ((pkg, xml) in extractAnnotations) {
+                assertPackageXml(pkg, extractedAnnotationsZip, xml)
+            }
+        }
+
         if (stubs.isNotEmpty() && stubsDir != null) {
             for (i in 0 until stubs.size) {
                 val stub = stubs[i]
@@ -638,13 +768,6 @@ abstract class DriverTest {
             val generated = gatherSources(listOf(stubsDir)).map { it.path }.toList().toTypedArray()
 
             // Also need to include on the compile path annotation classes referenced in the stubs
-            val supportAnnotationsDir = File("../../frameworks/support/annotations/src/main/java/")
-            if (!supportAnnotationsDir.isDirectory) {
-                fail("Couldn't find $supportAnnotationsDir: Is the pwd set to the root of the metalava source code?")
-            }
-            val supportAnnotations =
-                gatherSources(listOf(supportAnnotationsDir)).map { it.path }.toList().toTypedArray()
-
             val extraAnnotationsDir = File("stub-annotations/src/main/java")
             if (!extraAnnotationsDir.isDirectory) {
                 fail("Couldn't find $extraAnnotationsDir: Is the pwd set to the root of the metalava source code?")
@@ -652,11 +775,9 @@ abstract class DriverTest {
             }
             val extraAnnotations = gatherSources(listOf(extraAnnotationsDir)).map { it.path }.toList().toTypedArray()
 
-
             if (!runCommand(
                     "${getJdkPath()}/bin/javac", arrayOf(
-                        "-d", project.path, *generated,
-                        *supportAnnotations, *extraAnnotations
+                        "-d", project.path, *generated, *extraAnnotations
                     )
                 )
             ) {
@@ -668,7 +789,7 @@ abstract class DriverTest {
         if (checkDoclava1 && !CHECK_OLD_DOCLAVA_TOO) {
             println(
                 "This test requested diffing with doclava1, but doclava1 testing was disabled with the " +
-                        "DriverTest#CHECK_OLD_DOCLAVA_TOO = false"
+                    "DriverTest#CHECK_OLD_DOCLAVA_TOO = false"
             )
         }
 
@@ -714,8 +835,8 @@ abstract class DriverTest {
             )
         }
 
-        if (CHECK_OLD_DOCLAVA_TOO && checkDoclava1 && signatureSource == null
-            && removedApi != null && removedApiFile != null
+        if (CHECK_OLD_DOCLAVA_TOO && checkDoclava1 && signatureSource == null &&
+            removedApi != null && removedApiFile != null
         ) {
             removedApiFile.delete()
             checkSignaturesWithDoclava1(
@@ -818,6 +939,48 @@ abstract class DriverTest {
                 extraArguments = arrayOf("-api", File(privateDexApiFile.parentFile, "dummy-api.txt").path),
                 showUnannotated = showUnannotated
             )
+        }
+
+        if (CHECK_OLD_DOCLAVA_TOO && checkDoclava1 && signatureSource == null &&
+            dexApi != null && dexApiFile != null
+        ) {
+            dexApiFile.delete()
+            checkSignaturesWithDoclava1(
+                api = dexApi,
+                argument = "-dexApi",
+                output = dexApiFile,
+                expected = dexApiFile,
+                sourceList = sourceList,
+                sourcePath = sourcePath,
+                packages = packages,
+                androidJar = androidJar,
+                trim = trim,
+                stripBlankLines = stripBlankLines,
+                showAnnotationArgs = showAnnotationArguments,
+                stubImportPackages = importedPackages,
+                // Workaround: -dexApi is a no-op if you don't also provide -api
+                extraArguments = arrayOf("-api", File(dexApiFile.parentFile, "dummy-api.txt").path),
+                showUnannotated = showUnannotated
+            )
+        }
+    }
+
+    /** Checks that the given zip annotations file contains the given XML package contents */
+    private fun assertPackageXml(pkg: String, output: File, @Language("XML") expected: String) {
+        assertNotNull(output)
+        assertTrue(output.exists())
+        val url = URL(
+            "jar:" + SdkUtils.fileToUrlString(output) + "!/" + pkg.replace('.', '/') +
+                "/annotations.xml"
+        )
+        val stream = url.openStream()
+        try {
+            val bytes = ByteStreams.toByteArray(stream)
+            assertNotNull(bytes)
+            val xml = String(bytes, Charsets.UTF_8).replace("\r\n", "\n")
+            assertEquals(expected.trimIndent().trim(), xml.trimIndent().trim())
+        } finally {
+            Closeables.closeQuietly(stream)
         }
     }
 
@@ -931,10 +1094,8 @@ abstract class DriverTest {
             output.path
         )
 
-
         val message = "\n${args.joinToString(separator = "\n") { "\"$it\"," }}"
         println("Running doclava1 with the following args:\n$message")
-
 
         if (!runCommand(
                 "$jdkPath/bin/java",
@@ -982,11 +1143,11 @@ abstract class DriverTest {
         private val sdk: File
             get() = File(
                 System.getenv("ANDROID_HOME")
-                        ?: error("You must set \$ANDROID_HOME before running tests")
+                    ?: error("You must set \$ANDROID_HOME before running tests")
             )
 
         fun getAndroidJar(apiLevel: Int): File? {
-            val localFile = File("../../prebuilts/sdk/$apiLevel/android.jar")
+            val localFile = File("../../prebuilts/sdk/$apiLevel/public/android.jar")
             if (localFile.exists()) {
                 return localFile
             }
@@ -1058,6 +1219,23 @@ val intDefAnnotationSource: TestFile = java(
     @Retention(SOURCE)
     @Target({ANNOTATION_TYPE})
     public @interface IntDef {
+        int[] value() default {};
+        boolean flag() default false;
+    }
+    """
+).indented()
+
+val longDefAnnotationSource: TestFile = java(
+    """
+    package android.annotation;
+    import java.lang.annotation.Retention;
+    import java.lang.annotation.RetentionPolicy;
+    import java.lang.annotation.Target;
+    import static java.lang.annotation.ElementType.*;
+    import static java.lang.annotation.RetentionPolicy.SOURCE;
+    @Retention(SOURCE)
+    @Target({ANNOTATION_TYPE})
+    public @interface LongDef {
         long[] value() default {};
         boolean flag() default false;
     }
@@ -1088,6 +1266,37 @@ val nonNullSource: TestFile = java(
     """
 ).indented()
 
+val libcoreNonNullSource: TestFile = DriverTest.java(
+    """
+    package libcore.util;
+    import static java.lang.annotation.ElementType.*;
+    import static java.lang.annotation.RetentionPolicy.SOURCE;
+    import java.lang.annotation.*;
+    @Documented
+    @Retention(SOURCE)
+    @Target({TYPE_USE})
+    public @interface NonNull {
+       int from() default Integer.MIN_VALUE;
+       int to() default Integer.MAX_VALUE;
+    }
+    """
+).indented()
+
+val libcoreNullableSource: TestFile = DriverTest.java(
+    """
+    package libcore.util;
+    import static java.lang.annotation.ElementType.*;
+    import static java.lang.annotation.RetentionPolicy.SOURCE;
+    import java.lang.annotation.*;
+    @Documented
+    @Retention(SOURCE)
+    @Target({TYPE_USE})
+    public @interface Nullable {
+       int from() default Integer.MIN_VALUE;
+       int to() default Integer.MAX_VALUE;
+    }
+    """
+).indented()
 val requiresPermissionSource: TestFile = java(
     """
     package android.annotation;
@@ -1119,6 +1328,21 @@ val requiresFeatureSource: TestFile = java(
             """
 ).indented()
 
+val requiresApiSource: TestFile = java(
+    """
+    package androidx.annotation;
+    import java.lang.annotation.*;
+    import static java.lang.annotation.ElementType.*;
+    import static java.lang.annotation.RetentionPolicy.SOURCE;
+    @Retention(SOURCE)
+    @Target({TYPE,FIELD,METHOD,CONSTRUCTOR})
+    public @interface RequiresApi {
+        int value() default 1;
+        int api() default 1;
+    }
+            """
+).indented()
+
 val sdkConstantSource: TestFile = java(
     """
     package android.annotation;
@@ -1127,7 +1351,7 @@ val sdkConstantSource: TestFile = java(
     @Retention(RetentionPolicy.SOURCE)
     public @interface SdkConstant {
         enum SdkConstantType {
-            ACTIVITY_INTENT_ACTION, BROADCAST_INTENT_ACTION, SERVICE_ACTION, INTENT_CATEGORY, FEATURE;
+            ACTIVITY_INTENT_ACTION, BROADCAST_INTENT_ACTION, SERVICE_ACTION, INTENT_CATEGORY, FEATURE
         }
         SdkConstantType value();
     }
@@ -1172,7 +1396,7 @@ val nullableSource: TestFile = java(
 
 val supportNonNullSource: TestFile = java(
     """
-    package android.support.annotation;
+    package androidx.annotation;
     import java.lang.annotation.*;
     import static java.lang.annotation.ElementType.*;
     import static java.lang.annotation.RetentionPolicy.SOURCE;
@@ -1186,7 +1410,35 @@ val supportNonNullSource: TestFile = java(
 
 val supportNullableSource: TestFile = java(
     """
-package android.support.annotation;
+package androidx.annotation;
+import java.lang.annotation.*;
+import static java.lang.annotation.ElementType.*;
+import static java.lang.annotation.RetentionPolicy.SOURCE;
+@SuppressWarnings("WeakerAccess")
+@Retention(SOURCE)
+@Target({METHOD, PARAMETER, FIELD, TYPE_USE})
+public @interface Nullable {
+}
+                """
+)
+
+val androidxNonNullSource: TestFile = java(
+    """
+    package androidx.annotation;
+    import java.lang.annotation.*;
+    import static java.lang.annotation.ElementType.*;
+    import static java.lang.annotation.RetentionPolicy.SOURCE;
+    @SuppressWarnings("WeakerAccess")
+    @Retention(SOURCE)
+    @Target({METHOD, PARAMETER, FIELD, TYPE_USE})
+    public @interface NonNull {
+    }
+    """
+).indented()
+
+val androidxNullableSource: TestFile = java(
+    """
+package androidx.annotation;
 import java.lang.annotation.*;
 import static java.lang.annotation.ElementType.*;
 import static java.lang.annotation.RetentionPolicy.SOURCE;
@@ -1200,7 +1452,7 @@ public @interface Nullable {
 
 val supportParameterName: TestFile = java(
     """
-    package android.support.annotation;
+    package androidx.annotation;
     import java.lang.annotation.*;
     import static java.lang.annotation.ElementType.*;
     import static java.lang.annotation.RetentionPolicy.SOURCE;
@@ -1215,7 +1467,7 @@ val supportParameterName: TestFile = java(
 
 val supportDefaultValue: TestFile = java(
     """
-    package android.support.annotation;
+    package androidx.annotation;
     import java.lang.annotation.*;
     import static java.lang.annotation.ElementType.*;
     import static java.lang.annotation.RetentionPolicy.SOURCE;
@@ -1230,7 +1482,7 @@ val supportDefaultValue: TestFile = java(
 
 val uiThreadSource: TestFile = java(
     """
-    package android.support.annotation;
+    package androidx.annotation;
     import java.lang.annotation.*;
     import static java.lang.annotation.ElementType.*;
     import static java.lang.annotation.RetentionPolicy.SOURCE;
@@ -1254,7 +1506,7 @@ val uiThreadSource: TestFile = java(
 
 val workerThreadSource: TestFile = java(
     """
-    package android.support.annotation;
+    package androidx.annotation;
     import java.lang.annotation.*;
     import static java.lang.annotation.ElementType.*;
     import static java.lang.annotation.RetentionPolicy.SOURCE;
@@ -1313,6 +1565,18 @@ val systemApiSource: TestFile = java(
     """
 ).indented()
 
+val testApiSource: TestFile = java(
+    """
+    package android.annotation;
+    import static java.lang.annotation.ElementType.*;
+    import java.lang.annotation.*;
+    @Target({TYPE, FIELD, METHOD, CONSTRUCTOR, ANNOTATION_TYPE, PACKAGE})
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface TestApi {
+    }
+    """
+).indented()
+
 val widgetSource: TestFile = java(
     """
     package android.annotation;
@@ -1323,4 +1587,3 @@ val widgetSource: TestFile = java(
     }
     """
 ).indented()
-

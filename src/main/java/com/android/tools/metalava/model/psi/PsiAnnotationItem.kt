@@ -55,7 +55,7 @@ class PsiAnnotationItem private constructor(
 
         val attributes = psiAnnotation.parameterList.attributes
         if (attributes.isEmpty()) {
-            return "@" + qualifiedName
+            return "@$qualifiedName"
         }
 
         val sb = StringBuilder(30)
@@ -299,7 +299,8 @@ class PsiAnnotationItem private constructor(
         // TODO: Inline this such that instead of constructing XmlBackedAnnotationItem
         // and then producing source and parsing it, produce source directly
         fun create(
-            codebase: Codebase, xmlAnnotation: XmlBackedAnnotationItem,
+            codebase: Codebase,
+            xmlAnnotation: XmlBackedAnnotationItem,
             context: Item? = null
         ): PsiAnnotationItem {
             if (codebase is PsiBasedCodebase) {

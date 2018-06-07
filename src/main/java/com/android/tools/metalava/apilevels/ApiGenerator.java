@@ -16,7 +16,9 @@
 
 package com.android.tools.metalava.apilevels;
 
-import com.android.annotations.NonNull;
+import com.android.tools.metalava.model.Codebase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -93,10 +95,8 @@ public class ApiGenerator {
             } else if (arg.length() >= 2 && arg.substring(0, 2).equals("--")) {
                 System.err.println("Unknown argument: " + arg);
                 error = true;
-
             } else if (outPath == null) {
                 outPath = arg;
-
             } else if (new File(arg).isDirectory()) {
                 String pattern = arg;
                 if (!pattern.endsWith(File.separator)) {
@@ -104,7 +104,6 @@ public class ApiGenerator {
                 }
                 pattern += "platforms" + File.separator + "android-%" + File.separator + "android.jar";
                 patterns.add(pattern);
-
             } else {
                 System.err.println("Unknown argument: " + arg);
                 error = true;
@@ -137,7 +136,7 @@ public class ApiGenerator {
         }
 
         try {
-            if (!generate(minApi, currentApi, currentJar, patterns, outPath)) {
+            if (!generate(minApi, currentApi, currentJar, patterns, outPath, null)) {
                 System.exit(1);
             }
         } catch (IOException e) {
@@ -148,16 +147,19 @@ public class ApiGenerator {
 
     private static boolean generate(int minApi,
                                     int currentApi,
-                                    @NonNull File currentJar,
-                                    @NonNull List<String> patterns,
-                                    @NonNull String outPath) throws IOException {
-        AndroidJarReader reader = new AndroidJarReader(patterns, minApi, currentJar, currentApi);
+                                    @NotNull File currentJar,
+                                    @NotNull List<String> patterns,
+                                    @NotNull String outPath,
+                                    @Nullable Codebase codebase) throws IOException {
+        AndroidJarReader reader = new AndroidJarReader(patterns, minApi, currentJar, currentApi, codebase);
         Api api = reader.getApi();
         return createApiFile(new File(outPath), api);
     }
 
-    public static boolean generate(@NonNull File[] apiLevels, @NonNull File outputFile) throws IOException {
-        AndroidJarReader reader = new AndroidJarReader(apiLevels);
+    public static boolean generate(@NotNull File[] apiLevels,
+                                   @NotNull File outputFile,
+                                   @Nullable Codebase codebase) throws IOException {
+        AndroidJarReader reader = new AndroidJarReader(apiLevels, codebase);
         Api api = reader.getApi();
         return createApiFile(outputFile, api);
     }
@@ -165,16 +167,16 @@ public class ApiGenerator {
     private static void printUsage() {
         System.err.println("\nGenerates a single API file from the content of an SDK.");
         System.err.println("Usage:");
-        System.err.println("\tApiCheck [--min-api=1] OutFile [SdkFolder | --pattern sdk/%/android.jar]+");
+        System.err.println("\tApiCheck [--min-api=1] OutFile [SdkFolder | --pattern sdk/%/public/android.jar]+");
         System.err.println("Options:");
         System.err.println("--min-api <int> : The first API level to consider (>=1).");
         System.err.println("--pattern <pattern>: Path pattern to find per-API android.jar files, where\n" +
-                "            '%' is replaced by the API level.");
+            "            '%' is replaced by the API level.");
         System.err.println("--current-jar <path>: Path pattern to find the current android.jar");
         System.err.println("--current-version <int>: The API level for the current API");
         System.err.println("--current-codename <name>: REL, if a release, or codename for previews");
         System.err.println("SdkFolder: if given, this adds the pattern\n" +
-                "           '$SdkFolder/platforms/android-%/android.jar'");
+            "           '$SdkFolder/platforms/android-%/android.jar'");
         System.err.println("If multiple --pattern are specified, they are tried in the order given.\n");
     }
 
@@ -185,26 +187,20 @@ public class ApiGenerator {
      * @param api     the api to write
      */
     private static boolean createApiFile(File outFile, Api api) {
-        PrintStream stream = null;
-        try {
-            File parentFile = outFile.getParentFile();
-            if (!parentFile.exists()) {
-                boolean ok = parentFile.mkdirs();
-                if (!ok) {
-                    System.err.println("Could not create directory " + parentFile);
-                    return false;
-                }
+        File parentFile = outFile.getParentFile();
+        if (!parentFile.exists()) {
+            boolean ok = parentFile.mkdirs();
+            if (!ok) {
+                System.err.println("Could not create directory " + parentFile);
+                return false;
             }
-            stream = new PrintStream(outFile, "UTF-8");
+        }
+        try (PrintStream stream = new PrintStream(outFile, "UTF-8")) {
             stream.println("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
             api.print(stream);
         } catch (Exception e) {
             e.printStackTrace();
             return false;
-        } finally {
-            if (stream != null) {
-                stream.close();
-            }
         }
 
         return true;

@@ -207,11 +207,11 @@ class PsiModifierItem(
     }
 
     override fun isPackagePrivate(): Boolean {
-        return flags and (PUBLIC or PROTECTED or PRIVATE) == 0
+        return flags and (PUBLIC or PROTECTED or PRIVATE or INTERNAL) == 0
     }
 
     fun getAccessFlags(): Int {
-        return flags and (PUBLIC or PROTECTED or PRIVATE)
+        return flags and (PUBLIC or PROTECTED or PRIVATE or INTERNAL)
     }
 
     // Rename? It's not a full equality, it's whether an override's modifier set is significant
@@ -222,8 +222,8 @@ class PsiModifierItem(
 
             // Skipping the "default" flag
             // TODO: Compatibility: skipNativeModifier and skipStrictFpModifier modifier flags!
-            //if (!compatibility.skipNativeModifier && isNative() != other.isNative()) return false
-            //if (!compatibility.skipStrictFpModifier && isStrictFp() != other.isStrictFp()) return false
+            // if (!compatibility.skipNativeModifier && isNative() != other.isNative()) return false
+            // if (!compatibility.skipStrictFpModifier && isStrictFp() != other.isStrictFp()) return false
             return flags and mask == flags2 and mask
         }
         return false
@@ -255,8 +255,8 @@ class PsiModifierItem(
          * to consider whether an override of a method is different from its super implementation
          */
         private const val EQUIVALENCE_MASK = PUBLIC or PROTECTED or PRIVATE or STATIC or ABSTRACT or
-                FINAL or TRANSIENT or VOLATILE or SYNCHRONIZED or DEPRECATED or VARARG or
-                SEALED or INTERNAL or INFIX or OPERATOR
+            FINAL or TRANSIENT or VOLATILE or SYNCHRONIZED or DEPRECATED or VARARG or
+            SEALED or INTERNAL or INFIX or OPERATOR
 
         fun create(codebase: PsiBasedCodebase, element: PsiModifierListOwner, documentation: String?): PsiModifierItem {
             val modifiers = create(

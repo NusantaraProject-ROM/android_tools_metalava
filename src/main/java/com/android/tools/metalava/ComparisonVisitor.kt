@@ -26,6 +26,7 @@ import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.PackageItem
 import com.android.tools.metalava.model.ParameterItem
 import com.android.tools.metalava.model.visitors.ApiVisitor
+import com.android.tools.metalava.model.visitors.VisibleItemVisitor
 import com.intellij.util.containers.Stack
 import java.util.Comparator
 import java.util.function.Predicate
@@ -41,11 +42,18 @@ open class ComparisonVisitor(
      * instead of just a [#visitConstructor] call. Helps simplify visitors that
      * don't care to distinguish between the two cases. Defaults to true.
      */
-    val visitConstructorsAsMethods: Boolean = true
+    val visitConstructorsAsMethods: Boolean = true,
+    /**
+     * Normally if a new item is found, the visitor will
+     * only visit the top level newly added item, not all
+     * of its children. This flags enables you to request
+     * all individual items to also be visited.
+     */
+    val visitAddedItemsRecursively: Boolean = false
 ) {
     open fun compare(old: Item, new: Item) {}
-    open fun added(item: Item) {}
-    open fun removed(item: Item, from: Item?) {}
+    open fun added(new: Item) {}
+    open fun removed(old: Item, from: Item?) {}
 
     open fun compare(old: PackageItem, new: PackageItem) {}
     open fun compare(old: ClassItem, new: ClassItem) {}
@@ -54,19 +62,19 @@ open class ComparisonVisitor(
     open fun compare(old: FieldItem, new: FieldItem) {}
     open fun compare(old: ParameterItem, new: ParameterItem) {}
 
-    open fun added(item: PackageItem) {}
-    open fun added(item: ClassItem) {}
-    open fun added(item: ConstructorItem) {}
-    open fun added(item: MethodItem) {}
-    open fun added(item: FieldItem) {}
-    open fun added(item: ParameterItem) {}
+    open fun added(new: PackageItem) {}
+    open fun added(new: ClassItem) {}
+    open fun added(new: ConstructorItem) {}
+    open fun added(new: MethodItem) {}
+    open fun added(new: FieldItem) {}
+    open fun added(new: ParameterItem) {}
 
-    open fun removed(item: PackageItem, from: Item?) {}
-    open fun removed(item: ClassItem, from: Item?) {}
-    open fun removed(item: ConstructorItem, from: ClassItem?) {}
-    open fun removed(item: MethodItem, from: ClassItem?) {}
-    open fun removed(item: FieldItem, from: ClassItem?) {}
-    open fun removed(item: ParameterItem, from: MethodItem?) {}
+    open fun removed(old: PackageItem, from: Item?) {}
+    open fun removed(old: ClassItem, from: Item?) {}
+    open fun removed(old: ConstructorItem, from: ClassItem?) {}
+    open fun removed(old: MethodItem, from: ClassItem?) {}
+    open fun removed(old: FieldItem, from: ClassItem?) {}
+    open fun removed(old: ParameterItem, from: MethodItem?) {}
 }
 
 class CodebaseComparator {
@@ -83,7 +91,9 @@ class CodebaseComparator {
     }
 
     private fun compare(
-        visitor: ComparisonVisitor, oldList: List<ItemTree>, newList: List<ItemTree>,
+        visitor: ComparisonVisitor,
+        oldList: List<ItemTree>,
+        newList: List<ItemTree>,
         newParent: Item?
     ) {
         // Debugging tip: You can print out a tree like this: ItemTree.prettyPrint(list)
@@ -121,7 +131,6 @@ class CodebaseComparator {
                             index2++
                         }
                     }
-
                 } else {
                     // All the remaining items in oldList have been deleted
                     while (index1 < length1) {
@@ -139,8 +148,20 @@ class CodebaseComparator {
         }
     }
 
+    private fun visitAdded(visitor: ComparisonVisitor, new: Item) {
+        if (visitor.visitAddedItemsRecursively) {
+            new.accept(object : VisibleItemVisitor() {
+                override fun visitItem(item: Item) {
+                    doVisitAdded(visitor, item)
+                }
+            })
+        } else {
+            doVisitAdded(visitor, new)
+        }
+    }
+
     @Suppress("USELESS_CAST") // Overloaded visitor methods: be explicit about which one is being invoked
-    private fun visitAdded(visitor: ComparisonVisitor, item: Item) {
+    private fun doVisitAdded(visitor: ComparisonVisitor, item: Item) {
         visitor.added(item)
 
         when (item) {

@@ -44,6 +44,9 @@ interface Codebase {
     /** Description of what this codebase is (useful during debugging) */
     var description: String
 
+    /** The API level of this codebase, or -1 if not known */
+    var apiLevel: Int
+
     /** The packages in the codebase (may include packages that are not included in the API) */
     fun getPackages(): PackageList
 
@@ -92,7 +95,8 @@ interface Codebase {
      * Creates an annotation item for the given (fully qualified) Java source
      */
     fun createAnnotation(
-        @Language("JAVA") source: String, context: Item? = null,
+        @Language("JAVA") source: String,
+        context: Item? = null,
         mapName: Boolean = true
     ): AnnotationItem = TextBackedAnnotationItem(
         this, source, mapName
@@ -153,11 +157,13 @@ abstract class DefaultCodebase : Codebase {
     override var original: Codebase? = null
     override var supportsStagedNullability: Boolean = false
     override var units: List<PsiFile> = emptyList()
+    override var apiLevel: Int = -1
 
     override fun getPermissionLevel(name: String): String? {
         if (permissions == null) {
-            assert(manifest != null,
-                { "This method should only be called when a manifest has been configured on the codebase" })
+            assert(manifest != null) {
+                "This method should only be called when a manifest has been configured on the codebase"
+            }
             try {
                 val map = HashMap<String, String>(600)
                 val doc = XmlUtils.parseDocument(manifest?.readText(UTF_8), true)

@@ -183,12 +183,10 @@ open class TextMethodItem(
 
     override fun isExtensionMethod(): Boolean = codebase.unsupported()
 
-    override var inheritedInterfaceMethod: Boolean = false
+    override var inheritedMethod: Boolean = false
 
     override fun toString(): String =
         "${if (isConstructor()) "Constructor" else "Method"} ${containingClass().qualifiedName()}.${name()}(${parameters().joinToString {
             it.type().toSimpleType()
         }})"
 }
-
-

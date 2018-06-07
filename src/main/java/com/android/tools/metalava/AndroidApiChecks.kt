@@ -134,7 +134,6 @@ class AndroidApiChecks {
                         // found beginning
                         break
                     }
-
                 }
                 begin += tag.length
             }
@@ -152,8 +151,8 @@ class AndroidApiChecks {
             val c = doc[i]
 
             if (c == '@' && (isLinePrefix ||
-                        doc.startsWith("@param", i, true) ||
-                        doc.startsWith("@return", i, true))
+                    doc.startsWith("@param", i, true) ||
+                    doc.startsWith("@return", i, true))
             ) {
                 // Found it
                 end = i
@@ -191,23 +190,23 @@ class AndroidApiChecks {
                 }
 
                 for (value in values) {
-                    //var perm = String.valueOf(value.value())
+                    // var perm = String.valueOf(value.value())
                     var perm = value.toSource()
                     if (perm.indexOf('.') >= 0) perm = perm.substring(perm.lastIndexOf('.') + 1)
                     if (text.contains(perm)) {
                         reporter.report(
                             // Why is that a problem? Sometimes you want to describe
                             // particular use cases.
-                            Errors.REQUIRES_PERMISSION, method, "Method '" + method.name()
-                                    + "' documentation mentions permissions already declared by @RequiresPermission"
+                            Errors.REQUIRES_PERMISSION, method, "Method '" + method.name() +
+                                "' documentation mentions permissions already declared by @RequiresPermission"
                         )
                     }
                 }
             }
         } else if (text.contains("android.Manifest.permission") || text.contains("android.permission.")) {
             reporter.report(
-                Errors.REQUIRES_PERMISSION, method, "Method '" + method.name()
-                        + "' documentation mentions permissions without declaring @RequiresPermission"
+                Errors.REQUIRES_PERMISSION, method, "Method '" + method.name() +
+                    "' documentation mentions permissions without declaring @RequiresPermission"
             )
         }
     }
@@ -234,8 +233,8 @@ class AndroidApiChecks {
             }
             if (!hasSdkConstant) {
                 reporter.report(
-                    Errors.SDK_CONSTANT, field, "Field '" + field.name()
-                            + "' is missing @SdkConstant(SdkConstantType.BROADCAST_INTENT_ACTION)"
+                    Errors.SDK_CONSTANT, field, "Field '" + field.name() +
+                        "' is missing @SdkConstant(SdkConstantType.BROADCAST_INTENT_ACTION)"
                 )
             }
         }
@@ -243,8 +242,8 @@ class AndroidApiChecks {
         if (text.contains("Activity Action:")) {
             if (!hasSdkConstant) {
                 reporter.report(
-                    Errors.SDK_CONSTANT, field, "Field '" + field.name()
-                            + "' is missing @SdkConstant(SdkConstantType.ACTIVITY_INTENT_ACTION)"
+                    Errors.SDK_CONSTANT, field, "Field '" + field.name() +
+                        "' is missing @SdkConstant(SdkConstantType.ACTIVITY_INTENT_ACTION)"
                 )
             }
         }
@@ -261,7 +260,10 @@ class AndroidApiChecks {
             var foundTypeDef = false
             for (annotation in item.modifiers.annotations()) {
                 val cls = annotation.resolve() ?: continue
-                if (cls.modifiers.findAnnotation(SdkConstants.INT_DEF_ANNOTATION) != null) {
+                val modifiers = cls.modifiers
+                if (modifiers.findAnnotation(SdkConstants.INT_DEF_ANNOTATION.oldName()) != null ||
+                    modifiers.findAnnotation(SdkConstants.INT_DEF_ANNOTATION.newName()) != null
+                ) {
                     // TODO: Check that all the constants listed in the documentation are included in the
                     // annotation?
                     foundTypeDef = true
@@ -273,7 +275,7 @@ class AndroidApiChecks {
                 reporter.report(
                     Errors.INT_DEF, item,
                     // TODO: Include source code you can paste right into the code?
-                    ident + " documentation mentions constants without declaring an @IntDef"
+                    "$ident documentation mentions constants without declaring an @IntDef"
                 )
             }
         }
@@ -283,7 +285,7 @@ class AndroidApiChecks {
         ) {
             reporter.report(
                 Errors.NULLABLE, item,
-                ident + " documentation mentions 'null' without declaring @NonNull or @Nullable"
+                "$ident documentation mentions 'null' without declaring @NonNull or @Nullable"
             )
         }
     }
@@ -293,4 +295,3 @@ class AndroidApiChecks {
         val nullPattern: Pattern = Pattern.compile("\\bnull\\b")
     }
 }
-

@@ -1,7 +1,7 @@
 buildscript {
-    ext.gradle_version = '3.1.0-beta4'
-    ext.studio_version = '26.1.0-beta4'
-    ext.kotlin_version = '1.2.30'
+    ext.gradle_version = '3.2.0-alpha16'
+    ext.studio_version = '26.2.0-alpha16'
+    ext.kotlin_version = '1.2.41'
     repositories {
         google()
         jcenter()
@@ -10,6 +10,11 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "com.android.tools.build:gradle:$gradle_version"
     }
+}
+
+repositories {
+    google()
+    jcenter()
 }
 
 apply plugin: 'application'
@@ -42,11 +47,6 @@ compileKotlin {
     }
 }
 
-repositories {
-    google()
-    jcenter()
-}
-
 dependencies {
     implementation "com.android.tools.external.org-jetbrains:uast:$studio_version"
     implementation "com.android.tools.external.com-intellij:intellij-core:$studio_version"
@@ -54,8 +54,8 @@ dependencies {
     implementation "com.android.tools.lint:lint-checks:$studio_version"
     implementation "com.android.tools.lint:lint-gradle:$studio_version"
     implementation "com.android.tools.lint:lint:$studio_version"
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    implementation "com.android.tools.lint:lint-tests:$studio_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    testImplementation "com.android.tools.lint:lint-tests:$studio_version"
     testImplementation 'junit:junit:4.11'
 }
 
@@ -101,3 +101,27 @@ if (System.env.DIST_DIR != null && System.env.OUT_DIR != null) {
     version = "${version}-SNAPSHOT"
 }
 
+// KtLint: https://github.com/shyiko/ktlint
+
+configurations {
+    ktlint
+}
+
+dependencies {
+    ktlint "com.github.shyiko:ktlint:0.23.1"
+}
+
+task ktlint(type: JavaExec, group: "verification") {
+    description = "Check Kotlin code style."
+    main = "com.github.shyiko.ktlint.Main"
+    classpath = configurations.ktlint
+    args "src/**/*.kt"
+}
+check.dependsOn ktlint
+
+task format(type: JavaExec, group: "formatting") {
+    description = "Fix Kotlin code style deviations."
+    main = "com.github.shyiko.ktlint.Main"
+    classpath = configurations.ktlint
+    args "-F", "src/**/*.kt"
+}

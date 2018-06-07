@@ -75,7 +75,7 @@ interface ModifierList {
         if (isVolatile() != other.isVolatile()) return false
 
         // Default does not require an override to "remove" it
-        //if (isDefault() != other.isDefault()) return false
+        // if (isDefault() != other.isDefault()) return false
 
         return true
     }
@@ -183,7 +183,9 @@ interface ModifierList {
             omitCommonPackages: Boolean = false,
             removeAbstract: Boolean = false,
             removeFinal: Boolean = false,
-            addPublic: Boolean = false
+            addPublic: Boolean = false,
+            onlyIncludeSignatureAnnotations: Boolean = true
+
         ) {
 
             val list = if (removeAbstract || removeFinal || addPublic) {
@@ -211,8 +213,13 @@ interface ModifierList {
                     skipNullnessAnnotations = skipNullnessAnnotations,
                     omitCommonPackages = omitCommonPackages,
                     separateLines = false,
-                    writer = writer
+                    writer = writer,
+                    onlyIncludeSignatureAnnotations = onlyIncludeSignatureAnnotations
                 )
+            }
+
+            if (compatibility.doubleSpaceForPackagePrivate && item.isPackagePrivate && item is MemberItem) {
+                writer.write(" ")
             }
 
             // Kotlin order:
@@ -262,15 +269,15 @@ interface ModifierList {
                     writer.write("operator ")
                 }
 
-                val isInterface = classItem?.isInterface() == true
-                        || (methodItem?.containingClass()?.isInterface() == true &&
+                val isInterface = classItem?.isInterface() == true ||
+                    (methodItem?.containingClass()?.isInterface() == true &&
                         !list.isDefault() && !list.isStatic())
 
-                if ((compatibility.abstractInInterfaces && isInterface
-                            || list.isAbstract() &&
-                            (classItem?.isEnum() != true &&
-                                    (compatibility.abstractInAnnotations || classItem?.isAnnotationType() != true)))
-                    && (!isInterface || compatibility.abstractInInterfaces)
+                if ((compatibility.abstractInInterfaces && isInterface ||
+                        list.isAbstract() &&
+                        (classItem?.isEnum() != true &&
+                            (compatibility.abstractInAnnotations || classItem?.isAnnotationType() != true))) &&
+                    (!isInterface || compatibility.abstractInInterfaces)
                 ) {
                     writer.write("abstract ")
                 }
@@ -310,15 +317,15 @@ interface ModifierList {
                     list.isPrivate() -> writer.write("private ")
                 }
 
-                val isInterface = classItem?.isInterface() == true
-                        || (methodItem?.containingClass()?.isInterface() == true &&
+                val isInterface = classItem?.isInterface() == true ||
+                    (methodItem?.containingClass()?.isInterface() == true &&
                         !list.isDefault() && !list.isStatic())
 
-                if ((compatibility.abstractInInterfaces && isInterface
-                            || list.isAbstract() &&
-                            (classItem?.isEnum() != true &&
-                                    (compatibility.abstractInAnnotations || classItem?.isAnnotationType() != true)))
-                    && (!isInterface || compatibility.abstractInInterfaces)
+                if ((compatibility.abstractInInterfaces && isInterface ||
+                        list.isAbstract() &&
+                        (classItem?.isEnum() != true &&
+                            (compatibility.abstractInAnnotations || classItem?.isAnnotationType() != true))) &&
+                    (!isInterface || compatibility.abstractInInterfaces)
                 ) {
                     writer.write("abstract ")
                 }
@@ -378,16 +385,37 @@ interface ModifierList {
             skipNullnessAnnotations: Boolean = false,
             omitCommonPackages: Boolean = false,
             separateLines: Boolean = false,
-            writer: Writer
+            filterDuplicates: Boolean = false,
+            writer: Writer,
+            onlyIncludeSignatureAnnotations: Boolean = true
         ) {
-            if (list.annotations().isNotEmpty()) {
-                for (annotation in list.annotations()) {
+            val annotations = list.annotations()
+            if (annotations.isNotEmpty()) {
+                var index = -1
+                for (annotation in annotations) {
+                    index++
                     if ((annotation.isNonNull() || annotation.isNullable())) {
                         if (skipNullnessAnnotations) {
                             continue
                         }
-                    } else if (!annotation.isSignificant()) {
+                    } else if (onlyIncludeSignatureAnnotations && !annotation.isSignificant()) {
                         continue
+                    }
+
+                    // Optionally filter out duplicates
+                    if (index > 0 && filterDuplicates) {
+                        val qualifiedName = annotation.qualifiedName()
+                        var found = false
+                        for (i in 0 until index) {
+                            val prev = annotations[i]
+                            if (prev.qualifiedName() == qualifiedName) {
+                                found = true
+                                break
+                            }
+                        }
+                        if (found) {
+                            continue
+                        }
                     }
 
                     val source = annotation.toSource()
@@ -406,4 +434,3 @@ interface ModifierList {
         }
     }
 }
-

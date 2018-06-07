@@ -48,11 +48,29 @@ class DocAnalyzer(
 
         tweakGrammar()
 
+        injectArtifactIds()
+
         // TODO:
         // insertMissingDocFromHiddenSuperclasses()
     }
 
-    //noinspection SpellCheckingInspection
+    private fun injectArtifactIds() {
+        val artifacts = options.artifactRegistrations
+        if (!artifacts.any()) {
+            return
+        }
+
+        artifacts.tag(codebase)
+
+        codebase.accept(object : VisibleItemVisitor() {
+            override fun visitClass(cls: ClassItem) {
+                cls.artifact?.let {
+                    cls.appendDocumentation(it, "@artifactId")
+                }
+            }
+        })
+    }
+
     val mentionsNull: Pattern = Pattern.compile("\\bnull\\b")
 
     /** Hide packages explicitly listed in [Options.hidePackages] */
@@ -104,7 +122,7 @@ class DocAnalyzer(
                 if (findThreadAnnotations(annotations).size > 1) {
                     reporter.warning(
                         item, "Found more than one threading annotation on $item; " +
-                                "the auto-doc feature does not handle this correctly",
+                            "the auto-doc feature does not handle this correctly",
                         Errors.MULTIPLE_THREAD_ANNOTATIONS
                     )
                 }
@@ -114,7 +132,10 @@ class DocAnalyzer(
                 var result: MutableList<String>? = null
                 for (annotation in annotations) {
                     val name = annotation.qualifiedName()
-                    if (name != null && name.endsWith("Thread") && name.startsWith(ANDROID_SUPPORT_ANNOTATION_PREFIX)) {
+                    if (name != null && name.endsWith("Thread") &&
+                        (name.startsWith(ANDROID_SUPPORT_ANNOTATION_PREFIX) ||
+                            name.startsWith(ANDROIDX_ANNOTATION_PREFIX))
+                    ) {
                         if (result == null) {
                             result = mutableListOf()
                         }
@@ -141,7 +162,8 @@ class DocAnalyzer(
 
             private fun handleAnnotation(
                 annotation: AnnotationItem,
-                item: Item, depth: Int
+                item: Item,
+                depth: Int
             ) {
                 val name = annotation.qualifiedName()
                 if (name == null || name.startsWith(JAVA_LANG_PREFIX)) {
@@ -180,10 +202,11 @@ class DocAnalyzer(
                 }
 
                 // Document required permissions
-                if (item is MemberItem && name == "android.support.annotation.RequiresPermission") {
+                if (item is MemberItem && name == "androidx.annotation.RequiresPermission") {
+                    var values: List<AnnotationAttributeValue>? = null
+                    var any = false
+                    var conditional = false
                     for (attribute in annotation.attributes()) {
-                        var values: List<AnnotationAttributeValue>? = null
-                        var any = false
                         when (attribute.name) {
                             "value", "allOf" -> {
                                 values = attribute.leafValues()
@@ -192,12 +215,13 @@ class DocAnalyzer(
                                 any = true
                                 values = attribute.leafValues()
                             }
+                            "conditional" -> {
+                                conditional = attribute.value.value() == true
+                            }
                         }
+                    }
 
-                        if (values == null || values.isEmpty()) {
-                            continue
-                        }
-
+                    if (values != null && values.isNotEmpty() && !conditional) {
                         // Look at macros_override.cs for the usage of these
                         // tags. In particular, search for def:dump_permission
 
@@ -223,9 +247,7 @@ class DocAnalyzer(
                                     Errors.MISSING_PERMISSION, item,
                                     "Cannot find permission field for $value required by $item (may be hidden or removed)"
                                 )
-                                //return
                                 sb.append(value.toSource())
-
                             } else {
                                 if (field.isHiddenOrRemoved()) {
                                     reporter.report(
@@ -242,7 +264,7 @@ class DocAnalyzer(
                 }
 
                 // Document value ranges
-                if (name == "android.support.annotation.IntRange" || name == "android.support.annotation.FloatRange") {
+                if (name == "androidx.annotation.IntRange" || name == "androidx.annotation.FloatRange") {
                     val from: String? = annotation.findAttribute("from")?.value?.toSource()
                     val to: String? = annotation.findAttribute("to")?.value?.toSource()
                     // TODO: inclusive/exclusive attributes on FloatRange!
@@ -265,8 +287,8 @@ class DocAnalyzer(
                 }
 
                 // Document expected constants
-                if (name == "android.support.annotation.IntDef" || name == "android.support.annotation.LongDef"
-                    || name == "android.support.annotation.StringDef"
+                if (name == "androidx.annotation.IntDef" || name == "androidx.annotation.LongDef" ||
+                    name == "androidx.annotation.StringDef"
                 ) {
                     val values = annotation.findAttribute("value")?.leafValues() ?: return
                     val flag = annotation.findAttribute("flag")?.value?.toSource() == "true"
@@ -317,12 +339,7 @@ class DocAnalyzer(
                     val value = annotation.findAttribute("value")?.leafValues()?.firstOrNull() ?: return
                     val sb = StringBuilder(100)
                     val resolved = value.resolve()
-                    val field = if (resolved is FieldItem)
-                        resolved
-                    else {
-                        val v: Any = value.value() ?: value.toSource()
-                        findPermissionField(codebase, v)
-                    }
+                    val field = resolved as? FieldItem
                     sb.append("Requires the ")
                     if (field == null) {
                         reporter.report(
@@ -330,7 +347,6 @@ class DocAnalyzer(
                             "Cannot find feature field for $value required by $item (may be hidden or removed)"
                         )
                         sb.append("{@link ${value.toSource()}}")
-
                     } else {
                         if (field.isHiddenOrRemoved()) {
                             reporter.report(
@@ -348,6 +364,22 @@ class DocAnalyzer(
                     appendDocumentation(sb.toString(), item, false)
                 }
 
+                // Required API levels
+                if (name == "androidx.annotation.RequiresApi") {
+                    val level = run {
+                        val api = annotation.findAttribute("api")?.leafValues()?.firstOrNull()?.value()
+                        if (api == null || api == 1) {
+                            annotation.findAttribute("value")?.leafValues()?.firstOrNull()?.value() ?: return
+                        } else {
+                            api
+                        }
+                    }
+
+                    if (level is Int) {
+                        addApiLevelDocumentation(level, item)
+                    }
+                }
+
                 // Thread annotations are ignored here because they're handled as a group afterwards
 
                 // TODO: Resource type annotations
@@ -357,7 +389,7 @@ class DocAnalyzer(
                     if (depth == 20) { // Temp debugging
                         throw StackOverflowError(
                             "Unbounded recursion, processing annotation " +
-                                    "${annotation.toSource()} in $item in ${item.compilationUnit()} "
+                                "${annotation.toSource()} in $item in ${item.compilationUnit()} "
                         )
                     }
                     handleAnnotation(nested, item, depth + 1)
@@ -396,7 +428,7 @@ class DocAnalyzer(
 
         val documentation = cls.findTagDocumentation(tag)
         if (documentation != null) {
-            assert(documentation.startsWith("@$tag"), { documentation })
+            assert(documentation.startsWith("@$tag")) { documentation }
             // TODO: Insert it in the right place (@return or @param)
             val section = when {
                 documentation.startsWith("@returnDoc") -> "@return"
@@ -421,7 +453,6 @@ class DocAnalyzer(
 
     /** Replacements to perform in documentation */
     val typos = mapOf(
-        //noinspection SpellCheckingInspection
         "Andriod" to "Android",
         "Kitkat" to "KitKat",
         "LemonMeringuePie" to "Lollipop",
@@ -498,33 +529,33 @@ class DocAnalyzer(
                 addApiLevelDocumentation(apiLookup.getFieldVersion(psiField), field)
                 addDeprecatedDocumentation(apiLookup.getFieldDeprecatedIn(psiField), field)
             }
-
-            private fun addApiLevelDocumentation(level: Int, item: Item) {
-                if (level > 1) {
-                    appendDocumentation("Requires API level $level", item, false)
-                    // Also add @since tag, unless already manually entered.
-                    // TODO: Override it everywhere in case the existing doc is wrong (we know
-                    // better), and at least for OpenJDK sources we *should* since the since tags
-                    // are talking about language levels rather than API levels!
-                    if (!item.documentation.contains("@since")) {
-                        item.appendDocumentation(describeApiLevel(level), "@since")
-                    }
-                }
-            }
-
-            private fun addDeprecatedDocumentation(level: Int, item: Item) {
-                if (level > 1) {
-                    // TODO: *pre*pend instead!
-                    val description =
-                        "<p class=\"caution\"><strong>This class was deprecated in API level 21.</strong></p>"
-                    item.appendDocumentation(description, "@deprecated", append = false)
-                }
-            }
-
-            private fun describeApiLevel(level: Int): String {
-                return "${SdkVersionInfo.getVersionString(level)} ${SdkVersionInfo.getCodeName(level)} ($level)"
-            }
         })
+    }
+
+    private fun addApiLevelDocumentation(level: Int, item: Item) {
+        if (level > 1) {
+            appendDocumentation("Requires API level $level", item, false)
+            // Also add @since tag, unless already manually entered.
+            // TODO: Override it everywhere in case the existing doc is wrong (we know
+            // better), and at least for OpenJDK sources we *should* since the since tags
+            // are talking about language levels rather than API levels!
+            if (!item.documentation.contains("@since")) {
+                item.appendDocumentation(describeApiLevel(level), "@since")
+            }
+        }
+    }
+
+    private fun addDeprecatedDocumentation(level: Int, item: Item) {
+        if (level > 1) {
+            // TODO: *pre*pend instead!
+            val description =
+                "<p class=\"caution\"><strong>This class was deprecated in API level 21.</strong></p>"
+            item.appendDocumentation(description, "@deprecated", append = false)
+        }
+    }
+
+    private fun describeApiLevel(level: Int): String {
+        return "${SdkVersionInfo.getVersionString(level)} ${SdkVersionInfo.getCodeName(level)} ($level)"
     }
 }
 

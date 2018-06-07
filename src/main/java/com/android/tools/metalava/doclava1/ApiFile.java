@@ -16,7 +16,6 @@
 
 package com.android.tools.metalava.doclava1;
 
-import com.android.tools.lint.annotations.Extractor;
 import com.android.tools.lint.checks.infrastructure.ClassNameKt;
 import com.android.tools.metalava.model.AnnotationItem;
 import com.android.tools.metalava.model.TypeParameterList;
@@ -38,6 +37,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.android.tools.metalava.ConstantsKt.ANDROIDX_NOTNULL;
+import static com.android.tools.metalava.ConstantsKt.ANDROIDX_NULLABLE;
 import static com.android.tools.metalava.ConstantsKt.JAVA_LANG_ANNOTATION;
 import static com.android.tools.metalava.ConstantsKt.JAVA_LANG_ENUM;
 import static com.android.tools.metalava.ConstantsKt.JAVA_LANG_STRING;
@@ -89,7 +90,7 @@ public class ApiFile {
     }
 
     private static void parsePackage(TextCodebase api, Tokenizer tokenizer)
-            throws ApiParseException {
+        throws ApiParseException {
         String token;
         String name;
         TextPackageItem pkg;
@@ -114,7 +115,7 @@ public class ApiFile {
     }
 
     private static void parseClass(TextCodebase api, TextPackageItem pkg, Tokenizer tokenizer, String token)
-            throws ApiParseException {
+        throws ApiParseException {
         boolean isPublic = false;
         boolean isProtected = false;
         boolean isPrivate = false;
@@ -217,9 +218,9 @@ public class ApiFile {
         token = tokenizer.requireToken();
 
         cl = new TextClassItem(api, tokenizer.pos(), isPublic, isProtected,
-                isPrivate, internal, isStatic, isInterface, isAbstract, isEnum, isAnnotation,
-                isFinal, sealed, typeInfo.toErasedTypeString(), typeInfo.qualifiedTypeName(),
-                rawName, annotations);
+            isPrivate, internal, isStatic, isInterface, isAbstract, isEnum, isAnnotation,
+            isFinal, sealed, typeInfo.toErasedTypeString(), typeInfo.qualifiedTypeName(),
+            rawName, annotations);
         cl.setContainingPackage(pkg);
         cl.setTypeInfo(typeInfo);
         cl.setDeprecated(isDeprecated);
@@ -282,17 +283,17 @@ public class ApiFile {
         if (api.getKotlinStyleNulls()) {
             if (token.endsWith("?")) {
                 token = token.substring(0, token.length() - 1);
-                annotations = mergeAnnotations(annotations, Extractor.SUPPORT_NULLABLE);
+                annotations = mergeAnnotations(annotations, ANDROIDX_NULLABLE);
             } else if (token.endsWith("!")) {
                 token = token.substring(0, token.length() - 1);
             } else if (!token.endsWith("!")) {
                 if (!TextTypeItem.Companion.isPrimitive(token)) { // Don't add nullness on primitive types like void
-                    annotations = mergeAnnotations(annotations, Extractor.SUPPORT_NOTNULL);
+                    annotations = mergeAnnotations(annotations, ANDROIDX_NOTNULL);
                 }
             }
         } else if (token.endsWith("?") || token.endsWith("!")) {
             throw new ApiParseException("Did you forget to supply --input-kotlin-nulls? Found Kotlin-style null type suffix when parser was not configured " +
-                    "to interpret signature file that way: " + token);
+                "to interpret signature file that way: " + token);
         }
         //noinspection unchecked
         return new Pair<>(token, annotations);
@@ -337,7 +338,7 @@ public class ApiFile {
     }
 
     private static void parseConstructor(TextCodebase api, Tokenizer tokenizer, TextClassItem cl, String token)
-            throws ApiParseException {
+        throws ApiParseException {
         boolean isPublic = false;
         boolean isProtected = false;
         boolean isPrivate = false;
@@ -389,12 +390,12 @@ public class ApiFile {
             throw new ApiParseException("expected (", tokenizer.getLine());
         }
         method = new TextConstructorItem(api, /*typeParameters*/
-                name, /*signature*/ cl, isPublic, isProtected, isPrivate, isInternal, false/*isFinal*/,
-                false/*isStatic*/, /*isSynthetic*/ false/*isAbstract*/, false/*isSynthetic*/,
-                false/*isNative*/, false/* isDefault */,
-                /*isAnnotationElement*/  /*flatSignature*/
-                /*overriddenMethod*/ cl.asTypeInfo(),
-                /*thrownExceptions*/ tokenizer.pos(), annotations);
+            name, /*signature*/ cl, isPublic, isProtected, isPrivate, isInternal, false/*isFinal*/,
+            false/*isStatic*/, /*isSynthetic*/ false/*isAbstract*/, false/*isSynthetic*/,
+            false/*isNative*/, false/* isDefault */,
+            /*isAnnotationElement*/  /*flatSignature*/
+            /*overriddenMethod*/ cl.asTypeInfo(),
+            /*thrownExceptions*/ tokenizer.pos(), annotations);
         method.setDeprecated(isDeprecated);
         token = tokenizer.requireToken();
         parseParameterList(api, tokenizer, method, /*new HashSet<String>(),*/ token);
@@ -409,7 +410,7 @@ public class ApiFile {
     }
 
     private static void parseMethod(TextCodebase api, Tokenizer tokenizer, TextClassItem cl, String token)
-            throws ApiParseException {
+        throws ApiParseException {
         boolean isPublic = false;
         boolean isProtected = false;
         boolean isPrivate = false;
@@ -514,10 +515,10 @@ public class ApiFile {
         assertIdent(tokenizer, token);
         name = token;
         method = new TextMethodItem(
-                api, name, /*signature*/ cl,
-                isPublic, isProtected, isPrivate, isInternal, isFinal, isStatic, isAbstract/*isAbstract*/,
-                isSynchronized, false/*isNative*/, isDefault/*isDefault*/, isInfix, isOperator, isInline,
-                returnType, tokenizer.pos(), annotations);
+            api, name, /*signature*/ cl,
+            isPublic, isProtected, isPrivate, isInternal, isFinal, isStatic, isAbstract/*isAbstract*/,
+            isSynchronized, false/*isNative*/, isDefault/*isDefault*/, isInfix, isOperator, isInline,
+            returnType, tokenizer.pos(), annotations);
         method.setDeprecated(isDeprecated);
         method.setTypeParameterList(typeParameterList);
         token = tokenizer.requireToken();
@@ -542,15 +543,15 @@ public class ApiFile {
         }
         // Reverse effect of TypeItem.shortenTypes(...)
         String qualifiedName = annotation.indexOf('.') == -1
-                ? "@android.support.annotation" + annotation
-                : "@" + annotation;
+            ? "@androidx.annotation" + annotation
+            : "@" + annotation;
 
         annotations.add(qualifiedName);
         return annotations;
     }
 
     private static void parseField(TextCodebase api, Tokenizer tokenizer, TextClassItem cl, String token, boolean isEnum)
-            throws ApiParseException {
+        throws ApiParseException {
         boolean isPublic = false;
         boolean isProtected = false;
         boolean isPrivate = false;
@@ -646,8 +647,8 @@ public class ApiFile {
         }
 
         field = new TextFieldItem(api, name, cl, isPublic, isProtected, isPrivate, isInternal, isFinal, isStatic,
-                isTransient, isVolatile, typeInfo, v, tokenizer.pos(),
-                annotations);
+            isTransient, isVolatile, typeInfo, v, tokenizer.pos(),
+            annotations);
         field.setDeprecated(isDeprecated);
         if (isEnum) {
             cl.addEnumConstant(field);
@@ -788,10 +789,10 @@ public class ApiFile {
             }
 
             method.addParameter(new TextParameterItem(api, method, name, publicName, defaultValue, index, type,
-                    typeInfo,
-                    vararg || type.endsWith("..."),
-                    tokenizer.pos(),
-                    annotations));
+                typeInfo,
+                vararg || type.endsWith("..."),
+                tokenizer.pos(),
+                annotations));
             if (type.endsWith("...")) {
                 method.setVarargs(true);
             }
@@ -800,7 +801,7 @@ public class ApiFile {
     }
 
     private static String parseThrows(Tokenizer tokenizer, TextMethodItem method)
-            throws ApiParseException {
+        throws ApiParseException {
         String token = tokenizer.requireToken();
         boolean comma = true;
         while (true) {
@@ -967,7 +968,7 @@ public class ApiFile {
                         }
                     }
                 } while (mPos < mBuf.length
-                        && ((!isSpace(mBuf[mPos]) && !isSeparator(mBuf[mPos], parenIsSep)) || genericDepth != 0));
+                    && ((!isSpace(mBuf[mPos]) && !isSeparator(mBuf[mPos], parenIsSep)) || genericDepth != 0));
                 if (mPos >= mBuf.length) {
                     throw new ApiParseException("Unexpected end of file for \" starting at " + line, mLine);
                 }
@@ -994,9 +995,6 @@ public class ApiFile {
     }
 
     private static boolean isIdent(char c) {
-        if (c == '"' || isSeparator(c, true)) {
-            return false;
-        }
-        return true;
+        return c != '"' && !isSeparator(c, true);
     }
 }

@@ -17,23 +17,16 @@
 package com.android.tools.metalava
 
 import com.android.tools.metalava.model.AnnotationItem
+import com.android.tools.metalava.model.FieldItem
 import com.android.tools.metalava.model.Item
+import com.android.tools.metalava.model.MethodItem
+import com.android.tools.metalava.model.ParameterItem
+import com.android.tools.metalava.model.TypeItem
 
 /**
  * Performs null migration analysis, looking at previous API signature
  * files and new signature files, and replacing new @Nullable and @NonNull
- * annotations with @NewlyNullable and @NewlyNonNull, and similarly
- * moving @NewlyNullable and @NewlyNonNull to @RecentlyNullable and @RecentlyNonNull
- * (and finally once the annotations have been there for another API level,
- * finally moving them to unconditionally nullable/nonnull.)
- *
- * (Newly null is the initial level; user code is marked as warnings if in
- * conflict with the annotation. Recently null is the next level; once an
- * API has had newly-null metadata in one API level, it gets promoted to
- * recently, which generates errors instead of warnings. The reason we have
- * this instead of just making it unconditional is that you can still invoke
- * the compiler with a flag to defeat it, so the Kotlin team suggested we do
- * this.
+ * annotations with @RecentlyNullable and @RecentlyNonNull.
  *
  * TODO: Enforce compatibility across type use annotations, e.g.
  * changing parameter value from
@@ -42,38 +35,79 @@ import com.android.tools.metalava.model.Item
  *    {@code @NonNull List<@NonNull String>}
  * is forbidden.
  */
-class NullnessMigration : ComparisonVisitor() {
+class NullnessMigration : ComparisonVisitor(visitAddedItemsRecursively = true) {
     override fun compare(old: Item, new: Item) {
+        if (hasNullnessInformation(new) && !hasNullnessInformation(old)) {
+            markRecent(new)
+        }
+    }
+
+    override fun added(new: Item) {
+        // Translate newly added items into RecentlyNull/RecentlyNonNull
         if (hasNullnessInformation(new)) {
-            if (!hasNullnessInformation(old)) {
-                // Nullness information change: Add migration annotation
-                val annotation = if (isNullable(new)) NEWLY_NULLABLE else NEWLY_NONNULL
+            markRecent(new)
+        }
+    }
+    override fun compare(old: MethodItem, new: MethodItem) {
+        val newType = new.returnType() ?: return
+        val oldType = old.returnType() ?: return
+        checkType(oldType, newType)
+    }
 
-                val migration = findNullnessAnnotation(new) ?: return
-                val modifiers = new.mutableModifiers()
-                modifiers.removeAnnotation(migration)
+    override fun compare(old: FieldItem, new: FieldItem) {
+        val newType = new.type()
+        val oldType = old.type()
+        checkType(oldType, newType)
+    }
 
-                // Don't map annotation names - this would turn newly non null back into non null
-                modifiers.addAnnotation(new.codebase.createAnnotation("@" + annotation, new, mapName = false))
-            } else if (hasMigrationAnnotation(old)) {
-                // Already marked migration before: Now we can promote it to
-                // no longer migrated!
-                val nullAnnotation = findNullnessAnnotation(new) ?: return
-                val migration = findMigrationAnnotation(old)?.toSource() ?: return
-                val modifiers = new.mutableModifiers()
-                modifiers.removeAnnotation(nullAnnotation)
+    override fun compare(old: ParameterItem, new: ParameterItem) {
+        val newType = new.type()
+        val oldType = old.type()
+        checkType(oldType, newType)
+    }
 
-                if (isNewlyMigrated(old)) {
-                    // Move from newly to recently
-                    val source = migration.replace("Newly", "Recently")
-                    modifiers.addAnnotation(new.codebase.createAnnotation(source, new, mapName = false))
-                } else {
-                    // Move from recently to no longer marked as migrated
-                    val source = migration.replace("Newly", "").replace("Recently", "")
-                    modifiers.addAnnotation(new.codebase.createAnnotation(source, new, mapName = false))
-                }
+    override fun added(new: MethodItem) {
+        checkType(new.returnType() ?: return)
+    }
+
+    override fun added(new: FieldItem) {
+        checkType(new.type())
+    }
+
+    override fun added(new: ParameterItem) {
+        checkType(new.type())
+    }
+
+    private fun hasNullnessInformation(type: TypeItem): Boolean {
+        val typeString = type.toTypeString(false, true, false)
+        return typeString.contains(".Nullable") || typeString.contains(".NonNull")
+    }
+
+    private fun checkType(old: TypeItem, new: TypeItem) {
+        if (hasNullnessInformation(new)) {
+            if (old.toTypeString(false, true, false) !=
+                new.toTypeString(false, true, false)) {
+                new.markRecent()
             }
         }
+    }
+
+    private fun checkType(new: TypeItem) {
+        if (hasNullnessInformation(new)) {
+            new.markRecent()
+        }
+    }
+
+    private fun markRecent(new: Item) {
+        val annotation = findNullnessAnnotation(new) ?: return
+        // Nullness information change: Add migration annotation
+        val annotationClass = if (annotation.isNullable()) RECENTLY_NULLABLE else RECENTLY_NONNULL
+
+        val modifiers = new.mutableModifiers()
+        modifiers.removeAnnotation(annotation)
+
+        // Don't map annotation names - this would turn newly non null back into non null
+        modifiers.addAnnotation(new.codebase.createAnnotation("@$annotationClass", new, mapName = false))
     }
 
     companion object {
@@ -85,86 +119,21 @@ class NullnessMigration : ComparisonVisitor() {
             return item.modifiers.annotations().firstOrNull { it.isNullnessAnnotation() }
         }
 
-        fun findMigrationAnnotation(item: Item): AnnotationItem? {
-            return item.modifiers.annotations().firstOrNull {
-                val qualifiedName = it.qualifiedName() ?: ""
-                isMigrationAnnotation(qualifiedName)
-            }
-        }
-
         fun isNullable(item: Item): Boolean {
             return item.modifiers.annotations().any { it.isNullable() }
         }
 
-        fun isNonNull(item: Item): Boolean {
+        private fun isNonNull(item: Item): Boolean {
             return item.modifiers.annotations().any { it.isNonNull() }
         }
 
-        fun hasMigrationAnnotation(item: Item): Boolean {
-            return item.modifiers.annotations().any { isMigrationAnnotation(it.qualifiedName() ?: "") }
-        }
-
-        fun isNewlyMigrated(item: Item): Boolean {
-            return item.modifiers.annotations().any { isNewlyMigrated(it.qualifiedName() ?: "") }
-        }
-
-        fun isRecentlyMigrated(item: Item): Boolean {
+        private fun isRecentlyMigrated(item: Item): Boolean {
             return item.modifiers.annotations().any { isRecentlyMigrated(it.qualifiedName() ?: "") }
         }
 
-        fun isNewlyMigrated(qualifiedName: String): Boolean {
-            return qualifiedName.endsWith(".NewlyNullable") ||
-                    qualifiedName.endsWith(".NewlyNonNull")
-        }
-
-        fun isRecentlyMigrated(qualifiedName: String): Boolean {
+        private fun isRecentlyMigrated(qualifiedName: String): Boolean {
             return qualifiedName.endsWith(".RecentlyNullable") ||
-                    qualifiedName.endsWith(".RecentlyNonNull")
-        }
-
-        fun isMigrationAnnotation(qualifiedName: String): Boolean {
-            return isNewlyMigrated(qualifiedName) || isRecentlyMigrated(qualifiedName)
+                qualifiedName.endsWith(".RecentlyNonNull")
         }
     }
 }
-
-/**
- * @TypeQualifierNickname
- * @NonNull
- * @kotlin.annotations.jvm.UnderMigration(status = kotlin.annotations.jvm.MigrationStatus.WARN)
- * @Retention(RetentionPolicy.CLASS)
- * public @interface NewlyNullable {
- * }
- */
-const val NEWLY_NULLABLE = "android.support.annotation.NewlyNullable"
-
-/**
- * @TypeQualifierNickname
- * @NonNull
- * @kotlin.annotations.jvm.UnderMigration(status = kotlin.annotations.jvm.MigrationStatus.WARN)
- * @Retention(RetentionPolicy.CLASS)
- * public @interface NewlyNonNull {
- * }
- */
-const val NEWLY_NONNULL = "android.support.annotation.NewlyNonNull"
-
-/**
- * @TypeQualifierNickname
- * @NonNull
- * @kotlin.annotations.jvm.UnderMigration(status = kotlin.annotations.jvm.MigrationStatus.STRICT)
- * @Retention(RetentionPolicy.CLASS)
- * public @interface NewlyNullable {
- * }
- */
-
-const val RECENTLY_NULLABLE = "android.support.annotation.RecentlyNullable"
-/**
- * @TypeQualifierNickname
- * @NonNull
- * @kotlin.annotations.jvm.UnderMigration(status = kotlin.annotations.jvm.MigrationStatus.STRICT)
- * @Retention(RetentionPolicy.CLASS)
- * public @interface NewlyNonNull {
- * }
- */
-const val RECENTLY_NONNULL = "android.support.annotation.RecentlyNonNull"
-

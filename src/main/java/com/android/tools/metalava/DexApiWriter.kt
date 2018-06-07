@@ -27,11 +27,12 @@ import java.util.function.Predicate
 class DexApiWriter(
     private val writer: PrintWriter,
     filterEmit: Predicate<Item>,
-    filterReference: Predicate<Item>
+    filterReference: Predicate<Item>,
+    inlineInheritedFields: Boolean = true
 ) : ApiVisitor(
     visitConstructorsAsMethods = true,
     nestInnerClasses = false,
-    inlineInheritedFields = true,
+    inlineInheritedFields = inlineInheritedFields,
     filterEmit = filterEmit,
     filterReference = filterReference
 ) {
@@ -43,6 +44,10 @@ class DexApiWriter(
     }
 
     override fun visitMethod(method: MethodItem) {
+        if (method.inheritedMethod) {
+            return
+        }
+
         writer.print(method.containingClass().toType().internalName())
         writer.print("->")
         writer.print(method.internalName())
