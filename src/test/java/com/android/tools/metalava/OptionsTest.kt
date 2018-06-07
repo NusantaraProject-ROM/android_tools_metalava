@@ -120,8 +120,12 @@ Generating Stubs:
                                        files
 --write-stubs-source-list <file>       Write the list of generated stub files into the
                                        given source list file. If generating documentation
-                                       stubs, this list will refer to the documentation
-                                       stubs; otherwise it's the non-documentation stubs.
+                                       stubs and you haven't also specified
+                                       --write-doc-stubs-source-list, this list will refer
+                                       to the documentation stubs; otherwise it's the
+                                       non-documentation stubs.
+--write-doc-stubs-source-list <file>   Write the list of generated doc stub files into the
+                                       given source list file
 --register-artifact <api-file> <id>    Registers the given id for the packages found in
                                        the given signature file. metalava will inject an
                                        @artifactId <id> tag into every top level stub
