@@ -213,7 +213,8 @@ interface ModifierList {
                     skipNullnessAnnotations = skipNullnessAnnotations,
                     omitCommonPackages = omitCommonPackages,
                     separateLines = false,
-                    writer = writer
+                    writer = writer,
+                    onlyIncludeSignatureAnnotations = onlyIncludeSignatureAnnotations
                 )
             }
 

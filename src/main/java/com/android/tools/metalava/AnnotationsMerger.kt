@@ -45,6 +45,9 @@ import com.android.tools.lint.annotations.Extractor.SUPPORT_NOTNULL
 import com.android.tools.lint.annotations.Extractor.SUPPORT_NULLABLE
 import com.android.tools.lint.checks.AnnotationDetector
 import com.android.tools.lint.detector.api.getChildren
+import com.android.tools.metalava.doclava1.ApiFile
+import com.android.tools.metalava.doclava1.ApiParseException
+import com.android.tools.metalava.doclava1.ApiPredicate
 import com.android.tools.metalava.model.AnnotationAttribute
 import com.android.tools.metalava.model.AnnotationAttributeValue
 import com.android.tools.metalava.model.AnnotationItem
@@ -105,6 +108,17 @@ class AnnotationsMerger(
                 } catch (e: IOException) {
                     error("Aborting: I/O problem during transform: " + e.toString())
                 }
+            } else if (file.path.endsWith(".txt") ||
+                file.path.endsWith(".signatures") ||
+                file.path.endsWith(".api")
+            ) {
+                try {
+                    // .txt: Old style signature files
+                    // Others: new signature files (e.g. kotlin-style nullness info)
+                    mergeAnnotationsSignatureFile(file.path)
+                } catch (e: IOException) {
+                    error("Aborting: I/O problem during transform: " + e.toString())
+                }
             }
         }
     }
@@ -149,6 +163,51 @@ class AnnotationsMerger(
             if (e !is IOException) {
                 e.printStackTrace()
             }
+        }
+    }
+
+    private fun mergeAnnotationsSignatureFile(path: String) {
+        try {
+            // Old style signature files don't support annotations anyway, so we might as well
+            // accept
+            val kotlinStyleNulls = true
+            val supportsStagedNullability = true
+            val signatureCodebase = ApiFile.parseApi(File(path), kotlinStyleNulls, supportsStagedNullability)
+            signatureCodebase.description = "Signature files for annotation merger: loaded from $path"
+            val visitor = object : ComparisonVisitor() {
+                override fun compare(old: Item, new: Item) {
+                    val newModifiers = new.modifiers
+                    for (annotation in old.modifiers.annotations()) {
+                        var addAnnotation = false
+                        if (annotation.isNullnessAnnotation()) {
+                            if (!newModifiers.hasNullnessInfo()) {
+                                addAnnotation = true
+                            }
+                        } else {
+                            // TODO: Check for other incompatibilities than nullness?
+                            val qualifiedName = annotation.qualifiedName() ?: continue
+                            if (newModifiers.findAnnotation(qualifiedName) == null) {
+                                addAnnotation = true
+                            }
+                        }
+
+                        if (addAnnotation) {
+                            // Don't map annotation names - this would turn newly non null back into non null
+                            new.mutableModifiers().addAnnotation(
+                                new.codebase.createAnnotation(
+                                    annotation.toSource(),
+                                    new,
+                                    mapName = false
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+            CodebaseComparator().compare(visitor, signatureCodebase, codebase, ApiPredicate(signatureCodebase))
+        } catch (ex: ApiParseException) {
+            val message = "Unable to parse signature file $path: ${ex.message}"
+            throw DriverException(message)
         }
     }
 
@@ -492,10 +551,14 @@ class AnnotationsMerger(
                         listOf(
                             // Add "L" suffix to ensure that we don't for example interpret "-1" as
                             // an integer -1 and then end up recording it as "ffffffff" instead of -1L
-                            XmlBackedAnnotationAttribute(valName1,
-                                value1 + (if (value1.last().isDigit()) "L" else "")),
-                            XmlBackedAnnotationAttribute(valName2,
-                                value2 + (if (value2.last().isDigit()) "L" else ""))
+                            XmlBackedAnnotationAttribute(
+                                valName1,
+                                value1 + (if (value1.last().isDigit()) "L" else "")
+                            ),
+                            XmlBackedAnnotationAttribute(
+                                valName2,
+                                value2 + (if (value2.last().isDigit()) "L" else "")
+                            )
                         )
                     )
                 )
