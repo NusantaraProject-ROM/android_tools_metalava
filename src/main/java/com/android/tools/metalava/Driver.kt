@@ -183,7 +183,8 @@ private fun processFlags() {
     }
 
     // Generate the documentation stubs *before* we migrate nullness information.
-    options.docStubsDir?.let { createStubFiles(it, codebase, docStubs = true, writeStubList = true) }
+    options.docStubsDir?.let { createStubFiles(it, codebase, docStubs = true,
+        writeStubList = options.docStubsSourceList != null) }
 
     val currentApiFile = options.currentApi
     if (currentApiFile != null && options.checkCompatibility) {
@@ -320,11 +321,11 @@ private fun processFlags() {
     options.stubsDir?.let {
         createStubFiles(
             it, codebase, docStubs = false,
-            writeStubList = options.docStubsDir == null
+            writeStubList = options.stubsSourceList != null
         )
     }
     if (options.docStubsDir == null && options.stubsDir == null) {
-        options.stubsSourceList?.let { file ->
+        val writeStubsFile: (File) -> Unit = { file ->
             val root = File("").absoluteFile
             val sources = options.sources
             val rootPath = root.path
@@ -338,6 +339,8 @@ private fun processFlags() {
             }
             Files.asCharSink(file, UTF_8).write(contents)
         }
+        options.stubsSourceList?.let(writeStubsFile)
+        options.docStubsSourceList?.let(writeStubsFile)
     }
     options.externalAnnotations?.let { extractAnnotations(codebase, it) }
     progress("\n")
@@ -624,7 +627,12 @@ private fun createStubFiles(stubDir: File, codebase: Codebase, docStubs: Boolean
     if (writeStubList) {
         // Optionally also write out a list of source files that were generated; used
         // for example to point javadoc to the stubs output to generate documentation
-        options.stubsSourceList?.let {
+        val file = if (docStubs) {
+            options.docStubsSourceList ?: options.stubsSourceList
+        } else {
+            options.stubsSourceList
+        }
+        file?.let {
             val root = File("").absoluteFile
             stubWriter.writeSourceList(it, root)
         }
