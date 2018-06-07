@@ -503,10 +503,8 @@ private fun loadFromSources(): Codebase {
     // General API checks for Android APIs
     AndroidApiChecks().check(codebase)
 
-    val ignoreShown = options.showUnannotated
-
-    val filterEmit = ApiPredicate(codebase, ignoreShown = ignoreShown, ignoreRemoved = false)
-    val apiEmit = ApiPredicate(codebase, ignoreShown = ignoreShown)
+    val filterEmit = ApiPredicate(codebase, ignoreShown = true, ignoreRemoved = false)
+    val apiEmit = ApiPredicate(codebase, ignoreShown = true)
     val apiReference = ApiPredicate(codebase, ignoreShown = true)
 
     // Copy methods from soon-to-be-hidden parents into descendant classes, when necessary

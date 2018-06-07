@@ -37,4 +37,8 @@ public @interface Size {
     long max() default Long.MAX_VALUE;
     /** The size must be a multiple of this factor */
     long multiple() default 1;
+
+    // STUBS ONLY: historical API range for when this permission applies.
+    // Used for merged annotations.
+    String apis() default "";
 }

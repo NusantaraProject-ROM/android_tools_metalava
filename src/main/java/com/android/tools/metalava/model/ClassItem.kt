@@ -652,6 +652,10 @@ interface ClassItem : Item {
     }
 
     fun allInnerClasses(includeSelf: Boolean = false): Sequence<ClassItem> {
+        if (!includeSelf && innerClasses().isEmpty()) {
+            return emptySequence()
+        }
+
         val list = ArrayList<ClassItem>()
         if (includeSelf) {
             list.add(this)
