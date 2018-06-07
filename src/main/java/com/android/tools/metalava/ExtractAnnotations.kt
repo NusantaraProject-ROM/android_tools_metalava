@@ -437,8 +437,8 @@ class ExtractAnnotations(
                 } else if (expression is JavaUAnnotationCallExpression) {
                     val annotation = expression.uAnnotation
                     attributes = annotation.attributeValues
-                } else if (expression is UastEmptyExpression && attributes[0].psi is PsiNameValuePair) {
-                    val memberValue = (attributes[0].psi as PsiNameValuePair).value
+                } else if (expression is UastEmptyExpression && attributes[0].sourcePsi is PsiNameValuePair) {
+                    val memberValue = (attributes[0].sourcePsi as PsiNameValuePair).value
                     if (memberValue is PsiAnnotation) {
                         val annotation = JavaUAnnotation.wrap(memberValue)
                         attributes = annotation.attributeValues
