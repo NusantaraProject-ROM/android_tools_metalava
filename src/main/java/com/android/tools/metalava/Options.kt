@@ -58,6 +58,7 @@ private const val ARG_EXACT_API = "--exact-api"
 private const val ARG_STUBS = "--stubs"
 private const val ARG_DOC_STUBS = "--doc-stubs"
 private const val ARG_STUBS_SOURCE_LIST = "--write-stubs-source-list"
+private const val ARG_DOC_STUBS_SOURCE_LIST = "--write-doc-stubs-source-list"
 private const val ARG_PROGUARD = "--proguard"
 private const val ARG_EXTRACT_ANNOTATIONS = "--extract-annotations"
 private const val ARG_EXCLUDE_ANNOTATIONS = "--exclude-annotations"
@@ -231,6 +232,10 @@ class Options(
     /** If set, a source file to write the stub index (list of source files) to. Can be passed to
      * other tools like javac/javadoc using the special @-syntax. */
     var stubsSourceList: File? = null
+
+    /** If set, a source file to write the doc stub index (list of source files) to. Can be passed to
+     * other tools like javac/javadoc using the special @-syntax. */
+    var docStubsSourceList: File? = null
 
     /** Proguard Keep list file to write */
     var proguard: File? = null
@@ -469,6 +474,7 @@ class Options(
                 ARG_STUBS, "-stubs" -> stubsDir = stringToNewDir(getValue(args, ++index))
                 ARG_DOC_STUBS -> docStubsDir = stringToNewDir(getValue(args, ++index))
                 ARG_STUBS_SOURCE_LIST -> stubsSourceList = stringToNewFile(getValue(args, ++index))
+                ARG_DOC_STUBS_SOURCE_LIST -> docStubsSourceList = stringToNewFile(getValue(args, ++index))
 
                 ARG_EXCLUDE_ANNOTATIONS -> generateAnnotations = false
 
@@ -609,8 +615,12 @@ class Options(
                             docStubsDir?.path
                         } else if (it == "STUBS_DIR" && stubsDir != null) {
                             stubsDir?.path
+                        } else if (it == "DOC_STUBS_SOURCE_LIST" && docStubsSourceList != null) {
+                            "@${docStubsSourceList?.path}"
                         } else if (it == "STUBS_SOURCE_LIST" && stubsSourceList != null) {
                             "@${stubsSourceList?.path}"
+                        } else if (it == "STUBS_SOURCE_LIST" && docStubsSourceList != null) {
+                            "@${docStubsSourceList?.path}"
                         } else {
                             it
                         }
@@ -1201,8 +1211,11 @@ class Options(
                 "documentation stubs, but not regular stubs, etc.",
             ARG_EXCLUDE_ANNOTATIONS, "Exclude annotations such as @Nullable from the stub files",
             "$ARG_STUBS_SOURCE_LIST <file>", "Write the list of generated stub files into the given source " +
-                "list file. If generating documentation stubs, this list will refer to the documentation stubs; " +
+                "list file. If generating documentation stubs and you haven't also specified " +
+                "$ARG_DOC_STUBS_SOURCE_LIST, this list will refer to the documentation stubs; " +
                 "otherwise it's the non-documentation stubs.",
+            "$ARG_DOC_STUBS_SOURCE_LIST <file>", "Write the list of generated doc stub files into the given source " +
+                "list file",
             "$ARG_REGISTER_ARTIFACT <api-file> <id>", "Registers the given id for the packages found in " +
                 "the given signature file. $PROGRAM_NAME will inject an @artifactId <id> tag into every top " +
                 "level stub class in that API.",
