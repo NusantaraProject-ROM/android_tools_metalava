@@ -16,7 +16,6 @@
 
 package com.android.tools.metalava
 
-import com.android.annotations.NonNull
 import com.android.tools.metalava.doclava1.Errors
 import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.FieldItem
@@ -79,15 +78,18 @@ class KotlinInteropChecks {
         val doc = method.documentation
         for (exception in exceptions.sortedBy { it.qualifiedName() }) {
             val checked = !(exception.extends("java.lang.RuntimeException") ||
-                    exception.extends("java.lang.Error"))
+                exception.extends("java.lang.Error"))
             if (checked) {
                 val annotation = method.modifiers.findAnnotation("kotlin.jvm.Throws")
                 if (annotation != null) {
-                    val attribute = annotation.findAttribute("exceptionClasses")
+                    annotation.attributes().first().name
+                    val attribute =
+                        annotation.findAttribute("exceptionClasses") ?: annotation.findAttribute("value")
+                        ?: annotation.attributes().firstOrNull()
                     if (attribute != null) {
                         for (v in attribute.leafValues()) {
                             val source = v.toSource()
-                            if (source == exception.qualifiedName() + ".class") { // contains: is
+                            if (source.endsWith(exception.simpleName() + "::class")) {
                                 return
                             }
                         }
@@ -152,7 +154,7 @@ class KotlinInteropChecks {
                             } parameters (such as parameter ${i + 1}, \"${parameter.name()}\", in ${
                             method.containingClass().qualifiedName()}.${method.name()
                             }) should be last to improve Kotlin interoperability; see " +
-                                    "https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions"
+                                "https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions"
                         reporter.report(Errors.SAM_SHOULD_BE_LAST, method, message)
                         break
                     }
@@ -343,7 +345,7 @@ class KotlinInteropChecks {
     }
 
     /** Returns true if the given string is a reserved Java keyword  */
-    fun isJavaKeyword(@NonNull keyword: String): Boolean {
+    fun isJavaKeyword(keyword: String): Boolean {
         // TODO when we built on top of IDEA core replace this with
         //   JavaLexer.isKeyword(candidate, LanguageLevel.JDK_1_5)
         when (keyword) {

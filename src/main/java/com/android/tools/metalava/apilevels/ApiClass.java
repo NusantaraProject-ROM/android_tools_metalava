@@ -16,6 +16,7 @@
 package com.android.tools.metalava.apilevels;
 
 import com.google.common.collect.Iterables;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -30,11 +31,11 @@ import java.util.Map;
  * This is used to write the simplified XML file containing all the public API.
  */
 public class ApiClass extends ApiElement {
-    private final List<ApiElement> mSuperClasses = new ArrayList<ApiElement>();
-    private final List<ApiElement> mInterfaces = new ArrayList<ApiElement>();
+    private final List<ApiElement> mSuperClasses = new ArrayList<>();
+    private final List<ApiElement> mInterfaces = new ArrayList<>();
 
-    private final Map<String, ApiElement> mFields = new HashMap<String, ApiElement>();
-    private final Map<String, ApiElement> mMethods = new HashMap<String, ApiElement>();
+    private final Map<String, ApiElement> mFields = new HashMap<>();
+    private final Map<String, ApiElement> mMethods = new HashMap<>();
 
     public ApiClass(String name, int version, boolean deprecated) {
         super(name, version, deprecated);
@@ -50,6 +51,11 @@ public class ApiClass extends ApiElement {
 
     public void addSuperClass(String superClass, int since) {
         addToArray(mSuperClasses, superClass, since);
+    }
+
+    @NotNull
+    List<ApiElement> getSuperClasses() {
+        return mSuperClasses;
     }
 
     public void addInterface(String interfaceClass, int since) {

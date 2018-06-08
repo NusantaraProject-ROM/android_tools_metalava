@@ -41,10 +41,10 @@ class TextBackedAnnotationItemTest {
     fun testSimple() {
         val annotation = TextBackedAnnotationItem(
             dummyCodebase,
-            "@android.support.annotation.Nullable"
+            "@androidx.annotation.Nullable"
         )
-        assertEquals("@android.support.annotation.Nullable", annotation.toSource())
-        assertEquals("android.support.annotation.Nullable", annotation.qualifiedName())
+        assertEquals("@androidx.annotation.Nullable", annotation.toSource())
+        assertEquals("androidx.annotation.Nullable", annotation.qualifiedName())
         assertTrue(annotation.attributes().isEmpty())
     }
 
@@ -52,10 +52,10 @@ class TextBackedAnnotationItemTest {
     fun testIntRange() {
         val annotation = TextBackedAnnotationItem(
             dummyCodebase,
-            "@android.support.annotation.IntRange(from = 20, to = 40)"
+            "@androidx.annotation.IntRange(from = 20, to = 40)"
         )
-        assertEquals("@android.support.annotation.IntRange(from = 20, to = 40)", annotation.toSource())
-        assertEquals("android.support.annotation.IntRange", annotation.qualifiedName())
+        assertEquals("@androidx.annotation.IntRange(from = 20, to = 40)", annotation.toSource())
+        assertEquals("androidx.annotation.IntRange", annotation.qualifiedName())
         assertEquals(2, annotation.attributes().size)
         assertEquals("from", annotation.findAttribute("from")?.name)
         assertEquals("20", annotation.findAttribute("from")?.value.toString())
@@ -67,13 +67,13 @@ class TextBackedAnnotationItemTest {
     fun testIntDef() {
         val annotation = TextBackedAnnotationItem(
             dummyCodebase,
-            "@android.support.annotation.IntDef({STYLE_NORMAL, STYLE_NO_TITLE, STYLE_NO_FRAME, STYLE_NO_INPUT})"
+            "@androidx.annotation.IntDef({STYLE_NORMAL, STYLE_NO_TITLE, STYLE_NO_FRAME, STYLE_NO_INPUT})"
         )
         assertEquals(
-            "@android.support.annotation.IntDef({STYLE_NORMAL, STYLE_NO_TITLE, STYLE_NO_FRAME, STYLE_NO_INPUT})",
+            "@androidx.annotation.IntDef({STYLE_NORMAL, STYLE_NO_TITLE, STYLE_NO_FRAME, STYLE_NO_INPUT})",
             annotation.toSource()
         )
-        assertEquals("android.support.annotation.IntDef", annotation.qualifiedName())
+        assertEquals("androidx.annotation.IntDef", annotation.qualifiedName())
         assertEquals(1, annotation.attributes().size)
         val attribute = annotation.findAttribute("value")
         assertNotNull(attribute)

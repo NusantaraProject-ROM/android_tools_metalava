@@ -34,13 +34,12 @@ class TextBackedAnnotationItem(
         val index = source.indexOf("(")
         val annotationClass = if (index == -1)
             source.substring(1) // Strip @
-        else
-            source.substring(1, index)
+        else source.substring(1, index)
 
         qualifiedName = if (mapName) AnnotationItem.mapName(codebase, annotationClass) else annotationClass
         full = when {
             qualifiedName == null -> ""
-            index == -1 -> "@" + qualifiedName
+            index == -1 -> "@$qualifiedName"
             else -> "@" + qualifiedName + source.substring(index)
         }
 

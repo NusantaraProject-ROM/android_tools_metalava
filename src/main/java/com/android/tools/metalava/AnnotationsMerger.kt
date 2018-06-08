@@ -31,8 +31,6 @@ import com.android.SdkConstants.STRING_DEF_ANNOTATION
 import com.android.SdkConstants.TYPE_DEF_FLAG_ATTRIBUTE
 import com.android.SdkConstants.TYPE_DEF_VALUE_ATTRIBUTE
 import com.android.SdkConstants.VALUE_TRUE
-import com.android.annotations.NonNull
-import com.android.tools.lint.annotations.ApiDatabase
 import com.android.tools.lint.annotations.Extractor.ANDROID_INT_DEF
 import com.android.tools.lint.annotations.Extractor.ANDROID_NOTNULL
 import com.android.tools.lint.annotations.Extractor.ANDROID_NULLABLE
@@ -45,7 +43,11 @@ import com.android.tools.lint.annotations.Extractor.IDEA_NOTNULL
 import com.android.tools.lint.annotations.Extractor.IDEA_NULLABLE
 import com.android.tools.lint.annotations.Extractor.SUPPORT_NOTNULL
 import com.android.tools.lint.annotations.Extractor.SUPPORT_NULLABLE
-import com.android.tools.lint.detector.api.LintUtils.getChildren
+import com.android.tools.lint.checks.AnnotationDetector
+import com.android.tools.lint.detector.api.getChildren
+import com.android.tools.metalava.doclava1.ApiFile
+import com.android.tools.metalava.doclava1.ApiParseException
+import com.android.tools.metalava.doclava1.ApiPredicate
 import com.android.tools.metalava.model.AnnotationAttribute
 import com.android.tools.metalava.model.AnnotationAttributeValue
 import com.android.tools.metalava.model.AnnotationItem
@@ -54,41 +56,34 @@ import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.DefaultAnnotationValue
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
+import com.android.tools.metalava.model.PackageItem
 import com.android.tools.metalava.model.psi.PsiAnnotationItem
+import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.android.utils.XmlUtils
 import com.google.common.base.Charsets
-import com.google.common.base.Splitter
-import com.google.common.collect.ImmutableSet
 import com.google.common.io.ByteStreams
 import com.google.common.io.Closeables
 import com.google.common.io.Files
-import com.google.common.xml.XmlEscapers
 import org.w3c.dom.Document
 import org.w3c.dom.Element
-import org.w3c.dom.Node
 import org.xml.sax.SAXParseException
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
 import java.lang.reflect.Field
-import java.util.ArrayList
-import java.util.HashMap
 import java.util.jar.JarInputStream
 import java.util.regex.Pattern
 import java.util.zip.ZipEntry
-import kotlin.Comparator
 
 /** Merges annotations into classes already registered in the given [Codebase] */
 class AnnotationsMerger(
-    private val codebase: Codebase,
-    private val apiFilter: ApiDatabase?,
-    private val listIgnored: Boolean = true
+    private val codebase: Codebase
 ) {
     fun merge(mergeAnnotations: List<File>) {
         mergeAnnotations.forEach { mergeExisting(it) }
     }
 
-    private fun mergeExisting(@NonNull file: File) {
+    private fun mergeExisting(file: File) {
         if (file.isDirectory) {
             val files = file.listFiles()
             if (files != null) {
@@ -106,12 +101,29 @@ class AnnotationsMerger(
                 } catch (e: IOException) {
                     error("Aborting: I/O problem during transform: " + e.toString())
                 }
-
+            } else if (file.path.endsWith(".jaif")) {
+                try {
+                    val jaif = Files.asCharSource(file, Charsets.UTF_8).read()
+                    mergeAnnotationsJaif(file.path, jaif)
+                } catch (e: IOException) {
+                    error("Aborting: I/O problem during transform: " + e.toString())
+                }
+            } else if (file.path.endsWith(".txt") ||
+                file.path.endsWith(".signatures") ||
+                file.path.endsWith(".api")
+            ) {
+                try {
+                    // .txt: Old style signature files
+                    // Others: new signature files (e.g. kotlin-style nullness info)
+                    mergeAnnotationsSignatureFile(file.path)
+                } catch (e: IOException) {
+                    error("Aborting: I/O problem during transform: " + e.toString())
+                }
             }
         }
     }
 
-    private fun mergeFromJar(@NonNull jar: File) {
+    private fun mergeFromJar(jar: File) {
         // Reads in an existing annotations jar and merges in entries found there
         // with the annotations analyzed from source.
         var zis: JarInputStream? = null
@@ -138,7 +150,7 @@ class AnnotationsMerger(
         }
     }
 
-    private fun mergeAnnotationsXml(@NonNull path: String, @NonNull xml: String) {
+    private fun mergeAnnotationsXml(path: String, xml: String) {
         try {
             val document = XmlUtils.parseDocument(xml, false)
             mergeDocument(document)
@@ -154,23 +166,167 @@ class AnnotationsMerger(
         }
     }
 
+    private fun mergeAnnotationsSignatureFile(path: String) {
+        try {
+            // Old style signature files don't support annotations anyway, so we might as well
+            // accept
+            val kotlinStyleNulls = true
+            val supportsStagedNullability = true
+            val signatureCodebase = ApiFile.parseApi(File(path), kotlinStyleNulls, supportsStagedNullability)
+            signatureCodebase.description = "Signature files for annotation merger: loaded from $path"
+            val visitor = object : ComparisonVisitor() {
+                override fun compare(old: Item, new: Item) {
+                    val newModifiers = new.modifiers
+                    for (annotation in old.modifiers.annotations()) {
+                        var addAnnotation = false
+                        if (annotation.isNullnessAnnotation()) {
+                            if (!newModifiers.hasNullnessInfo()) {
+                                addAnnotation = true
+                            }
+                        } else {
+                            // TODO: Check for other incompatibilities than nullness?
+                            val qualifiedName = annotation.qualifiedName() ?: continue
+                            if (newModifiers.findAnnotation(qualifiedName) == null) {
+                                addAnnotation = true
+                            }
+                        }
+
+                        if (addAnnotation) {
+                            // Don't map annotation names - this would turn newly non null back into non null
+                            new.mutableModifiers().addAnnotation(
+                                new.codebase.createAnnotation(
+                                    annotation.toSource(),
+                                    new,
+                                    mapName = false
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+            CodebaseComparator().compare(visitor, signatureCodebase, codebase, ApiPredicate(signatureCodebase))
+        } catch (ex: ApiParseException) {
+            val message = "Unable to parse signature file $path: ${ex.message}"
+            throw DriverException(message)
+        }
+    }
+
+    private fun mergeAnnotationsJaif(path: String, jaif: String) {
+        var pkgItem: PackageItem? = null
+        var clsItem: ClassItem? = null
+        var methodItem: MethodItem? = null
+        var curr: Item? = null
+
+        for (rawLine in jaif.split("\n")) {
+            val line = rawLine.trim()
+            if (line.isEmpty()) {
+                continue
+            }
+            if (line.startsWith("//")) {
+                continue
+            }
+            if (line.startsWith("package ")) {
+                val pkg = line.substring("package ".length, line.length - 1)
+                pkgItem = codebase.findPackage(pkg)
+                curr = pkgItem
+            } else if (line.startsWith("class ")) {
+                val cls = line.substring("class ".length, line.length - 1)
+                clsItem = if (pkgItem != null)
+                    codebase.findClass(pkgItem.qualifiedName() + "." + cls)
+                else
+                    null
+                curr = clsItem
+            } else if (line.startsWith("annotation ")) {
+                val cls = line.substring("annotation ".length, line.length - 1)
+                clsItem = if (pkgItem != null)
+                    codebase.findClass(pkgItem.qualifiedName() + "." + cls)
+                else
+                    null
+                curr = clsItem
+            } else if (line.startsWith("method ")) {
+                val method = line.substring("method ".length, line.length - 1)
+                methodItem = null
+                if (clsItem != null) {
+                    val index = method.indexOf('(')
+                    if (index != -1) {
+                        val name = method.substring(0, index)
+                        val desc = method.substring(index)
+                        methodItem = clsItem.findMethodByDesc(name, desc, true, true)
+                    }
+                }
+                curr = methodItem
+            } else if (line.startsWith("field ")) {
+                val field = line.substring("field ".length, line.length - 1)
+                val fieldItem = clsItem?.findField(field, true, true)
+                curr = fieldItem
+            } else if (line.startsWith("parameter #")) {
+                val parameterIndex = line.substring("parameter #".length, line.length - 1).toInt()
+                val parameterItem = if (methodItem != null) {
+                    methodItem.parameters()[parameterIndex]
+                } else {
+                    null
+                }
+                curr = parameterItem
+            } else if (line.startsWith("type: ")) {
+                val typeAnnotation = line.substring("type: ".length)
+                if (curr != null) {
+                    mergeJaifAnnotation(path, curr, typeAnnotation)
+                }
+            } else if (line.startsWith("return: ")) {
+                val annotation = line.substring("return: ".length)
+                if (methodItem != null) {
+                    mergeJaifAnnotation(path, methodItem, annotation)
+                }
+            } else if (line.startsWith("inner-type")) {
+                warning("$path: Skipping inner-type annotations for now ($line)")
+            } else if (line.startsWith("int ")) {
+                // warning("Skipping int attribute definitions for annotations now ($line)")
+            }
+        }
+    }
+
+    private fun mergeJaifAnnotation(
+        path: String,
+        item: Item,
+        annotationSource: String
+    ) {
+        if (annotationSource.isEmpty()) {
+            return
+        }
+
+        if (annotationSource.contains("(")) {
+            warning("$path: Can't merge complex annotations from jaif yet: $annotationSource")
+            return
+        }
+        val originalName = annotationSource.substring(1) // remove "@"
+        val qualifiedName = AnnotationItem.mapName(codebase, originalName) ?: originalName
+        if (hasNullnessConflicts(item, qualifiedName)) {
+            return
+        }
+
+        val annotationItem = codebase.createAnnotation("@$qualifiedName")
+        item.mutableModifiers().addAnnotation(annotationItem)
+    }
+
     internal fun error(message: String) {
         // TODO: Integrate with metalava error facility
-        options.stderr.println("Error: " + message)
+        options.stderr.println("Error: $message")
     }
 
     internal fun warning(message: String) {
-        options.stdout.println("Warning: " + message)
+        if (options.verbose) {
+            options.stdout.println("Warning: $message")
+        }
     }
 
     @Suppress("PrivatePropertyName")
     private val XML_SIGNATURE: Pattern = Pattern.compile(
         // Class (FieldName | Type? Name(ArgList) Argnum?)
-        //"(\\S+) (\\S+|(.*)\\s+(\\S+)\\((.*)\\)( \\d+)?)");
+        // "(\\S+) (\\S+|(.*)\\s+(\\S+)\\((.*)\\)( \\d+)?)");
         "(\\S+) (\\S+|((.*)\\s+)?(\\S+)\\((.*)\\)( \\d+)?)"
     )
 
-    private fun mergeDocument(@NonNull document: Document) {
+    private fun mergeDocument(document: Document) {
 
         val root = document.documentElement
         val rootTag = root.tagName
@@ -186,9 +342,9 @@ class AnnotationsMerger(
             if (signature == "java.util.Calendar int get(int)") {
                 // https://youtrack.jetbrains.com/issue/IDEA-137385
                 continue
-            } else if (signature == "java.util.Calendar void set(int, int, int) 1"
-                || signature == "java.util.Calendar void set(int, int, int, int, int) 1"
-                || signature == "java.util.Calendar void set(int, int, int, int, int, int) 1"
+            } else if (signature == "java.util.Calendar void set(int, int, int) 1" ||
+                signature == "java.util.Calendar void set(int, int, int, int, int) 1" ||
+                signature == "java.util.Calendar void set(int, int, int, int, int, int) 1"
             ) {
                 // http://b.android.com/76090
                 continue
@@ -198,23 +354,19 @@ class AnnotationsMerger(
             if (matcher.matches()) {
                 val containingClass = matcher.group(1)
                 if (containingClass == null) {
-                    warning("Could not find class for " + signature)
-                    continue
-                }
-
-                if (apiFilter != null &&
-                    !hasHistoricData(item) &&
-                    !apiFilter.hasClass(containingClass)
-                ) {
-                    if (listIgnored) {
-                        warning("Skipping imported element because it is not part of the API file: $containingClass")
-                    }
+                    warning("Could not find class for $signature")
                     continue
                 }
 
                 val classItem = codebase.findClass(containingClass)
                 if (classItem == null) {
-                    warning("Could not find class $containingClass; omitting annotations merge")
+                    // Well known exceptions from IntelliJ's external annotations
+                    // we won't complain loudly about
+                    if (wellKnownIgnoredImport(containingClass)) {
+                        continue
+                    }
+
+                    warning("Could not find class $containingClass; omitting annotation from merge")
                     continue
                 }
 
@@ -235,27 +387,32 @@ class AnnotationsMerger(
             } else if (signature.indexOf(' ') == -1 && signature.indexOf('.') != -1) {
                 // Must be just a class
                 val containingClass = signature
-                if (apiFilter != null &&
-                    !hasHistoricData(item) &&
-                    !apiFilter.hasClass(containingClass)
-                ) {
-                    if (listIgnored) {
-                        warning("Skipping imported element because it is not part of the API file: $containingClass")
-                    }
-                    continue
-                }
-
                 val classItem = codebase.findClass(containingClass)
                 if (classItem == null) {
-                    warning("Could not find class $containingClass; omitting annotations merge")
+                    if (wellKnownIgnoredImport(containingClass)) {
+                        continue
+                    }
+
+                    warning("Could not find class $containingClass; omitting annotation from merge")
                     continue
                 }
 
                 mergeAnnotations(item, classItem)
             } else {
-                warning("No merge match for signature " + signature)
+                warning("No merge match for signature $signature")
             }
         }
+    }
+
+    private fun wellKnownIgnoredImport(containingClass: String): Boolean {
+        if (containingClass.startsWith("javax.swing.") ||
+            containingClass.startsWith("javax.naming.") ||
+            containingClass.startsWith("java.awt.") ||
+            containingClass.startsWith("org.jdom.")
+        ) {
+            return true
+        }
+        return false
     }
 
     // The parameter declaration used in XML files should not have duplicated spaces,
@@ -268,37 +425,31 @@ class AnnotationsMerger(
     }
 
     private fun mergeMethodOrParameter(
-        item: Element, containingClass: String, classItem: ClassItem,
-        methodName: String, parameterIndex: Int,
+        item: Element,
+        containingClass: String,
+        classItem: ClassItem,
+        methodName: String,
+        parameterIndex: Int,
         parameters: String
     ) {
         @Suppress("NAME_SHADOWING")
         val parameters = fixParameterString(parameters)
 
-        if (apiFilter != null &&
-            !hasHistoricData(item) &&
-            !apiFilter.hasMethod(containingClass, methodName, parameters)
-        ) {
-            if (listIgnored) {
-                warning(
-                    "Skipping imported element because it is not part of the API file: "
-                            + containingClass + "#" + methodName + "(" + parameters + ")"
-                )
-            }
-            return
-        }
-
         val methodItem: MethodItem? = classItem.findMethod(methodName, parameters)
         if (methodItem == null) {
-            warning("Could not find class $methodName($parameters) in $containingClass; omitting annotations merge")
+            if (wellKnownIgnoredImport(containingClass)) {
+                return
+            }
+
+            warning("Could not find method $methodName($parameters) in $containingClass; omitting annotation from merge")
             return
         }
 
         if (parameterIndex != -1) {
             val parameterItem = methodItem.parameters()[parameterIndex]
 
-            if ("java.util.Calendar" == containingClass && "set" == methodName
-                && parameterIndex > 0
+            if ("java.util.Calendar" == containingClass && "set" == methodName &&
+                parameterIndex > 0
             ) {
                 // Skip the metadata for Calendar.set(int, int, int+); see
                 // https://code.google.com/p/android/issues/detail?id=73982
@@ -313,25 +464,18 @@ class AnnotationsMerger(
     }
 
     private fun mergeField(item: Element, containingClass: String, classItem: ClassItem, fieldName: String) {
-        if (apiFilter != null &&
-            !hasHistoricData(item) &&
-            !apiFilter.hasField(containingClass, fieldName)
-        ) {
-            if (listIgnored) {
-                warning(
-                    "Skipping imported element because it is not part of the API file: "
-                            + containingClass + "#" + fieldName
-                )
-            }
-        } else {
-            val fieldItem = classItem.findField(fieldName)
-            if (fieldItem == null) {
-                warning("Could not find field $fieldName in $containingClass; omitting annotations merge")
+
+        val fieldItem = classItem.findField(fieldName)
+        if (fieldItem == null) {
+            if (wellKnownIgnoredImport(containingClass)) {
                 return
             }
 
-            mergeAnnotations(item, fieldItem)
+            warning("Could not find field $fieldName in $containingClass; omitting annotation from merge")
+            return
         }
+
+        mergeAnnotations(item, fieldItem)
     }
 
     private fun getAnnotationName(element: Element): String {
@@ -343,53 +487,82 @@ class AnnotationsMerger(
         return qualifiedName
     }
 
-    private fun mergeAnnotations(xmlElement: Element, item: Item): Int {
-        var count = 0
-
+    private fun mergeAnnotations(xmlElement: Element, item: Item) {
         loop@ for (annotationElement in getChildren(xmlElement)) {
-            val qualifiedName = getAnnotationName(annotationElement)
-            if (!AnnotationItem.isSignificantAnnotation(qualifiedName)) {
-                continue
-            }
-            var haveNullable = false
-            var haveNotNull = false
-            for (existing in item.modifiers.annotations()) {
-                val name = existing.qualifiedName() ?: continue
-                if (isNonNull(name)) {
-                    haveNotNull = true
-                }
-                if (isNullable(name)) {
-                    haveNullable = true
-                }
-                if (name == qualifiedName) {
-                    continue@loop
-                }
-            }
-
-            // Make sure we don't have a conflict between nullable and not nullable
-            if (isNonNull(qualifiedName) && haveNullable || isNullable(qualifiedName) && haveNotNull) {
-                warning("Found both @Nullable and @NonNull after import for " + item)
-                continue
+            val originalName = getAnnotationName(annotationElement)
+            val qualifiedName = AnnotationItem.mapName(codebase, originalName) ?: originalName
+            if (hasNullnessConflicts(item, qualifiedName)) {
+                continue@loop
             }
 
             val annotationItem = createAnnotation(annotationElement) ?: continue
             item.mutableModifiers().addAnnotation(annotationItem)
-            count++
+        }
+    }
+
+    private fun hasNullnessConflicts(
+        item: Item,
+        qualifiedName: String
+    ): Boolean {
+        var haveNullable = false
+        var haveNotNull = false
+        for (existing in item.modifiers.annotations()) {
+            val name = existing.qualifiedName() ?: continue
+            if (isNonNull(name)) {
+                haveNotNull = true
+            }
+            if (isNullable(name)) {
+                haveNullable = true
+            }
+            if (name == qualifiedName) {
+                return true
+            }
         }
 
-        return count
+        // Make sure we don't have a conflict between nullable and not nullable
+        if (isNonNull(qualifiedName) && haveNullable || isNullable(qualifiedName) && haveNotNull) {
+            warning("Found both @Nullable and @NonNull after import for $item")
+            return true
+        }
+        return false
     }
 
     /** Reads in annotation data from an XML item (using IntelliJ IDE's external annotations XML format) and
      * creates a corresponding [AnnotationItem], performing some "translations" in the process (e.g. mapping
-     * from IntelliJ annotations like `org.jetbrains.annotations.Nullable` to `android.support.annotation.Nullable`,
-     * as well as dropping constants from typedefs that aren't included according to the [apiFilter]. */
+     * from IntelliJ annotations like `org.jetbrains.annotations.Nullable` to `android.support.annotation.Nullable`. */
     private fun createAnnotation(annotationElement: Element): AnnotationItem? {
         val tagName = annotationElement.tagName
         assert(tagName == "annotation") { tagName }
         val name = annotationElement.getAttribute(ATTR_NAME)
         assert(name != null && !name.isEmpty())
         when {
+            name == "org.jetbrains.annotations.Range" -> {
+                val children = getChildren(annotationElement)
+                assert(children.size == 2) { children.size }
+                val valueElement1 = children[0]
+                val valueElement2 = children[1]
+                val valName1 = valueElement1.getAttribute(ATTR_NAME)
+                val value1 = valueElement1.getAttribute(ATTR_VAL)
+                val valName2 = valueElement2.getAttribute(ATTR_NAME)
+                val value2 = valueElement2.getAttribute(ATTR_VAL)
+                return PsiAnnotationItem.create(
+                    codebase, XmlBackedAnnotationItem(
+                        codebase, AnnotationDetector.INT_RANGE_ANNOTATION.newName(),
+                        listOf(
+                            // Add "L" suffix to ensure that we don't for example interpret "-1" as
+                            // an integer -1 and then end up recording it as "ffffffff" instead of -1L
+                            XmlBackedAnnotationAttribute(
+                                valName1,
+                                value1 + (if (value1.last().isDigit()) "L" else "")
+                            ),
+                            XmlBackedAnnotationAttribute(
+                                valName2,
+                                value2 + (if (value2.last().isDigit()) "L" else "")
+                            )
+                        )
+                    )
+                )
+            }
             name == IDEA_MAGIC -> {
                 val children = getChildren(annotationElement)
                 assert(children.size == 1) { children.size }
@@ -415,66 +588,20 @@ class AnnotationsMerger(
                             // It's mainly used for sorting anyway.
                         }
 
-                        if (apiFilter != null) {
-                            // Search in API database
-                            var fields: Set<String>? = apiFilter.getDeclaredIntFields(clsName)
-                            if ("java.util.zip.ZipEntry" == clsName) {
-                                // The metadata says valuesFromClass ZipEntry, and unfortunately
-                                // that class implements ZipConstants and therefore imports a large
-                                // number of irrelevant constants that aren't valid here. Instead,
-                                // only allow these two:
-                                fields = ImmutableSet.of("STORED", "DEFLATED")
-                            }
-
-                            if (fields != null) {
-                                val sorted = ArrayList(fields)
-                                sorted.sort()
-                                if (reflectionFields != null) {
-                                    val rank = HashMap<String, Int>()
-                                    run {
-                                        var i = 0
-                                        val n = sorted.size
-                                        while (i < n) {
-                                            rank[sorted[i]] = reflectionFields.size + i
-                                            i++
-
-                                        }
-                                    }
-                                    var i = 0
-                                    val n = reflectionFields.size
-                                    while (i < n) {
-                                        rank[reflectionFields[i].name] = i
-                                        i++
-                                    }
-                                    sorted.sortWith(Comparator { o1, o2 ->
-                                        val rank1 = rank[o1]
-                                        val rank2 = rank[o2]
-                                        val delta = rank1!! - rank2!!
-                                        if (delta != 0) {
-                                            return@Comparator delta
-
-                                        }
-                                        o1.compareTo(o2)
-                                    })
-                                }
-                                var first = true
-                                for (field in sorted) {
-                                    if (first) {
-                                        first = false
-                                    } else {
-                                        sb.append(',').append(' ')
-                                    }
-                                    sb.append(clsName).append('.').append(field)
-                                }
-                                found = true
-                            }
-                        }
                         // Attempt to sort in reflection order
-                        if (!found && reflectionFields != null && (apiFilter == null || apiFilter.hasClass(clsName))) {
+                        if (!found && reflectionFields != null) {
+                            val filterEmit = ApiVisitor(codebase).filterEmit
+
                             // Attempt with reflection
                             var first = true
                             for (field in reflectionFields) {
                                 if (field.type == Integer.TYPE || field.type == Int::class.javaPrimitiveType) {
+                                    // Make sure this field is included in our API too
+                                    val fieldItem = codebase.findClass(clsName)?.findField(field.name)
+                                    if (fieldItem == null || !filterEmit.test(fieldItem)) {
+                                        continue
+                                    }
+
                                     if (first) {
                                         first = false
                                     } else {
@@ -496,16 +623,6 @@ class AnnotationsMerger(
                     }
                 }
 
-                if (apiFilter != null) {
-                    value = removeFiltered(value)
-                    while (value.contains(", ,")) {
-                        value = value.replace(", ,", ",")
-                    }
-                    if (value.startsWith(", ")) {
-                        value = value.substring(2)
-                    }
-                }
-
                 val attributes = mutableListOf<XmlBackedAnnotationAttribute>()
                 attributes.add(XmlBackedAnnotationAttribute(TYPE_DEF_VALUE_ATTRIBUTE, value))
                 if (flag) {
@@ -514,15 +631,18 @@ class AnnotationsMerger(
                 return PsiAnnotationItem.create(
                     codebase, XmlBackedAnnotationItem(
                         codebase,
-                        if (valName == "stringValues") STRING_DEF_ANNOTATION else INT_DEF_ANNOTATION, attributes
+                        if (valName == "stringValues") STRING_DEF_ANNOTATION.newName() else INT_DEF_ANNOTATION.newName(),
+                        attributes
                     )
                 )
             }
 
-            name == STRING_DEF_ANNOTATION ||
-                    name == ANDROID_STRING_DEF ||
-                    name == INT_DEF_ANNOTATION ||
-                    name == ANDROID_INT_DEF -> {
+            name == STRING_DEF_ANNOTATION.oldName() ||
+                name == STRING_DEF_ANNOTATION.newName() ||
+                name == ANDROID_STRING_DEF ||
+                name == INT_DEF_ANNOTATION.oldName() ||
+                name == INT_DEF_ANNOTATION.newName() ||
+                name == ANDROID_INT_DEF -> {
                 val children = getChildren(annotationElement)
                 var valueElement = children[0]
                 val valName = valueElement.getAttribute(ATTR_NAME)
@@ -534,7 +654,9 @@ class AnnotationsMerger(
                     assert(TYPE_DEF_FLAG_ATTRIBUTE == valueElement.getAttribute(ATTR_NAME))
                     flag = VALUE_TRUE == valueElement.getAttribute(ATTR_VAL)
                 }
-                val intDef = INT_DEF_ANNOTATION == name || ANDROID_INT_DEF == name
+                val intDef = INT_DEF_ANNOTATION.oldName() == name ||
+                    INT_DEF_ANNOTATION.newName() == name ||
+                    ANDROID_INT_DEF == name
 
                 val attributes = mutableListOf<XmlBackedAnnotationAttribute>()
                 attributes.add(XmlBackedAnnotationAttribute(TYPE_DEF_VALUE_ATTRIBUTE, value))
@@ -544,7 +666,7 @@ class AnnotationsMerger(
                 return PsiAnnotationItem.create(
                     codebase, XmlBackedAnnotationItem(
                         codebase,
-                        if (intDef) INT_DEF_ANNOTATION else STRING_DEF_ANNOTATION, attributes
+                        if (intDef) INT_DEF_ANNOTATION.newName() else STRING_DEF_ANNOTATION.newName(), attributes
                     )
                 )
             }
@@ -574,9 +696,9 @@ class AnnotationsMerger(
                 }
             }
 
-            isNonNull(name) -> return codebase.createAnnotation("@$SUPPORT_NOTNULL")
+            isNonNull(name) -> return codebase.createAnnotation("@$ANDROIDX_NOTNULL")
 
-            isNullable(name) -> return codebase.createAnnotation("@$SUPPORT_NULLABLE")
+            isNullable(name) -> return codebase.createAnnotation("@$ANDROIDX_NULLABLE")
 
             else -> {
                 val children = getChildren(annotationElement)
@@ -597,91 +719,21 @@ class AnnotationsMerger(
         }
     }
 
-    private fun removeFiltered(originalValue: String): String {
-        var value = originalValue
-        assert(apiFilter != null)
-        if (value.startsWith("{")) {
-            value = value.substring(1)
-        }
-        if (value.endsWith("}")) {
-            value = value.substring(0, value.length - 1)
-        }
-        value = value.trim { it <= ' ' }
-        val sb = StringBuilder(value.length)
-        sb.append('{')
-        for (escaped in Splitter.on(',').omitEmptyStrings().trimResults().split(value)) {
-            val fqn = unescapeXml(escaped)
-            if (fqn.startsWith("\"")) {
-                continue
-            }
-            val index = fqn.lastIndexOf('.')
-            val cls = fqn.substring(0, index)
-            val field = fqn.substring(index + 1)
-            if (apiFilter?.hasField(cls, field) != false) {
-                if (sb.length > 1) { // 0: '{'
-                    sb.append(", ")
-                }
-                sb.append(fqn)
-            } else if (listIgnored) {
-                warning("Skipping constant from typedef because it is not part of the SDK: " + fqn)
-            }
-        }
-        sb.append('}')
-        return escapeXml(sb.toString())
-    }
-
     private fun isNonNull(name: String): Boolean {
-        return name == IDEA_NOTNULL
-                || name == ANDROID_NOTNULL
-                || name == SUPPORT_NOTNULL
+        return name == IDEA_NOTNULL ||
+            name == ANDROID_NOTNULL ||
+            name == ANDROIDX_NOTNULL ||
+            name == SUPPORT_NOTNULL
     }
 
     private fun isNullable(name: String): Boolean {
-        return name == IDEA_NULLABLE
-                || name == ANDROID_NULLABLE
-                || name == SUPPORT_NULLABLE
+        return name == IDEA_NULLABLE ||
+            name == ANDROID_NULLABLE ||
+            name == ANDROIDX_NULLABLE ||
+            name == SUPPORT_NULLABLE
     }
 
-    /**
-     * Returns true if this XML entry contains historic metadata, e.g. has
-     * an api attribute which designates that this API may no longer be in the SDK,
-     * but the annotations should be preserved for older API levels
-     */
-    private fun hasHistoricData(@NonNull item: Element): Boolean {
-        var curr: Node? = item.firstChild
-        while (curr != null) {
-            // Example:
-            // <item name="android.provider.Browser BOOKMARKS_URI">
-            //   <annotation name="android.support.annotation.RequiresPermission.Read">
-            //     <val name="value" val="&quot;com.android.browser.permission.READ_HISTORY_BOOKMARKS&quot;" />
-            //     <val name="apis" val="&quot;..22&quot;" />
-            //   </annotation>
-            //   ..
-            if (curr.nodeType == Node.ELEMENT_NODE && "annotation" == curr.nodeName) {
-                var inner: Node? = curr.firstChild
-                while (inner != null) {
-                    if (inner.nodeType == Node.ELEMENT_NODE &&
-                        "val" == inner.nodeName &&
-                        "apis" == (inner as Element).getAttribute("name")
-                    ) {
-                        return true
-                    }
-                    inner = inner.nextSibling
-                }
-            }
-            curr = curr.nextSibling
-        }
-
-        return false
-    }
-
-    @NonNull
-    private fun escapeXml(@NonNull unescaped: String): String {
-        return XmlEscapers.xmlAttributeEscaper().escape(unescaped)
-    }
-
-    @NonNull
-    private fun unescapeXml(@NonNull escaped: String): String {
+    private fun unescapeXml(escaped: String): String {
         var workingString = escaped.replace(QUOT_ENTITY, "\"")
         workingString = workingString.replace(LT_ENTITY, "<")
         workingString = workingString.replace(GT_ENTITY, ">")
@@ -718,7 +770,7 @@ class XmlBackedAnnotationItem(
         val qualifiedName = qualifiedName() ?: return ""
 
         if (attributes.isEmpty()) {
-            return "@" + qualifiedName
+            return "@$qualifiedName"
         }
 
         val sb = StringBuilder(30)

@@ -64,6 +64,8 @@ open class TextClassItem(
 
     override val isTypeParameter: Boolean = false
 
+    override var artifact: String? = null
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is ClassItem) return false
@@ -119,8 +121,7 @@ open class TextClassItem(
         if (typeParameterList().toString().isNotEmpty())
 // TODO: No, handle List<String>[], though this is highly unlikely in a class
             qualifiedName() + "<" + typeParameterList() + ">"
-        else
-            qualifiedName()
+        else qualifiedName()
     )
 
     override fun hasTypeVariables(): Boolean {
@@ -227,7 +228,8 @@ open class TextClassItem(
             }
 
         private fun addStubPackage(
-            name: String, codebase: TextCodebase,
+            name: String,
+            codebase: TextCodebase,
             textClassItem: TextClassItem
         ) {
             val endIndex = name.lastIndexOf('.')

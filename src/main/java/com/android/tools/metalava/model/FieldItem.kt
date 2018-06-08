@@ -110,6 +110,25 @@ interface FieldItem : MemberItem {
         return false
     }
 
+    override fun hasNullnessInfo(): Boolean {
+        if (!requiresNullnessInfo()) {
+            return true
+        }
+
+        return modifiers.hasNullnessInfo()
+    }
+
+    override fun requiresNullnessInfo(): Boolean {
+        if (type().primitive) {
+            return false
+        }
+
+        if (modifiers.isFinal() && initialValue(true) != null) {
+            return false
+        }
+
+        return true
+    }
 
     companion object {
         val comparator: java.util.Comparator<FieldItem> = Comparator { a, b -> a.name().compareTo(b.name()) }
@@ -126,7 +145,7 @@ interface FieldItem : MemberItem {
     ) {
         val value =
             initialValue(!allowDefaultValue)
-                    ?: if (allowDefaultValue && !containingClass().isClass()) type().defaultValue() else null
+                ?: if (allowDefaultValue && !containingClass().isClass()) type().defaultValue() else null
         if (value != null) {
             when (value) {
                 is Int -> {
@@ -310,8 +329,8 @@ fun javaUnescapeString(str: String): String {
                     in 'a'..'f' -> (escaped.toInt() or (10 + (c - 'a'))).toChar()
                     in 'A'..'F' -> (escaped.toInt() or (10 + (c - 'A'))).toChar()
                     else -> throw IllegalArgumentException(
-                        "bad escape sequence: '" + c + "' at pos " + i + " in: \""
-                                + str + "\""
+                        "bad escape sequence: '" + c + "' at pos " + i + " in: \"" +
+                            str + "\""
                     )
                 }
                 if (state == CHAR4) {
@@ -324,7 +343,7 @@ fun javaUnescapeString(str: String): String {
         }
     }
     if (state != START) {
-        throw IllegalArgumentException("unfinished escape sequence: " + str)
+        throw IllegalArgumentException("unfinished escape sequence: $str")
     }
     return buf.toString()
 }

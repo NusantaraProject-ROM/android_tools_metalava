@@ -72,7 +72,7 @@ class PsiParameterItem(
     private fun getKtParameter(): KtParameter? {
         val ktParameters =
             ((containingMethod.psiMethod as? KotlinUMethod)?.sourcePsi as? KtNamedFunction)?.valueParameters
-                    ?: return null
+                ?: return null
 
         // Perform matching based on parameter names, because indices won't work in the
         // presence of @JvmOverloads where UAST generates multiple permutations of the

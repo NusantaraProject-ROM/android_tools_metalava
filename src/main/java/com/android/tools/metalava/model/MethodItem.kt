@@ -37,6 +37,32 @@ interface MethodItem : MemberItem {
     /** Returns the super methods that this method is overriding */
     fun superMethods(): List<MethodItem>
 
+    /**
+     * Like [internalName] but is the desc-portion of the internal signature,
+     * e.g. for the method "void create(int x, int y)" the internal name of
+     * the constructor is "create" and the desc is "(II)V"
+     */
+    fun internalDesc(voidConstructorTypes: Boolean = false): String {
+        val sb = StringBuilder()
+        sb.append("(")
+
+        // Non-static inner classes get an implicit constructor parameter for the
+        // outer type
+        if (isConstructor() && containingClass().containingClass() != null &&
+            !containingClass().modifiers.isStatic()
+        ) {
+            sb.append(containingClass().containingClass()?.toType()?.internalName() ?: "")
+        }
+
+        for (parameter in parameters()) {
+            sb.append(parameter.type().internalName())
+        }
+
+        sb.append(")")
+        sb.append(if (voidConstructorTypes && isConstructor()) "V" else returnType()?.internalName() ?: "V")
+        return sb.toString()
+    }
+
     fun allSuperMethods(): Sequence<MethodItem> {
         val original = superMethods().firstOrNull() ?: return emptySequence()
         return generateSequence(original) { item ->
@@ -72,6 +98,9 @@ interface MethodItem : MemberItem {
     }
 
     fun filteredThrowsTypes(predicate: Predicate<Item>): Collection<ClassItem> {
+        if (throwsTypes().isEmpty()) {
+            return emptyList()
+        }
         return filteredThrowsTypes(predicate, LinkedHashSet())
     }
 
@@ -87,7 +116,7 @@ interface MethodItem : MemberItem {
                 // Excluded, but it may have super class throwables that are included; if so, include those
                 var curr = cls.publicSuperClass()
                 while (curr != null) {
-                    if (predicate.test(cls)) {
+                    if (predicate.test(curr)) {
                         classes.add(curr)
                         break
                     }
@@ -106,7 +135,7 @@ interface MethodItem : MemberItem {
      * may think the method required and not yet implemented, e.g. the class must be
      * abstract.)
      */
-    var inheritedInterfaceMethod: Boolean
+    var inheritedMethod: Boolean
 
     /**
      * Duplicates this field item. Used when we need to insert inherited fields from
@@ -284,7 +313,6 @@ interface MethodItem : MemberItem {
                     if (pt1.toErasedTypeString() != pt2.toErasedTypeString()) {
                         return false
                     }
-
                 } else {
                     if (pt1 != pt2) {
                         return false
@@ -350,6 +378,10 @@ interface MethodItem : MemberItem {
     }
 
     override fun hasNullnessInfo(): Boolean {
+        if (!requiresNullnessInfo()) {
+            return true
+        }
+
         if (!isConstructor() && returnType()?.primitive != true) {
             if (!modifiers.hasNullnessInfo()) {
                 return false

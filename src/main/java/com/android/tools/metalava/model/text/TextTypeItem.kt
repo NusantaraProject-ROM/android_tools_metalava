@@ -40,7 +40,7 @@ class TextTypeItem(
         innerAnnotations: Boolean,
         erased: Boolean
     ): String {
-        return Companion.toTypeString(type, outerAnnotations, innerAnnotations, erased)
+        return toTypeString(type, outerAnnotations, innerAnnotations, erased)
     }
 
     override fun asClass(): ClassItem? {
@@ -129,7 +129,6 @@ class TextTypeItem(
             }
 
             typeParameter
-
         } else {
             null
         }
@@ -143,6 +142,8 @@ class TextTypeItem(
     override fun convertType(replacementMap: Map<String, String>?, owner: Item?): TypeItem {
         return TextTypeItem(codebase, convertTypeString(replacementMap))
     }
+
+    override fun markRecent() = codebase.unsupported()
 
     companion object {
         // heuristic to guess if a given type parameter is a type variable

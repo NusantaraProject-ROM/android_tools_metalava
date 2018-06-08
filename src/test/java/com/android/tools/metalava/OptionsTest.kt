@@ -53,7 +53,8 @@ API sources:
                                        when parsing the source files
 --merge-annotations <file>             An external annotations file (using IntelliJ's
                                        external annotations database format) to merge and
-                                       overlay the sources
+                                       overlay the sources. A subset of .jaif files is
+                                       also supported.
 --input-api-jar <file>                 A .jar file to read APIs from directly
 --manifest <file>                      A manifest file, used to for check permissions to
                                        cross check APIs
@@ -62,6 +63,8 @@ API sources:
 --show-annotation <annotation class>   Include the given annotation in the API analysis
 --show-unannotated                     Include un-annotated public APIs in the signature
                                        file as well
+--java-source <level>                  Sets the source level for Java source files;
+                                       default is 1.8.
 
 Documentation:
 --public                               Only include elements that are public
@@ -76,6 +79,8 @@ Extracting Signature Files:
 --api <file>                           Generate a signature descriptor file
 --private-api <file>                   Generate a signature descriptor file listing the
                                        exact private APIs
+--dex-api <file>                       Generate a DEX signature descriptor file listing
+                                       the APIs
 --private-dex-api <file>               Generate a DEX signature descriptor file listing
                                        the exact private APIs
 --removed-api <file>                   Generate a signature descriptor file for APIs that
@@ -100,10 +105,31 @@ Extracting Signature Files:
 
 Generating Stubs:
 --stubs <dir>                          Generate stub source files for the API
+--doc-stubs <dir>                      Generate documentation stub source files for the
+                                       API. Documentation stub files are similar to
+                                       regular stub files, but there are some differences.
+                                       For example, in the stub files, we'll use special
+                                       annotations like @RecentlyNonNull instead of
+                                       @NonNull to indicate that an element is recently
+                                       marked as non null, whereas in the documentation
+                                       stubs we'll just list this as @NonNull. Another
+                                       difference is that @doconly elements are included
+                                       in documentation stubs, but not regular stubs,
+                                       etc.
 --exclude-annotations                  Exclude annotations such as @Nullable from the stub
                                        files
 --write-stubs-source-list <file>       Write the list of generated stub files into the
+                                       given source list file. If generating documentation
+                                       stubs and you haven't also specified
+                                       --write-doc-stubs-source-list, this list will refer
+                                       to the documentation stubs; otherwise it's the
+                                       non-documentation stubs.
+--write-doc-stubs-source-list <file>   Write the list of generated doc stub files into the
                                        given source list file
+--register-artifact <api-file> <id>    Registers the given id for the packages found in
+                                       the given signature file. metalava will inject an
+                                       @artifactId <id> tag into every top level stub
+                                       class in that API.
 
 Diffs and Checks:
 --previous-api <signature file>        A signature file for the previous version of this
@@ -116,6 +142,9 @@ Diffs and Checks:
 --check-compatibility                  Check compatibility with the previous API
 --check-kotlin-interop                 Check API intended to be used from both Kotlin and
                                        Java for interoperability issues
+--current-api <signature file>         A signature file for the current version of this
+                                       API to check compatibility with. If not specified,
+                                       --previous-api will be used instead.
 --migrate-nullness                     Compare nullness information with the previous API
                                        and mark newly annotated APIs as under migration.
 --warnings-as-errors                   Promote all warnings to errors
@@ -139,20 +168,14 @@ Statistics:
 --skip-java-in-coverage-report         In the coverage annotation report, skip java.** and
                                        kotlin.** to narrow the focus down to the Android
                                        framework APIs.
+--write-class-coverage-to <path>       Specifies a file to write the annotation coverage
+                                       report for classes to.
+--write-member-coverage-to <path>      Specifies a file to write the annotation coverage
+                                       report for members to.
 
 Extracting Annotations:
---extract-annotations <zipfile>        Extracts annotations from the source files and
-                                       writes them into the given zip file
---api-filter <file>                    Applies the given signature file as a filter (which
-                                       means no classes,methods or fields not found in the
-                                       filter will be included.)
---hide-filtered                        Omit listing APIs that were skipped because of the
-                                       --api-filter
---skip-class-retention                 Do not extract annotations that have class file
-                                       retention
---rmtypedefs                           Delete all the typedef .class files
---typedef-file <file>                  Writes an typedef annotation class names into the
-                                       given file
+--extract-annotations <zipfile>        Extracts source annotations from the source files
+                                       and writes them into the given zip file
 
 Injecting API Levels:
 --apply-api-levels <api-versions.xml>  Reads an XML file containing API level descriptions

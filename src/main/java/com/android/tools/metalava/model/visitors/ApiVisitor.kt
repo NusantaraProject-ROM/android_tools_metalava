@@ -52,8 +52,15 @@ open class ApiVisitor(
     /** The filter to use to determine if we should emit an item */
     val filterEmit: Predicate<Item>,
     /** The filter to use to determine if we should emit a reference to an item */
-    val filterReference: Predicate<Item>
+    val filterReference: Predicate<Item>,
 
+    /**
+     * Whether the visitor should include visiting top-level classes that have
+     * nothing other than non-empty inner classes within.
+     * Typically these are not included in signature files, but when generating
+     * stubs we need to include them.
+     */
+    val includeEmptyOuterClasses: Boolean = false
 ) : ItemVisitor(visitConstructorsAsMethods, nestInnerClasses) {
     constructor(
         codebase: Codebase,
@@ -71,6 +78,7 @@ open class ApiVisitor(
         nestInnerClasses: Boolean = false,
 
         /** Whether to ignore APIs with annotations in the --show-annotations list */
+//        ignoreShown: Boolean = options.showUnannotated,
         ignoreShown: Boolean = true,
 
         /** Whether to match APIs marked for removal instead of the normal API */
@@ -89,11 +97,9 @@ open class ApiVisitor(
         ApiPredicate(codebase, ignoreShown = true, ignoreRemoved = remove)
     )
 
-
     // The API visitor lazily visits packages only when there's a match within at least one class;
     // this property keeps track of whether we've already visited the current package
     var visitingPackage = false
 
     open fun include(cls: ClassItem): Boolean = cls.emit
 }
-

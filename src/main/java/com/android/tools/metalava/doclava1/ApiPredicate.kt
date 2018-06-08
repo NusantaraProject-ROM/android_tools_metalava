@@ -48,7 +48,10 @@ class ApiPredicate(
     private val matchRemoved: Boolean = false,
 
     /** Whether we allow matching items loaded from jar files instead of sources */
-    private val allowFromJar: Boolean = true
+    private val allowFromJar: Boolean = true,
+
+    /** Whether we should include doc-only items */
+    private val includeDocOnly: Boolean = false
 ) : Predicate<Item> {
 
     override fun test(member: Item): Boolean {
@@ -94,7 +97,7 @@ class ApiPredicate(
             removed = matchRemoved
         }
 
-        if (docOnly && options.includeDocOnly) {
+        if (docOnly && includeDocOnly) {
             docOnly = false
         }
 

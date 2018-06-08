@@ -15,7 +15,7 @@
  */
 package com.android.tools.metalava.apilevels;
 
-import com.android.annotations.NonNull;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -182,7 +182,7 @@ public class ApiElement implements Comparable<ApiElement> {
     }
 
     private <T extends ApiElement> List<T> sortedList(Collection<T> elements) {
-        List<T> list = new ArrayList<T>(elements);
+        List<T> list = new ArrayList<>(elements);
         Collections.sort(list);
         return list;
     }
@@ -225,7 +225,7 @@ public class ApiElement implements Comparable<ApiElement> {
     }
 
     @Override
-    public int compareTo(@NonNull ApiElement other) {
+    public int compareTo(@NotNull ApiElement other) {
         return mName.compareTo(other.mName);
     }
 }

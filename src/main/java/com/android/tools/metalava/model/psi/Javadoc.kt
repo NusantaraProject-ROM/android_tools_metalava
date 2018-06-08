@@ -72,7 +72,7 @@ fun mergeDocumentation(
     // we don't have to search for raw substrings like "@return" which
     // can incorrectly find matches in escaped code snippets etc.
     val factory = JavaPsiFacade.getElementFactory(psiElement.project)
-            ?: error("Invalid tool configuration; did not find JavaPsiFacade factory")
+        ?: error("Invalid tool configuration; did not find JavaPsiFacade factory")
     val docComment = factory.createDocCommentFromText(doc)
 
     if (tagSection == "@return") {
@@ -91,15 +91,13 @@ fun mergeDocumentation(
             // Add text to the existing @return tag
             val offset = if (append)
                 findTagEnd(returnTag)
-            else
-                returnTag.textRange.startOffset + returnTag.name.length + 1
+            else returnTag.textRange.startOffset + returnTag.name.length + 1
             return insertInto(doc, newText, offset)
         }
     } else if (tagSection != null) {
         val parameter = if (tagSection.startsWith("@"))
             docComment.findTagByName(tagSection.substring(1))
-        else
-            findParamTag(docComment, tagSection)
+        else findParamTag(docComment, tagSection)
         if (parameter == null) {
             // Add new parameter or tag
             // TODO: Decide whether to place it alphabetically or place it by parameter order
@@ -114,7 +112,7 @@ fun mergeDocumentation(
             val offset = when {
                 returnTag != null -> returnTag.textRange.startOffset
                 anchor != null -> findTagEnd(anchor)
-                else -> doc.length - 2  // "*/
+                else -> doc.length - 2 // "*/
             }
             val tagName = if (tagSection.startsWith("@")) tagSection else "@param $tagSection"
             return insertInto(doc, "$tagName $newText", offset)
@@ -122,8 +120,7 @@ fun mergeDocumentation(
             // Add to existing tag/parameter
             val offset = if (append)
                 findTagEnd(parameter)
-            else
-                parameter.textRange.startOffset + parameter.name.length + 1
+            else parameter.textRange.startOffset + parameter.name.length + 1
             return insertInto(doc, newText, offset)
         }
     } else {
@@ -132,7 +129,7 @@ fun mergeDocumentation(
         val startOffset =
             if (!append) {
                 4 // "/** ".length
-            } else firstTag?.textRange?.startOffset ?: doc.length-2
+            } else firstTag?.textRange?.startOffset ?: doc.length - 2
         return insertInto(doc, newText, startOffset)
     }
 }
@@ -171,13 +168,13 @@ fun trimDocIndent(existingDoc: String): String {
     }
 
     return existingDoc.substring(0, index + 1) +
-            existingDoc.substring(index + 1).trimIndent().split('\n').joinToString(separator = "\n") {
-                if (!it.startsWith(" ")) {
-                    " ${it.trimEnd()}"
-                } else {
-                    it.trimEnd()
-                }
+        existingDoc.substring(index + 1).trimIndent().split('\n').joinToString(separator = "\n") {
+            if (!it.startsWith(" ")) {
+                " ${it.trimEnd()}"
+            } else {
+                it.trimEnd()
             }
+        }
 }
 
 fun insertInto(existingDoc: String, newText: String, initialOffset: Int): String {
@@ -190,7 +187,7 @@ fun insertInto(existingDoc: String, newText: String, initialOffset: Int): String
     }
     val index = existingDoc.indexOf('\n')
     val prefixWithStar = index == -1 || existingDoc[index + 1] == '*' ||
-            existingDoc[index + 1] == ' ' && existingDoc[index + 2] == '*'
+        existingDoc[index + 1] == ' ' && existingDoc[index + 2] == '*'
 
     val prefix = existingDoc.substring(0, offset)
     val suffix = existingDoc.substring(offset)
@@ -200,7 +197,7 @@ fun insertInto(existingDoc: String, newText: String, initialOffset: Int): String
 
     val middle = if (prefixWithStar) {
         startSeparator + newText.split('\n').joinToString(separator = "\n") { " * $it" } +
-                endSeparator
+            endSeparator
     } else {
         "$startSeparator$newText$endSeparator"
     }
@@ -208,7 +205,7 @@ fun insertInto(existingDoc: String, newText: String, initialOffset: Int): String
     // Going from single-line to multi-line?
     return if (existingDoc.indexOf('\n') == -1 && existingDoc.startsWith("/** ")) {
         prefix.substring(0, 3) + "\n *" + prefix.substring(3) + middle +
-                if (suffix == "*/") " */" else suffix
+            if (suffix == "*/") " */" else suffix
     } else {
         prefix + middle + suffix
     }

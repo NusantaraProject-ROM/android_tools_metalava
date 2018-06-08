@@ -142,11 +142,20 @@ interface TypeItem {
      */
     fun asTypeParameter(context: MemberItem? = null): TypeParameterItem?
 
+    /**
+     * Mark nullness annotations in the type as recent.
+     * TODO: This isn't very clean; we should model individual annotations.
+     */
+    fun markRecent()
+
     companion object {
         /** Shortens types, if configured */
         fun shortenTypes(type: String): String {
             if (options.omitCommonPackages) {
                 var cleaned = type
+                if (cleaned.contains("@androidx.annotation.")) {
+                    cleaned = cleaned.replace("@androidx.annotation.", "@")
+                }
                 if (cleaned.contains("@android.support.annotation.")) {
                     cleaned = cleaned.replace("@android.support.annotation.", "@")
                 }
@@ -209,9 +218,8 @@ interface TypeItem {
             // <T extends java.lang.Object> is the same as <T>
             //  but NOT for <T extends Object & java.lang.Comparable> -- you can't
             //  shorten this to <T & java.lang.Comparable
-            //return type.replace(" extends java.lang.Object", "")
+            // return type.replace(" extends java.lang.Object", "")
             return signature.replace(" extends java.lang.Object>", ">")
-
         }
 
         val comparator: Comparator<TypeItem> = Comparator { type1, type2 ->

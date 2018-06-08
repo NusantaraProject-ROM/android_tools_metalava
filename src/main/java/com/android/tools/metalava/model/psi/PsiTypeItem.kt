@@ -16,7 +16,7 @@
 
 package com.android.tools.metalava.model.psi
 
-import com.android.tools.lint.detector.api.LintUtils
+import com.android.tools.lint.detector.api.getInternalName
 import com.android.tools.metalava.compatibility
 import com.android.tools.metalava.doclava1.ApiPredicate
 import com.android.tools.metalava.model.AnnotationItem
@@ -265,6 +265,11 @@ class PsiTypeItem private constructor(private val codebase: PsiBasedCodebase, pr
 
     override fun hasTypeArguments(): Boolean = psiType is PsiClassType && psiType.hasParameters()
 
+    override fun markRecent() {
+        toAnnotatedString = toTypeString(false, true, false).replace(".NonNull", ".RecentlyNonNull")
+        toInnerAnnotatedString = toTypeString(true, true, false).replace(".NonNull", ".RecentlyNonNull")
+    }
+
     companion object {
         private fun getPrimitiveSignature(typeName: String): String? = when (typeName) {
             "boolean" -> "Z"
@@ -310,7 +315,7 @@ class PsiTypeItem private constructor(private val codebase: PsiBasedCodebase, pr
             signature: StringBuilder,
             outerClass: PsiClass
         ): Boolean {
-            val className = LintUtils.getInternalName(outerClass) ?: return false
+            val className = getInternalName(outerClass) ?: return false
             signature.append('L').append(className).append(';')
             return true
         }
@@ -341,7 +346,6 @@ class PsiTypeItem private constructor(private val codebase: PsiBasedCodebase, pr
                     return TextTypeItem.eraseAnnotations(typeString, false, true)
                 }
                 return typeString
-
             } else {
                 return type.canonicalText
             }
@@ -434,9 +438,9 @@ class PsiTypeItem private constructor(private val codebase: PsiBasedCodebase, pr
                             ci--
                         }
                         return typeString.substring(0, ci) +
-                                annotation + " " +
-                                typeString.substring(ci, index + 1) +
-                                typeString.substring(end + 1)
+                            annotation + " " +
+                            typeString.substring(ci, index + 1) +
+                            typeString.substring(end + 1)
                     } else {
                         return typeString.substring(0, index + 1) + typeString.substring(end + 1)
                     }

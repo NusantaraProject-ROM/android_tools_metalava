@@ -19,9 +19,11 @@ package com.android.tools.metalava.model.psi
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.FieldItem
 import com.android.tools.metalava.model.TypeItem
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiField
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator
+import org.jetbrains.uast.UClass
 
 class PsiFieldItem(
     override val codebase: PsiBasedCodebase,
@@ -62,6 +64,18 @@ class PsiFieldItem(
     override fun isEnumConstant(): Boolean = isEnumConstant
     override fun name(): String = name
     override fun containingClass(): ClassItem = containingClass
+
+    override fun isCloned(): Boolean {
+        val psiClass = run {
+            val p = containingClass().psi() as? PsiClass ?: return false
+            if (p is UClass) {
+                p.sourcePsi as? PsiClass ?: return false
+            } else {
+                p
+            }
+        }
+        return psiField.containingClass != psiClass
+    }
 
     override fun duplicate(targetContainingClass: ClassItem): PsiFieldItem {
         val duplicated = create(codebase, targetContainingClass as PsiClassItem, psiField)

@@ -51,7 +51,7 @@ class ApiGeneratorTest : DriverTest() {
                 "--android-jar-pattern",
                 "${oldSdkJars.path}/android-%/android.jar",
                 "--android-jar-pattern",
-                "${platformJars.path}/%/android.jar"
+                "${platformJars.path}/%/public/android.jar"
             ),
             checkDoclava1 = false,
             signatureSource = """
@@ -75,7 +75,5 @@ class ApiGeneratorTest : DriverTest() {
 
         val document = XmlUtils.parseDocumentSilently(xml, false)
         assertNotNull(document)
-
     }
-
 }
