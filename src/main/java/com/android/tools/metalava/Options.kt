@@ -551,8 +551,18 @@ class Options(
                 ARG_LINT, "-lint" -> Errors.setErrorLevel(getValue(args, ++index), Severity.LINT)
                 ARG_HIDE, "-hide" -> Errors.setErrorLevel(getValue(args, ++index), Severity.HIDDEN)
 
-                ARG_WARNINGS_AS_ERRORS, "-werror" -> warningsAreErrors = true
-                ARG_LINTS_AS_ERRORS, "-lerror" -> lintsAreErrors = true
+                ARG_WARNINGS_AS_ERRORS -> warningsAreErrors = true
+                ARG_LINTS_AS_ERRORS -> lintsAreErrors = true
+                "-werror" -> {
+                    // Temporarily disabled; this is used in various builds but is pretty much
+                    // never what we want.
+                    //warningsAreErrors = true
+                }
+                "-lerror" -> {
+                    // Temporarily disabled; this is used in various builds but is pretty much
+                    // never what we want.
+                    //lintsAreErrors = true
+                }
 
                 ARG_CHECK_KOTLIN_INTEROP -> checkKotlinInterop = true
 
