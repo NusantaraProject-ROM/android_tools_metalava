@@ -19,6 +19,7 @@ package com.android.tools.metalava
 import com.android.tools.metalava.doclava1.ApiPredicate
 import com.android.tools.metalava.doclava1.Errors
 import com.android.tools.metalava.doclava1.FilterPredicate
+import com.android.tools.metalava.doclava1.TextCodebase
 import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.Item
 import java.io.File
@@ -57,7 +58,7 @@ import java.util.function.Predicate
  * file.
  */
 class AnnotationsDiffer(
-    superset: Codebase,
+    private val superset: Codebase,
     private val codebase: Codebase
 ) {
     private val relevant = HashSet<Item>(1000)
@@ -100,10 +101,17 @@ class AnnotationsDiffer(
                 }
             }
         }
-        CodebaseComparator().compare(visitor, superset, codebase, ApiPredicate(codebase))
+        val filter =
+            if (codebase.supportsDocumentation()) {
+                ApiPredicate(codebase)
+            } else {
+                Predicate<Item> { true }
+            }
+        CodebaseComparator().compare(visitor, superset, codebase, filter)
     }
 
     fun writeDiffSignature(apiFile: File) {
+        val codebase = superset
         val apiFilter = FilterPredicate(ApiPredicate(codebase))
         val apiReference = ApiPredicate(codebase, ignoreShown = true)
         val apiEmit = apiFilter.and(predicate)
@@ -113,13 +121,13 @@ class AnnotationsDiffer(
             val stringWriter = StringWriter()
             val writer = PrintWriter(stringWriter)
             writer.use { printWriter ->
-                val preFiltered = codebase.original != null
+                val preFiltered = codebase.original != null || codebase is TextCodebase
                 val apiWriter = SignatureWriter(printWriter, apiEmit, apiReference, preFiltered)
                 codebase.accept(apiWriter)
             }
 
             // Clean up blank lines
-            var prev: Char = ' '
+            var prev = ' '
             val cleanedUp = stringWriter.toString().filter {
                 if (it == '\n' && prev == '\n')
                     false

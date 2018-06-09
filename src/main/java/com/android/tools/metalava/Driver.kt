@@ -375,8 +375,8 @@ fun invokeDocumentationTool() {
     if (args.isNotEmpty()) {
         if (!options.quiet) {
             options.stdout.println(
-                "Invoking external documentation tool ${args[0]} with arguments ${
-                args.slice(1 until args.size).joinToString { it }}"
+                "Invoking external documentation tool ${args[0]} with arguments\n\"${
+                args.slice(1 until args.size).joinToString(separator = "\",\n\"") { it }}\""
             )
             options.stdout.flush()
         }

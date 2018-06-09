@@ -199,9 +199,20 @@ class SignatureWriter(
         }
 
         if (all.any()) {
-            val label = if (isInterface && !compatibility.extendsForInterfaceSuperClass) " extends" else " implements"
+            val label =
+                if (isInterface && !compatibility.extendsForInterfaceSuperClass) {
+                    val superInterface = cls.filteredSuperclass(filterReference)
+                    if (superInterface != null && !superInterface.isJavaLangObject()) {
+                        // For interfaces we've already listed "extends <super interface>"; we don't
+                        // want to repeat "extends " here
+                        ""
+                    } else {
+                        " extends"
+                    }
+                } else {
+                    " implements"
+                }
             writer.print(label)
-
             all.sortedWith(TypeItem.comparator).forEach { item ->
                 writer.print(" ")
                 writer.print(item.toTypeString(erased = compatibility.omitTypeParametersInInterfaces))
