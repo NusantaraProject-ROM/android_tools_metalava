@@ -157,7 +157,7 @@ class ApiFileTest : DriverTest() {
                     package test.pkg
 
                     class Foo {
-                        fun error(int: Int = 42, int2: Int? = null, byte: Int = 42) { }
+                        fun error(int: Int = 42, int2: Int? = null, byte: Int = 42, vararg args: String) { }
                     }
                     """
                 )
@@ -166,7 +166,7 @@ class ApiFileTest : DriverTest() {
                 package test.pkg {
                   public final class Foo {
                     ctor public Foo();
-                    method public void error(int p = "42", Integer? int2 = "null", int p1 = "42");
+                    method public void error(int p = "42", Integer? int2 = "null", int p1 = "42", java.lang.String... args);
                   }
                 }
                 """,
