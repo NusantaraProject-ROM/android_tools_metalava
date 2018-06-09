@@ -556,12 +556,12 @@ class Options(
                 "-werror" -> {
                     // Temporarily disabled; this is used in various builds but is pretty much
                     // never what we want.
-                    //warningsAreErrors = true
+                    // warningsAreErrors = true
                 }
                 "-lerror" -> {
                     // Temporarily disabled; this is used in various builds but is pretty much
                     // never what we want.
-                    //lintsAreErrors = true
+                    // lintsAreErrors = true
                 }
 
                 ARG_CHECK_KOTLIN_INTEROP -> checkKotlinInterop = true
@@ -620,19 +620,33 @@ class Options(
                 ARG_GENERATE_DOCUMENTATION -> {
                     // Digest all the remaining arguments.
                     // Allow "STUBS_DIR" to reference the stubs directory.
+                    var prev = ""
                     invokeDocumentationToolArguments = args.slice(++index until args.size).mapNotNull {
-                        if (it == "STUBS_DIR" && docStubsDir != null) {
-                            docStubsDir?.path
-                        } else if (it == "STUBS_DIR" && stubsDir != null) {
+                        var argument = it
+                        // When generating documentation, use the doc stubs directory rather than the
+                        // original source path
+                        val docStubsDir = docStubsDir
+                        if (docStubsDir != null && (prev == ARG_SOURCE_PATH || prev == "-sourcepath") &&
+                            !argument.contains(docStubsDir.path)) {
+                            // Insert the doc stubs as the default place to look for sources
+                            argument = docStubsDir.path // + File.pathSeparatorChar + argument
+                        }
+                        prev = it
+
+                        if (argument == "STUBS_DIR" && docStubsDir != null) {
+                            docStubsDir.path
+                        } else if (argument == "STUBS_DIR" && stubsDir != null) {
                             stubsDir?.path
-                        } else if (it == "DOC_STUBS_SOURCE_LIST" && docStubsSourceList != null) {
+                        } else if (argument == "DOCS_STUBS_DIR" && docStubsDir != null) {
+                            docStubsDir.path
+                        } else if (argument == "DOC_STUBS_SOURCE_LIST" && docStubsSourceList != null) {
                             "@${docStubsSourceList?.path}"
-                        } else if (it == "STUBS_SOURCE_LIST" && stubsSourceList != null) {
+                        } else if (argument == "STUBS_SOURCE_LIST" && stubsSourceList != null) {
                             "@${stubsSourceList?.path}"
-                        } else if (it == "STUBS_SOURCE_LIST" && docStubsSourceList != null) {
+                        } else if (argument == "STUBS_SOURCE_LIST" && docStubsSourceList != null) {
                             "@${docStubsSourceList?.path}"
                         } else {
-                            it
+                            argument
                         }
                     }.toTypedArray()
 

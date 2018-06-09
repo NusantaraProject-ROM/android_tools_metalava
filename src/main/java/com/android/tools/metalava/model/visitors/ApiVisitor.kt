@@ -78,7 +78,6 @@ open class ApiVisitor(
         nestInnerClasses: Boolean = false,
 
         /** Whether to ignore APIs with annotations in the --show-annotations list */
-//        ignoreShown: Boolean = options.showUnannotated,
         ignoreShown: Boolean = true,
 
         /** Whether to match APIs marked for removal instead of the normal API */
