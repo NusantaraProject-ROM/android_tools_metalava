@@ -40,6 +40,7 @@ open class TextMethodItem(
     isSynchronized: Boolean,
     isNative: Boolean,
     isDefault: Boolean,
+    isStrictFp: Boolean,
     isInfix: Boolean,
     isOperator: Boolean,
     isInline: Boolean,
@@ -54,7 +55,7 @@ open class TextMethodItem(
         codebase = codebase,
         annotationStrings = annotations, public = isPublic, protected = isProtected, internal = isInternal,
         private = isPrivate, static = isStatic, final = isFinal, abstract = isAbstract,
-        synchronized = isSynchronized, native = isNative, default = isDefault,
+        synchronized = isSynchronized, native = isNative, default = isDefault, strictfp = isStrictFp,
         infix = isInfix, operator = isOperator, inline = isInline
     )
 ), MethodItem {

@@ -1,0 +1,142 @@
+// APIs annotated in master that haven't been annotated in pi-dev
+package android.content.pm {
+  public abstract class PackageManager {
+    method @RequiresPermission(value=android.Manifest.permission.CHANGE_COMPONENT_ENABLED_STATE, conditional=true) public abstract void setApplicationEnabledSetting(String, int, int);
+    method @RequiresPermission(value=android.Manifest.permission.CHANGE_COMPONENT_ENABLED_STATE, conditional=true) public abstract void setComponentEnabledSetting(android.content.ComponentName, int, int);
+  }
+}
+package android.graphics {
+  public class Path {
+    method @NonNull public android.graphics.Path.FillType getFillType();
+  }
+  public final class Rect implements android.os.Parcelable {
+    method @NonNull public String flattenToString();
+    method @NonNull public String toShortString();
+    method @Nullable public static android.graphics.Rect unflattenFromString(@Nullable String);
+  }
+  public class RectF implements android.os.Parcelable {
+    method @NonNull public String toShortString();
+  }
+}
+package android.os {
+  public class DropBoxManager {
+    method @RequiresPermission(allOf={android.Manifest.permission.READ_LOGS, android.Manifest.permission.PACKAGE_USAGE_STATS}) @Nullable public android.os.DropBoxManager.Entry getNextEntry(String, long);
+  }
+  public final class Parcel {
+    method @Nullable public android.os.IBinder[] createBinderArray();
+    method @Nullable public java.util.ArrayList<android.os.IBinder> createBinderArrayList();
+    method @Nullable public boolean[] createBooleanArray();
+    method @Nullable public byte[] createByteArray();
+    method @Nullable public char[] createCharArray();
+    method @Nullable public double[] createDoubleArray();
+    method @Nullable public float[] createFloatArray();
+    method @Nullable public int[] createIntArray();
+    method @Nullable public long[] createLongArray();
+    method @Nullable public String[] createStringArray();
+    method @Nullable public java.util.ArrayList<java.lang.String> createStringArrayList();
+    method @Nullable public <T> T[] createTypedArray(@NonNull android.os.Parcelable.Creator<T>);
+    method @Nullable public <T> java.util.ArrayList<T> createTypedArrayList(@NonNull android.os.Parcelable.Creator<T>);
+    method @NonNull public static android.os.Parcel obtain();
+    method @Nullable public Object[] readArray(@Nullable ClassLoader);
+    method @Nullable public java.util.ArrayList readArrayList(@Nullable ClassLoader);
+    method @Nullable public android.os.Bundle readBundle();
+    method @Nullable public android.os.Bundle readBundle(@Nullable ClassLoader);
+    method @Nullable public java.util.HashMap readHashMap(@Nullable ClassLoader);
+    method @Nullable public <T extends android.os.Parcelable> T readParcelable(@Nullable ClassLoader);
+    method @Nullable public android.os.Parcelable[] readParcelableArray(@Nullable ClassLoader);
+    method @Nullable public android.os.PersistableBundle readPersistableBundle();
+    method @Nullable public android.os.PersistableBundle readPersistableBundle(@Nullable ClassLoader);
+    method @Nullable public java.io.Serializable readSerializable();
+    method @NonNull public android.util.Size readSize();
+    method @NonNull public android.util.SizeF readSizeF();
+    method @Nullable public android.util.SparseArray readSparseArray(@Nullable ClassLoader);
+    method @Nullable public android.util.SparseBooleanArray readSparseBooleanArray();
+    method @Nullable public String readString();
+    method @Nullable public <T> T readTypedObject(@NonNull android.os.Parcelable.Creator<T>);
+    method @Nullable public Object readValue(@Nullable ClassLoader);
+  }
+}
+package android.util {
+  public final class Log {
+    method @NonNull public static String getStackTraceString(@Nullable Throwable);
+  }
+}
+package android.view {
+  public abstract class Window {
+    method @NonNull public abstract android.view.View getDecorView();
+  }
+}
+package java.lang {
+  public final class Character implements java.lang.Comparable<java.lang.Character> java.io.Serializable {
+    method @NonNull public static char @NonNull [] toChars(int);
+  }
+  public final class Class<T> implements java.lang.reflect.AnnotatedElement java.lang.reflect.GenericDeclaration java.io.Serializable java.lang.reflect.Type {
+    method @Nullable public T cast(@Nullable Object);
+    method @NonNull public static Class<?> forName(@NonNull String) throws java.lang.ClassNotFoundException;
+    method @NonNull public static Class<?> forName(@NonNull String, boolean, @Nullable ClassLoader) throws java.lang.ClassNotFoundException;
+    method @Nullable public <A extends java.lang.annotation.Annotation> A getAnnotation(@NonNull Class<A>);
+    method @NonNull public java.lang.annotation.Annotation @NonNull [] getAnnotations();
+    method @NonNull public <A extends java.lang.annotation.Annotation> A @NonNull [] getAnnotationsByType(@NonNull Class<A>);
+    method @Nullable public String getCanonicalName();
+    method @Nullable public ClassLoader getClassLoader();
+    method @NonNull public Class<?> @NonNull [] getClasses();
+    method @Nullable public Class<?> getComponentType();
+    method @NonNull public java.lang.reflect.Constructor<?> @NonNull [] getConstructors() throws java.lang.SecurityException;
+    method @Nullable public native <A extends java.lang.annotation.Annotation> A getDeclaredAnnotation(@NonNull Class<A>);
+    method @NonNull public native java.lang.annotation.Annotation @NonNull [] getDeclaredAnnotations();
+    method @NonNull public native Class<?> @NonNull [] getDeclaredClasses();
+    method @NonNull public java.lang.reflect.Constructor<?> @NonNull [] getDeclaredConstructors() throws java.lang.SecurityException;
+    method @NonNull public native java.lang.reflect.Field getDeclaredField(@NonNull String) throws java.lang.NoSuchFieldException;
+    method @NonNull public native java.lang.reflect.Field @NonNull [] getDeclaredFields();
+    method @NonNull public java.lang.reflect.Method @NonNull [] getDeclaredMethods() throws java.lang.SecurityException;
+    method @Nullable public native Class<?> getDeclaringClass();
+    method @Nullable public native Class<?> getEnclosingClass();
+    method @Nullable public java.lang.reflect.Constructor<?> getEnclosingConstructor();
+    method @Nullable public java.lang.reflect.Method getEnclosingMethod();
+    method @NonNull public T @Nullable [] getEnumConstants();
+    method @NonNull public java.lang.reflect.Field getField(@NonNull String) throws java.lang.NoSuchFieldException;
+    method @NonNull public java.lang.reflect.Field @NonNull [] getFields() throws java.lang.SecurityException;
+    method @NonNull public java.lang.reflect.Type @NonNull [] getGenericInterfaces();
+    method @Nullable public java.lang.reflect.Type getGenericSuperclass();
+    method @NonNull public Class<?> @NonNull [] getInterfaces();
+    method @NonNull public java.lang.reflect.Method @NonNull [] getMethods() throws java.lang.SecurityException;
+    method @NonNull public String getName();
+    method @Nullable public Package getPackage();
+    method @Nullable public java.security.ProtectionDomain getProtectionDomain();
+    method @Nullable public java.net.URL getResource(@NonNull String);
+    method @Nullable public java.io.InputStream getResourceAsStream(@NonNull String);
+    method @NonNull public Object @Nullable [] getSigners();
+    method @NonNull public String getSimpleName();
+    method @Nullable public Class<? super T> getSuperclass();
+    method @NonNull public synchronized java.lang.reflect.TypeVariable<java.lang.@NonNull Class<T>> @NonNull [] getTypeParameters();
+    method @NonNull public native T newInstance() throws java.lang.IllegalAccessException, java.lang.InstantiationException;
+    method @NonNull public String toGenericString();
+  }
+  public class Object {
+    method @NonNull public final Class<?> getClass();
+    method @NonNull public String toString();
+  }
+  public final class System {
+    method @NonNull public static java.util.Map<java.lang.String,java.lang.String> getenv();
+  }
+  public class ThreadLocal<T> {
+    method @NonNull public static <S> ThreadLocal<S> withInitial(@NonNull java.util.function.Supplier<? extends S>);
+  }
+}
+package java.util {
+  public class ArrayList<E> extends java.util.AbstractList<E> implements java.lang.Cloneable java.util.List<E> java.util.RandomAccess java.io.Serializable {
+    method @NonNull public Object clone();
+  }
+  public class HashMap<K, V> extends java.util.AbstractMap<K,V> implements java.lang.Cloneable java.util.Map<K,V> java.io.Serializable {
+    method @NonNull public Object clone();
+    method @NonNull public java.util.Set<java.util.Map.Entry<K,V>> entrySet();
+  }
+  public interface Map<K, V> {
+    method @Nullable public V get(@Nullable Object);
+    method @Nullable public default V getOrDefault(@Nullable Object, @Nullable V);
+    method @Nullable public V put(K, V);
+    method @Nullable public default V putIfAbsent(K, V);
+    method @Nullable public V remove(@Nullable Object);
+    method @Nullable public default V replace(K, V);
+  }
+}
