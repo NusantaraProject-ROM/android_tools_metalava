@@ -27,7 +27,7 @@ import java.io.StringWriter
 
 class TextModifiers(
     override val codebase: Codebase,
-    annotationStrings: List<String>? = null,
+    private val annotationStrings: List<String>? = null,
     private var public: Boolean = false,
     private var protected: Boolean = false,
     private var private: Boolean = false,
@@ -48,6 +48,33 @@ class TextModifiers(
     private var vararg: Boolean = false
 ) : MutableModifierList {
     private var annotations: MutableList<AnnotationItem> = mutableListOf()
+
+    fun duplicate(): TextModifiers {
+        val new = TextModifiers(
+            codebase,
+            null,
+            public,
+            protected,
+            private,
+            internal,
+            static,
+            abstract,
+            final,
+            native,
+            synchronized,
+            strictfp,
+            transient,
+            volatile,
+            default,
+            infix,
+            operator,
+            inline,
+            sealed,
+            vararg
+        )
+        new.annotations.addAll(annotations) // these are immutable; sharing copies is fine
+        return new
+    }
 
     init {
         annotationStrings?.forEach { source ->
@@ -89,6 +116,7 @@ class TextModifiers(
     override fun isDefault(): Boolean = default
     override fun isSealed(): Boolean = sealed
     override fun isInfix(): Boolean = infix
+    override fun isInline(): Boolean = inline
     override fun isOperator(): Boolean = operator
     override fun isVarArg(): Boolean = vararg
 

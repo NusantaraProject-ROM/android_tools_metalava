@@ -39,7 +39,7 @@ class TextConstructorItem(
     annotations: List<String>?
 ) : TextMethodItem(
     codebase, name, containingClass, isPublic, isProtected, isPrivate, isInternal,
-    isFinal, isStatic, isAbstract, isSynchronized, isNative, isDefault, false, false, false,
+    isFinal, isStatic, isAbstract, isSynchronized, isNative, isDefault, false, false, false, false,
     returnType, position, annotations
 ),
     ConstructorItem {

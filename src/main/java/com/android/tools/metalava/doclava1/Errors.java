@@ -197,6 +197,7 @@ public class Errors {
     public static final Error ANNOTATION_EXTRACTION = new Error(146, ERROR);
     public static final Error SUPERFLUOUS_PREFIX = new Error(147, WARNING);
     public static final Error HIDDEN_TYPEDEF_CONSTANT = new Error(148, ERROR);
+    public static final Error MISSING_TYPEDEF_CONSTANT = new Error(149, LINT);
 
     static {
         // Attempt to initialize error names based on the field names
