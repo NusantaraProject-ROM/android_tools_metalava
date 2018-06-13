@@ -465,40 +465,74 @@ class DefaultAnnotationAttribute(
         }
 
         fun createList(source: String): List<AnnotationAttribute> {
-            val list = mutableListOf<AnnotationAttribute>()
-            if (source.contains("{")) {
-                assert(
-                    source.indexOf('{', source.indexOf('{', source.indexOf('{') + 1) + 1) != -1
-                ) { "Multiple arrays not supported: $source" }
-                val split = source.indexOf('=')
-                val name: String
-                val value: String
-                if (split == -1) {
-                    name = "value"
-                    value = source.substring(source.indexOf('{'))
-                } else {
-                    name = source.substring(0, split).trim()
-                    value = source.substring(split + 1).trim()
+            val list = mutableListOf<AnnotationAttribute>() // TODO: default size = 2
+            var begin = 0
+            var index = 0
+            val length = source.length
+            while (index < length) {
+                val c = source[index]
+                if (c == '{') {
+                    index = findEnd(source, index + 1, length, '}')
+                } else if (c == '"') {
+                    index = findEnd(source, index + 1, length, '"')
+                } else if (c == ',') {
+                    addAttribute(list, source, begin, index)
+                    index++
+                    begin = index
+                    continue
+                } else if (c == ' ' && index == begin) {
+                    begin++
                 }
-                list.add(DefaultAnnotationAttribute.create(name, value))
-                return list
+
+                index++
             }
 
-            source.split(",").forEach { declaration ->
-                val split = declaration.indexOf('=')
-                val name: String
-                val value: String
-                if (split == -1) {
-                    name = "value"
-                    value = declaration.trim()
-                } else {
-                    name = declaration.substring(0, split).trim()
-                    value = declaration.substring(split + 1).trim()
-                }
-                list.add(DefaultAnnotationAttribute.create(name, value))
+            if (begin < length) {
+                addAttribute(list, source, begin, length)
             }
+
             return list
         }
+
+        private fun findEnd(source: String, from: Int, to: Int, sentinel: Char): Int {
+            var i = from
+            while (i < to) {
+                val c = source[i]
+                if (c == '\\') {
+                    i++
+                } else if (c == sentinel) {
+                    return i
+                }
+                i++
+            }
+            return to
+        }
+
+        private fun addAttribute(list: MutableList<AnnotationAttribute>, source: String, from: Int, to: Int) {
+            var split = source.indexOf('=', from)
+            if (split >= to) {
+                split = -1
+            }
+            val name: String
+            val value: String
+            val valueBegin: Int
+            val valueEnd: Int
+            if (split == -1) {
+                valueBegin = split + 1
+                valueEnd = to
+                name = "value"
+            } else {
+                name = source.substring(from, split).trim()
+                valueBegin = split + 1
+                valueEnd = to
+            }
+            value = source.substring(valueBegin, valueEnd).trim()
+            list.add(DefaultAnnotationAttribute.create(name, value))
+        }
+    }
+
+    override fun toString(): String {
+        return "DefaultAnnotationAttribute(name='$name', value=$value)"
     }
 }
 
