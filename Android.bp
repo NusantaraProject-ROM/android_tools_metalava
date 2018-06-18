@@ -27,9 +27,11 @@ java_binary_host {
     manifest: "manifest.txt",
 }
 
-java_library_host {
+java_library {
     name: "stub-annotations",
+    host_supported: true,
     srcs: [
         "stub-annotations/src/main/java/**/*.java",
     ],
+    no_framework_libs: true,
 }
