@@ -183,6 +183,9 @@ interface Item {
      * {@link java.util.List List}.
      */
     fun fullyQualifiedDocumentation(): String = documentation
+
+    /** Expands the given documentation comment in the current name context */
+    fun fullyQualifiedDocumentation(documentation: String): String = documentation
 }
 
 abstract class DefaultItem(override val sortingRank: Int = nextRank++) : Item {

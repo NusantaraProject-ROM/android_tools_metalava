@@ -139,6 +139,11 @@ interface Codebase {
     /** Reports that the given operation is unsupported for this codebase type */
     fun unsupported(desc: String? = null): Nothing
 
+    /** Discards this model */
+    fun dispose() {
+        description += " [disposed]"
+    }
+
     /** Whether this codebase supports staged nullability (RecentlyNullable etc) */
     var supportsStagedNullability: Boolean
 
