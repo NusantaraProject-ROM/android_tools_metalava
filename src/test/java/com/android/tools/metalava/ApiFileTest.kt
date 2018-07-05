@@ -1032,6 +1032,47 @@ class ApiFileTest : DriverTest() {
     }
 
     @Test
+    fun `Warn about findViewById`() {
+        // Include as many modifiers as possible to see which ones are included
+        // in the signature files, and the expected sorting order.
+        // Note that the signature files treat "deprecated" as a fake modifier.
+        // Note also how the "protected" modifier on the interface method gets
+        // promoted to public.
+        check(
+            checkDoclava1 = true,
+            compatibilityMode = false,
+            outputKotlinStyleNulls = false,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    import android.annotation.Nullable;
+
+                    @SuppressWarnings("ALL")
+                    public abstract class Foo {
+                        @Nullable public String findViewById(int id) { return ""; }
+                    }
+                    """
+                ),
+                nullableSource
+            ),
+
+            warnings = """
+                src/test/pkg/Foo.java:6: warning: method test.pkg.Foo.findViewById(int) should not be annotated @Nullable; it should be left unspecified to make it a platform type [ExpectedPlatformType:149]
+                """,
+
+            api = """
+                package test.pkg {
+                  public abstract class Foo {
+                    ctor public Foo();
+                    method public String findViewById(int);
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
     fun `Check all modifiers, non-compat mode`() {
         @Suppress("ConstantConditionIf")
         if (SKIP_NON_COMPAT) {

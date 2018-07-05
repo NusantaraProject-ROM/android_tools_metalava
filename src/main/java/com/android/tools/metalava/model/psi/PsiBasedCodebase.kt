@@ -35,6 +35,7 @@ import com.android.tools.metalava.tick
 import com.google.common.collect.BiMap
 import com.google.common.collect.HashBiMap
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiArrayType
@@ -197,6 +198,11 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
         // Point to "parent" packages, since doclava treats packages as nested (e.g. an @hide on
         // android.foo will also apply to android.foo.bar)
         addParentPackages(packageMap.values)
+    }
+
+    override fun dispose() {
+        Disposer.dispose(project)
+        super.dispose()
     }
 
     private fun addParentPackages(packages: Collection<PsiPackageItem>) {

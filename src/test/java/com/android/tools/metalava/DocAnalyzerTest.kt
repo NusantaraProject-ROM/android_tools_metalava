@@ -5,7 +5,6 @@ import com.android.tools.metalava.model.psi.trimDocIndent
 import com.google.common.io.Files
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 
@@ -296,14 +295,18 @@ class DocAnalyzerTest : DriverTest() {
             stubs = arrayOf(
                 """
                 package test.pkg;
-                /** Methods in this class must be called on the thread that originally created
-                 *            this UI element, unless otherwise noted. This is typically the
-                 *            main thread of your app. * */
+                /**
+                 * Methods in this class must be called on the thread that originally created
+                 * this UI element, unless otherwise noted. This is typically the
+                 * main thread of your app. *
+                 */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 @androidx.annotation.UiThread public class RangeTest {
                 public RangeTest() { throw new RuntimeException("Stub!"); }
-                /** This method may take several seconds to complete, so it should
-                 *            only be called from a worker thread. */
+                /**
+                 * This method may take several seconds to complete, so it should
+                 * only be called from a worker thread.
+                 */
                 @androidx.annotation.WorkerThread public int test1() { throw new RuntimeException("Stub!"); }
                 }
                 """
@@ -338,12 +341,80 @@ class DocAnalyzerTest : DriverTest() {
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class RangeTest {
                 public RangeTest() { throw new RuntimeException("Stub!"); }
-                /** This method must be called on the thread that originally created
-                 *            this UI element. This is typically the main thread of your app.
+                /**
+                 * This method must be called on the thread that originally created
+                 * this UI element. This is typically the main thread of your app.
+                 * <br>
                  * This method may take several seconds to complete, so it should
-                 *  *            only be called from a worker thread.
+                 * only be called from a worker thread.
                  */
                 @androidx.annotation.UiThread @androidx.annotation.WorkerThread public int test1() { throw new RuntimeException("Stub!"); }
+                }
+                """
+            )
+        )
+    }
+
+    @Test
+    fun `Merge Multiple sections`() {
+        check(
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package android.widget;
+                    import androidx.annotation.UiThread;
+
+                    public class Toolbar2 {
+                        /**
+                        * Existing documentation for {@linkplain #getCurrentContentInsetEnd()} here.
+                        * @return blah blah blah
+                        */
+                        @UiThread
+                        public int getCurrentContentInsetEnd() {
+                            return 0;
+                        }
+                    }
+                    """
+                ),
+                uiThreadSource
+            ),
+            checkCompilation = true,
+            checkDoclava1 = false,
+            applyApiLevelsXml = """
+                    <?xml version="1.0" encoding="utf-8"?>
+                    <api version="2">
+                        <class name="android/widget/Toolbar2" since="21">
+                            <method name="&lt;init>(Landroid/content/Context;)V"/>
+                            <method name="collapseActionView()V"/>
+                            <method name="getContentInsetStartWithNavigation()I" since="24"/>
+                            <method name="getCurrentContentInsetEnd()I" since="24"/>
+                            <method name="getCurrentContentInsetLeft()I" since="24"/>
+                            <method name="getCurrentContentInsetRight()I" since="24"/>
+                            <method name="getCurrentContentInsetStart()I" since="24"/>
+                        </class>
+                    </api>
+                    """,
+            stubs = arrayOf(
+                """
+                package android.widget;
+                /**
+                 * Requires API level 21
+                 * @since 5.0 Lollipop (21)
+                 */
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class Toolbar2 {
+                public Toolbar2() { throw new RuntimeException("Stub!"); }
+                /**
+                 * Existing documentation for {@linkplain #getCurrentContentInsetEnd()} here.
+                 * <br>
+                 * This method must be called on the thread that originally created
+                 * this UI element. This is typically the main thread of your app.
+                 * <br>
+                 * Requires API level 24
+                 * @since 7.0 Nougat (24)
+                 * @return blah blah blah
+                 */
+                @androidx.annotation.UiThread public int getCurrentContentInsetEnd() { throw new RuntimeException("Stub!"); }
                 }
                 """
             )
@@ -577,6 +648,7 @@ class DocAnalyzerTest : DriverTest() {
                 public RangeTest() { throw new RuntimeException("Stub!"); }
                 /**
                  * This is the existing documentation.
+                 * <br>
                  * Requires {@link test.pkg.RangeTest#ACCESS_COARSE_LOCATION}
                  */
                 @androidx.annotation.RequiresPermission(test.pkg.RangeTest.ACCESS_COARSE_LOCATION) public int test1() { throw new RuntimeException("Stub!"); }
@@ -620,6 +692,7 @@ class DocAnalyzerTest : DriverTest() {
                 /**
                  * This is the existing documentation.
                  * Multiple lines of it.
+                 * <br>
                  * Requires {@link test.pkg.RangeTest#ACCESS_COARSE_LOCATION}
                  */
                 @androidx.annotation.RequiresPermission(test.pkg.RangeTest.ACCESS_COARSE_LOCATION) public int test1() { throw new RuntimeException("Stub!"); }
@@ -698,6 +771,7 @@ class DocAnalyzerTest : DriverTest() {
                 public RangeTest() { throw new RuntimeException("Stub!"); }
                 /**
                  * This is the existing documentation.
+                 * <br>
                  * Requires {@link test.pkg.RangeTest#ACCESS_COARSE_LOCATION}
                  * @param parameter1 docs for parameter1
                  * @param parameter2 docs for parameter2
@@ -927,7 +1001,6 @@ class DocAnalyzerTest : DriverTest() {
         )
     }
 
-    @Ignore("This test for some reason is flaky; it works when run directly but sometimes fails when running all tests")
     @Test
     fun `Merge API levels`() {
         check(
@@ -977,6 +1050,7 @@ class DocAnalyzerTest : DriverTest() {
                 public Toolbar() { throw new RuntimeException("Stub!"); }
                 /**
                  * Existing documentation for {@linkplain #getCurrentContentInsetEnd()} here.
+                 * <br>
                  * Requires API level 24
                  * @since 7.0 Nougat (24)
                  * @return blah blah blah
@@ -1156,6 +1230,62 @@ class DocAnalyzerTest : DriverTest() {
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 @androidx.annotation.RequiresApi(21) public class MyClass1 {
                 public MyClass1() { throw new RuntimeException("Stub!"); }
+                }
+                """
+            )
+        )
+    }
+
+    @Test
+    fun `Include Kotlin deprecation text`() {
+        check(
+            sourceFiles = *arrayOf(
+                kotlin(
+                    """
+                    package test.pkg
+
+                    @Suppress("DeprecatedCallableAddReplaceWith","EqualsOrHashCode")
+                    @Deprecated("Use Jetpack preference library", level = DeprecationLevel.ERROR)
+                    class Foo {
+                        fun foo()
+
+                        @Deprecated("Blah blah blah 1", level = DeprecationLevel.ERROR)
+                        override fun toString(): String = "Hello World"
+
+                        /**
+                         * My description
+                         * @deprecated Existing deprecation message.
+                         */
+                        @Deprecated("Blah blah blah 2", level = DeprecationLevel.ERROR)
+                        override fun hashCode(): Int = 0
+                    }
+
+                    """
+                )
+            ),
+            checkCompilation = true,
+            checkDoclava1 = false,
+            stubs = arrayOf(
+                """
+                package test.pkg;
+                /**
+                 * @deprecated Use Jetpack preference library
+                 */
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                @Deprecated public final class Foo {
+                public Foo() { throw new RuntimeException("Stub!"); }
+                public void foo() { throw new RuntimeException("Stub!"); }
+                /**
+                 * {@inheritDoc}
+                 * @deprecated Blah blah blah 1
+                 */
+                @Deprecated @androidx.annotation.NonNull public java.lang.String toString() { throw new RuntimeException("Stub!"); }
+                /**
+                 * My description
+                 * @deprecated Existing deprecation message.
+                 * Blah blah blah 2
+                 */
+                @Deprecated public int hashCode() { throw new RuntimeException("Stub!"); }
                 }
                 """
             )

@@ -58,24 +58,6 @@ class RewriteAnnotations {
         }
     }
 
-    /** Modifies annotation source files such that they are package private */
-    fun modifyAnnotationSources(source: File, target: File) {
-        if (source.name.endsWith(SdkConstants.DOT_JAVA)) {
-            // Copy and convert
-            target.parentFile.mkdirs()
-            target.writeText(
-                source.readText(Charsets.UTF_8).replace(
-                    "\npublic @interface",
-                    "\n@interface"
-                )
-            )
-        } else if (source.isDirectory) {
-            source.listFiles()?.forEach {
-                modifyAnnotationSources(it, File(target, it.name))
-            }
-        }
-    }
-
     /** Writes the bytecode for the compiled annotations in the given file list such that they are package private */
     fun rewriteAnnotations(files: List<File>) {
         for (file in files) {
