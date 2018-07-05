@@ -134,7 +134,11 @@ abstract class PsiItem(
     }
 
     override fun fullyQualifiedDocumentation(): String {
-        if (documentation.isBlank()) {
+        return fullyQualifiedDocumentation(documentation)
+    }
+
+    override fun fullyQualifiedDocumentation(documentation: String): String {
+        if (documentation.isBlank() || !containsLinkTags(documentation)) {
             return documentation
         }
 
@@ -153,7 +157,7 @@ abstract class PsiItem(
                 // TODO: Get rid of line comments as documentation
                 // Invalid comment
                 if (documentation.startsWith("//") && documentation.contains("/**")) {
-                    documentation = documentation.substring(documentation.indexOf("/**"))
+                    return fullyQualifiedDocumentation(documentation.substring(documentation.indexOf("/**")))
                 }
                 codebase.getComment(documentation, psi())
             }
@@ -322,11 +326,25 @@ abstract class PsiItem(
                 }
             }
 
-            if (element is PsiDocCommentOwner) {
+            if (element is PsiDocCommentOwner && element.docComment !is PsiCompiledElement) {
                 return element.docComment?.text ?: ""
             }
 
             return ""
+        }
+
+        fun containsLinkTags(documentation: String): Boolean {
+            var index = 0
+            while (true) {
+                index = documentation.indexOf('@', index)
+                if (index == -1) {
+                    return false
+                }
+                if (!documentation.startsWith("@code", index)) {
+                    return true
+                }
+                index++
+            }
         }
 
         fun modifiers(

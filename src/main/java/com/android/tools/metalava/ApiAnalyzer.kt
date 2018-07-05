@@ -491,6 +491,9 @@ class ApiAnalyzer(
                     method.documentation
              */
             method.inheritedMethod = true
+            // The documentation may use relative references to classes in import statements
+            // in the original class, so expand the documentation to be fully qualified
+            method.documentation = it.fullyQualifiedDocumentation()
             cls.addMethod(method)
         }
     }
@@ -794,14 +797,38 @@ class ApiAnalyzer(
         packages.accept(object : ApiVisitor(codebase) {
             override fun visitItem(item: Item) {
                 // TODO: Check annotations and also mark removed/hidden based on annotations
-                if (item.deprecated && !item.documentation.contains("@deprecated")) {
+                if (item.deprecated && !item.documentation.contains("@deprecated") &&
+                    // Don't warn about this in Kotlin; the Kotlin deprecation annotation includes deprecation
+                    // messages (unlike java.lang.Deprecated which has no attributes). Instead, these
+                    // are added to the documentation by the [DocAnalyzer].
+                    !item.isKotlin()
+                ) {
                     reporter.report(
                         Errors.DEPRECATION_MISMATCH, item,
                         "${item.toString().capitalize()}: @Deprecated annotation (present) and @deprecated doc tag (not present) do not match"
                     )
                 }
+
                 // TODO: Check opposite (doc tag but no annotation)
                 // TODO: Other checks
+            }
+
+            override fun visitMethod(method: MethodItem) {
+                // Make sure we don't annotate findViewById & getSystemService as @Nullable.
+                // See for example 68914170.
+                val name = method.name()
+                if ((name == "findViewById" || name == "getSystemService") && method.parameters().size == 1 &&
+                    method.modifiers.isNullable()
+                ) {
+                    reporter.report(
+                        Errors.EXPECTED_PLATFORM_TYPE, method,
+                        "$method should not be annotated @Nullable; it should be left unspecified to make it a platform type"
+                    )
+                    val annotation = method.modifiers.annotations().find { it.isNullable() }
+                    annotation?.let {
+                        method.mutableModifiers().removeAnnotation(it)
+                    }
+                }
             }
         })
     }

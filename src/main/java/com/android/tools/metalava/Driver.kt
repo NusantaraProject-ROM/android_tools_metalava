@@ -23,11 +23,14 @@ import com.android.SdkConstants.DOT_KT
 import com.android.ide.common.process.CachedProcessOutputHandler
 import com.android.ide.common.process.DefaultProcessExecutor
 import com.android.ide.common.process.ProcessInfoBuilder
+import com.android.ide.common.process.ProcessOutput
+import com.android.ide.common.process.ProcessOutputHandler
 import com.android.tools.lint.KotlinLintAnalyzerFacade
 import com.android.tools.lint.LintCoreApplicationEnvironment
 import com.android.tools.lint.LintCoreProjectEnvironment
 import com.android.tools.lint.annotations.Extractor
 import com.android.tools.lint.checks.infrastructure.ClassName
+import com.android.tools.lint.detector.api.assertionsEnabled
 import com.android.tools.metalava.apilevels.ApiGenerator
 import com.android.tools.metalava.doclava1.ApiFile
 import com.android.tools.metalava.doclava1.ApiParseException
@@ -45,10 +48,12 @@ import com.android.utils.StdLogger.Level.ERROR
 import com.google.common.base.Stopwatch
 import com.google.common.collect.Lists
 import com.google.common.io.Files
+import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.util.Disposer
 import java.io.File
 import java.io.IOException
+import java.io.OutputStream
 import java.io.OutputStreamWriter
 import java.io.PrintWriter
 import java.util.concurrent.TimeUnit
@@ -85,8 +90,8 @@ fun run(
     setExitCode: Boolean = false
 ): Boolean {
 
-    if (System.getenv("METALAVA_DUMP_ARGV") != null &&
-        !java.lang.Boolean.getBoolean("METALAVA_TESTS_RUNNING")
+    if (System.getenv(ENV_VAR_METALAVA_DUMP_ARGV) != null &&
+        !java.lang.Boolean.getBoolean(ENV_VAR_METALAVA_TESTS_RUNNING)
     ) {
         stdout.println("---Running $PROGRAM_NAME----")
         stdout.println("pwd=${File("").absolutePath}")
@@ -144,17 +149,6 @@ private fun exit(exitCode: Int = 0) {
 private fun processFlags() {
     val stopwatch = Stopwatch.createStarted()
 
-    // --copy-annotations?
-    val privateAnnotationsSource = options.privateAnnotationsSource
-    val privateAnnotationsTarget = options.privateAnnotationsTarget
-    if (privateAnnotationsSource != null && privateAnnotationsTarget != null) {
-        val rewrite = RewriteAnnotations()
-        // Support pointing to both stub-annotations and stub-annotations/src/main/java
-        val src = File(privateAnnotationsSource, "src${File.separator}main${File.separator}java")
-        val source = if (src.isDirectory) src else privateAnnotationsSource
-        rewrite.modifyAnnotationSources(source, privateAnnotationsTarget)
-    }
-
     // --rewrite-annotations?
     options.rewriteAnnotations?.let { RewriteAnnotations().rewriteAnnotations(it) }
 
@@ -199,8 +193,12 @@ private fun processFlags() {
     }
 
     // Generate the documentation stubs *before* we migrate nullness information.
-    options.docStubsDir?.let { createStubFiles(it, codebase, docStubs = true,
-        writeStubList = options.docStubsSourceList != null) }
+    options.docStubsDir?.let {
+        createStubFiles(
+            it, codebase, docStubs = true,
+            writeStubList = options.docStubsSourceList != null
+        )
+    }
 
     val currentApiFile = options.currentApi
     if (currentApiFile != null && options.checkCompatibility) {
@@ -243,6 +241,8 @@ private fun processFlags() {
         // as warnings instead of errors
 
         migrateNulls(codebase, previous)
+
+        previous.dispose()
     }
 
     // Based on the input flags, generates various output files such
@@ -411,21 +411,51 @@ fun invokeDocumentationTool() {
         builder.setExecutable(File(args[0]))
         builder.addArgs(args.slice(1 until args.size))
 
-        val processOutputHandler = CachedProcessOutputHandler()
+        val processOutputHandler =
+            if (options.quiet) {
+                CachedProcessOutputHandler()
+            } else {
+                object : ProcessOutputHandler {
+                    override fun handleOutput(processOutput: ProcessOutput?) {
+                    }
+
+                    override fun createOutput(): ProcessOutput {
+                        return object : ProcessOutput {
+                            override fun getStandardOutput(): OutputStream {
+                                return System.out
+                            }
+
+                            override fun getErrorOutput(): OutputStream {
+                                return System.err
+                            }
+
+                            override fun close() {
+                                System.out.flush()
+                                System.err.flush()
+                            }
+                        }
+                    }
+                }
+            }
 
         val result = DefaultProcessExecutor(StdLogger(ERROR))
             .execute(builder.createProcess(), processOutputHandler)
-        val output = processOutputHandler.processOutput
-        output.standardOutputAsString
-        output.errorOutputAsString
 
         val exitCode = result.exitValue
-        options.stdout.println("${args[0]} finished with exitCode $exitCode")
-        options.stdout.flush()
+        if (!options.quiet) {
+            options.stdout.println("${args[0]} finished with exitCode $exitCode")
+            options.stdout.flush()
+        }
         if (exitCode != 0) {
+            val stdout = if (processOutputHandler is CachedProcessOutputHandler)
+                processOutputHandler.processOutput.errorOutputAsString
+            else ""
+            val stderr = if (processOutputHandler is CachedProcessOutputHandler)
+                processOutputHandler.processOutput.errorOutputAsString
+            else ""
             throw DriverException(
-                stdout = output.standardOutputAsString,
-                stderr = output.errorOutputAsString,
+                stdout = "Invoking documentation tool ${args[0]} failed with exit code $exitCode\n$stdout",
+                stderr = stderr,
                 exitCode = exitCode
             )
         }
@@ -588,6 +618,13 @@ private fun createProjectEnvironment(): LintCoreProjectEnvironment {
     ensurePsiFileCapacity()
     val appEnv = LintCoreApplicationEnvironment.get()
     val parentDisposable = Disposer.newDisposable()
+
+    if (!assertionsEnabled() &&
+        System.getenv(ENV_VAR_METALAVA_DUMP_ARGV) == null &&
+        !java.lang.Boolean.getBoolean(ENV_VAR_METALAVA_TESTS_RUNNING)) {
+        DefaultLogger.disableStderrDumping(parentDisposable)
+    }
+
     return LintCoreProjectEnvironment.create(parentDisposable, appEnv)
 }
 
@@ -637,11 +674,15 @@ private fun createStubFiles(stubDir: File, codebase: Codebase, docStubs: Boolean
         compatibility.useErasureInThrows = prevCompatibility.useErasureInThrows
     }
 
+    // Fow now, we don't put annotations into documentation stub files, unless you're explicitly
+    // generating only documentation stubs *and* asked to include annotations
+    val generateAnnotations = options.generateAnnotations && (!docStubs || options.stubsDir == null)
+
     val stubWriter =
         StubWriter(
             codebase = codebase,
             stubsDir = stubDir,
-            generateAnnotations = options.generateAnnotations,
+            generateAnnotations = generateAnnotations,
             preFiltered = codebase.original != null,
             docStubs = docStubs
         )

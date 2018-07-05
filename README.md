@@ -55,8 +55,6 @@ flags and translates them on the fly. Flags that are ignored are listed on
 the command line. If metalava is dropped into an Android framework build for
 example, you'll see something like this (unless running with --quiet) :
 
-    metalava: Ignoring unimplemented doclava1 flag -encoding (UTF-8 assumed)
-    metalava: Ignoring unimplemented doclava1 flag -source  (1.8 assumed)
     metalava: Ignoring javadoc-related doclava1 flag -J-Xmx1600m
     metalava: Ignoring javadoc-related doclava1 flag -J-XX:-OmitStackTraceInFastThrow
     metalava: Ignoring javadoc-related doclava1 flag -XDignore.symbol.file
@@ -437,13 +435,3 @@ improved some of the grammar, e.g. when it's listing a number of possible
 constants the conjunction is usually "or", but if it's a flag, the sentence
 begins with "a combination of " and then the conjunction at the end should
 be "and").
-
-## Current Status
-
-Some things are still missing before this tool can be integrated:
-
-- there are some remaining bugs around type resolution in Kotlin and
-  reified methods (also in Kotlin) are not included
-
-- the code needs cleanup, and some performance optimizations (it's about 3x
-  slower than doclava1)

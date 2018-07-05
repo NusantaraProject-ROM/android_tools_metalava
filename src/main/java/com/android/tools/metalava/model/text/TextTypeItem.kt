@@ -249,7 +249,7 @@ class TextTypeItem(
             while (true) {
                 val index = s.indexOf('@')
                 if (index == -1 || index >= max) {
-                    return s
+                    break
                 }
 
                 // Find end
@@ -260,6 +260,28 @@ class TextTypeItem(
                 val removed = oldLength - newLength
                 max -= removed
             }
+
+            // Sometimes we have a second type after the max, such as
+            // @androidx.annotation.NonNull java.lang.reflect.@androidx.annotation.NonNull TypeVariable<...>
+            for (i in 0 until s.length) {
+                val c = s[i]
+                if (Character.isJavaIdentifierPart(c) || c == '.') {
+                    continue
+                } else if (c == '@') {
+                    // Found embedded annotation within the type
+                    val end = findAnnotationEnd(s, i + 1)
+                    if (end == -1 || end == length) {
+                        break
+                    }
+
+                    s = s.substring(0, i).trim() + s.substring(end).trim()
+                    break
+                } else {
+                    break
+                }
+            }
+
+            return s
         }
 
         private fun findAnnotationEnd(type: String, start: Int): Int {
