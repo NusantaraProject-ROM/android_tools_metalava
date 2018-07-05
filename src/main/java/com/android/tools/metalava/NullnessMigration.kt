@@ -42,12 +42,6 @@ class NullnessMigration : ComparisonVisitor(visitAddedItemsRecursively = true) {
         }
     }
 
-    override fun added(new: Item) {
-        // Translate newly added items into RecentlyNull/RecentlyNonNull
-        if (hasNullnessInformation(new)) {
-            markRecent(new)
-        }
-    }
     override fun compare(old: MethodItem, new: MethodItem) {
         val newType = new.returnType() ?: return
         val oldType = old.returnType() ?: return
@@ -66,18 +60,6 @@ class NullnessMigration : ComparisonVisitor(visitAddedItemsRecursively = true) {
         checkType(oldType, newType)
     }
 
-    override fun added(new: MethodItem) {
-        checkType(new.returnType() ?: return)
-    }
-
-    override fun added(new: FieldItem) {
-        checkType(new.type())
-    }
-
-    override fun added(new: ParameterItem) {
-        checkType(new.type())
-    }
-
     private fun hasNullnessInformation(type: TypeItem): Boolean {
         val typeString = type.toTypeString(false, true, false)
         return typeString.contains(".Nullable") || typeString.contains(".NonNull")
@@ -89,12 +71,6 @@ class NullnessMigration : ComparisonVisitor(visitAddedItemsRecursively = true) {
                 new.toTypeString(false, true, false)) {
                 new.markRecent()
             }
-        }
-    }
-
-    private fun checkType(new: TypeItem) {
-        if (hasNullnessInformation(new)) {
-            new.markRecent()
         }
     }
 
@@ -125,15 +101,6 @@ class NullnessMigration : ComparisonVisitor(visitAddedItemsRecursively = true) {
 
         private fun isNonNull(item: Item): Boolean {
             return item.modifiers.annotations().any { it.isNonNull() }
-        }
-
-        private fun isRecentlyMigrated(item: Item): Boolean {
-            return item.modifiers.annotations().any { isRecentlyMigrated(it.qualifiedName() ?: "") }
-        }
-
-        private fun isRecentlyMigrated(qualifiedName: String): Boolean {
-            return qualifiedName.endsWith(".RecentlyNullable") ||
-                qualifiedName.endsWith(".RecentlyNonNull")
         }
     }
 }

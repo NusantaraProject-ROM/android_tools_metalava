@@ -19,6 +19,7 @@ package com.android.tools.metalava.model.psi
 import com.intellij.psi.JavaDocTokenType
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.javadoc.PsiDocTag
 import com.intellij.psi.javadoc.PsiDocToken
@@ -57,12 +58,17 @@ fun mergeDocumentation(
             else -> newText
         }
 
-        // TODO: Handle prefixing "*" on lines, if already done in the document?
-        return if (newText.contains('\n')) {
-            "/** $content */"
-        } else {
-            return insertInto("/**\n */", content, 3)
+        val inherit =
+            when (psiElement) {
+                is PsiMethod -> psiElement.findSuperMethods(true).isNotEmpty()
+                else -> false
+            }
+        val initial = if (inherit) "/**\n* {@inheritDoc}\n */" else "/** */"
+        val new = insertInto(initial, content, initial.indexOf("*/"))
+        if (new.startsWith("/**\n * \n *")) {
+            return "/**\n *" + new.substring(10)
         }
+        return new
     }
 
     val doc = trimDocIndent(existingDoc)
@@ -130,7 +136,8 @@ fun mergeDocumentation(
             if (!append) {
                 4 // "/** ".length
             } else firstTag?.textRange?.startOffset ?: doc.length - 2
-        return insertInto(doc, newText, startOffset)
+        // Insert a <br> before the appended docs, unless it's the beginning of a doc section
+        return insertInto(doc, if (startOffset > 4) "<br>\n$newText" else newText, startOffset)
     }
 }
 

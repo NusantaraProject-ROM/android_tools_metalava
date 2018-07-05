@@ -22,60 +22,10 @@ import com.android.tools.lint.checks.infrastructure.TestFiles.xml
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
 import java.lang.reflect.Modifier
 import java.net.URLClassLoader
 
 class RewriteAnnotationsTest : DriverTest() {
-    @Test
-    fun `Test copying private annotations from one of the stubs`() {
-        val source = File("stub-annotations/src/main/java/androidx/annotation".replace('/', File.separatorChar))
-        assertTrue(source.path, source.isDirectory)
-        val target = temporaryFolder.newFolder()
-        runDriver(
-            "--no-color",
-            "--no-banner",
-
-            "--copy-annotations",
-            source.path,
-            target.path
-        )
-
-        val converted = File(target, "CallSuper.java")
-        assertTrue("${converted.path} doesn't exist", converted.isFile)
-        assertEquals(
-            """
-            /*
-             * Copyright (C) 2015 The Android Open Source Project
-             *
-             * Licensed under the Apache License, Version 2.0 (the "License");
-             * you may not use this file except in compliance with the License.
-             * You may obtain a copy of the License at
-             *
-             *      http://www.apache.org/licenses/LICENSE-2.0
-             *
-             * Unless required by applicable law or agreed to in writing, software
-             * distributed under the License is distributed on an "AS IS" BASIS,
-             * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-             * See the License for the specific language governing permissions and
-             * limitations under the License.
-             */
-            package androidx.annotation;
-
-            import static java.lang.annotation.ElementType.METHOD;
-            import static java.lang.annotation.RetentionPolicy.CLASS;
-
-            import java.lang.annotation.Retention;
-            import java.lang.annotation.Target;
-
-            /** Stub only annotation. Do not use directly. */
-            @Retention(CLASS)
-            @Target({METHOD})
-            @interface CallSuper {}
-        """.trimIndent().trim(), converted.readText(Charsets.UTF_8).trim().replace("\r\n", "\n")
-        )
-    }
-
     @Test
     fun `Test rewriting the bytecode for one of the public annotations`() {
         val bytecode = base64gzip(

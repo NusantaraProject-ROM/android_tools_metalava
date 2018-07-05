@@ -221,7 +221,16 @@ abstract class DriverTest {
         /** Extract annotations and check that the given packages contain the given extracted XML files */
         extractAnnotations: Map<String, String>? = null
     ) {
-        System.setProperty("METALAVA_TESTS_RUNNING", VALUE_TRUE)
+        System.setProperty(ENV_VAR_METALAVA_TESTS_RUNNING, VALUE_TRUE)
+
+        // Ensure different API clients don't interfere with each other
+        try {
+            val method = ApiLookup::class.java.getDeclaredMethod("dispose")
+            method.isAccessible = true
+            method.invoke(null)
+        } catch (ignore: Throwable) {
+            ignore.printStackTrace()
+        }
 
         if (compatibilityMode && mergeXmlAnnotations != null) {
             fail(
@@ -1150,8 +1159,12 @@ abstract class DriverTest {
             val localFile = File("../../prebuilts/sdk/$apiLevel/public/android.jar")
             if (localFile.exists()) {
                 return localFile
+            } else {
+                val androidJar = File("../../prebuilts/sdk/$apiLevel/android.jar")
+                if (androidJar.exists()) {
+                    return androidJar
+                }
             }
-
             return null
         }
 
