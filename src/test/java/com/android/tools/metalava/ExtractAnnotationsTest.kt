@@ -177,7 +177,7 @@ class ExtractAnnotationsTest : DriverTest() {
         )
     }
 
-    @Ignore("Not working reliably")
+    @Ignore("Not working reliably -- fails when run and passes when debugged...")
     @Test
     fun `Include merged annotations in exported source annotations`() {
         check(

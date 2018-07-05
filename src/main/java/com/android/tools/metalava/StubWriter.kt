@@ -204,6 +204,8 @@ class StubWriter(
             compilationUnit?.getImportStatements(filterReference)?.let {
                 for (item in it) {
                     when (item) {
+                        is PackageItem ->
+                            writer.println("import ${item.qualifiedName()}.*;")
                         is ClassItem ->
                             writer.println("import ${item.qualifiedName()};")
                         is MemberItem ->

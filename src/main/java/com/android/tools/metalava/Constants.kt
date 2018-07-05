@@ -28,3 +28,6 @@ const val ANDROIDX_NOTNULL = "androidx.annotation.NonNull"
 const val ANDROIDX_NULLABLE = "androidx.annotation.Nullable"
 const val RECENTLY_NULLABLE = "androidx.annotation.RecentlyNullable"
 const val RECENTLY_NONNULL = "androidx.annotation.RecentlyNonNull"
+
+const val ENV_VAR_METALAVA_TESTS_RUNNING = "METALAVA_TESTS_RUNNING"
+const val ENV_VAR_METALAVA_DUMP_ARGV = "METALAVA_DUMP_ARGV"

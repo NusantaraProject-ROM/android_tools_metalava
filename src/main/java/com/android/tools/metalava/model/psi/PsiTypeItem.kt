@@ -340,12 +340,18 @@ class PsiTypeItem private constructor(private val codebase: PsiBasedCodebase, pr
             }
 
             if (outerAnnotations || innerAnnotations) {
-                val typeString = mapAnnotations(codebase, getCanonicalText(type, true))
-                if (!outerAnnotations && typeString.contains("@")) {
-                    // Temporary hack: should use PSI type visitor instead
-                    return TextTypeItem.eraseAnnotations(typeString, false, true)
+                try {
+                    val canonical = getCanonicalText(type, true)
+                    val typeString = mapAnnotations(codebase, canonical)
+                    if (!outerAnnotations && typeString.contains("@")) {
+                        // Temporary hack: should use PSI type visitor instead
+                        return TextTypeItem.eraseAnnotations(typeString, false, true)
+                    }
+
+                    return typeString
+                } catch (ignore: Throwable) {
+                    return type.canonicalText
                 }
-                return typeString
             } else {
                 return type.canonicalText
             }
@@ -404,7 +410,11 @@ class PsiTypeItem private constructor(private val codebase: PsiBasedCodebase, pr
         }
 
         private fun getCanonicalText(type: PsiType, annotated: Boolean): String {
-            val typeString = type.getCanonicalText(annotated)
+            val typeString = try {
+                type.getCanonicalText(annotated)
+            } catch (e: Throwable) {
+                return type.getCanonicalText(false)
+            }
             if (!annotated) {
                 return typeString
             }
