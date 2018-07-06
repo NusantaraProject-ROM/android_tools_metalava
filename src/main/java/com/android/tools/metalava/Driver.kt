@@ -345,7 +345,9 @@ private fun processFlags() {
             // Support pointing to both stub-annotations and stub-annotations/src/main/java
             val src = File(stubAnnotations, "src${File.separator}main${File.separator}java")
             val source = if (src.isDirectory) src else stubAnnotations
-            RewriteAnnotations().copyAnnotations(source, it)
+            source.listFiles()?.forEach { file ->
+                RewriteAnnotations().copyAnnotations(file, File(it, file.name))
+            }
         }
     }
 

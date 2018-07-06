@@ -219,7 +219,12 @@ abstract class DriverTest {
         /** Map from artifact id to artifact descriptor */
         artifacts: Map<String, String>? = null,
         /** Extract annotations and check that the given packages contain the given extracted XML files */
-        extractAnnotations: Map<String, String>? = null
+        extractAnnotations: Map<String, String>? = null,
+        /**
+         * Whether to include source retention annotations in the stubs (in that case they do not
+         * go into the extracted annotations zip file)
+         */
+        includeSourceRetentionAnnotations: Boolean = true
     ) {
         System.setProperty("METALAVA_TESTS_RUNNING", VALUE_TRUE)
 
@@ -407,7 +412,14 @@ abstract class DriverTest {
             if (showUnannotated) {
                 arrayOf("--show-unannotated")
             } else {
-                emptyArray<String>()
+                emptyArray()
+            }
+
+        val includeSourceRetentionAnnotationArgs =
+            if (includeSourceRetentionAnnotations) {
+                arrayOf("--include-source-retention")
+            } else {
+                emptyArray()
             }
 
         var removedApiFile: File? = null
@@ -606,6 +618,7 @@ abstract class DriverTest {
             *applyApiLevelsXmlArgs,
             *showAnnotationArguments,
             *showUnannotatedArgs,
+            *includeSourceRetentionAnnotationArgs,
             *sdkFilesArgs,
             *importedPackageArgs.toTypedArray(),
             *skipEmitPackagesArgs.toTypedArray(),
@@ -1310,8 +1323,16 @@ val requiresPermissionSource: TestFile = java(
         String[] allOf() default {};
         String[] anyOf() default {};
         boolean conditional() default false;
+        @Target({FIELD, METHOD, PARAMETER})
+        @interface Read {
+            RequiresPermission value() default @RequiresPermission;
+        }
+        @Target({FIELD, METHOD, PARAMETER})
+        @interface Write {
+            RequiresPermission value() default @RequiresPermission;
+        }
     }
-                    """
+    """
 ).indented()
 
 val requiresFeatureSource: TestFile = java(
@@ -1325,7 +1346,7 @@ val requiresFeatureSource: TestFile = java(
     public @interface RequiresFeature {
         String value();
     }
-            """
+    """
 ).indented()
 
 val requiresApiSource: TestFile = java(
@@ -1340,7 +1361,7 @@ val requiresApiSource: TestFile = java(
         int value() default 1;
         int api() default 1;
     }
-            """
+    """
 ).indented()
 
 val sdkConstantSource: TestFile = java(
@@ -1355,23 +1376,23 @@ val sdkConstantSource: TestFile = java(
         }
         SdkConstantType value();
     }
-        """
+    """
 ).indented()
 
 val broadcastBehaviorSource: TestFile = java(
     """
-        package android.annotation;
-        import java.lang.annotation.*;
-        /** @hide */
-        @Target({ ElementType.FIELD })
-        @Retention(RetentionPolicy.SOURCE)
-        public @interface BroadcastBehavior {
-            boolean explicitOnly() default false;
-            boolean registeredOnly() default false;
-            boolean includeBackground() default false;
-            boolean protectedBroadcast() default false;
-        }
-        """
+    package android.annotation;
+    import java.lang.annotation.*;
+    /** @hide */
+    @Target({ ElementType.FIELD })
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface BroadcastBehavior {
+        boolean explicitOnly() default false;
+        boolean registeredOnly() default false;
+        boolean includeBackground() default false;
+        boolean protectedBroadcast() default false;
+    }
+    """
 ).indented()
 
 val nullableSource: TestFile = java(
@@ -1396,7 +1417,7 @@ val nullableSource: TestFile = java(
 
 val supportNonNullSource: TestFile = java(
     """
-    package androidx.annotation;
+    package android.support.annotation;
     import java.lang.annotation.*;
     import static java.lang.annotation.ElementType.*;
     import static java.lang.annotation.RetentionPolicy.SOURCE;
@@ -1410,17 +1431,17 @@ val supportNonNullSource: TestFile = java(
 
 val supportNullableSource: TestFile = java(
     """
-package androidx.annotation;
-import java.lang.annotation.*;
-import static java.lang.annotation.ElementType.*;
-import static java.lang.annotation.RetentionPolicy.SOURCE;
-@SuppressWarnings("WeakerAccess")
-@Retention(SOURCE)
-@Target({METHOD, PARAMETER, FIELD, TYPE_USE})
-public @interface Nullable {
-}
-                """
-)
+    package android.support.annotation;
+    import java.lang.annotation.*;
+    import static java.lang.annotation.ElementType.*;
+    import static java.lang.annotation.RetentionPolicy.SOURCE;
+    @SuppressWarnings("WeakerAccess")
+    @Retention(SOURCE)
+    @Target({METHOD, PARAMETER, FIELD, TYPE_USE})
+    public @interface Nullable {
+    }
+    """
+).indented()
 
 val androidxNonNullSource: TestFile = java(
     """
@@ -1438,17 +1459,45 @@ val androidxNonNullSource: TestFile = java(
 
 val androidxNullableSource: TestFile = java(
     """
-package androidx.annotation;
-import java.lang.annotation.*;
-import static java.lang.annotation.ElementType.*;
-import static java.lang.annotation.RetentionPolicy.SOURCE;
-@SuppressWarnings("WeakerAccess")
-@Retention(SOURCE)
-@Target({METHOD, PARAMETER, FIELD, TYPE_USE})
-public @interface Nullable {
-}
-                """
-)
+    package androidx.annotation;
+    import java.lang.annotation.*;
+    import static java.lang.annotation.ElementType.*;
+    import static java.lang.annotation.RetentionPolicy.SOURCE;
+    @SuppressWarnings("WeakerAccess")
+    @Retention(SOURCE)
+    @Target({METHOD, PARAMETER, FIELD, TYPE_USE})
+    public @interface Nullable {
+    }
+    """
+).indented()
+
+val recentlyNonNullSource: TestFile = java(
+    """
+    package androidx.annotation;
+    import java.lang.annotation.*;
+    import static java.lang.annotation.ElementType.*;
+    import static java.lang.annotation.RetentionPolicy.SOURCE;
+    @SuppressWarnings("WeakerAccess")
+    @Retention(SOURCE)
+    @Target({METHOD, PARAMETER, FIELD, TYPE_USE})
+    public @interface RecentlyNonNull {
+    }
+    """
+).indented()
+
+val recentlyNullableSource: TestFile = java(
+    """
+    package androidx.annotation;
+    import java.lang.annotation.*;
+    import static java.lang.annotation.ElementType.*;
+    import static java.lang.annotation.RetentionPolicy.SOURCE;
+    @SuppressWarnings("WeakerAccess")
+    @Retention(SOURCE)
+    @Target({METHOD, PARAMETER, FIELD, TYPE_USE})
+    public @interface RecentlyNullable {
+    }
+    """
+).indented()
 
 val supportParameterName: TestFile = java(
     """
@@ -1527,17 +1576,17 @@ val workerThreadSource: TestFile = java(
 
 val suppressLintSource: TestFile = java(
     """
-package android.annotation;
+    package android.annotation;
 
-import static java.lang.annotation.ElementType.*;
-import java.lang.annotation.*;
-@Target({TYPE, FIELD, METHOD, PARAMETER, CONSTRUCTOR, LOCAL_VARIABLE})
-@Retention(RetentionPolicy.CLASS)
-public @interface SuppressLint {
-    String[] value();
-}
-                """
-)
+    import static java.lang.annotation.ElementType.*;
+    import java.lang.annotation.*;
+    @Target({TYPE, FIELD, METHOD, PARAMETER, CONSTRUCTOR, LOCAL_VARIABLE})
+    @Retention(RetentionPolicy.CLASS)
+    public @interface SuppressLint {
+        String[] value();
+    }
+    """
+).indented()
 
 val systemServiceSource: TestFile = java(
     """

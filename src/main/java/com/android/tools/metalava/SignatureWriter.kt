@@ -150,7 +150,8 @@ class SignatureWriter(
             includeAnnotations = compatibility.annotationsInSignatures,
             skipNullnessAnnotations = options.outputKotlinStyleNulls,
             omitCommonPackages = options.omitCommonPackages,
-            onlyIncludeSignatureAnnotations = true
+            onlyIncludeSignatureAnnotations = true,
+            onlyIncludeClassRetentionAnnotations = false
         )
     }
 

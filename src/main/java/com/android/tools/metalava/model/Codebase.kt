@@ -155,7 +155,7 @@ abstract class DefaultCodebase : Codebase {
     override var manifest: File? = null
     private var permissions: Map<String, String>? = null
     override var original: Codebase? = null
-    override var supportsStagedNullability: Boolean = false
+    override var supportsStagedNullability: Boolean = true
     override var units: List<PsiFile> = emptyList()
     override var apiLevel: Int = -1
 

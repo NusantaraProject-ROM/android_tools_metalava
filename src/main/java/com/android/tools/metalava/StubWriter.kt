@@ -141,6 +141,7 @@ class StubWriter(
                 // here; make sure the are filtered out
                 filterDuplicates = true,
                 onlyIncludeSignatureAnnotations = true,
+                onlyIncludeClassRetentionAnnotations = true,
                 writer = writer
             )
             writer.println("package ${pkg.qualifiedName()};")
@@ -302,7 +303,8 @@ class StubWriter(
         ModifierList.write(
             writer, modifiers, item, removeAbstract = removeAbstract, removeFinal = removeFinal,
             addPublic = addPublic, includeAnnotations = generateAnnotations,
-            onlyIncludeSignatureAnnotations = true
+            onlyIncludeSignatureAnnotations = true,
+            onlyIncludeClassRetentionAnnotations = true
         )
     }
 
