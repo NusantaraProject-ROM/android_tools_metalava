@@ -57,6 +57,7 @@ import com.android.tools.metalava.model.DefaultAnnotationValue
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.PackageItem
+import com.android.tools.metalava.model.SUPPORT_TYPE_USE_ANNOTATIONS
 import com.android.tools.metalava.model.psi.PsiAnnotationItem
 import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.android.utils.XmlUtils
@@ -267,7 +268,7 @@ class AnnotationsMerger(
                     null
                 }
                 curr = parameterItem
-            } else if (line.startsWith("type: ")) {
+            } else if (line.startsWith("type: ") && SUPPORT_TYPE_USE_ANNOTATIONS) {
                 val typeAnnotation = line.substring("type: ".length)
                 if (curr != null) {
                     mergeJaifAnnotation(path, curr, typeAnnotation)
@@ -277,7 +278,7 @@ class AnnotationsMerger(
                 if (methodItem != null) {
                     mergeJaifAnnotation(path, methodItem, annotation)
                 }
-            } else if (line.startsWith("inner-type")) {
+            } else if (line.startsWith("inner-type") && SUPPORT_TYPE_USE_ANNOTATIONS) {
                 warning("$path: Skipping inner-type annotations for now ($line)")
             } else if (line.startsWith("int ")) {
                 // warning("Skipping int attribute definitions for annotations now ($line)")
