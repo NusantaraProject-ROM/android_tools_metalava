@@ -163,8 +163,8 @@ class AnnotationStatisticsTest : DriverTest() {
                     }
                     """
                 ),
-                supportNonNullSource,
-                supportNullableSource
+                androidxNonNullSource,
+                androidxNullableSource
             ),
             expectedOutput = """
                 6 methods and fields were missing nullness annotations out of 8 total API references.

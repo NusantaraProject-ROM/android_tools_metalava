@@ -16,6 +16,7 @@
 
 package com.android.tools.metalava
 
+import com.android.tools.metalava.model.SUPPORT_TYPE_USE_ANNOTATIONS
 import org.junit.Test
 
 class AnnotationsMergerTest : DriverTest() {
@@ -50,8 +51,8 @@ class AnnotationsMergerTest : DriverTest() {
                 ),
                 uiThreadSource,
                 intRangeAnnotationSource,
-                supportNonNullSource,
-                supportNullableSource
+                androidxNonNullSource,
+                androidxNullableSource
             ),
             // Skip the annotations themselves from the output
             extraArguments = arrayOf(
@@ -162,14 +163,25 @@ class AnnotationsMergerTest : DriverTest() {
                         // Is expected to return self
                         return: @libcore.util.NonNull
                 """,
-            api = """
-                package test.pkg {
-                  public interface Appendable {
-                    method @androidx.annotation.NonNull public test.pkg.Appendable append(@androidx.annotation.Nullable java.lang.CharSequence);
-                    method public java.lang.String reverse(java.lang.String);
-                  }
-                }
+            api = if (SUPPORT_TYPE_USE_ANNOTATIONS) {
                 """
+                    package test.pkg {
+                      public interface Appendable {
+                        method @androidx.annotation.NonNull public test.pkg.Appendable append(@androidx.annotation.Nullable java.lang.CharSequence);
+                        method public java.lang.String reverse(java.lang.String);
+                      }
+                    }
+                   """
+            } else {
+                """
+                    package test.pkg {
+                      public interface Appendable {
+                        method @androidx.annotation.NonNull public test.pkg.Appendable append(java.lang.CharSequence);
+                        method public java.lang.String reverse(java.lang.String);
+                      }
+                    }
+                   """
+            }
         )
     }
 

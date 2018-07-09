@@ -57,6 +57,14 @@ interface AnnotationItem {
         return includeInSignatures(qualifiedName() ?: return false)
     }
 
+    /**
+     * Whether this annotation has class retention. Only class retention annotations are
+     * inserted into the stubs, the rest are extracted into the separate external annotations file.
+     */
+    fun hasClassRetention(): Boolean {
+        return hasClassRetention(qualifiedName())
+    }
+
     /** Attributes of the annotation (may be empty) */
     fun attributes(): List<AnnotationAttribute>
 
@@ -250,6 +258,8 @@ interface AnnotationItem {
                 "android.annotation.CheckResult" -> return "androidx.annotation.CheckResult"
                 "android.support.annotation.RequiresPermission",
                 "android.annotation.RequiresPermission" -> return "androidx.annotation.RequiresPermission"
+                "android.annotation.RequiresPermission.Read" -> return "androidx.annotation.RequiresPermission.Read"
+                "android.annotation.RequiresPermission.Write" -> return "androidx.annotation.RequiresPermission.Write"
 
             // These aren't support annotations, but could/should be:
                 "android.annotation.CurrentTimeMillisLong",
@@ -386,6 +396,21 @@ interface AnnotationItem {
                 else -> {
                     "@androidx.annotation." + source.substring(1)
                 }
+            }
+        }
+
+        fun hasClassRetention(qualifiedName: String?): Boolean {
+            // For now, we treat everything except the recently nullable annotations
+            // as source retention; this works around the bug that we don't want to
+            // reference (from the .class files) annotations that aren't part of the SDK
+            // except for those that we include with the stubs
+
+            qualifiedName ?: return false
+
+            return when (qualifiedName) {
+                "androidx.annotation.RecentlyNullable",
+                "androidx.annotation.RecentlyNonNull" -> true
+                else -> false
             }
         }
     }
