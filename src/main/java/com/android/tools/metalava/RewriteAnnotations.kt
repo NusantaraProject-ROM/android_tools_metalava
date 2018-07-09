@@ -19,6 +19,7 @@ package com.android.tools.metalava
 import com.android.SdkConstants
 import com.android.SdkConstants.DOT_CLASS
 import com.android.SdkConstants.DOT_JAR
+import com.android.tools.metalava.model.AnnotationItem
 import com.google.common.io.Closer
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
@@ -46,14 +47,24 @@ import java.util.zip.ZipOutputStream
 
 class RewriteAnnotations {
     /** Copies annotation source files from [source] to [target] */
-    fun copyAnnotations(source: File, target: File) {
-        if (source.name.endsWith(SdkConstants.DOT_JAVA)) {
+    fun copyAnnotations(source: File, target: File, pkg: String = "") {
+        val fileName = source.name
+        if (fileName.endsWith(SdkConstants.DOT_JAVA)) {
+            if (!options.includeSourceRetentionAnnotations) {
+                // Only copy non-source retention annotation classes
+                val qualifiedName = pkg + "." + fileName.substring(0, fileName.indexOf('.'))
+                if (!AnnotationItem.hasClassRetention(qualifiedName)) {
+                    return
+                }
+            }
+
             // Copy and convert
             target.parentFile.mkdirs()
             source.copyTo(target)
         } else if (source.isDirectory) {
+            val newPackage = if (pkg.isEmpty()) fileName else "$pkg.$fileName"
             source.listFiles()?.forEach {
-                copyAnnotations(it, File(target, it.name))
+                copyAnnotations(it, File(target, it.name), newPackage)
             }
         }
     }

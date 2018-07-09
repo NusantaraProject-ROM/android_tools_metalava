@@ -19,6 +19,7 @@
 package com.android.tools.metalava
 
 import com.android.tools.lint.checks.infrastructure.TestFile
+import com.android.tools.metalava.model.SUPPORT_TYPE_USE_ANNOTATIONS
 import org.intellij.lang.annotations.Language
 import org.junit.Test
 
@@ -1345,16 +1346,28 @@ class StubsTest : DriverTest() {
                     """
                 )
             ),
-            api = """
+            api = if (SUPPORT_TYPE_USE_ANNOTATIONS) {
+                """
                 package test.pkg {
                   public class Foo {
                     ctor public Foo();
                     method public void foo(int, java.util.Map<java.lang.String, java.lang.String>!);
                   }
                 }
-                """,
+                """
+            } else {
+                """
+                package test.pkg {
+                  public class Foo {
+                    ctor public Foo();
+                    method public void foo(int, java.util.Map<java.lang.String,java.lang.String>!);
+                  }
+                }
+                """
+            },
 
-            source = """
+            source = if (SUPPORT_TYPE_USE_ANNOTATIONS) {
+                """
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class Foo {
@@ -1362,6 +1375,16 @@ class StubsTest : DriverTest() {
                 public void foo(int p1, java.util.Map<java.lang.String, java.lang.String> p2) { throw new RuntimeException("Stub!"); }
                 }
                 """
+            } else {
+                """
+                package test.pkg;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class Foo {
+                public Foo() { throw new RuntimeException("Stub!"); }
+                public void foo(int p1, java.util.Map<java.lang.String,java.lang.String> p2) { throw new RuntimeException("Stub!"); }
+                }
+                """
+            }
         )
     }
 
@@ -1764,40 +1787,52 @@ class StubsTest : DriverTest() {
                       }
                     }
                     """,
-            stubs = arrayOf(
-                """
-                package my.pkg;
-                @SuppressWarnings({"unchecked", "deprecation", "all"})
-                public class String {
-                public String(char @androidx.annotation.NonNull [] value) { throw new RuntimeException("Stub!"); }
-                }
-                """
-            )
+            stubs = if (SUPPORT_TYPE_USE_ANNOTATIONS) {
+                arrayOf(
+                    """
+                    package my.pkg;
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class String {
+                    public String(char @androidx.annotation.NonNull [] value) { throw new RuntimeException("Stub!"); }
+                    }
+                    """
+                )
+            } else {
+                arrayOf(
+                    """
+                    package my.pkg;
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class String {
+                    public String(char[] value) { throw new RuntimeException("Stub!"); }
+                    }
+                    """
+                )
+            }
         )
     }
 
-    @Test
-    fun `Test inaccessible constructors`() {
-        // If the constructors of a class are not visible, and the class has subclasses,
-        // those subclass stubs will need to reference these inaccessible constructors.
-        // This generally only happens when the constructors are package private (and
-        // therefore hidden) but the subclass using it is also in the same package.
+@Test
+fun `Test inaccessible constructors`() {
+    // If the constructors of a class are not visible, and the class has subclasses,
+    // those subclass stubs will need to reference these inaccessible constructors.
+    // This generally only happens when the constructors are package private (and
+    // therefore hidden) but the subclass using it is also in the same package.
 
-        check(
-            checkDoclava1 = false,
-            checkCompilation = true,
-            sourceFiles =
-            *arrayOf(
-                java(
-                    """
+    check(
+        checkDoclava1 = false,
+        checkCompilation = true,
+        sourceFiles =
+        *arrayOf(
+            java(
+                """
                     package test.pkg;
                     public class MyClass1 {
                         MyClass1(int myVar) { }
                     }
                     """
-                ),
-                java(
-                    """
+            ),
+            java(
+                """
                     package test.pkg;
                     import java.io.IOException;
                     @SuppressWarnings("RedundantThrows")
@@ -1805,27 +1840,27 @@ class StubsTest : DriverTest() {
                         MySubClass1(int myVar) throws IOException { super(myVar); }
                     }
                     """
-                ),
-                java(
-                    """
+            ),
+            java(
+                """
                     package test.pkg;
                     public class MyClass2 {
                         /** @hide */
                         public MyClass2(int myVar) { }
                     }
                     """
-                ),
-                java(
-                    """
+            ),
+            java(
+                """
                     package test.pkg;
                     public class MySubClass2 extends MyClass2 {
                         public MySubClass2() { super(5); }
                     }
                     """
-                )
-            ),
-            warnings = "",
-            api = """
+            )
+        ),
+        warnings = "",
+        api = """
                     package test.pkg {
                       public class MyClass1 {
                       }
@@ -1838,22 +1873,22 @@ class StubsTest : DriverTest() {
                       }
                     }
                     """,
-            stubs = arrayOf(
-                """
+        stubs = arrayOf(
+            """
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class MyClass1 {
                 MyClass1(int myVar) { throw new RuntimeException("Stub!"); }
                 }
                 """,
-                """
+            """
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class MySubClass1 extends test.pkg.MyClass1 {
                 MySubClass1(int myVar) throws java.io.IOException { super(0); throw new RuntimeException("Stub!"); }
                 }
                 """,
-                """
+            """
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class MyClass2 {
@@ -1861,32 +1896,32 @@ class StubsTest : DriverTest() {
                 MyClass2(int myVar) { throw new RuntimeException("Stub!"); }
                 }
                 """,
-                """
+            """
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class MySubClass2 extends test.pkg.MyClass2 {
                 public MySubClass2() { super(0); throw new RuntimeException("Stub!"); }
                 }
                 """
-            )
         )
-    }
+    )
+}
 
-    @Test
-    fun `Generics Variable Rewriting`() {
-        // When we move methods from hidden superclasses into the subclass since they
-        // provide the implementation for a required method, it's possible that the
-        // method we copied in is referencing generics with a different variable than
-        // in the current class, so we need to handle this
+@Test
+fun `Generics Variable Rewriting`() {
+    // When we move methods from hidden superclasses into the subclass since they
+    // provide the implementation for a required method, it's possible that the
+    // method we copied in is referencing generics with a different variable than
+    // in the current class, so we need to handle this
 
-        checkStubs(
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
-                // TODO: Try using prefixes like "A", and "AA" to make sure my generics
-                // variable renaming doesn't do something really dumb
-                java(
-                    """
+    checkStubs(
+        checkDoclava1 = false,
+        sourceFiles =
+        *arrayOf(
+            // TODO: Try using prefixes like "A", and "AA" to make sure my generics
+            // variable renaming doesn't do something really dumb
+            java(
+                """
                     package test.pkg;
 
                     import java.util.List;
@@ -1916,10 +1951,10 @@ class StubsTest : DriverTest() {
                         }
                     }
                     """
-                )
-            ),
-            warnings = "",
-            source = """
+            )
+        ),
+        warnings = "",
+        source = """
                     package test.pkg;
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class Generics {
@@ -1945,18 +1980,18 @@ class StubsTest : DriverTest() {
                     }
                     }
                     """
-        )
-    }
+    )
+}
 
-    @Test
-    fun `Rewriting type parameters in interfaces from hidden super classes and in throws lists`() {
-        checkStubs(
-            extraArguments = arrayOf("--skip-inherited-methods=false"),
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
-                java(
-                    """
+@Test
+fun `Rewriting type parameters in interfaces from hidden super classes and in throws lists`() {
+    checkStubs(
+        extraArguments = arrayOf("--skip-inherited-methods=false"),
+        checkDoclava1 = false,
+        sourceFiles =
+        *arrayOf(
+            java(
+                """
                     package test.pkg;
 
                     import java.io.IOException;
@@ -1991,10 +2026,10 @@ class StubsTest : DriverTest() {
                         }
                     }
                     """
-                )
-            ),
-            warnings = "",
-            api = """
+            )
+        ),
+        warnings = "",
+        api = """
                     package test.pkg {
                       public class Generics {
                         ctor public Generics();
@@ -2013,41 +2048,66 @@ class StubsTest : DriverTest() {
                       }
                     }
                     """,
-            source = """
-                    package test.pkg;
-                    @SuppressWarnings({"unchecked", "deprecation", "all"})
-                    public class Generics {
-                    public Generics() { throw new RuntimeException("Stub!"); }
-                    @SuppressWarnings({"unchecked", "deprecation", "all"})
-                    public class MyClass<X, Y extends java.lang.Number> extends test.pkg.Generics.PublicParent<X,Y> implements test.pkg.Generics.PublicInterface<X,Y> {
-                    public MyClass() { throw new RuntimeException("Stub!"); }
-                    public java.util.List<X> foo() { throw new RuntimeException("Stub!"); }
-                    public java.util.Map<X,java.util.Map<Y,java.lang.String>> createMap(java.util.List<X> list) throws java.io.IOException { throw new RuntimeException("Stub!"); }
-                    }
-                    @SuppressWarnings({"unchecked", "deprecation", "all"})
-                    public static interface PublicInterface<A, B> {
-                    public java.util.Map<A,java.util.Map<B,java.lang.String>> createMap(java.util.List<A> list) throws java.io.IOException;
-                    }
-                    @SuppressWarnings({"unchecked", "deprecation", "all"})
-                    public abstract class PublicParent<A, B extends java.lang.Number> {
-                    public PublicParent() { throw new RuntimeException("Stub!"); }
-                    protected abstract java.util.List<A> foo();
-                    }
-                    }
-                    """
-        )
-    }
+        source = if (SUPPORT_TYPE_USE_ANNOTATIONS) {
+            """
+            package test.pkg;
+            @SuppressWarnings({"unchecked", "deprecation", "all"})
+            public class Generics {
+            public Generics() { throw new RuntimeException("Stub!"); }
+            @SuppressWarnings({"unchecked", "deprecation", "all"})
+            public class MyClass<X, Y extends java.lang.Number> extends test.pkg.Generics.PublicParent<X,Y> implements test.pkg.Generics.PublicInterface<X,Y> {
+            public MyClass() { throw new RuntimeException("Stub!"); }
+            public java.util.List<X> foo() { throw new RuntimeException("Stub!"); }
+            public java.util.Map<X,java.util.Map<Y,java.lang.String>> createMap(java.util.List<X> list) throws java.io.IOException { throw new RuntimeException("Stub!"); }
+            }
+            @SuppressWarnings({"unchecked", "deprecation", "all"})
+            public static interface PublicInterface<A, B> {
+            public java.util.Map<A,java.util.Map<B,java.lang.String>> createMap(java.util.List<A> list) throws java.io.IOException;
+            }
+            @SuppressWarnings({"unchecked", "deprecation", "all"})
+            public abstract class PublicParent<A, B extends java.lang.Number> {
+            public PublicParent() { throw new RuntimeException("Stub!"); }
+            protected abstract java.util.List<A> foo();
+            }
+            }
+            """
+        } else {
+            """
+            package test.pkg;
+            @SuppressWarnings({"unchecked", "deprecation", "all"})
+            public class Generics {
+            public Generics() { throw new RuntimeException("Stub!"); }
+            @SuppressWarnings({"unchecked", "deprecation", "all"})
+            public class MyClass<X, Y extends java.lang.Number> extends test.pkg.Generics.PublicParent<X,Y> implements test.pkg.Generics.PublicInterface<X,Y> {
+            public MyClass() { throw new RuntimeException("Stub!"); }
+            public java.util.List<X> foo() { throw new RuntimeException("Stub!"); }
+            public java.util.Map<X, java.util.Map<Y, java.lang.String>> createMap(java.util.List<X> list) throws java.io.IOException { throw new RuntimeException("Stub!"); }
+            }
+            @SuppressWarnings({"unchecked", "deprecation", "all"})
+            public static interface PublicInterface<A, B> {
+            public java.util.Map<A, java.util.Map<B, java.lang.String>> createMap(java.util.List<A> list) throws java.io.IOException;
+            }
+            @SuppressWarnings({"unchecked", "deprecation", "all"})
+            public abstract class PublicParent<A, B extends java.lang.Number> {
+            public PublicParent() { throw new RuntimeException("Stub!"); }
+            protected abstract java.util.List<A> foo();
+            }
+            }
+            """
+        }
+    )
+}
 
-    @Test
-    fun `Picking super class throwables`() {
-        // Like previous test, but without compatibility mode: ensures that we
-        // use super classes of filtered throwables
-        checkStubs(
-            compatibilityMode = false,
-            sourceFiles =
-            *arrayOf(
-                java(
-                    """
+@Test
+fun `Picking super class throwables`() {
+    // Like previous test, but without compatibility mode: ensures that we
+    // use super classes of filtered throwables
+    checkStubs(
+        compatibilityMode = false,
+        sourceFiles =
+        *arrayOf(
+            java(
+                """
                     package test.pkg;
 
                     import java.io.IOException;
@@ -2082,10 +2142,10 @@ class StubsTest : DriverTest() {
                         }
                     }
                     """
-                )
-            ),
-            warnings = "",
-            api = """
+            )
+        ),
+        warnings = "",
+        api = """
                 package test.pkg {
                   public class Generics {
                     ctor public Generics();
@@ -2104,7 +2164,7 @@ class StubsTest : DriverTest() {
                   }
                 }
                     """,
-            source = """
+        source = """
                     package test.pkg;
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class Generics {
@@ -2126,19 +2186,19 @@ class StubsTest : DriverTest() {
                     }
                     }
                     """
-        )
-    }
+    )
+}
 
-    @Test
-    fun `Rewriting implements class references`() {
-        // Checks some more subtle bugs around generics type variable renaming
-        checkStubs(
-            extraArguments = arrayOf("--skip-inherited-methods=false"),
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
-                java(
-                    """
+@Test
+fun `Rewriting implements class references`() {
+    // Checks some more subtle bugs around generics type variable renaming
+    checkStubs(
+        extraArguments = arrayOf("--skip-inherited-methods=false"),
+        checkDoclava1 = false,
+        sourceFiles =
+        *arrayOf(
+            java(
+                """
                     package test.pkg;
 
                     import java.util.Collection;
@@ -2165,10 +2225,10 @@ class StubsTest : DriverTest() {
                         }
                     }
                     """
-                )
-            ),
-            warnings = "",
-            api = """
+            )
+        ),
+        warnings = "",
+        api = """
                     package test.pkg {
                       public class ConcurrentHashMap<K, V> {
                         ctor public ConcurrentHashMap();
@@ -2181,7 +2241,7 @@ class StubsTest : DriverTest() {
                       }
                     }
                     """,
-            source = """
+        source = """
                     package test.pkg;
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class ConcurrentHashMap<K, V> {
@@ -2195,17 +2255,17 @@ class StubsTest : DriverTest() {
                     }
                     }
                     """
-        )
-    }
+    )
+}
 
-    @Test
-    fun `Arrays in type arguments`() {
-        checkStubs(
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
-                java(
-                    """
+@Test
+fun `Arrays in type arguments`() {
+    checkStubs(
+        checkDoclava1 = false,
+        sourceFiles =
+        *arrayOf(
+            java(
+                """
                     package test.pkg;
 
                     public class Generics2 {
@@ -2217,10 +2277,10 @@ class StubsTest : DriverTest() {
                         }
                     }
                     """
-                )
-            ),
-            warnings = "",
-            source = """
+            )
+        ),
+        warnings = "",
+        source = """
                     package test.pkg;
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class Generics2 {
@@ -2234,20 +2294,20 @@ class StubsTest : DriverTest() {
                     }
                     }
                     """
-        )
-    }
+    )
+}
 
-    @Test
-    fun `Interface extending multiple interfaces`() {
-        // Ensure that we handle sorting correctly where we're mixing super classes and implementing
-        // interfaces
-        // Real-world example: XmlResourceParser
-        check(
-            checkDoclava1 = false,
-            checkCompilation = true,
-            sourceFiles = *arrayOf(
-                java(
-                    """
+@Test
+fun `Interface extending multiple interfaces`() {
+    // Ensure that we handle sorting correctly where we're mixing super classes and implementing
+    // interfaces
+    // Real-world example: XmlResourceParser
+    check(
+        checkDoclava1 = false,
+        checkCompilation = true,
+        sourceFiles = *arrayOf(
+            java(
+                """
                     package android.content.res;
                     import android.util.AttributeSet;
                     import org.xmlpull.v1.XmlPullParser;
@@ -2257,52 +2317,52 @@ class StubsTest : DriverTest() {
                         public void close();
                     }
                     """
-                ),
-                java(
-                    """
+            ),
+            java(
+                """
                     package android.util;
                     public interface AttributeSet {
                     }
                     """
-                ),
-                java(
-                    """
+            ),
+            java(
+                """
                     package java.lang;
                     public interface AutoCloseable {
                     }
                     """
-                ),
-                java(
-                    """
+            ),
+            java(
+                """
                     package org.xmlpull.v1;
                     public interface XmlPullParser {
                     }
                     """
-                )
-            ),
-            stubs = arrayOf(
-                """
+            )
+        ),
+        stubs = arrayOf(
+            """
                 package android.content.res;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public interface XmlResourceParser extends org.xmlpull.v1.XmlPullParser,  android.util.AttributeSet, java.lang.AutoCloseable {
                 public void close();
                 }
                 """
-            )
         )
-    }
+    )
+}
 
-    // TODO: Add a protected constructor too to make sure my code to make non-public constructors package private
-    // don't accidentally demote protected constructors to package private!
+// TODO: Add a protected constructor too to make sure my code to make non-public constructors package private
+// don't accidentally demote protected constructors to package private!
 
-    @Test
-    fun `Picking Super Constructors`() {
-        checkStubs(
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
-                java(
-                    """
+@Test
+fun `Picking Super Constructors`() {
+    checkStubs(
+        checkDoclava1 = false,
+        sourceFiles =
+        *arrayOf(
+            java(
+                """
                     package test.pkg;
 
                     import java.io.IOException;
@@ -2374,10 +2434,10 @@ class StubsTest : DriverTest() {
                         }
                     }
                     """
-                )
-            ),
-            warnings = "",
-            api = """
+            )
+        ),
+        warnings = "",
+        api = """
                     package test.pkg {
                       public class PickConstructors {
                         ctor public PickConstructors();
@@ -2418,7 +2478,7 @@ class StubsTest : DriverTest() {
                       }
                     }
                 """,
-            source = """
+        source = """
                     package test.pkg;
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class PickConstructors {
@@ -2470,17 +2530,17 @@ class StubsTest : DriverTest() {
                     }
                     }
                     """
-        )
-    }
+    )
+}
 
-    @Test
-    fun `Picking Constructors`() {
-        checkStubs(
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
-                java(
-                    """
+@Test
+fun `Picking Constructors`() {
+    checkStubs(
+        checkDoclava1 = false,
+        sourceFiles =
+        *arrayOf(
+            java(
+                """
                     package test.pkg;
 
                     @SuppressWarnings({"WeakerAccess", "unused"})
@@ -2557,10 +2617,10 @@ class StubsTest : DriverTest() {
                         }
                     }
                     """
-                )
-            ),
-            warnings = "",
-            source = """
+            )
+        ),
+        warnings = "",
+        source = """
                     package test.pkg;
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class Constructors2 {
@@ -2604,18 +2664,18 @@ class StubsTest : DriverTest() {
                     }
                     }
                     """
-        )
-    }
+    )
+}
 
-    @Test
-    fun `Another Constructor Test`() {
-        // A specific scenario triggered in the API where the right super class detector was not chosen
-        checkStubs(
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
-                java(
-                    """
+@Test
+fun `Another Constructor Test`() {
+    // A specific scenario triggered in the API where the right super class detector was not chosen
+    checkStubs(
+        checkDoclava1 = false,
+        sourceFiles =
+        *arrayOf(
+            java(
+                """
                     package test.pkg;
 
                     @SuppressWarnings({"RedundantThrows", "JavaDoc", "WeakerAccess"})
@@ -2641,10 +2701,10 @@ class StubsTest : DriverTest() {
                         }
                     }
                     """
-                )
-            ),
-            warnings = "",
-            source = """
+            )
+        ),
+        warnings = "",
+        source = """
                     package test.pkg;
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class PickConstructors2 {
@@ -2665,18 +2725,18 @@ class StubsTest : DriverTest() {
                     }
                     }
                     """
-        )
-    }
+    )
+}
 
-    @Test
-    fun `Overriding protected methods`() {
-        // Checks a scenario where the stubs were missing overrides
-        checkStubs(
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
-                java(
-                    """
+@Test
+fun `Overriding protected methods`() {
+    // Checks a scenario where the stubs were missing overrides
+    checkStubs(
+        checkDoclava1 = false,
+        sourceFiles =
+        *arrayOf(
+            java(
+                """
                     package test.pkg;
 
                     @SuppressWarnings("all")
@@ -2699,10 +2759,10 @@ class StubsTest : DriverTest() {
                         }
                     }
                     """
-                )
-            ),
-            warnings = "",
-            api = """
+            )
+        ),
+        warnings = "",
+        api = """
                     package test.pkg {
                       public class Layouts {
                         ctor public Layouts();
@@ -2720,7 +2780,7 @@ class StubsTest : DriverTest() {
                       }
                     }
                     """,
-            source = """
+        source = """
                     package test.pkg;
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class Layouts {
@@ -2742,18 +2802,18 @@ class StubsTest : DriverTest() {
                     }
                     }
                     """
-        )
-    }
+    )
+}
 
-    @Test
-    fun `Missing overridden method`() {
-        // Another special case where overridden methods were missing
-        checkStubs(
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
-                java(
-                    """
+@Test
+fun `Missing overridden method`() {
+    // Another special case where overridden methods were missing
+    checkStubs(
+        checkDoclava1 = false,
+        sourceFiles =
+        *arrayOf(
+            java(
+                """
                     package test.pkg;
 
                     import java.util.Collection;
@@ -2780,10 +2840,10 @@ class StubsTest : DriverTest() {
                         }
                     }
                     """
-                )
-            ),
-            warnings = "",
-            source = """
+            )
+        ),
+        warnings = "",
+        source = """
                     package test.pkg;
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class SpanTest {
@@ -2805,18 +2865,18 @@ class StubsTest : DriverTest() {
                     }
                     }
                     """
-        )
-    }
+    )
+}
 
-    @Test
-    fun `Skip type variables in casts`() {
-        // When generating casts in super constructor calls, use raw types
-        checkStubs(
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
-                java(
-                    """
+@Test
+fun `Skip type variables in casts`() {
+    // When generating casts in super constructor calls, use raw types
+    checkStubs(
+        checkDoclava1 = false,
+        sourceFiles =
+        *arrayOf(
+            java(
+                """
                     package test.pkg;
 
                     @SuppressWarnings("all")
@@ -2836,10 +2896,10 @@ class StubsTest : DriverTest() {
                         }
                     }
                     """
-                )
-            ),
-            warnings = "",
-            source = """
+            )
+        ),
+        warnings = "",
+        source = """
                     package test.pkg;
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class Properties {
@@ -2855,18 +2915,18 @@ class StubsTest : DriverTest() {
                     }
                     }
                     """
-        )
-    }
+    )
+}
 
-    @Test
-    fun `Rewrite relative documentation links`() {
-        // When generating casts in super constructor calls, use raw types
-        checkStubs(
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
-                java(
-                    """
+@Test
+fun `Rewrite relative documentation links`() {
+    // When generating casts in super constructor calls, use raw types
+    checkStubs(
+        checkDoclava1 = false,
+        sourceFiles =
+        *arrayOf(
+            java(
+                """
                     package test.pkg1;
                     import java.io.IOException;
                     import test.pkg2.OtherClass;
@@ -2898,9 +2958,9 @@ class StubsTest : DriverTest() {
                        public boolean importance;
                     }
                     """
-                ),
-                java(
-                    """
+            ),
+            java(
+                """
                     package test.pkg2;
 
                     @SuppressWarnings("all")
@@ -2911,19 +2971,19 @@ class StubsTest : DriverTest() {
                         public void bar(int baz, boolean bar);
                     }
                     """
-                ),
-                java(
-                    """
+            ),
+            java(
+                """
                     package test.pkg1;
 
                     @SuppressWarnings("all")
                     public class LocalClass {
                     }
                     """
-                )
-            ),
-            warnings = "",
-            source = """
+            )
+        ),
+        warnings = "",
+        source = """
                     package test.pkg1;
                     import test.pkg2.OtherClass;
                     import java.io.IOException;
@@ -2955,52 +3015,52 @@ class StubsTest : DriverTest() {
                     public boolean importance;
                     }
                     """
-        )
-    }
+    )
+}
 
-    @Test
-    fun `Check writing package info file`() {
-        checkStubs(
-            sourceFiles =
-            *arrayOf(
-                java(
-                    """
+@Test
+fun `Check writing package info file`() {
+    checkStubs(
+        sourceFiles =
+        *arrayOf(
+            java(
+                """
                     @androidx.annotation.Nullable
                     package test.pkg;
                     """
-                ),
-                java(
-                    """
+            ),
+            java(
+                """
                     package test.pkg;
 
                     @SuppressWarnings("all")
                     public class Test {
                     }
                     """
-                ),
-
-                supportNullableSource
             ),
-            warnings = "",
-            api = """
+
+            androidxNullableSource
+        ),
+        warnings = "",
+        api = """
                 package test.pkg {
                   public class Test {
                     ctor public Test();
                   }
                 }
             """, // WRONG: I should include package annotations!
-            source = """
+        source = """
                 @androidx.annotation.Nullable
                 package test.pkg;
                 """,
-            extraArguments = arrayOf("--hide-package", "androidx.annotation")
-        )
-    }
+        extraArguments = arrayOf("--hide-package", "androidx.annotation")
+    )
+}
 
-    // TODO: Add in some type variables in method signatures and constructors!
-    // TODO: Test what happens when a class extends a hidden extends a public in separate packages,
-    // and the hidden has a @hide constructor so the stub in the leaf class doesn't compile -- I should
-    // check for this and fail build.
+// TODO: Add in some type variables in method signatures and constructors!
+// TODO: Test what happens when a class extends a hidden extends a public in separate packages,
+// and the hidden has a @hide constructor so the stub in the leaf class doesn't compile -- I should
+// check for this and fail build.
 
-    // TODO: Test -stubPackages
+// TODO: Test -stubPackages
 }
