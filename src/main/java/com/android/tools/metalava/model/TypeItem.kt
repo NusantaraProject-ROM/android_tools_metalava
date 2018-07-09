@@ -23,6 +23,14 @@ import com.android.tools.metalava.compatibility
 import com.android.tools.metalava.options
 import java.util.function.Predicate
 
+/**
+ * Whether metalava supports type use annotations.
+ * Note that you can't just turn this flag back on; you have to
+ * also add TYPE_USE back to the handful of nullness
+ * annotations in stub-annotations/src/main/java/.
+ */
+const val SUPPORT_TYPE_USE_ANNOTATIONS = false
+
 /** Represents a type */
 interface TypeItem {
     /**

@@ -250,7 +250,8 @@ open class PsiMethodItem(
         ModifierList.write(
             modifierString, method.modifiers, method, removeAbstract = false,
             removeFinal = false, addPublic = true,
-            onlyIncludeSignatureAnnotations = true
+            onlyIncludeSignatureAnnotations = true,
+            onlyIncludeClassRetentionAnnotations = true
         )
         sb.append(modifierString.toString())
 
