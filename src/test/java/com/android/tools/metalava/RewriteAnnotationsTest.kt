@@ -20,12 +20,72 @@ import com.android.tools.lint.checks.infrastructure.TestFiles.base64gzip
 import com.android.tools.lint.checks.infrastructure.TestFiles.jar
 import com.android.tools.lint.checks.infrastructure.TestFiles.xml
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 import java.lang.reflect.Modifier
 import java.net.URLClassLoader
 
 class RewriteAnnotationsTest : DriverTest() {
+    @Test
+    fun `Test copying private annotations from one of the stubs`() {
+        val source = File("stub-annotations".replace('/', File.separatorChar))
+        assertTrue(source.path, source.isDirectory)
+        val target = temporaryFolder.newFolder()
+        runDriver(
+            "--no-color",
+            "--no-banner",
+
+            "--copy-annotations",
+            source.path,
+            target.path
+        )
+
+        // Source retention: Shouldn't exist
+        val nonNull = File(target, "androidx/annotation/NonNull.java")
+        assertFalse("${nonNull.path} exists", nonNull.isFile)
+
+        // Class retention: Should be converted
+
+        val recentlyNull = File(target, "androidx/annotation/RecentlyNullable.java")
+        assertTrue("${recentlyNull.path} doesn't exist", recentlyNull.isFile)
+        assertEquals(
+            """
+            /*
+             * Copyright (C) 2018 The Android Open Source Project
+             *
+             * Licensed under the Apache License, Version 2.0 (the "License");
+             * you may not use this file except in compliance with the License.
+             * You may obtain a copy of the License at
+             *
+             *      http://www.apache.org/licenses/LICENSE-2.0
+             *
+             * Unless required by applicable law or agreed to in writing, software
+             * distributed under the License is distributed on an "AS IS" BASIS,
+             * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+             * See the License for the specific language governing permissions and
+             * limitations under the License.
+             */
+            package androidx.annotation;
+
+            import static java.lang.annotation.ElementType.FIELD;
+            import static java.lang.annotation.ElementType.METHOD;
+            import static java.lang.annotation.ElementType.PARAMETER;
+            import static java.lang.annotation.ElementType.TYPE_USE;
+            import static java.lang.annotation.RetentionPolicy.CLASS;
+
+            import java.lang.annotation.Retention;
+            import java.lang.annotation.Target;
+
+            /** Stub only annotation. Do not use directly. */
+            @Retention(CLASS)
+            @Target({METHOD, PARAMETER, FIELD})
+            @interface RecentlyNullable {}
+        """.trimIndent().trim(), recentlyNull.readText(Charsets.UTF_8).trim().replace("\r\n", "\n")
+        )
+    }
+
     @Test
     fun `Test rewriting the bytecode for one of the public annotations`() {
         val bytecode = base64gzip(

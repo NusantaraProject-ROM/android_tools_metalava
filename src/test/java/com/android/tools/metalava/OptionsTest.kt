@@ -181,6 +181,9 @@ Extracting Annotations:
                                        metalava/stub-annotations/src/main/java/.
 --rewrite-annotations <dir/jar>        For a bytecode folder or output jar, rewrites the
                                        androidx annotations to be package private
+--copy-annotations <source> <dest>     For a source folder full of annotation sources,
+                                       generates corresponding package private versions of
+                                       the same annotations.
 --include-source-retention             If true, include source-retention annotations in
                                        the stub files. Does not apply to signature files.
                                        Source retention annotations are extracted into the
