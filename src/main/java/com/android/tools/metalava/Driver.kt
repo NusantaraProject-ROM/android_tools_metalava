@@ -149,6 +149,19 @@ private fun exit(exitCode: Int = 0) {
 private fun processFlags() {
     val stopwatch = Stopwatch.createStarted()
 
+    // --copy-annotations?
+    val privateAnnotationsSource = options.privateAnnotationsSource
+    val privateAnnotationsTarget = options.privateAnnotationsTarget
+    if (privateAnnotationsSource != null && privateAnnotationsTarget != null) {
+        val rewrite = RewriteAnnotations()
+        // Support pointing to both stub-annotations and stub-annotations/src/main/java
+        val src = File(privateAnnotationsSource, "src${File.separator}main${File.separator}java")
+        val source = if (src.isDirectory) src else privateAnnotationsSource
+        source.listFiles()?.forEach { file ->
+            rewrite.modifyAnnotationSources(file, File(privateAnnotationsTarget, file.name))
+        }
+    }
+
     // --rewrite-annotations?
     options.rewriteAnnotations?.let { RewriteAnnotations().rewriteAnnotations(it) }
 

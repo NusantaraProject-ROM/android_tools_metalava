@@ -46,6 +46,34 @@ import java.util.zip.ZipOutputStream
  */
 
 class RewriteAnnotations {
+    /** Modifies annotation source files such that they are package private */
+    fun modifyAnnotationSources(source: File, target: File, pkg: String = "") {
+        val fileName = source.name
+        if (fileName.endsWith(SdkConstants.DOT_JAVA)) {
+            if (!options.includeSourceRetentionAnnotations) {
+                // Only copy non-source retention annotation classes
+                val qualifiedName = pkg + "." + fileName.substring(0, fileName.indexOf('.'))
+                if (!AnnotationItem.hasClassRetention(qualifiedName)) {
+                    return
+                }
+            }
+
+            // Copy and convert
+            target.parentFile.mkdirs()
+            target.writeText(
+                source.readText(Charsets.UTF_8).replace(
+                    "\npublic @interface",
+                    "\n@interface"
+                )
+            )
+        } else if (source.isDirectory) {
+            val newPackage = if (pkg.isEmpty()) fileName else "$pkg.$fileName"
+            source.listFiles()?.forEach {
+                modifyAnnotationSources(it, File(target, it.name), newPackage)
+            }
+        }
+    }
+
     /** Copies annotation source files from [source] to [target] */
     fun copyAnnotations(source: File, target: File, pkg: String = "") {
         val fileName = source.name
