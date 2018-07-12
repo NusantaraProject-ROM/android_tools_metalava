@@ -459,4 +459,25 @@ class ApiFromTextTest : DriverTest() {
             api = source
         )
     }
+
+    @Test
+    fun `Signatures with default annotation method values`() {
+        val source = """
+                package libcore.util {
+                  public @interface NonNull {
+                    method public abstract int from() default java.lang.Integer.MIN_VALUE;
+                    method public abstract double fromWithCast() default (double)java.lang.Float.NEGATIVE_INFINITY;
+                    method public abstract String! myString() default "This is a \"string\"";
+                    method public abstract int to() default java.lang.Integer.MAX_VALUE;
+                  }
+                }
+                """
+
+        check(
+            inputKotlinStyleNulls = true,
+            compatibilityMode = false,
+            signatureSource = source,
+            api = source
+        )
+    }
 }
