@@ -406,6 +406,9 @@ interface MethodItem : MemberItem {
      * declared in the signature) */
     fun findThrownExceptions(): Set<ClassItem> = codebase.unsupported()
 
+    /** If annotation method, returns the default value as a source expression */
+    fun defaultValue(): String = ""
+
     /**
      * Returns true if this method is a signature match for the given method (e.g. can
      * be overriding). This checks that the name and parameter lists match, but ignores
