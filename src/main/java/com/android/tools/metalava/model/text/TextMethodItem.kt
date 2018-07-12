@@ -190,4 +190,14 @@ open class TextMethodItem(
         "${if (isConstructor()) "Constructor" else "Method"} ${containingClass().qualifiedName()}.${name()}(${parameters().joinToString {
             it.type().toSimpleType()
         }})"
+
+    private var annotationDefault = ""
+
+    fun setAnnotationDefault(default: String) {
+        annotationDefault = default
+    }
+
+    override fun defaultValue(): String {
+        return annotationDefault
+    }
 }

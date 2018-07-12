@@ -3018,6 +3018,150 @@ fun `Rewrite relative documentation links`() {
     )
 }
 
+    @Test
+    fun `Annotation default values`() {
+
+        checkStubs(
+            compatibilityMode = false,
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+
+                    import java.lang.annotation.ElementType;
+                    import java.lang.annotation.Retention;
+                    import java.lang.annotation.RetentionPolicy;
+                    import java.lang.annotation.Target;
+
+                    import static java.lang.annotation.RetentionPolicy.SOURCE;
+
+                    /**
+                     * This annotation can be used to mark fields and methods to be dumped by
+                     * the view server. Only non-void methods with no arguments can be annotated
+                     * by this annotation.
+                     */
+                    @Target({ElementType.FIELD, ElementType.METHOD})
+                    @Retention(RetentionPolicy.RUNTIME)
+                    public @interface ExportedProperty {
+                        /**
+                         * When resolveId is true, and if the annotated field/method return value
+                         * is an int, the value is converted to an Android's resource name.
+                         *
+                         * @return true if the property's value must be transformed into an Android
+                         * resource name, false otherwise
+                         */
+                        boolean resolveId() default false;
+                        String prefix() default "";
+                        String category() default "";
+                        boolean formatToHexString() default false;
+                        boolean hasAdjacentMapping() default false;
+                        Class<? extends Number> myCls() default Integer.class;
+                        char[] letters1() default {};
+                        char[] letters2() default {'a', 'b', 'c'};
+                        double from() default Double.NEGATIVE_INFINITY;
+                        double fromWithCast() default (double)Float.NEGATIVE_INFINITY;
+                        InnerAnnotation value() default @InnerAnnotation;
+                        char letter() default 'a';
+                        int integer() default 1;
+                        long large_integer() default 1L;
+                        float floating() default 1.0f;
+                        double large_floating() default 1.0;
+                        byte small() default 1;
+                        short medium() default 1;
+                        int math() default 1+2*3;
+                        @InnerAnnotation
+                        int unit() default PX;
+                        int DP = 0;
+                        int PX = 1;
+                        int SP = 2;
+                        @Retention(SOURCE)
+                        @interface InnerAnnotation {
+                        }
+                    }
+                    """
+                )
+            ),
+            warnings = "",
+            // TODO: Put default values into signature files if not compatibiility mode
+            api = """
+                package test.pkg {
+                  public @interface ExportedProperty {
+                    method public abstract String! category() default "";
+                    method public abstract float floating() default 1.0f;
+                    method public abstract boolean formatToHexString() default false;
+                    method public abstract double from() default java.lang.Double.NEGATIVE_INFINITY;
+                    method public abstract double fromWithCast() default (double)java.lang.Float.NEGATIVE_INFINITY;
+                    method public abstract boolean hasAdjacentMapping() default false;
+                    method public abstract int integer() default 1;
+                    method public abstract double large_floating() default 1.0;
+                    method public abstract long large_integer() default 1;
+                    method public abstract char letter() default 'a';
+                    method public abstract char[]! letters1() default {};
+                    method public abstract char[]! letters2() default {'a', 'b', 'c'};
+                    method public abstract int math() default 7;
+                    method public abstract short medium() default 1;
+                    method public abstract Class<? extends java.lang.Number>! myCls() default java.lang.Integer.class;
+                    method public abstract String! prefix() default "";
+                    method public abstract boolean resolveId() default false;
+                    method public abstract byte small() default 1;
+                    method public abstract int unit() default test.pkg.ExportedProperty.PX;
+                    method public abstract test.pkg.ExportedProperty.InnerAnnotation! value() default @test.pkg.ExportedProperty.InnerAnnotation;
+                    field public static final int DP = 0; // 0x0
+                    field public static final int PX = 1; // 0x1
+                    field public static final int SP = 2; // 0x2
+                  }
+                  public static @interface ExportedProperty.InnerAnnotation {
+                  }
+                }
+            """,
+            source = """
+                package test.pkg;
+                /**
+                 * This annotation can be used to mark fields and methods to be dumped by
+                 * the view server. Only non-void methods with no arguments can be annotated
+                 * by this annotation.
+                 */
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public @interface ExportedProperty {
+                /**
+                 * When resolveId is true, and if the annotated field/method return value
+                 * is an int, the value is converted to an Android's resource name.
+                 *
+                 * @return true if the property's value must be transformed into an Android
+                 * resource name, false otherwise
+                 */
+                public boolean resolveId() default false;
+                public java.lang.String prefix() default "";
+                public java.lang.String category() default "";
+                public boolean formatToHexString() default false;
+                public boolean hasAdjacentMapping() default false;
+                public java.lang.Class<? extends java.lang.Number> myCls() default java.lang.Integer.class;
+                public char[] letters1() default {};
+                public char[] letters2() default {'a', 'b', 'c'};
+                public double from() default java.lang.Double.NEGATIVE_INFINITY;
+                public double fromWithCast() default (double)java.lang.Float.NEGATIVE_INFINITY;
+                public test.pkg.ExportedProperty.InnerAnnotation value() default @test.pkg.ExportedProperty.InnerAnnotation;
+                public char letter() default 'a';
+                public int integer() default 1;
+                public long large_integer() default 1;
+                public float floating() default 1.0f;
+                public double large_floating() default 1.0;
+                public byte small() default 1;
+                public short medium() default 1;
+                public int math() default 7;
+                public int unit() default test.pkg.ExportedProperty.PX;
+                public static final int DP = 0; // 0x0
+                public static final int PX = 1; // 0x1
+                public static final int SP = 2; // 0x2
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public static @interface InnerAnnotation {
+                }
+                }
+                """
+        )
+    }
+
 @Test
 fun `Check writing package info file`() {
     checkStubs(

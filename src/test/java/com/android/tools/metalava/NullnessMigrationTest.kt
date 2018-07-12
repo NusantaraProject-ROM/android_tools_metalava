@@ -238,8 +238,8 @@ class NullnessMigrationTest : DriverTest() {
             api = """
                     package libcore.util {
                       public @interface NonNull {
-                        method public abstract int from();
-                        method public abstract int to();
+                        method public abstract int from() default java.lang.Integer.MIN_VALUE;
+                        method public abstract int to() default java.lang.Integer.MAX_VALUE;
                       }
                     }
                     package test.pkg {
