@@ -501,6 +501,14 @@ class StubWriter(
         generateParameterList(method)
         generateThrowsList(method)
 
+        if (isAnnotation) {
+            val default = method.defaultValue()
+            if (default.isNotEmpty()) {
+                writer.print(" default ")
+                writer.print(default)
+            }
+        }
+
         if (modifiers.isAbstract() && !removeAbstract && !isEnum || isAnnotation || modifiers.isNative()) {
             writer.println(";")
         } else {

@@ -45,6 +45,10 @@ class Compatibility(
     /** Add in explicit `valueOf` and `values` methods into annotation classes  */
     var defaultAnnotationMethods: Boolean = compat
 
+    /** Whether signature files should contain annotation default values (as is already
+     * done for field default values) */
+    var includeAnnotationDefaults: Boolean = !compat
+
     /** In signature files, refer to enums as "class" instead of "enum" */
     var classForEnums: Boolean = compat
 

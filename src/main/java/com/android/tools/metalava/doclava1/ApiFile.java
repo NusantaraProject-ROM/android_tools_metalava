@@ -568,6 +568,9 @@ public class ApiFile {
         if ("throws".equals(token)) {
             token = parseThrows(tokenizer, method);
         }
+        if ("default".equals(token)) {
+            token = parseDefault(tokenizer, method);
+        }
         if (!";".equals(token)) {
             throw new ApiParseException("expected ; found " + token, tokenizer);
         }
@@ -849,6 +852,20 @@ public class ApiFile {
                 method.setVarargs(true);
             }
             index++;
+        }
+    }
+
+    private static String parseDefault(Tokenizer tokenizer, TextMethodItem method)
+        throws ApiParseException {
+        StringBuilder sb = new StringBuilder();
+        while (true) {
+            String token = tokenizer.requireToken();
+            if (";".equals(token)) {
+                method.setAnnotationDefault(sb.toString());
+                return token;
+            } else {
+                sb.append(token);
+            }
         }
     }
 
