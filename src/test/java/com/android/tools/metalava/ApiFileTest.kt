@@ -137,7 +137,7 @@ class ApiFileTest : DriverTest() {
                 package test.pkg {
                   public class Foo {
                     ctor public Foo();
-                    method public void foo(String! = "null", String! = "\"Hello World\"", int = "42");
+                    method public void foo(String! = null, String! = "Hello World", int = 42);
                   }
                 }
                  """,
@@ -166,7 +166,7 @@ class ApiFileTest : DriverTest() {
                 package test.pkg {
                   public final class Foo {
                     ctor public Foo();
-                    method public void error(int p = "42", Integer? int2 = "null", int p1 = "42", java.lang.String... args);
+                    method public void error(int p = 42, Integer? int2 = null, int p1 = 42, java.lang.String... args);
                   }
                 }
                 """,
@@ -460,11 +460,11 @@ class ApiFileTest : DriverTest() {
                 package androidx.content {
                   public final class TestKt {
                     ctor public TestKt();
-                    method public static void blahblahblah(String, String firstArg = "\"hello\"", int secondArg = "\"42\"", String thirdArg = "\"world\"");
-                    method public static void blahblahblah(String, String firstArg = "\"hello\"", int secondArg = "\"42\"");
-                    method public static void blahblahblah(String, String firstArg = "\"hello\"");
+                    method public static void blahblahblah(String, String firstArg = "hello", int secondArg = "42", String thirdArg = "world");
+                    method public static void blahblahblah(String, String firstArg = "hello", int secondArg = "42");
+                    method public static void blahblahblah(String, String firstArg = "hello");
                     method public static void blahblahblah(String);
-                    method public static void edit(android.content.SharedPreferences, boolean commit = "false", kotlin.jvm.functions.Function1<? super android.content.SharedPreferences.Editor,kotlin.Unit> action);
+                    method public static void edit(android.content.SharedPreferences, boolean commit = false, kotlin.jvm.functions.Function1<? super android.content.SharedPreferences.Editor,kotlin.Unit> action);
                     method public static void edit(android.content.SharedPreferences, kotlin.jvm.functions.Function1<? super android.content.SharedPreferences.Editor,kotlin.Unit> action);
                   }
                 }
@@ -1013,8 +1013,8 @@ class ApiFileTest : DriverTest() {
                     package test.pkg {
                       public abstract class Foo {
                         ctor public Foo();
-                        method public static final deprecated synchronized void method1();
-                        method public static final deprecated synchronized void method2();
+                        method public static final deprecated synchronized strictfp void method1();
+                        method public static final native deprecated synchronized void method2();
                       }
                       protected static final deprecated class Foo.Inner1 {
                         ctor protected Foo.Inner1();

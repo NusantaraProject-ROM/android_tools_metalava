@@ -320,6 +320,28 @@ class CompatibilityCheck : ComparisonVisitor() {
                     "${describe(new, capitalize = true)} has changed return type from $oldTypeString to $newTypeString"
                 report(Errors.CHANGED_TYPE, new, message)
             }
+
+            // Annotation methods?
+            if (!old.hasSameValue(new)) {
+                val prevValue = old.defaultValue()
+                val prevString = if (prevValue.isEmpty()) {
+                    "nothing"
+                } else {
+                    prevValue
+                }
+
+                val newValue = new.defaultValue()
+                val newString = if (newValue.isEmpty()) {
+                    "nothing"
+                } else {
+                    newValue
+                }
+                val message = "${describe(
+                    new,
+                    capitalize = true
+                )} has changed value from $prevString to $newString"
+                report(Errors.CHANGED_VALUE, new, message)
+            }
         }
 
         // Check for changes in abstract, but only for regular classes; older signature files

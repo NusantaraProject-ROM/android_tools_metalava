@@ -58,19 +58,13 @@ class Compatibility(
     var nonstandardModifierOrder: Boolean = compat
 
     /** In signature files, skip the native modifier from the modifier lists */
-    var skipNativeModifier: Boolean = nonstandardModifierOrder
+    var skipNativeModifier: Boolean = false
 
     /** In signature files, skip the strictfp modifier from the modifier lists */
-    var skipStrictFpModifier: Boolean = nonstandardModifierOrder
+    var skipStrictFpModifier: Boolean = false
 
     /** Whether to include instance methods in annotation classes for the annotation properties */
     var skipAnnotationInstanceMethods: Boolean = compat
-
-    /** Include spaces after commas in type strings */
-    var spacesAfterCommas: Boolean = compat
-
-    /** Use two spaces after type for package private elements in signature files */
-    var doubleSpaceForPackagePrivate: Boolean = compat
 
     /**
      * In signature files, whether interfaces should also be described as "abstract"

@@ -278,7 +278,8 @@ class StubsTest : DriverTest() {
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public enum Foo {
-                A, B;
+                A,
+                B;
                 }
                 """
         )
@@ -309,7 +310,9 @@ class StubsTest : DriverTest() {
             source = """
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
-                @java.lang.annotation.Target({java.lang.annotation.ElementType.TYPE, java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD, java.lang.annotation.ElementType.PARAMETER, java.lang.annotation.ElementType.CONSTRUCTOR, java.lang.annotation.ElementType.LOCAL_VARIABLE}) @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS) public @interface Foo {
+                @java.lang.annotation.Target({java.lang.annotation.ElementType.TYPE, java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD, java.lang.annotation.ElementType.PARAMETER, java.lang.annotation.ElementType.CONSTRUCTOR, java.lang.annotation.ElementType.LOCAL_VARIABLE})
+                @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS)
+                public @interface Foo {
                 public java.lang.String value();
                 }
                 """
@@ -445,18 +448,23 @@ class StubsTest : DriverTest() {
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public abstract class Foo {
                 public Foo() { throw new RuntimeException("Stub!"); }
-                @Deprecated public static final synchronized strictfp void method1() { throw new RuntimeException("Stub!"); }
-                @Deprecated public static final synchronized native void method2();
+                @Deprecated
+                public static final synchronized strictfp void method1() { throw new RuntimeException("Stub!"); }
+                @Deprecated
+                public static final synchronized native void method2();
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
-                @Deprecated protected static final class Inner1 {
+                @Deprecated
+                protected static final class Inner1 {
                 protected Inner1() { throw new RuntimeException("Stub!"); }
                 }
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
-                @Deprecated protected abstract static class Inner2 {
+                @Deprecated
+                protected abstract static class Inner2 {
                 protected Inner2() { throw new RuntimeException("Stub!"); }
                 }
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
-                @Deprecated protected static interface Inner3 {
+                @Deprecated
+                protected static interface Inner3 {
                 public default void method3() { throw new RuntimeException("Stub!"); }
                 public static void method4() { throw new RuntimeException("Stub!"); }
                 }
@@ -481,10 +489,13 @@ class StubsTest : DriverTest() {
                     package test.pkg;
 
                     public enum FooBar {
+                        /** My 1st documentation */
                         ABC {
                             @Override
                             protected void foo() { }
-                        }, DEF {
+                        },
+                        /** My 2nd documentation */
+                        DEF {
                             @Override
                             protected void foo() { }
                         };
@@ -500,12 +511,15 @@ class StubsTest : DriverTest() {
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public enum FooBar {
-                ABC, DEF;
+                /** My 1st documentation */
+                ABC,
+                /** My 2nd documentation */
+                DEF;
                 protected void foo() { throw new RuntimeException("Stub!"); }
                 public static int field1 = 1; // 0x1
                 public int field2 = 2; // 0x2
                 }
-            """
+                """
         )
     }
 
@@ -654,7 +668,9 @@ class StubsTest : DriverTest() {
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public enum ChronUnit implements test.pkg.TempUnit {
-                C, B, A;
+                C,
+                B,
+                A;
                 public java.lang.String valueOf(int x) { throw new RuntimeException("Stub!"); }
                 public java.lang.String toString() { throw new RuntimeException("Stub!"); }
                 }
@@ -1136,7 +1152,8 @@ class StubsTest : DriverTest() {
                     /**
                      * Requires android.Manifest.permission.INTERACT_ACROSS_USERS and {@link android.Manifest.permission#BROADCAST_STICKY}
                      */
-                    @androidx.annotation.RequiresPermission(allOf={"android.permission.INTERACT_ACROSS_USERS", android.Manifest.permission.BROADCAST_STICKY}) public abstract void removeStickyBroadcast(@androidx.annotation.RequiresPermission java.lang.Object intent);
+                    @androidx.annotation.RequiresPermission(allOf={"android.permission.INTERACT_ACROSS_USERS", android.Manifest.permission.BROADCAST_STICKY})
+                    public abstract void removeStickyBroadcast(@androidx.annotation.RequiresPermission java.lang.Object intent);
                     }
                 """
         )
@@ -1270,14 +1287,17 @@ class StubsTest : DriverTest() {
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public final class Kotlin extends test.pkg.Parent {
                     public Kotlin(@androidx.annotation.NonNull java.lang.String property1, int arg2) { throw new RuntimeException("Stub!"); }
-                    @androidx.annotation.NonNull public java.lang.String method() { throw new RuntimeException("Stub!"); }
+                    @androidx.annotation.NonNull
+                    public java.lang.String method() { throw new RuntimeException("Stub!"); }
                     /** My method doc */
                     public void otherMethod(boolean ok, int times) { throw new RuntimeException("Stub!"); }
                     /** property doc */
-                    @androidx.annotation.Nullable public java.lang.String getProperty2() { throw new RuntimeException("Stub!"); }
+                    @androidx.annotation.Nullable
+                    public java.lang.String getProperty2() { throw new RuntimeException("Stub!"); }
                     /** property doc */
                     public void setProperty2(@androidx.annotation.Nullable java.lang.String p) { throw new RuntimeException("Stub!"); }
-                    @androidx.annotation.NonNull public java.lang.String getProperty1() { throw new RuntimeException("Stub!"); }
+                    @androidx.annotation.NonNull
+                    public java.lang.String getProperty1() { throw new RuntimeException("Stub!"); }
                     public int someField2;
                     }
                 """,
@@ -3006,7 +3026,8 @@ class StubsTest : DriverTest() {
                      *  @see OtherClass#bar(int, boolean)
                      */
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
-                    @Deprecated public class SomeClass {
+                    @Deprecated
+                    public class SomeClass {
                     public SomeClass() { throw new RuntimeException("Stub!"); }
                     /**
                      * My method.
@@ -3125,7 +3146,9 @@ class StubsTest : DriverTest() {
                  * by this annotation.
                  */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
-                @java.lang.annotation.Target({java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD}) @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME) public @interface ExportedProperty {
+                @java.lang.annotation.Target({java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD})
+                @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
+                public @interface ExportedProperty {
                 /**
                  * When resolveId is true, and if the annotated field/method return value
                  * is an int, the value is converted to an Android's resource name.
@@ -3157,7 +3180,8 @@ class StubsTest : DriverTest() {
                 public static final int PX = 1; // 0x1
                 public static final int SP = 2; // 0x2
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
-                @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.SOURCE) public static @interface InnerAnnotation {
+                @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.SOURCE)
+                public static @interface InnerAnnotation {
                 }
                 }
                 """
@@ -3189,7 +3213,9 @@ class StubsTest : DriverTest() {
             source = """
                 package java.lang;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
-                @java.lang.annotation.Target(java.lang.annotation.ElementType.METHOD) @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.SOURCE) public @interface MyAnnotation {
+                @java.lang.annotation.Target(java.lang.annotation.ElementType.METHOD)
+                @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.SOURCE)
+                public @interface MyAnnotation {
                 }
                 """
         )

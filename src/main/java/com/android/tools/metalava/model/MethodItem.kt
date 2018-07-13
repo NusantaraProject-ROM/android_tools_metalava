@@ -410,6 +410,19 @@ interface MethodItem : MemberItem {
     fun defaultValue(): String = ""
 
     /**
+     * Check the declared default annotation value and return true if the defaults
+     * are the same. Only defined on two annotation methods; for all other
+     * methods the result is "true".
+     */
+    fun hasSameValue(other: MethodItem): Boolean {
+        if (!containingClass().isAnnotationType() || !other.containingClass().isAnnotationType()) {
+            return true
+        }
+
+        return defaultValue() == other.defaultValue()
+    }
+
+    /**
      * Returns true if this method is a signature match for the given method (e.g. can
      * be overriding). This checks that the name and parameter lists match, but ignores
      * differences in parameter names, return value types and throws list types.

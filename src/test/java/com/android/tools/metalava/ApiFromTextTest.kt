@@ -442,11 +442,11 @@ class ApiFromTextTest : DriverTest() {
                 package test.pkg {
                   public final class Foo {
                     ctor public Foo();
-                    method public final void error(int p = "42", java.lang.Integer? int2 = "null");
+                    method public final void error(int p = 42, java.lang.Integer? int2 = null);
                   }
                   public class Foo2 {
                     ctor public Foo2();
-                    method public void foo(java.lang.String! = "null", java.lang.String! = "\"Hello World\"", int = "42");
+                    method public void foo(java.lang.String! = null, java.lang.String! = "(Hello) World", int = 42);
                   }
                 }
                 """
