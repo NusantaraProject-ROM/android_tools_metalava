@@ -102,7 +102,7 @@ class DocAnalyzerTest : DriverTest() {
                  * to be a String resource reference (e.g.&nbsp;{@code android.R.string.ok}).
                  */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
-                public @interface StringRes {
+                @java.lang.annotation.Documented @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS) @java.lang.annotation.Target({java.lang.annotation.ElementType.METHOD, java.lang.annotation.ElementType.PARAMETER, java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.LOCAL_VARIABLE}) public @interface StringRes {
                 }
                 """
             )

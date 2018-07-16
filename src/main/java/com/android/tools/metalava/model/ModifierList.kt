@@ -185,6 +185,7 @@ interface ModifierList {
             removeFinal: Boolean = false,
             addPublic: Boolean = false,
             onlyIncludeSignatureAnnotations: Boolean = true,
+            onlyIncludeStubAnnotations: Boolean = false,
             onlyIncludeClassRetentionAnnotations: Boolean = false
         ) {
 
@@ -215,6 +216,7 @@ interface ModifierList {
                     separateLines = false,
                     writer = writer,
                     onlyIncludeSignatureAnnotations = onlyIncludeSignatureAnnotations,
+                    onlyIncludeStubAnnotations = onlyIncludeStubAnnotations,
                     onlyIncludeClassRetentionAnnotations = onlyIncludeClassRetentionAnnotations
                 )
             }
@@ -389,6 +391,7 @@ interface ModifierList {
             filterDuplicates: Boolean = false,
             writer: Writer,
             onlyIncludeSignatureAnnotations: Boolean = true,
+            onlyIncludeStubAnnotations: Boolean = true,
             onlyIncludeClassRetentionAnnotations: Boolean = false
         ) {
             val annotations = list.annotations()
@@ -396,10 +399,13 @@ interface ModifierList {
                 var index = -1
                 for (annotation in annotations) {
                     index++
-                    if (onlyIncludeSignatureAnnotations && !annotation.isSignificant()) {
+                    if (onlyIncludeSignatureAnnotations && !annotation.isSignificantInSignatures()) {
+                        continue
+                    } else if (onlyIncludeStubAnnotations && !annotation.isSignificantInStubs()) {
                         continue
                     } else if (onlyIncludeClassRetentionAnnotations && !annotation.hasClassRetention() &&
-                        !options.includeSourceRetentionAnnotations) {
+                        !options.includeSourceRetentionAnnotations
+                    ) {
                         continue
                     } else if ((annotation.isNonNull() || annotation.isNullable())) {
                         if (skipNullnessAnnotations) {

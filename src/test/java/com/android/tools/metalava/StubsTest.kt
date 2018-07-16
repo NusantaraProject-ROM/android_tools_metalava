@@ -37,6 +37,8 @@ class StubsTest : DriverTest() {
         extraArguments: Array<String> = emptyArray(),
         docStubs: Boolean = false,
         showAnnotations: Array<String> = emptyArray(),
+        includeSourceRetentionAnnotations: Boolean = true,
+        skipEmitPackages: List<String> = listOf("java.lang", "java.util", "java.io"),
         vararg sourceFiles: TestFile
     ) {
         check(
@@ -49,7 +51,9 @@ class StubsTest : DriverTest() {
             checkCompilation = true,
             api = api,
             extraArguments = extraArguments,
-            docStubs = docStubs
+            docStubs = docStubs,
+            includeSourceRetentionAnnotations = includeSourceRetentionAnnotations,
+            skipEmitPackages = skipEmitPackages
         )
     }
 
@@ -305,7 +309,7 @@ class StubsTest : DriverTest() {
             source = """
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
-                public @interface Foo {
+                @java.lang.annotation.Target({java.lang.annotation.ElementType.TYPE, java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD, java.lang.annotation.ElementType.PARAMETER, java.lang.annotation.ElementType.CONSTRUCTOR, java.lang.annotation.ElementType.LOCAL_VARIABLE}) @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS) public @interface Foo {
                 public java.lang.String value();
                 }
                 """
@@ -1811,28 +1815,28 @@ class StubsTest : DriverTest() {
         )
     }
 
-@Test
-fun `Test inaccessible constructors`() {
-    // If the constructors of a class are not visible, and the class has subclasses,
-    // those subclass stubs will need to reference these inaccessible constructors.
-    // This generally only happens when the constructors are package private (and
-    // therefore hidden) but the subclass using it is also in the same package.
+    @Test
+    fun `Test inaccessible constructors`() {
+        // If the constructors of a class are not visible, and the class has subclasses,
+        // those subclass stubs will need to reference these inaccessible constructors.
+        // This generally only happens when the constructors are package private (and
+        // therefore hidden) but the subclass using it is also in the same package.
 
-    check(
-        checkDoclava1 = false,
-        checkCompilation = true,
-        sourceFiles =
-        *arrayOf(
-            java(
-                """
+        check(
+            checkDoclava1 = false,
+            checkCompilation = true,
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
                     package test.pkg;
                     public class MyClass1 {
                         MyClass1(int myVar) { }
                     }
                     """
-            ),
-            java(
-                """
+                ),
+                java(
+                    """
                     package test.pkg;
                     import java.io.IOException;
                     @SuppressWarnings("RedundantThrows")
@@ -1840,27 +1844,27 @@ fun `Test inaccessible constructors`() {
                         MySubClass1(int myVar) throws IOException { super(myVar); }
                     }
                     """
-            ),
-            java(
-                """
+                ),
+                java(
+                    """
                     package test.pkg;
                     public class MyClass2 {
                         /** @hide */
                         public MyClass2(int myVar) { }
                     }
                     """
-            ),
-            java(
-                """
+                ),
+                java(
+                    """
                     package test.pkg;
                     public class MySubClass2 extends MyClass2 {
                         public MySubClass2() { super(5); }
                     }
                     """
-            )
-        ),
-        warnings = "",
-        api = """
+                )
+            ),
+            warnings = "",
+            api = """
                     package test.pkg {
                       public class MyClass1 {
                       }
@@ -1873,22 +1877,22 @@ fun `Test inaccessible constructors`() {
                       }
                     }
                     """,
-        stubs = arrayOf(
-            """
+            stubs = arrayOf(
+                """
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class MyClass1 {
                 MyClass1(int myVar) { throw new RuntimeException("Stub!"); }
                 }
                 """,
-            """
+                """
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class MySubClass1 extends test.pkg.MyClass1 {
                 MySubClass1(int myVar) throws java.io.IOException { super(0); throw new RuntimeException("Stub!"); }
                 }
                 """,
-            """
+                """
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class MyClass2 {
@@ -1896,32 +1900,32 @@ fun `Test inaccessible constructors`() {
                 MyClass2(int myVar) { throw new RuntimeException("Stub!"); }
                 }
                 """,
-            """
+                """
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class MySubClass2 extends test.pkg.MyClass2 {
                 public MySubClass2() { super(0); throw new RuntimeException("Stub!"); }
                 }
                 """
+            )
         )
-    )
-}
+    }
 
-@Test
-fun `Generics Variable Rewriting`() {
-    // When we move methods from hidden superclasses into the subclass since they
-    // provide the implementation for a required method, it's possible that the
-    // method we copied in is referencing generics with a different variable than
-    // in the current class, so we need to handle this
+    @Test
+    fun `Generics Variable Rewriting`() {
+        // When we move methods from hidden superclasses into the subclass since they
+        // provide the implementation for a required method, it's possible that the
+        // method we copied in is referencing generics with a different variable than
+        // in the current class, so we need to handle this
 
-    checkStubs(
-        checkDoclava1 = false,
-        sourceFiles =
-        *arrayOf(
-            // TODO: Try using prefixes like "A", and "AA" to make sure my generics
-            // variable renaming doesn't do something really dumb
-            java(
-                """
+        checkStubs(
+            checkDoclava1 = false,
+            sourceFiles =
+            *arrayOf(
+                // TODO: Try using prefixes like "A", and "AA" to make sure my generics
+                // variable renaming doesn't do something really dumb
+                java(
+                    """
                     package test.pkg;
 
                     import java.util.List;
@@ -1951,10 +1955,10 @@ fun `Generics Variable Rewriting`() {
                         }
                     }
                     """
-            )
-        ),
-        warnings = "",
-        source = """
+                )
+            ),
+            warnings = "",
+            source = """
                     package test.pkg;
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class Generics {
@@ -1980,18 +1984,18 @@ fun `Generics Variable Rewriting`() {
                     }
                     }
                     """
-    )
-}
+        )
+    }
 
-@Test
-fun `Rewriting type parameters in interfaces from hidden super classes and in throws lists`() {
-    checkStubs(
-        extraArguments = arrayOf("--skip-inherited-methods=false"),
-        checkDoclava1 = false,
-        sourceFiles =
-        *arrayOf(
-            java(
-                """
+    @Test
+    fun `Rewriting type parameters in interfaces from hidden super classes and in throws lists`() {
+        checkStubs(
+            extraArguments = arrayOf("--skip-inherited-methods=false"),
+            checkDoclava1 = false,
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
                     package test.pkg;
 
                     import java.io.IOException;
@@ -2026,10 +2030,10 @@ fun `Rewriting type parameters in interfaces from hidden super classes and in th
                         }
                     }
                     """
-            )
-        ),
-        warnings = "",
-        api = """
+                )
+            ),
+            warnings = "",
+            api = """
                     package test.pkg {
                       public class Generics {
                         ctor public Generics();
@@ -2048,8 +2052,8 @@ fun `Rewriting type parameters in interfaces from hidden super classes and in th
                       }
                     }
                     """,
-        source = if (SUPPORT_TYPE_USE_ANNOTATIONS) {
-            """
+            source = if (SUPPORT_TYPE_USE_ANNOTATIONS) {
+                """
             package test.pkg;
             @SuppressWarnings({"unchecked", "deprecation", "all"})
             public class Generics {
@@ -2071,8 +2075,8 @@ fun `Rewriting type parameters in interfaces from hidden super classes and in th
             }
             }
             """
-        } else {
-            """
+            } else {
+                """
             package test.pkg;
             @SuppressWarnings({"unchecked", "deprecation", "all"})
             public class Generics {
@@ -2094,20 +2098,20 @@ fun `Rewriting type parameters in interfaces from hidden super classes and in th
             }
             }
             """
-        }
-    )
-}
+            }
+        )
+    }
 
-@Test
-fun `Picking super class throwables`() {
-    // Like previous test, but without compatibility mode: ensures that we
-    // use super classes of filtered throwables
-    checkStubs(
-        compatibilityMode = false,
-        sourceFiles =
-        *arrayOf(
-            java(
-                """
+    @Test
+    fun `Picking super class throwables`() {
+        // Like previous test, but without compatibility mode: ensures that we
+        // use super classes of filtered throwables
+        checkStubs(
+            compatibilityMode = false,
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
                     package test.pkg;
 
                     import java.io.IOException;
@@ -2142,10 +2146,10 @@ fun `Picking super class throwables`() {
                         }
                     }
                     """
-            )
-        ),
-        warnings = "",
-        api = """
+                )
+            ),
+            warnings = "",
+            api = """
                 package test.pkg {
                   public class Generics {
                     ctor public Generics();
@@ -2164,7 +2168,7 @@ fun `Picking super class throwables`() {
                   }
                 }
                     """,
-        source = """
+            source = """
                     package test.pkg;
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class Generics {
@@ -2186,19 +2190,19 @@ fun `Picking super class throwables`() {
                     }
                     }
                     """
-    )
-}
+        )
+    }
 
-@Test
-fun `Rewriting implements class references`() {
-    // Checks some more subtle bugs around generics type variable renaming
-    checkStubs(
-        extraArguments = arrayOf("--skip-inherited-methods=false"),
-        checkDoclava1 = false,
-        sourceFiles =
-        *arrayOf(
-            java(
-                """
+    @Test
+    fun `Rewriting implements class references`() {
+        // Checks some more subtle bugs around generics type variable renaming
+        checkStubs(
+            extraArguments = arrayOf("--skip-inherited-methods=false"),
+            checkDoclava1 = false,
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
                     package test.pkg;
 
                     import java.util.Collection;
@@ -2225,10 +2229,10 @@ fun `Rewriting implements class references`() {
                         }
                     }
                     """
-            )
-        ),
-        warnings = "",
-        api = """
+                )
+            ),
+            warnings = "",
+            api = """
                     package test.pkg {
                       public class ConcurrentHashMap<K, V> {
                         ctor public ConcurrentHashMap();
@@ -2241,7 +2245,7 @@ fun `Rewriting implements class references`() {
                       }
                     }
                     """,
-        source = """
+            source = """
                     package test.pkg;
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class ConcurrentHashMap<K, V> {
@@ -2255,17 +2259,17 @@ fun `Rewriting implements class references`() {
                     }
                     }
                     """
-    )
-}
+        )
+    }
 
-@Test
-fun `Arrays in type arguments`() {
-    checkStubs(
-        checkDoclava1 = false,
-        sourceFiles =
-        *arrayOf(
-            java(
-                """
+    @Test
+    fun `Arrays in type arguments`() {
+        checkStubs(
+            checkDoclava1 = false,
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
                     package test.pkg;
 
                     public class Generics2 {
@@ -2277,10 +2281,10 @@ fun `Arrays in type arguments`() {
                         }
                     }
                     """
-            )
-        ),
-        warnings = "",
-        source = """
+                )
+            ),
+            warnings = "",
+            source = """
                     package test.pkg;
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class Generics2 {
@@ -2294,20 +2298,20 @@ fun `Arrays in type arguments`() {
                     }
                     }
                     """
-    )
-}
+        )
+    }
 
-@Test
-fun `Interface extending multiple interfaces`() {
-    // Ensure that we handle sorting correctly where we're mixing super classes and implementing
-    // interfaces
-    // Real-world example: XmlResourceParser
-    check(
-        checkDoclava1 = false,
-        checkCompilation = true,
-        sourceFiles = *arrayOf(
-            java(
-                """
+    @Test
+    fun `Interface extending multiple interfaces`() {
+        // Ensure that we handle sorting correctly where we're mixing super classes and implementing
+        // interfaces
+        // Real-world example: XmlResourceParser
+        check(
+            checkDoclava1 = false,
+            checkCompilation = true,
+            sourceFiles = *arrayOf(
+                java(
+                    """
                     package android.content.res;
                     import android.util.AttributeSet;
                     import org.xmlpull.v1.XmlPullParser;
@@ -2317,52 +2321,52 @@ fun `Interface extending multiple interfaces`() {
                         public void close();
                     }
                     """
-            ),
-            java(
-                """
+                ),
+                java(
+                    """
                     package android.util;
                     public interface AttributeSet {
                     }
                     """
-            ),
-            java(
-                """
+                ),
+                java(
+                    """
                     package java.lang;
                     public interface AutoCloseable {
                     }
                     """
-            ),
-            java(
-                """
+                ),
+                java(
+                    """
                     package org.xmlpull.v1;
                     public interface XmlPullParser {
                     }
                     """
-            )
-        ),
-        stubs = arrayOf(
-            """
+                )
+            ),
+            stubs = arrayOf(
+                """
                 package android.content.res;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public interface XmlResourceParser extends org.xmlpull.v1.XmlPullParser,  android.util.AttributeSet, java.lang.AutoCloseable {
                 public void close();
                 }
                 """
+            )
         )
-    )
-}
+    }
 
 // TODO: Add a protected constructor too to make sure my code to make non-public constructors package private
 // don't accidentally demote protected constructors to package private!
 
-@Test
-fun `Picking Super Constructors`() {
-    checkStubs(
-        checkDoclava1 = false,
-        sourceFiles =
-        *arrayOf(
-            java(
-                """
+    @Test
+    fun `Picking Super Constructors`() {
+        checkStubs(
+            checkDoclava1 = false,
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
                     package test.pkg;
 
                     import java.io.IOException;
@@ -2434,10 +2438,10 @@ fun `Picking Super Constructors`() {
                         }
                     }
                     """
-            )
-        ),
-        warnings = "",
-        api = """
+                )
+            ),
+            warnings = "",
+            api = """
                     package test.pkg {
                       public class PickConstructors {
                         ctor public PickConstructors();
@@ -2478,7 +2482,7 @@ fun `Picking Super Constructors`() {
                       }
                     }
                 """,
-        source = """
+            source = """
                     package test.pkg;
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class PickConstructors {
@@ -2530,17 +2534,17 @@ fun `Picking Super Constructors`() {
                     }
                     }
                     """
-    )
-}
+        )
+    }
 
-@Test
-fun `Picking Constructors`() {
-    checkStubs(
-        checkDoclava1 = false,
-        sourceFiles =
-        *arrayOf(
-            java(
-                """
+    @Test
+    fun `Picking Constructors`() {
+        checkStubs(
+            checkDoclava1 = false,
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
                     package test.pkg;
 
                     @SuppressWarnings({"WeakerAccess", "unused"})
@@ -2617,10 +2621,10 @@ fun `Picking Constructors`() {
                         }
                     }
                     """
-            )
-        ),
-        warnings = "",
-        source = """
+                )
+            ),
+            warnings = "",
+            source = """
                     package test.pkg;
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class Constructors2 {
@@ -2664,18 +2668,18 @@ fun `Picking Constructors`() {
                     }
                     }
                     """
-    )
-}
+        )
+    }
 
-@Test
-fun `Another Constructor Test`() {
-    // A specific scenario triggered in the API where the right super class detector was not chosen
-    checkStubs(
-        checkDoclava1 = false,
-        sourceFiles =
-        *arrayOf(
-            java(
-                """
+    @Test
+    fun `Another Constructor Test`() {
+        // A specific scenario triggered in the API where the right super class detector was not chosen
+        checkStubs(
+            checkDoclava1 = false,
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
                     package test.pkg;
 
                     @SuppressWarnings({"RedundantThrows", "JavaDoc", "WeakerAccess"})
@@ -2701,10 +2705,10 @@ fun `Another Constructor Test`() {
                         }
                     }
                     """
-            )
-        ),
-        warnings = "",
-        source = """
+                )
+            ),
+            warnings = "",
+            source = """
                     package test.pkg;
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class PickConstructors2 {
@@ -2725,18 +2729,18 @@ fun `Another Constructor Test`() {
                     }
                     }
                     """
-    )
-}
+        )
+    }
 
-@Test
-fun `Overriding protected methods`() {
-    // Checks a scenario where the stubs were missing overrides
-    checkStubs(
-        checkDoclava1 = false,
-        sourceFiles =
-        *arrayOf(
-            java(
-                """
+    @Test
+    fun `Overriding protected methods`() {
+        // Checks a scenario where the stubs were missing overrides
+        checkStubs(
+            checkDoclava1 = false,
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
                     package test.pkg;
 
                     @SuppressWarnings("all")
@@ -2759,10 +2763,10 @@ fun `Overriding protected methods`() {
                         }
                     }
                     """
-            )
-        ),
-        warnings = "",
-        api = """
+                )
+            ),
+            warnings = "",
+            api = """
                     package test.pkg {
                       public class Layouts {
                         ctor public Layouts();
@@ -2780,7 +2784,7 @@ fun `Overriding protected methods`() {
                       }
                     }
                     """,
-        source = """
+            source = """
                     package test.pkg;
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class Layouts {
@@ -2802,18 +2806,18 @@ fun `Overriding protected methods`() {
                     }
                     }
                     """
-    )
-}
+        )
+    }
 
-@Test
-fun `Missing overridden method`() {
-    // Another special case where overridden methods were missing
-    checkStubs(
-        checkDoclava1 = false,
-        sourceFiles =
-        *arrayOf(
-            java(
-                """
+    @Test
+    fun `Missing overridden method`() {
+        // Another special case where overridden methods were missing
+        checkStubs(
+            checkDoclava1 = false,
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
                     package test.pkg;
 
                     import java.util.Collection;
@@ -2840,10 +2844,10 @@ fun `Missing overridden method`() {
                         }
                     }
                     """
-            )
-        ),
-        warnings = "",
-        source = """
+                )
+            ),
+            warnings = "",
+            source = """
                     package test.pkg;
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class SpanTest {
@@ -2865,18 +2869,18 @@ fun `Missing overridden method`() {
                     }
                     }
                     """
-    )
-}
+        )
+    }
 
-@Test
-fun `Skip type variables in casts`() {
-    // When generating casts in super constructor calls, use raw types
-    checkStubs(
-        checkDoclava1 = false,
-        sourceFiles =
-        *arrayOf(
-            java(
-                """
+    @Test
+    fun `Skip type variables in casts`() {
+        // When generating casts in super constructor calls, use raw types
+        checkStubs(
+            checkDoclava1 = false,
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
                     package test.pkg;
 
                     @SuppressWarnings("all")
@@ -2896,10 +2900,10 @@ fun `Skip type variables in casts`() {
                         }
                     }
                     """
-            )
-        ),
-        warnings = "",
-        source = """
+                )
+            ),
+            warnings = "",
+            source = """
                     package test.pkg;
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class Properties {
@@ -2915,18 +2919,18 @@ fun `Skip type variables in casts`() {
                     }
                     }
                     """
-    )
-}
+        )
+    }
 
-@Test
-fun `Rewrite relative documentation links`() {
-    // When generating casts in super constructor calls, use raw types
-    checkStubs(
-        checkDoclava1 = false,
-        sourceFiles =
-        *arrayOf(
-            java(
-                """
+    @Test
+    fun `Rewrite relative documentation links`() {
+        // When generating casts in super constructor calls, use raw types
+        checkStubs(
+            checkDoclava1 = false,
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
                     package test.pkg1;
                     import java.io.IOException;
                     import test.pkg2.OtherClass;
@@ -2958,9 +2962,9 @@ fun `Rewrite relative documentation links`() {
                        public boolean importance;
                     }
                     """
-            ),
-            java(
-                """
+                ),
+                java(
+                    """
                     package test.pkg2;
 
                     @SuppressWarnings("all")
@@ -2971,19 +2975,19 @@ fun `Rewrite relative documentation links`() {
                         public void bar(int baz, boolean bar);
                     }
                     """
-            ),
-            java(
-                """
+                ),
+                java(
+                    """
                     package test.pkg1;
 
                     @SuppressWarnings("all")
                     public class LocalClass {
                     }
                     """
-            )
-        ),
-        warnings = "",
-        source = """
+                )
+            ),
+            warnings = "",
+            source = """
                     package test.pkg1;
                     import test.pkg2.OtherClass;
                     import java.io.IOException;
@@ -3015,12 +3019,11 @@ fun `Rewrite relative documentation links`() {
                     public boolean importance;
                     }
                     """
-    )
-}
+        )
+    }
 
     @Test
     fun `Annotation default values`() {
-
         checkStubs(
             compatibilityMode = false,
             sourceFiles =
@@ -3083,7 +3086,6 @@ fun `Rewrite relative documentation links`() {
                 )
             ),
             warnings = "",
-            // TODO: Put default values into signature files if not compatibiility mode
             api = """
                 package test.pkg {
                   public @interface ExportedProperty {
@@ -3123,7 +3125,7 @@ fun `Rewrite relative documentation links`() {
                  * by this annotation.
                  */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
-                public @interface ExportedProperty {
+                @java.lang.annotation.Target({java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD}) @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME) public @interface ExportedProperty {
                 /**
                  * When resolveId is true, and if the annotated field/method return value
                  * is an int, the value is converted to an Android's resource name.
@@ -3155,51 +3157,82 @@ fun `Rewrite relative documentation links`() {
                 public static final int PX = 1; // 0x1
                 public static final int SP = 2; // 0x2
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
-                public static @interface InnerAnnotation {
+                @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.SOURCE) public static @interface InnerAnnotation {
                 }
                 }
                 """
         )
     }
 
-@Test
-fun `Check writing package info file`() {
-    checkStubs(
-        sourceFiles =
-        *arrayOf(
-            java(
+    @Test
+    fun `Annotation metadata in stubs`() {
+        checkStubs(
+            compatibilityMode = false,
+            includeSourceRetentionAnnotations = false,
+            skipEmitPackages = emptyList(),
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
+                    package java.lang;
+
+                    import java.lang.annotation.*;
+
+                    @Target(ElementType.METHOD)
+                    @Retention(RetentionPolicy.SOURCE)
+                    public @interface MyAnnotation {
+                    }
+                    """
+                )
+            ),
+            warnings = "",
+            source = """
+                package java.lang;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                @java.lang.annotation.Target(java.lang.annotation.ElementType.METHOD) @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.SOURCE) public @interface MyAnnotation {
+                }
                 """
+        )
+    }
+
+    @Test
+    fun `Check writing package info file`() {
+        checkStubs(
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
                     @androidx.annotation.Nullable
                     package test.pkg;
                     """
-            ),
-            java(
-                """
+                ),
+                java(
+                    """
                     package test.pkg;
 
                     @SuppressWarnings("all")
                     public class Test {
                     }
                     """
-            ),
+                ),
 
-            androidxNullableSource
-        ),
-        warnings = "",
-        api = """
+                androidxNullableSource
+            ),
+            warnings = "",
+            api = """
                 package test.pkg {
                   public class Test {
                     ctor public Test();
                   }
                 }
             """, // WRONG: I should include package annotations!
-        source = """
+            source = """
                 @androidx.annotation.Nullable
                 package test.pkg;
                 """,
-        extraArguments = arrayOf("--hide-package", "androidx.annotation")
-    )
-}
+            extraArguments = arrayOf("--hide-package", "androidx.annotation")
+        )
+    }
 
 // TODO: Add in some type variables in method signatures and constructors!
 // TODO: Test what happens when a class extends a hidden extends a public in separate packages,
