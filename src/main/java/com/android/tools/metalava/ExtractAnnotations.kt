@@ -189,7 +189,7 @@ class ExtractAnnotations(
                 if (annotation.isTypeDefAnnotation()) {
                     // Imported typedef
                     addItem(item, AnnotationHolder(null, annotation, null))
-                } else if (annotation.isSignificant() && !annotation.hasClassRetention() &&
+                } else if (annotation.isSignificantInStubs() && !annotation.hasClassRetention() &&
                     !options.includeSourceRetentionAnnotations
                 ) {
                     addItem(item, AnnotationHolder(null, annotation, null))
