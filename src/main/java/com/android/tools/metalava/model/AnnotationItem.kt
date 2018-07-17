@@ -24,6 +24,7 @@ import com.android.SdkConstants.STRING_DEF_ANNOTATION
 import com.android.tools.lint.annotations.Extractor.ANDROID_INT_DEF
 import com.android.tools.lint.annotations.Extractor.ANDROID_LONG_DEF
 import com.android.tools.lint.annotations.Extractor.ANDROID_STRING_DEF
+import com.android.tools.lint.detector.api.startsWith
 import com.android.tools.metalava.ANDROIDX_ANNOTATION_PREFIX
 import com.android.tools.metalava.ANDROID_SUPPORT_ANNOTATION_PREFIX
 import com.android.tools.metalava.JAVA_LANG_PREFIX
@@ -52,9 +53,14 @@ interface AnnotationItem {
     /** Generates source code for this annotation (using fully qualified names) */
     fun toSource(): String
 
-    /** Whether this annotation is significant and should be included in signature files, stubs, etc */
-    fun isSignificant(): Boolean {
+    /** Whether this annotation is significant and should be included in signature files */
+    fun isSignificantInSignatures(): Boolean {
         return includeInSignatures(qualifiedName() ?: return false)
+    }
+
+    /** Whether this annotation is significant and should be included in stub files etc */
+    fun isSignificantInStubs(): Boolean {
+        return includeInStubs(qualifiedName() ?: return false)
     }
 
     /**
@@ -137,6 +143,17 @@ interface AnnotationItem {
                 return true
             }
             return false
+        }
+
+        /** Whether the given annotation name is "significant", e.g. should be included in signature files */
+        fun includeInStubs(qualifiedName: String?): Boolean {
+            qualifiedName ?: return false
+            if (includeInSignatures(qualifiedName)) {
+                return true
+            }
+
+            return qualifiedName.startsWith("java.lang.annotation") &&
+                !qualifiedName.endsWith("SuppressWarnings")
         }
 
         /** The simple name of an annotation, which is the annotation name (not qualified name) prefixed by @ */
@@ -410,7 +427,10 @@ interface AnnotationItem {
             return when (qualifiedName) {
                 "androidx.annotation.RecentlyNullable",
                 "androidx.annotation.RecentlyNonNull" -> true
-                else -> false
+                else -> qualifiedName.startsWith("java.") ||
+                    qualifiedName.startsWith("javax.") ||
+                    qualifiedName.startsWith("kotlin.") ||
+                    qualifiedName.startsWith("kotlinx.")
             }
         }
     }
