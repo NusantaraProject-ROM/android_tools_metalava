@@ -162,6 +162,7 @@ class SignatureWriter(
             skipNullnessAnnotations = options.outputKotlinStyleNulls,
             omitCommonPackages = options.omitCommonPackages,
             onlyIncludeSignatureAnnotations = true,
+            onlyIncludeStubAnnotations = false,
             onlyIncludeClassRetentionAnnotations = false
         )
     }

@@ -140,7 +140,8 @@ class StubWriter(
                 // Some bug in UAST triggers duplicate nullability annotations
                 // here; make sure the are filtered out
                 filterDuplicates = true,
-                onlyIncludeSignatureAnnotations = true,
+                onlyIncludeSignatureAnnotations = false,
+                onlyIncludeStubAnnotations = true,
                 onlyIncludeClassRetentionAnnotations = true,
                 writer = writer
             )
@@ -305,7 +306,8 @@ class StubWriter(
         ModifierList.write(
             writer, modifiers, item, removeAbstract = removeAbstract, removeFinal = removeFinal,
             addPublic = addPublic, includeAnnotations = generateAnnotations,
-            onlyIncludeSignatureAnnotations = true,
+            onlyIncludeSignatureAnnotations = false,
+            onlyIncludeStubAnnotations = true,
             onlyIncludeClassRetentionAnnotations = true
         )
     }
