@@ -260,15 +260,14 @@ class SignatureWriter(
                 }
             }
             if (options.outputDefaultValues && parameter.hasDefaultValue()) {
-                writer.print(" = \"")
+                writer.print(" = ")
                 val defaultValue = parameter.defaultValue()
                 if (defaultValue != null) {
-                    writer.print(javaEscapeString(defaultValue))
+                    writer.print(defaultValue)
                 } else {
                     // null is a valid default value!
                     writer.print("null")
                 }
-                writer.print("\"")
             }
         }
         writer.print(")")

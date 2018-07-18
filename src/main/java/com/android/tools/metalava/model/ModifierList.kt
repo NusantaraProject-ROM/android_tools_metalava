@@ -189,6 +189,7 @@ interface ModifierList {
             removeAbstract: Boolean = false,
             removeFinal: Boolean = false,
             addPublic: Boolean = false,
+            separateLines: Boolean = false,
             onlyIncludeSignatureAnnotations: Boolean = true,
             onlyIncludeStubAnnotations: Boolean = false,
             onlyIncludeClassRetentionAnnotations: Boolean = false
@@ -218,7 +219,7 @@ interface ModifierList {
                     list = list,
                     skipNullnessAnnotations = skipNullnessAnnotations,
                     omitCommonPackages = omitCommonPackages,
-                    separateLines = false,
+                    separateLines = separateLines,
                     writer = writer,
                     onlyIncludeSignatureAnnotations = onlyIncludeSignatureAnnotations,
                     onlyIncludeStubAnnotations = onlyIncludeStubAnnotations,
@@ -226,7 +227,7 @@ interface ModifierList {
                 )
             }
 
-            if (compatibility.doubleSpaceForPackagePrivate && item.isPackagePrivate && item is MemberItem) {
+            if (compatibility.extraSpaceForEmptyModifiers && item.isPackagePrivate && item is MemberItem) {
                 writer.write(" ")
             }
 

@@ -628,6 +628,54 @@ CompatibilityCheckTest : DriverTest() {
     }
 
     @Test
+    fun `Change annotation default method value change`() {
+        check(
+            checkCompatibility = true,
+            inputKotlinStyleNulls = true,
+            warnings = """
+                src/test/pkg/ExportedProperty.java:15: warning: Method test.pkg.ExportedProperty.category has changed value from "" to nothing [ChangedValue:17]
+                src/test/pkg/ExportedProperty.java:14: warning: Method test.pkg.ExportedProperty.floating has changed value from 1.0f to 1.1f [ChangedValue:17]
+                src/test/pkg/ExportedProperty.java:16: warning: Method test.pkg.ExportedProperty.formatToHexString has changed value from nothing to false [ChangedValue:17]
+                src/test/pkg/ExportedProperty.java:13: warning: Method test.pkg.ExportedProperty.prefix has changed value from "" to "hello" [ChangedValue:17]
+                """,
+            previousApi = """
+                package test.pkg {
+                  public @interface ExportedProperty {
+                    method public abstract boolean resolveId() default false;
+                    method public abstract float floating() default 1.0f;
+                    method public abstract String! prefix() default "";
+                    method public abstract String! category() default "";
+                    method public abstract boolean formatToHexString();
+                  }
+                }
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+
+                    import java.lang.annotation.ElementType;
+                    import java.lang.annotation.Retention;
+                    import java.lang.annotation.RetentionPolicy;
+                    import java.lang.annotation.Target;
+                    import static java.lang.annotation.RetentionPolicy.SOURCE;
+
+                    @Target({ElementType.FIELD, ElementType.METHOD})
+                    @Retention(RetentionPolicy.RUNTIME)
+                    public @interface ExportedProperty {
+                        boolean resolveId() default false;            // UNCHANGED
+                        String prefix() default "hello";              // CHANGED VALUE
+                        float floating() default 1.1f;                // CHANGED VALUE
+                        String category();                            // REMOVED VALUE
+                        boolean formatToHexString() default false;    // ADDED VALUE
+                    }
+                    """
+                )
+            )
+        )
+    }
+
+    @Test
     fun `Incompatible class change -- class to interface`() {
         check(
             checkCompatibility = true,
