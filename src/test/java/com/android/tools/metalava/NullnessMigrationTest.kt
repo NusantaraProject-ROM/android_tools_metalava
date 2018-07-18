@@ -399,7 +399,8 @@ class NullnessMigrationTest : DriverTest() {
                     public static char @androidx.annotation.RecentlyNonNull [] toChars(int codePoint) { throw new RuntimeException("Stub!"); }
                     public static int codePointAt(char @androidx.annotation.RecentlyNonNull [] a, int index) { throw new RuntimeException("Stub!"); }
                     public <T> T @androidx.annotation.RecentlyNonNull [] toArray(T @androidx.annotation.RecentlyNonNull [] a) { throw new RuntimeException("Stub!"); }
-                    @androidx.annotation.NonNull public static java.lang.String newMethod(@androidx.annotation.Nullable java.lang.String argument) { throw new RuntimeException("Stub!"); }
+                    @androidx.annotation.NonNull
+                    public static java.lang.String newMethod(@androidx.annotation.Nullable java.lang.String argument) { throw new RuntimeException("Stub!"); }
                     }
                 """
                 )
@@ -413,7 +414,8 @@ class NullnessMigrationTest : DriverTest() {
                     public static char[] toChars(int codePoint) { throw new RuntimeException("Stub!"); }
                     public static int codePointAt(char[] a, int index) { throw new RuntimeException("Stub!"); }
                     public <T> T[] toArray(T[] a) { throw new RuntimeException("Stub!"); }
-                    @androidx.annotation.NonNull public static java.lang.String newMethod(@androidx.annotation.Nullable java.lang.String argument) { throw new RuntimeException("Stub!"); }
+                    @androidx.annotation.NonNull
+                    public static java.lang.String newMethod(@androidx.annotation.Nullable java.lang.String argument) { throw new RuntimeException("Stub!"); }
                     }
                     """
                 )
@@ -530,8 +532,10 @@ class NullnessMigrationTest : DriverTest() {
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class Foo {
                     public Foo() { throw new RuntimeException("Stub!"); }
-                    @androidx.annotation.RecentlyNonNull public java.lang.reflect.Constructor<?> @androidx.annotation.RecentlyNonNull [] getConstructors() { throw new RuntimeException("Stub!"); }
-                    @androidx.annotation.RecentlyNonNull public synchronized java.lang.reflect.TypeVariable<java.lang.@androidx.annotation.RecentlyNonNull Class<T>> @androidx.annotation.RecentlyNonNull [] getTypeParameters() { throw new RuntimeException("Stub!"); }
+                    @androidx.annotation.RecentlyNonNull
+                    public java.lang.reflect.Constructor<?> @androidx.annotation.RecentlyNonNull [] getConstructors() { throw new RuntimeException("Stub!"); }
+                    @androidx.annotation.RecentlyNonNull
+                    public synchronized java.lang.reflect.TypeVariable<java.lang.@androidx.annotation.RecentlyNonNull Class<T>> @androidx.annotation.RecentlyNonNull [] getTypeParameters() { throw new RuntimeException("Stub!"); }
                     }
                     """
                 )
@@ -542,8 +546,10 @@ class NullnessMigrationTest : DriverTest() {
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class Foo {
                     public Foo() { throw new RuntimeException("Stub!"); }
-                    @androidx.annotation.RecentlyNonNull public java.lang.reflect.Constructor<?>[] getConstructors() { throw new RuntimeException("Stub!"); }
-                    @androidx.annotation.RecentlyNonNull public synchronized java.lang.reflect.TypeVariable<java.lang.Class<T>>[] getTypeParameters() { throw new RuntimeException("Stub!"); }
+                    @androidx.annotation.RecentlyNonNull
+                    public java.lang.reflect.Constructor<?>[] getConstructors() { throw new RuntimeException("Stub!"); }
+                    @androidx.annotation.RecentlyNonNull
+                    public synchronized java.lang.reflect.TypeVariable<java.lang.Class<T>>[] getTypeParameters() { throw new RuntimeException("Stub!"); }
                     }
                     """
                 )

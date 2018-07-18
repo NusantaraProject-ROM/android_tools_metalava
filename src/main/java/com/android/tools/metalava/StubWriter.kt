@@ -253,8 +253,9 @@ class StubWriter(
                     if (first) {
                         first = false
                     } else {
-                        writer.write(", ")
+                        writer.write(",\n")
                     }
+                    appendDocumentation(field, writer)
                     writer.write(field.name())
                 }
             }
@@ -299,8 +300,10 @@ class StubWriter(
         removeFinal: Boolean = false,
         addPublic: Boolean = false
     ) {
+        val separateLines = item is ClassItem || item is MethodItem
         if (item.deprecated && generateAnnotations) {
-            writer.write("@Deprecated ")
+            writer.write("@Deprecated")
+            writer.write(if (separateLines) "\n" else " ")
         }
 
         ModifierList.write(
@@ -308,7 +311,8 @@ class StubWriter(
             addPublic = addPublic, includeAnnotations = generateAnnotations,
             onlyIncludeSignatureAnnotations = false,
             onlyIncludeStubAnnotations = true,
-            onlyIncludeClassRetentionAnnotations = true
+            onlyIncludeClassRetentionAnnotations = true,
+            separateLines = separateLines // not fields or parameters
         )
     }
 
