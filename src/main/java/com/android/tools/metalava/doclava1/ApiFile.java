@@ -826,13 +826,7 @@ public class ApiFile {
 
             String defaultValue = TextParameterItemKt.NO_DEFAULT_VALUE;
             if ("=".equals(token)) {
-                token = tokenizer.requireToken(false);
-                try {
-                    defaultValue = (String) parseValue(JAVA_LANG_STRING, token);
-                } catch (ApiParseException ex) {
-                    ex.line = tokenizer.getLine();
-                    throw ex;
-                }
+                defaultValue = tokenizer.requireToken(true);
                 token = tokenizer.requireToken();
             }
 

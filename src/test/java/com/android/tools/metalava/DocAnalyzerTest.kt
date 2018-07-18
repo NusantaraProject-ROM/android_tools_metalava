@@ -48,19 +48,22 @@ class DocAnalyzerTest : DriverTest() {
                  * @param factor2 This value must never be {@code null}.
                  * @return This value may be {@code null}.
                  */
-                @androidx.annotation.Nullable public java.lang.Double method1(@androidx.annotation.NonNull java.lang.Double factor1, @androidx.annotation.NonNull java.lang.Double factor2) { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.Nullable
+                public java.lang.Double method1(@androidx.annotation.NonNull java.lang.Double factor1, @androidx.annotation.NonNull java.lang.Double factor2) { throw new RuntimeException("Stub!"); }
                 /**
                  * These are the docs for method2. It can sometimes return null.
                  * @param factor1 This value must never be {@code null}.
                  * @param factor2 This value must never be {@code null}.
                  */
-                @androidx.annotation.Nullable public java.lang.Double method2(@androidx.annotation.NonNull java.lang.Double factor1, @androidx.annotation.NonNull java.lang.Double factor2) { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.Nullable
+                public java.lang.Double method2(@androidx.annotation.NonNull java.lang.Double factor1, @androidx.annotation.NonNull java.lang.Double factor2) { throw new RuntimeException("Stub!"); }
                 /**
                  * @param factor1 This value must never be {@code null}.
                  * @param factor2 This value must never be {@code null}.
                  * @return This value may be {@code null}.
                  */
-                @androidx.annotation.Nullable public java.lang.Double method3(@androidx.annotation.NonNull java.lang.Double factor1, @androidx.annotation.NonNull java.lang.Double factor2) { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.Nullable
+                public java.lang.Double method3(@androidx.annotation.NonNull java.lang.Double factor1, @androidx.annotation.NonNull java.lang.Double factor2) { throw new RuntimeException("Stub!"); }
                 }
                 """
             )
@@ -101,7 +104,10 @@ class DocAnalyzerTest : DriverTest() {
                  * to be a String resource reference (e.g.&nbsp;{@code android.R.string.ok}).
                  */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
-                @java.lang.annotation.Documented @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS) @java.lang.annotation.Target({java.lang.annotation.ElementType.METHOD, java.lang.annotation.ElementType.PARAMETER, java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.LOCAL_VARIABLE}) public @interface StringRes {
+                @java.lang.annotation.Documented
+                @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS)
+                @java.lang.annotation.Target({java.lang.annotation.ElementType.METHOD, java.lang.annotation.ElementType.PARAMETER, java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.LOCAL_VARIABLE})
+                public @interface StringRes {
                 }
                 """
             )
@@ -199,20 +205,25 @@ class DocAnalyzerTest : DriverTest() {
                 /**
                  * Requires {@link android.Manifest.permission#ACCESS_COARSE_LOCATION}
                  */
-                @androidx.annotation.RequiresPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) public void test1() { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.RequiresPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                public void test1() { throw new RuntimeException("Stub!"); }
                 /**
                  * Requires {@link android.Manifest.permission#ACCESS_COARSE_LOCATION}
                  */
-                @androidx.annotation.RequiresPermission(allOf=android.Manifest.permission.ACCESS_COARSE_LOCATION) public void test2() { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.RequiresPermission(allOf=android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                public void test2() { throw new RuntimeException("Stub!"); }
                 /**
                  * Requires {@link android.Manifest.permission#ACCESS_COARSE_LOCATION} or {@link android.Manifest.permission#ACCESS_FINE_LOCATION}
                  */
-                @androidx.annotation.RequiresPermission(anyOf={android.Manifest.permission.ACCESS_COARSE_LOCATION, android.Manifest.permission.ACCESS_FINE_LOCATION}) public void test3() { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.RequiresPermission(anyOf={android.Manifest.permission.ACCESS_COARSE_LOCATION, android.Manifest.permission.ACCESS_FINE_LOCATION})
+                public void test3() { throw new RuntimeException("Stub!"); }
                 /**
                  * Requires {@link android.Manifest.permission#ACCESS_COARSE_LOCATION} and {@link android.Manifest.permission#ACCOUNT_MANAGER}
                  */
-                @androidx.annotation.RequiresPermission(allOf={android.Manifest.permission.ACCESS_COARSE_LOCATION, android.Manifest.permission.ACCOUNT_MANAGER}) public void test4() { throw new RuntimeException("Stub!"); }
-                @androidx.annotation.RequiresPermission(value=android.Manifest.permission.WATCH_APPOPS, conditional=true) public void test5() { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.RequiresPermission(allOf={android.Manifest.permission.ACCESS_COARSE_LOCATION, android.Manifest.permission.ACCOUNT_MANAGER})
+                public void test4() { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.RequiresPermission(value=android.Manifest.permission.WATCH_APPOPS, conditional=true)
+                public void test5() { throw new RuntimeException("Stub!"); }
                 }
                 """
             )
@@ -256,15 +267,18 @@ class DocAnalyzerTest : DriverTest() {
                  * @param range2 Value is 20 or greater
                  * @return Value is 10 or greater
                  */
-                @androidx.annotation.IntRange(from=10) public int test1(@androidx.annotation.IntRange(from=20) int range2) { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.IntRange(from=10)
+                public int test1(@androidx.annotation.IntRange(from=20) int range2) { throw new RuntimeException("Stub!"); }
                 /**
                  * @return Value is between 10 and 20 inclusive
                  */
-                @androidx.annotation.IntRange(from=10, to=20) public int test2() { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.IntRange(from=10, to=20)
+                public int test2() { throw new RuntimeException("Stub!"); }
                 /**
                  * @return Value is 100 or less
                  */
-                @androidx.annotation.IntRange(to=100) public int test3() { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.IntRange(to=100)
+                public int test3() { throw new RuntimeException("Stub!"); }
                 }
                 """
             )
@@ -301,13 +315,15 @@ class DocAnalyzerTest : DriverTest() {
                  * main thread of your app. *
                  */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
-                @androidx.annotation.UiThread public class RangeTest {
+                @androidx.annotation.UiThread
+                public class RangeTest {
                 public RangeTest() { throw new RuntimeException("Stub!"); }
                 /**
                  * This method may take several seconds to complete, so it should
                  * only be called from a worker thread.
                  */
-                @androidx.annotation.WorkerThread public int test1() { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.WorkerThread
+                public int test1() { throw new RuntimeException("Stub!"); }
                 }
                 """
             )
@@ -348,7 +364,9 @@ class DocAnalyzerTest : DriverTest() {
                  * This method may take several seconds to complete, so it should
                  * only be called from a worker thread.
                  */
-                @androidx.annotation.UiThread @androidx.annotation.WorkerThread public int test1() { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.UiThread
+                @androidx.annotation.WorkerThread
+                public int test1() { throw new RuntimeException("Stub!"); }
                 }
                 """
             )
@@ -414,7 +432,8 @@ class DocAnalyzerTest : DriverTest() {
                  * @since 7.0 Nougat (24)
                  * @return blah blah blah
                  */
-                @androidx.annotation.UiThread public int getCurrentContentInsetEnd() { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.UiThread
+                public int getCurrentContentInsetEnd() { throw new RuntimeException("Stub!"); }
                 }
                 """
             )
@@ -575,7 +594,8 @@ class DocAnalyzerTest : DriverTest() {
                 /**
                  * Requires {@link test.pkg.RangeTest#ACCESS_COARSE_LOCATION}
                  */
-                @androidx.annotation.RequiresPermission(test.pkg.RangeTest.ACCESS_COARSE_LOCATION) public void test1() { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.RequiresPermission(test.pkg.RangeTest.ACCESS_COARSE_LOCATION)
+                public void test1() { throw new RuntimeException("Stub!"); }
                 public static final java.lang.String ACCESS_COARSE_LOCATION = "android.permission.ACCESS_COARSE_LOCATION";
                 }
                 """
@@ -612,7 +632,8 @@ class DocAnalyzerTest : DriverTest() {
                 /**
                  * Requires "MyPermission"
                  */
-                @androidx.annotation.RequiresPermission("MyPermission") public void test1() { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.RequiresPermission("MyPermission")
+                public void test1() { throw new RuntimeException("Stub!"); }
                 }
                 """
             )
@@ -651,7 +672,8 @@ class DocAnalyzerTest : DriverTest() {
                  * <br>
                  * Requires {@link test.pkg.RangeTest#ACCESS_COARSE_LOCATION}
                  */
-                @androidx.annotation.RequiresPermission(test.pkg.RangeTest.ACCESS_COARSE_LOCATION) public int test1() { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.RequiresPermission(test.pkg.RangeTest.ACCESS_COARSE_LOCATION)
+                public int test1() { throw new RuntimeException("Stub!"); }
                 public static final java.lang.String ACCESS_COARSE_LOCATION = "android.permission.ACCESS_COARSE_LOCATION";
                 }
                 """
@@ -695,7 +717,8 @@ class DocAnalyzerTest : DriverTest() {
                  * <br>
                  * Requires {@link test.pkg.RangeTest#ACCESS_COARSE_LOCATION}
                  */
-                @androidx.annotation.RequiresPermission(test.pkg.RangeTest.ACCESS_COARSE_LOCATION) public int test1() { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.RequiresPermission(test.pkg.RangeTest.ACCESS_COARSE_LOCATION)
+                public int test1() { throw new RuntimeException("Stub!"); }
                 public static final java.lang.String ACCESS_COARSE_LOCATION = "android.permission.ACCESS_COARSE_LOCATION";
                 }
                 """
@@ -778,7 +801,8 @@ class DocAnalyzerTest : DriverTest() {
                  * @param parameter3 docs for parameter2
                  * @return return value documented here
                  */
-                @androidx.annotation.RequiresPermission(test.pkg.RangeTest.ACCESS_COARSE_LOCATION) public int test1(int parameter1, int parameter2, int parameter3) { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.RequiresPermission(test.pkg.RangeTest.ACCESS_COARSE_LOCATION)
+                public int test1(int parameter1, int parameter2, int parameter3) { throw new RuntimeException("Stub!"); }
                 public static final java.lang.String ACCESS_COARSE_LOCATION = "android.permission.ACCESS_COARSE_LOCATION";
                 }
                 """
@@ -940,7 +964,8 @@ class DocAnalyzerTest : DriverTest() {
                 /**
                  * @return Value is 10 or greater
                  */
-                @androidx.annotation.IntRange(from=10) public int test1(int parameter1, int parameter2, int parameter3) { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.IntRange(from=10)
+                public int test1(int parameter1, int parameter2, int parameter3) { throw new RuntimeException("Stub!"); }
                 }
                 """
             )
@@ -980,7 +1005,8 @@ class DocAnalyzerTest : DriverTest() {
                  * @return return value documented here
                  * Value is 10 or greater
                  */
-                @androidx.annotation.IntRange(from=10) public int test1(int parameter1, int parameter2, int parameter3) { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.IntRange(from=10)
+                public int test1(int parameter1, int parameter2, int parameter3) { throw new RuntimeException("Stub!"); }
                 }
                 """
             )
@@ -1108,7 +1134,8 @@ class DocAnalyzerTest : DriverTest() {
                  *             applications.*
                  */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
-                @Deprecated public class Camera {
+                @Deprecated
+                public class Camera {
                 public Camera() { throw new RuntimeException("Stub!"); }
                 /**
                  *
@@ -1228,7 +1255,8 @@ class DocAnalyzerTest : DriverTest() {
                  * @since 5.0 Lollipop (21)
                  */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
-                @androidx.annotation.RequiresApi(21) public class MyClass1 {
+                @androidx.annotation.RequiresApi(21)
+                public class MyClass1 {
                 public MyClass1() { throw new RuntimeException("Stub!"); }
                 }
                 """
@@ -1272,20 +1300,24 @@ class DocAnalyzerTest : DriverTest() {
                  * @deprecated Use Jetpack preference library
                  */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
-                @Deprecated public final class Foo {
+                @Deprecated
+                public final class Foo {
                 public Foo() { throw new RuntimeException("Stub!"); }
                 public void foo() { throw new RuntimeException("Stub!"); }
                 /**
                  * {@inheritDoc}
                  * @deprecated Blah blah blah 1
                  */
-                @Deprecated @androidx.annotation.NonNull public java.lang.String toString() { throw new RuntimeException("Stub!"); }
+                @Deprecated
+                @androidx.annotation.NonNull
+                public java.lang.String toString() { throw new RuntimeException("Stub!"); }
                 /**
                  * My description
                  * @deprecated Existing deprecation message.
                  * Blah blah blah 2
                  */
-                @Deprecated public int hashCode() { throw new RuntimeException("Stub!"); }
+                @Deprecated
+                public int hashCode() { throw new RuntimeException("Stub!"); }
                 }
                 """
             )

@@ -213,7 +213,7 @@ interface TypeItem {
 
             var cleaned = type
 
-            if (compatibility.spacesAfterCommas && cleaned.indexOf(',') != -1) {
+            if (compatibility.spaceAfterCommaInTypes && cleaned.indexOf(',') != -1) {
                 // The compat files have spaces after commas where we normally don't
                 cleaned = cleaned.replace(",", ", ").replace(",  ", ", ")
             }
