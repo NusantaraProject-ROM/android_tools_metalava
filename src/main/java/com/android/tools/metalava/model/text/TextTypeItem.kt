@@ -24,6 +24,7 @@ import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.TypeItem
 import com.android.tools.metalava.model.TypeParameterItem
 import com.android.tools.metalava.model.TypeParameterList
+import com.android.tools.metalava.model.TypeParameterListOwner
 
 class TextTypeItem(
     val codebase: TextCodebase,
@@ -116,14 +117,14 @@ class TextTypeItem(
 
     override fun asTypeParameter(context: MemberItem?): TypeParameterItem? {
         return if (isLikelyTypeParameter(toTypeString())) {
-            val typeParameter = TextTypeParameterItem.create(codebase, toTypeString())
+            val typeParameter = TextTypeParameterItem.create(codebase, context as? TypeParameterListOwner, toTypeString())
 
             if (context != null && typeParameter.bounds().isEmpty()) {
                 val bounds = findTypeVariableBounds(context, typeParameter.simpleName())
                 if (bounds.isNotEmpty()) {
                     val filtered = bounds.filter { !it.isJavaLangObject() }
                     if (filtered.isNotEmpty()) {
-                        return TextTypeParameterItem.create(codebase, toTypeString(), bounds)
+                        return TextTypeParameterItem.create(codebase, context as? TypeParameterListOwner, toTypeString(), bounds)
                     }
                 }
             }

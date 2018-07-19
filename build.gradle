@@ -1,7 +1,7 @@
 buildscript {
-    ext.gradle_version = '3.2.0-alpha16'
-    ext.studio_version = '26.2.0-alpha16'
-    ext.kotlin_version = '1.2.41'
+    ext.gradle_version = '3.2.0-beta05'
+    ext.studio_version = '26.2.0-beta05'
+    ext.kotlin_version = '1.2.60'
     repositories {
         google()
         jcenter()
@@ -108,7 +108,7 @@ configurations {
 }
 
 dependencies {
-    ktlint "com.github.shyiko:ktlint:0.24.0"
+    ktlint "com.github.shyiko:ktlint:0.26.0"
 }
 
 task ktlint(type: JavaExec, group: "verification") {

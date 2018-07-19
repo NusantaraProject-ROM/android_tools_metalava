@@ -24,6 +24,7 @@ import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.PackageItem
 import com.android.tools.metalava.model.ParameterItem
+import com.android.tools.metalava.model.PropertyItem
 
 open class ItemVisitor(
     /**
@@ -61,6 +62,7 @@ open class ItemVisitor(
     open fun visitField(field: FieldItem) {}
     open fun visitMethod(method: MethodItem) {}
     open fun visitParameter(parameter: ParameterItem) {}
+    open fun visitProperty(property: PropertyItem) {}
 
     open fun afterVisitItem(item: Item) {}
     open fun afterVisitPackage(pkg: PackageItem) {}
@@ -75,4 +77,5 @@ open class ItemVisitor(
     open fun afterVisitField(field: FieldItem) {}
     open fun afterVisitMethod(method: MethodItem) {}
     open fun afterVisitParameter(parameter: ParameterItem) {}
+    open fun afterVisitProperty(property: PropertyItem) {}
 }

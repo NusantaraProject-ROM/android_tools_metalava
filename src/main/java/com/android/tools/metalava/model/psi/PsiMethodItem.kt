@@ -18,6 +18,7 @@ package com.android.tools.metalava.model.psi
 
 import com.android.tools.metalava.ExtractAnnotations
 import com.android.tools.metalava.compatibility
+import com.android.tools.metalava.model.AnnotationTarget
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.ModifierList
@@ -261,11 +262,11 @@ open class PsiMethodItem(
 
         val modifierString = StringWriter()
         ModifierList.write(
-            modifierString, method.modifiers, method, removeAbstract = false,
-            removeFinal = false, addPublic = true,
-            onlyIncludeSignatureAnnotations = false,
-            onlyIncludeStubAnnotations = true,
-            onlyIncludeClassRetentionAnnotations = true
+            modifierString, method.modifiers, method,
+            target = AnnotationTarget.STUBS_FILE,
+            removeAbstract = false,
+            removeFinal = false,
+            addPublic = true
         )
         sb.append(modifierString.toString())
 

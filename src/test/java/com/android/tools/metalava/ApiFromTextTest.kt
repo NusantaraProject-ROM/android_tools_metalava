@@ -480,4 +480,50 @@ class ApiFromTextTest : DriverTest() {
             api = source
         )
     }
+
+    @Test
+    fun `Signatures with many annotations`() {
+        val source = """
+            package libcore.util {
+              @java.lang.annotation.Documented @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.SOURCE) public @interface NonNull {
+                method public abstract int from() default java.lang.Integer.MIN_VALUE;
+                method public abstract int to() default java.lang.Integer.MAX_VALUE;
+              }
+            }
+            package test.pkg {
+              public class Test {
+                ctor public Test();
+                method @NonNull public Object compute();
+              }
+            }
+        """
+
+        check(
+            compatibilityMode = false,
+            signatureSource = source,
+            outputKotlinStyleNulls = false,
+            api = source
+        )
+    }
+
+    @Test
+    fun `Kotlin Properties`() {
+        val source = """
+                package test.pkg {
+                  public final class Kotlin {
+                    ctor public Kotlin(java.lang.String property1, int arg2);
+                    method public java.lang.String getProperty1();
+                    method public java.lang.String getProperty2();
+                    method public void setProperty2(java.lang.String p);
+                    property public final java.lang.String property2;
+                  }
+                }
+                """
+
+        check(
+            compatibilityMode = true,
+            signatureSource = source,
+            api = source
+        )
+    }
 }
