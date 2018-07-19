@@ -152,8 +152,11 @@ interface AnnotationItem {
                 return true
             }
 
-            return qualifiedName.startsWith("java.lang.annotation") &&
-                !qualifiedName.endsWith("SuppressWarnings")
+            return qualifiedName.startsWith("java.lang.") &&
+                !qualifiedName.startsWith("java.lang.invoke.") &&
+                !(qualifiedName.endsWith(".SuppressWarnings") ||
+                    qualifiedName.endsWith(".Override") ||
+                    qualifiedName.endsWith(".Deprecated"))
         }
 
         /** The simple name of an annotation, which is the annotation name (not qualified name) prefixed by @ */
