@@ -35,3 +35,28 @@ java_library {
     ],
     no_framework_libs: true,
 }
+
+genrule {
+    name: "private-stub-annotations",
+    tools: [
+        "soong_zip",
+        "metalava",
+    ],
+    srcs: [
+        "stub-annotations/src/main/java/**/*.java",
+    ],
+    cmd: "($(location metalava) --no-banner --copy-annotations tools/metalava/stub-annotations " +
+         "$(genDir)/private-stub-annotations) && ($(location soong_zip) -o $(out) -C $(genDir) -D $(genDir))",
+    out: [
+        "private-stub-annotations.srcjar",
+    ],
+}
+
+java_library {
+    name: "private-stub-annotations-jar",
+    host_supported: true,
+    srcs: [
+        ":private-stub-annotations",
+    ],
+    no_framework_libs: true,
+}
