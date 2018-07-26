@@ -1219,9 +1219,10 @@ class Options(
                 "`${File.pathSeparator}`) containing classes that should be on the classpath when parsing the " +
                 "source files",
 
-            "$ARG_MERGE_ANNOTATIONS <file>", "An external annotations file (using IntelliJ's external " +
-                "annotations database format) to merge and overlay the sources. A subset of .jaif files " +
-                "is also supported.",
+            "$ARG_MERGE_ANNOTATIONS <file>", "An external annotations file to merge and overlay " +
+                "the sources, or a directory of such files. Formats supported are: IntelliJ's " +
+                "external annotations database format, .jar or .zip files containing those, and " +
+                "Android signature files.",
 
             "$ARG_INPUT_API_JAR <file>", "A .jar file to read APIs from directly",
 

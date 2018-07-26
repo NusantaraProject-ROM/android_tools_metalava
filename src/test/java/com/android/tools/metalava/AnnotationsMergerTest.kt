@@ -16,7 +16,6 @@
 
 package com.android.tools.metalava
 
-import com.android.tools.metalava.model.SUPPORT_TYPE_USE_ANNOTATIONS
 import org.junit.Test
 
 class AnnotationsMergerTest : DriverTest() {
@@ -130,58 +129,6 @@ class AnnotationsMergerTest : DriverTest() {
                   }
                 }
                 """
-        )
-    }
-
-    @Test
-    fun `Merge jaif files`() {
-        check(
-            sourceFiles = *arrayOf(
-                java(
-                    """
-                    package test.pkg;
-
-                    public interface Appendable {
-                        Appendable append(CharSequence csq) throws IOException;
-                        String reverse(String s);
-                    }
-                    """
-                )
-            ),
-            compatibilityMode = false,
-            outputKotlinStyleNulls = false,
-            omitCommonPackages = false,
-            mergeJaifAnnotations = """
-                //
-                // Copyright (C) 2017 The Android Open Source Project
-                //
-                package test.pkg:
-                class Appendable:
-                    method append(Ljava/lang/CharSequence;)Ltest/pkg/Appendable;:
-                        parameter #0:
-                          type: @libcore.util.Nullable
-                        // Is expected to return self
-                        return: @libcore.util.NonNull
-                """,
-            api = if (SUPPORT_TYPE_USE_ANNOTATIONS) {
-                """
-                    package test.pkg {
-                      public interface Appendable {
-                        method @androidx.annotation.NonNull public test.pkg.Appendable append(@androidx.annotation.Nullable java.lang.CharSequence);
-                        method public java.lang.String reverse(java.lang.String);
-                      }
-                    }
-                   """
-            } else {
-                """
-                    package test.pkg {
-                      public interface Appendable {
-                        method @androidx.annotation.NonNull public test.pkg.Appendable append(java.lang.CharSequence);
-                        method public java.lang.String reverse(java.lang.String);
-                      }
-                    }
-                   """
-            }
         )
     }
 
