@@ -51,14 +51,20 @@ class PsiAnnotationItem private constructor(
     override fun toString(): String = toSource()
 
     override fun toSource(): String {
-        val qualifiedName = qualifiedName() ?: return ""
+        val sb = StringBuilder(60)
+        appendAnnotation(sb, psiAnnotation)
+        return sb.toString()
+    }
+
+    private fun appendAnnotation(sb: StringBuilder, psiAnnotation: PsiAnnotation) {
+        val qualifiedName = AnnotationItem.mapName(codebase, psiAnnotation.qualifiedName) ?: return
 
         val attributes = psiAnnotation.parameterList.attributes
         if (attributes.isEmpty()) {
-            return "@$qualifiedName"
+            sb.append("@$qualifiedName")
+            return
         }
 
-        val sb = StringBuilder(30)
         sb.append("@")
         sb.append(qualifiedName)
         sb.append("(")
@@ -79,8 +85,6 @@ class PsiAnnotationItem private constructor(
             }
         }
         sb.append(")")
-
-        return sb.toString()
     }
 
     override fun resolve(): ClassItem? {
@@ -149,6 +153,9 @@ class PsiAnnotationItem private constructor(
                     appendValue(sb, initializer)
                 }
                 sb.append('}')
+            }
+            is PsiAnnotation -> {
+                appendAnnotation(sb, value)
             }
             else -> {
                 if (value is PsiExpression) {

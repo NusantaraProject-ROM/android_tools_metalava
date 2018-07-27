@@ -24,7 +24,6 @@ import com.android.SdkConstants.STRING_DEF_ANNOTATION
 import com.android.tools.lint.annotations.Extractor.ANDROID_INT_DEF
 import com.android.tools.lint.annotations.Extractor.ANDROID_LONG_DEF
 import com.android.tools.lint.annotations.Extractor.ANDROID_STRING_DEF
-import com.android.tools.lint.detector.api.startsWith
 import com.android.tools.metalava.ANDROIDX_ANNOTATION_PREFIX
 import com.android.tools.metalava.ANDROID_SUPPORT_ANNOTATION_PREFIX
 import com.android.tools.metalava.JAVA_LANG_PREFIX
@@ -152,8 +151,24 @@ interface AnnotationItem {
                 return true
             }
 
-            return qualifiedName.startsWith("java.lang.annotation") &&
-                !qualifiedName.endsWith("SuppressWarnings")
+            // These are the significant annotations that should be included in the stubs.
+            // This is a hardcoded list here to minimize risk in the P release branch;
+            // in master the check is more general (we keep only runtime retention annotations
+            // that match the API filter, plus the retention one)
+            return when (qualifiedName) {
+                "android.view.ViewDebug.ExportedProperty",
+                "android.widget.RemoteViews.RemoteView",
+                "android.view.ViewDebug.CapturedViewProperty",
+
+                "java.lang.FunctionalInterface",
+                "java.lang.SafeVarargs",
+                "java.lang.annotation.Documented",
+                "java.lang.annotation.Inherited",
+                "java.lang.annotation.Repeatable",
+                "java.lang.annotation.Retention",
+                "java.lang.annotation.Target" -> true
+                else -> false
+            }
         }
 
         /** The simple name of an annotation, which is the annotation name (not qualified name) prefixed by @ */
@@ -425,8 +440,14 @@ interface AnnotationItem {
             qualifiedName ?: return false
 
             return when (qualifiedName) {
+                // Hardcoded list for now; in master, this is generalized
+                "android.view.ViewDebug.ExportedProperty",
+                "android.widget.RemoteViews.RemoteView",
+                "android.view.ViewDebug.CapturedViewProperty",
+
                 "androidx.annotation.RecentlyNullable",
-                "androidx.annotation.RecentlyNonNull" -> true
+                "androidx.annotation.RecentlyNonNull" -> return true
+
                 else -> qualifiedName.startsWith("java.") ||
                     qualifiedName.startsWith("javax.") ||
                     qualifiedName.startsWith("kotlin.") ||

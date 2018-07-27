@@ -3196,6 +3196,35 @@ class StubsTest : DriverTest() {
     }
 
     @Test
+    fun `Functional Interfaces`() {
+        checkStubs(
+            compatibilityMode = false,
+            skipEmitPackages = emptyList(),
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
+                    package java.lang;
+
+                    @SuppressWarnings("something") @FunctionalInterface
+                    public interface MyInterface {
+                        void run();
+                    }
+                    """
+                )
+            ),
+            warnings = "",
+            source = """
+                package java.lang;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                @java.lang.FunctionalInterface public interface MyInterface {
+                public void run();
+                }
+                """
+        )
+    }
+
+    @Test
     fun `Check writing package info file`() {
         checkStubs(
             sourceFiles =
