@@ -55,7 +55,8 @@ API sources:
                                        the sources, or a directory of such files. Formats
                                        supported are: IntelliJ's external annotations
                                        database format, .jar or .zip files containing
-                                       those, and Android signature files.
+                                       those, Android signature files, and Java stub
+                                       files.
 --input-api-jar <file>                 A .jar file to read APIs from directly
 --manifest <file>                      A manifest file, used to for check permissions to
                                        cross check APIs

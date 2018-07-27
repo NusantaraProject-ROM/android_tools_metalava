@@ -157,6 +157,8 @@ abstract class DriverTest {
         @Language("XML") mergeXmlAnnotations: String? = null,
         /** Annotations to merge in (in .txt/.signature format) */
         @Language("TEXT") mergeSignatureAnnotations: String? = null,
+        /** Annotations to merge in (in Java stub format) */
+        @Language("JAVA") mergeJavaStubAnnotations: String? = null,
         /** An optional API signature file content to load **instead** of Java/Kotlin source files */
         @Language("TEXT") signatureSource: String? = null,
         /** An optional API jar file content to load **instead** of Java/Kotlin source files */
@@ -247,8 +249,14 @@ abstract class DriverTest {
         }
         if (compatibilityMode && mergeSignatureAnnotations != null) {
             fail(
-                "Can't specify both compatibilityMode and mergeSignatureAnnotations: there were no " +
-                    "annotations output in doclava1"
+                    "Can't specify both compatibilityMode and mergeSignatureAnnotations: there were no " +
+                            "annotations output in doclava1"
+            )
+        }
+        if (compatibilityMode && mergeJavaStubAnnotations != null) {
+            fail(
+                    "Can't specify both compatibilityMode and mergeJavaStubAnnotations: there were no " +
+                            "annotations output in doclava1"
             )
         }
         Errors.resetLevels()
@@ -310,6 +318,14 @@ abstract class DriverTest {
         val signatureAnnotationsArgs = if (mergeSignatureAnnotations != null) {
             val merged = File(project, "merged-annotations.txt")
             Files.asCharSink(merged, Charsets.UTF_8).write(mergeSignatureAnnotations.trimIndent())
+            arrayOf("--merge-annotations", merged.path)
+        } else {
+            emptyArray()
+        }
+
+        val javaStubAnnotationsArgs = if (mergeJavaStubAnnotations != null) {
+            val merged = File(project, "merged-annotations.java")
+            Files.asCharSink(merged, Charsets.UTF_8).write(mergeJavaStubAnnotations.trimIndent())
             arrayOf("--merge-annotations", merged.path)
         } else {
             emptyArray()
@@ -606,6 +622,7 @@ abstract class DriverTest {
             *quiet,
             *mergeAnnotationsArgs,
             *signatureAnnotationsArgs,
+            *javaStubAnnotationsArgs,
             *previousApiArgs,
             *migrateNullsArguments,
             *checkCompatibilityArguments,
