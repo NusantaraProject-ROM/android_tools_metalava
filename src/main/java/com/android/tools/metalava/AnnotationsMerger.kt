@@ -56,8 +56,6 @@ import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.DefaultAnnotationValue
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
-import com.android.tools.metalava.model.PackageItem
-import com.android.tools.metalava.model.SUPPORT_TYPE_USE_ANNOTATIONS
 import com.android.tools.metalava.model.psi.PsiAnnotationItem
 import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.android.utils.XmlUtils
@@ -99,13 +97,6 @@ class AnnotationsMerger(
                 try {
                     val xml = Files.asCharSource(file, Charsets.UTF_8).read()
                     mergeAnnotationsXml(file.path, xml)
-                } catch (e: IOException) {
-                    error("Aborting: I/O problem during transform: " + e.toString())
-                }
-            } else if (file.path.endsWith(".jaif")) {
-                try {
-                    val jaif = Files.asCharSource(file, Charsets.UTF_8).read()
-                    mergeAnnotationsJaif(file.path, jaif)
                 } catch (e: IOException) {
                     error("Aborting: I/O problem during transform: " + e.toString())
                 }
@@ -210,103 +201,6 @@ class AnnotationsMerger(
             val message = "Unable to parse signature file $path: ${ex.message}"
             throw DriverException(message)
         }
-    }
-
-    private fun mergeAnnotationsJaif(path: String, jaif: String) {
-        var pkgItem: PackageItem? = null
-        var clsItem: ClassItem? = null
-        var methodItem: MethodItem? = null
-        var curr: Item? = null
-
-        for (rawLine in jaif.split("\n")) {
-            val line = rawLine.trim()
-            if (line.isEmpty()) {
-                continue
-            }
-            if (line.startsWith("//")) {
-                continue
-            }
-            if (line.startsWith("package ")) {
-                val pkg = line.substring("package ".length, line.length - 1)
-                pkgItem = codebase.findPackage(pkg)
-                curr = pkgItem
-            } else if (line.startsWith("class ")) {
-                val cls = line.substring("class ".length, line.length - 1)
-                clsItem = if (pkgItem != null)
-                    codebase.findClass(pkgItem.qualifiedName() + "." + cls)
-                else
-                    null
-                curr = clsItem
-            } else if (line.startsWith("annotation ")) {
-                val cls = line.substring("annotation ".length, line.length - 1)
-                clsItem = if (pkgItem != null)
-                    codebase.findClass(pkgItem.qualifiedName() + "." + cls)
-                else
-                    null
-                curr = clsItem
-            } else if (line.startsWith("method ")) {
-                val method = line.substring("method ".length, line.length - 1)
-                methodItem = null
-                if (clsItem != null) {
-                    val index = method.indexOf('(')
-                    if (index != -1) {
-                        val name = method.substring(0, index)
-                        val desc = method.substring(index)
-                        methodItem = clsItem.findMethodByDesc(name, desc, true, true)
-                    }
-                }
-                curr = methodItem
-            } else if (line.startsWith("field ")) {
-                val field = line.substring("field ".length, line.length - 1)
-                val fieldItem = clsItem?.findField(field, true, true)
-                curr = fieldItem
-            } else if (line.startsWith("parameter #")) {
-                val parameterIndex = line.substring("parameter #".length, line.length - 1).toInt()
-                val parameterItem = if (methodItem != null) {
-                    methodItem.parameters()[parameterIndex]
-                } else {
-                    null
-                }
-                curr = parameterItem
-            } else if (line.startsWith("type: ") && SUPPORT_TYPE_USE_ANNOTATIONS) {
-                val typeAnnotation = line.substring("type: ".length)
-                if (curr != null) {
-                    mergeJaifAnnotation(path, curr, typeAnnotation)
-                }
-            } else if (line.startsWith("return: ")) {
-                val annotation = line.substring("return: ".length)
-                if (methodItem != null) {
-                    mergeJaifAnnotation(path, methodItem, annotation)
-                }
-            } else if (line.startsWith("inner-type") && SUPPORT_TYPE_USE_ANNOTATIONS) {
-                warning("$path: Skipping inner-type annotations for now ($line)")
-            } else if (line.startsWith("int ")) {
-                // warning("Skipping int attribute definitions for annotations now ($line)")
-            }
-        }
-    }
-
-    private fun mergeJaifAnnotation(
-        path: String,
-        item: Item,
-        annotationSource: String
-    ) {
-        if (annotationSource.isEmpty()) {
-            return
-        }
-
-        if (annotationSource.contains("(")) {
-            warning("$path: Can't merge complex annotations from jaif yet: $annotationSource")
-            return
-        }
-        val originalName = annotationSource.substring(1) // remove "@"
-        val qualifiedName = AnnotationItem.mapName(codebase, originalName) ?: originalName
-        if (hasNullnessConflicts(item, qualifiedName)) {
-            return
-        }
-
-        val annotationItem = codebase.createAnnotation("@$qualifiedName")
-        item.mutableModifiers().addAnnotation(annotationItem)
     }
 
     internal fun error(message: String) {
