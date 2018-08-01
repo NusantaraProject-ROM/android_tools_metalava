@@ -155,8 +155,6 @@ abstract class DriverTest {
         checkCompilation: Boolean = false,
         /** Annotations to merge in (in .xml format) */
         @Language("XML") mergeXmlAnnotations: String? = null,
-        /** Annotations to merge in (in .jaif format) */
-        @Language("TEXT") mergeJaifAnnotations: String? = null,
         /** Annotations to merge in (in .txt/.signature format) */
         @Language("TEXT") mergeSignatureAnnotations: String? = null,
         /** An optional API signature file content to load **instead** of Java/Kotlin source files */
@@ -239,17 +237,10 @@ abstract class DriverTest {
 
         if (compatibilityMode && mergeXmlAnnotations != null) {
             fail(
-                "Can't specify both compatibilityMode and mergeAnnotations: there were no " +
+                "Can't specify both compatibilityMode and mergeXmlAnnotations: there were no " +
                     "annotations output in doclava1"
             )
         }
-        if (compatibilityMode && mergeJaifAnnotations != null) {
-            fail(
-                "Can't specify both compatibilityMode and mergeJaifAnnotations: there were no " +
-                    "annotations output in doclava1"
-            )
-        }
-
         if (compatibilityMode && mergeSignatureAnnotations != null) {
             fail(
                 "Can't specify both compatibilityMode and mergeSignatureAnnotations: there were no " +
@@ -307,14 +298,6 @@ abstract class DriverTest {
         val mergeAnnotationsArgs = if (mergeXmlAnnotations != null) {
             val merged = File(project, "merged-annotations.xml")
             Files.asCharSink(merged, Charsets.UTF_8).write(mergeXmlAnnotations.trimIndent())
-            arrayOf("--merge-annotations", merged.path)
-        } else {
-            emptyArray()
-        }
-
-        val jaifAnnotationsArgs = if (mergeJaifAnnotations != null) {
-            val merged = File(project, "merged-annotations.jaif")
-            Files.asCharSink(merged, Charsets.UTF_8).write(mergeJaifAnnotations.trimIndent())
             arrayOf("--merge-annotations", merged.path)
         } else {
             emptyArray()
@@ -617,7 +600,6 @@ abstract class DriverTest {
             *coverageStats,
             *quiet,
             *mergeAnnotationsArgs,
-            *jaifAnnotationsArgs,
             *signatureAnnotationsArgs,
             *previousApiArgs,
             *migrateNullsArguments,
