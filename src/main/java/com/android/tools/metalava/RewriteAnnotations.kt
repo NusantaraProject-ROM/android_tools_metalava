@@ -19,7 +19,8 @@ package com.android.tools.metalava
 import com.android.SdkConstants
 import com.android.SdkConstants.DOT_CLASS
 import com.android.SdkConstants.DOT_JAR
-import com.android.tools.metalava.model.AnnotationItem
+import com.android.tools.metalava.model.AnnotationRetention
+import com.android.tools.metalava.model.Codebase
 import com.google.common.io.Closer
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
@@ -47,13 +48,13 @@ import java.util.zip.ZipOutputStream
 
 class RewriteAnnotations {
     /** Modifies annotation source files such that they are package private */
-    fun modifyAnnotationSources(source: File, target: File, pkg: String = "") {
+    fun modifyAnnotationSources(codebase: Codebase?, source: File, target: File, pkg: String = "") {
         val fileName = source.name
         if (fileName.endsWith(SdkConstants.DOT_JAVA)) {
             if (!options.includeSourceRetentionAnnotations) {
                 // Only copy non-source retention annotation classes
                 val qualifiedName = pkg + "." + fileName.substring(0, fileName.indexOf('.'))
-                if (!AnnotationItem.hasClassRetention(qualifiedName)) {
+                if (hasSourceRetention(codebase, qualifiedName)) {
                     return
                 }
             }
@@ -69,19 +70,19 @@ class RewriteAnnotations {
         } else if (source.isDirectory) {
             val newPackage = if (pkg.isEmpty()) fileName else "$pkg.$fileName"
             source.listFiles()?.forEach {
-                modifyAnnotationSources(it, File(target, it.name), newPackage)
+                modifyAnnotationSources(codebase, it, File(target, it.name), newPackage)
             }
         }
     }
 
     /** Copies annotation source files from [source] to [target] */
-    fun copyAnnotations(source: File, target: File, pkg: String = "") {
+    fun copyAnnotations(codebase: Codebase, source: File, target: File, pkg: String = "") {
         val fileName = source.name
         if (fileName.endsWith(SdkConstants.DOT_JAVA)) {
             if (!options.includeSourceRetentionAnnotations) {
                 // Only copy non-source retention annotation classes
                 val qualifiedName = pkg + "." + fileName.substring(0, fileName.indexOf('.'))
-                if (!AnnotationItem.hasClassRetention(qualifiedName)) {
+                if (hasSourceRetention(codebase, qualifiedName)) {
                     return
                 }
             }
@@ -92,7 +93,7 @@ class RewriteAnnotations {
         } else if (source.isDirectory) {
             val newPackage = if (pkg.isEmpty()) fileName else "$pkg.$fileName"
             source.listFiles()?.forEach {
-                copyAnnotations(it, File(target, it.name), newPackage)
+                copyAnnotations(codebase, it, File(target, it.name), newPackage)
             }
         }
     }
@@ -111,6 +112,25 @@ class RewriteAnnotations {
 
             rewriteAnnotations(file)
         }
+    }
+
+    /** Returns true if the given annotation class name has source retention as far as the stub
+     * annotations are concerned.
+     */
+    private fun hasSourceRetention(codebase: Codebase?, qualifiedName: String): Boolean {
+        when {
+            qualifiedName == "androidx.annotation.RecentlyNullable" ||
+            qualifiedName == "androidx.annotation.RecentlyNonNull" -> return false
+            qualifiedName.startsWith("androidx.annotation.") -> return true
+        }
+
+        // See if the annotation is pointing to an annotation class that is part of the API; if not, skip it.
+        if (codebase != null) {
+            val cls = codebase.findClass(qualifiedName) ?: return true
+            return cls.isAnnotationType() && cls.getRetention() == AnnotationRetention.SOURCE
+        }
+
+        return false
     }
 
     /** Writes the bytecode for the compiled annotations in the given file such that they are package private */

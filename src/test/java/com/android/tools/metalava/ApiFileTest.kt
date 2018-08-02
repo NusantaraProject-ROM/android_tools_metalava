@@ -163,6 +163,7 @@ class ApiFileTest : DriverTest() {
                 )
             ),
             api = """
+                // Signature format: $SIGNATURE_FORMAT
                 package test.pkg {
                   public final class Foo {
                     ctor public Foo();
@@ -171,6 +172,7 @@ class ApiFileTest : DriverTest() {
                 }
                 """,
             extraArguments = arrayOf("--hide-package", "androidx.annotation"),
+            includeSignatureVersion = true,
             checkDoclava1 = false /* doesn't support default Values */
         )
     }
@@ -202,6 +204,11 @@ class ApiFileTest : DriverTest() {
                         }
                     }
 
+                    //@get:RequiresApi(26)
+                    inline val @receiver:String Long.isSrgb get() = true
+                    inline val /*@receiver:ColorInt*/ Int.red get() = 0
+                    inline operator fun String.component1() = ""
+
                     open class Parent {
                         open fun method(): String? = null
                         open fun method2(value: Boolean, value: Boolean?): String? = null
@@ -218,11 +225,18 @@ class ApiFileTest : DriverTest() {
                     method public java.lang.String getProperty2();
                     method public void otherMethod(boolean ok, int times);
                     method public void setProperty2(java.lang.String p);
+                    property public final java.lang.String property2;
                     field public static final test.pkg.Kotlin.Companion Companion;
                     field public static final int MY_CONST = 42; // 0x2a
                     field public int someField2;
                   }
                   public static final class Kotlin.Companion {
+                  }
+                  public final class KotlinKt {
+                    ctor public KotlinKt();
+                    method public static operator java.lang.String component1(java.lang.String);
+                    method public static int getRed(int);
+                    method public static boolean isSrgb(long);
                   }
                   public class Parent {
                     ctor public Parent();
@@ -238,6 +252,7 @@ class ApiFileTest : DriverTest() {
                     method internal boolean getMyHiddenVar${"$"}lintWithKotlin();
                     method internal void myHiddenMethod${"$"}lintWithKotlin();
                     method internal void setMyHiddenVar${"$"}lintWithKotlin(boolean p);
+                    property internal final boolean myHiddenVar;
                     field internal boolean myHiddenVar;
                     field private final java.lang.String property1;
                     field private java.lang.String property2;
@@ -676,12 +691,6 @@ class ApiFileTest : DriverTest() {
 
     @Test
     fun `Enum class, non-compat mode`() {
-        @Suppress("ConstantConditionIf")
-        if (SKIP_NON_COMPAT) {
-            println("Skipping test for non-compatibility mode which isn't fully done yet")
-            return
-        }
-
         // Interface: makes sure the right modifiers etc are shown (and that "package private" methods
         // in the interface are taken to be public etc)
         check(
@@ -824,12 +833,6 @@ class ApiFileTest : DriverTest() {
 
     @Test
     fun `Annotation class extraction, non-compat mode`() {
-        @Suppress("ConstantConditionIf")
-        if (SKIP_NON_COMPAT) {
-            println("Skipping test for non-compatibility mode which isn't fully done yet")
-            return
-        }
-
         // Interface: makes sure the right modifiers etc are shown (and that "package private" methods
         // in the interface are taken to be public etc)
         check(
@@ -859,12 +862,12 @@ class ApiFileTest : DriverTest() {
             compatibilityMode = false,
             api = """
                 package android.annotation {
-                  public @interface SuppressLint {
+                  @java.lang.annotation.Target({java.lang.annotation.ElementType.TYPE, java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD, java.lang.annotation.ElementType.PARAMETER, java.lang.annotation.ElementType.CONSTRUCTOR, java.lang.annotation.ElementType.LOCAL_VARIABLE}) @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS) public @interface SuppressLint {
                     method public abstract String[]! value();
                   }
                 }
                 package test.pkg {
-                  public @interface Foo {
+                  @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS) public @interface Foo {
                     method public abstract String! value();
                   }
                 }
@@ -1074,13 +1077,6 @@ class ApiFileTest : DriverTest() {
 
     @Test
     fun `Check all modifiers, non-compat mode`() {
-        @Suppress("ConstantConditionIf")
-        if (SKIP_NON_COMPAT) {
-            @Suppress("ConstantConditionIf")
-            println("Skipping test for non-compatibility mode which isn't fully done yet")
-            return
-        }
-
         // Like testModifiers but turns off compat mode, such that we have
         // a modifier order more in line with standard code conventions
         check(
@@ -1110,16 +1106,16 @@ class ApiFileTest : DriverTest() {
                 package test.pkg {
                   public abstract class Foo {
                     ctor public Foo();
-                    method deprecated public static final synchronized strictfp void method1();
-                    method deprecated public static final synchronized native void method2();
+                    method @Deprecated public static final synchronized strictfp void method1();
+                    method @Deprecated public static final synchronized native void method2();
                   }
-                  deprecated protected static final class Foo.Inner1 {
+                  @Deprecated protected static final class Foo.Inner1 {
                     ctor protected Foo.Inner1();
                   }
-                  deprecated protected abstract static class Foo.Inner2 {
+                  @Deprecated protected abstract static class Foo.Inner2 {
                     ctor protected Foo.Inner2();
                   }
-                  deprecated protected static interface Foo.Inner3 {
+                  @Deprecated protected static interface Foo.Inner3 {
                     method public default void method3();
                     method public static void method4(int);
                   }
@@ -1662,12 +1658,6 @@ class ApiFileTest : DriverTest() {
 
     @Test
     fun `Implementing package private class, non-compat mode`() {
-        @Suppress("ConstantConditionIf")
-        if (SKIP_NON_COMPAT) {
-            println("Skipping test for non-compatibility mode which isn't fully done yet")
-            return
-        }
-
         // Like the previous test, but in non compat mode we correctly
         // include all the non-hidden public interfaces into the signature
 

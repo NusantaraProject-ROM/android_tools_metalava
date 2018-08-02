@@ -53,6 +53,7 @@ import com.android.tools.metalava.model.AnnotationAttributeValue
 import com.android.tools.metalava.model.AnnotationItem
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.Codebase
+import com.android.tools.metalava.model.DefaultAnnotationItem
 import com.android.tools.metalava.model.DefaultAnnotationValue
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
@@ -653,10 +654,10 @@ data class XmlBackedAnnotationAttribute(
 
 // TODO: Replace with usage of DefaultAnnotationAttribute?
 class XmlBackedAnnotationItem(
-    override var codebase: Codebase,
+    codebase: Codebase,
     private val qualifiedName: String,
     private val attributes: List<XmlBackedAnnotationAttribute> = emptyList()
-) : AnnotationItem {
+) : DefaultAnnotationItem(codebase) {
     override fun qualifiedName(): String? = AnnotationItem.mapName(codebase, qualifiedName)
 
     override fun attributes() = attributes

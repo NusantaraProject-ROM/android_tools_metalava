@@ -1127,7 +1127,7 @@ CompatibilityCheckTest : DriverTest() {
                 src/test/pkg/MyClass.java:9: warning: Method test.pkg.MyClass.method5 has changed return type from String[] to String[][] [ChangedType:16]
                 src/test/pkg/MyClass.java:10: warning: Method test.pkg.MyClass.method6 has changed return type from T (extends java.lang.Object) to U (extends java.lang.Number) [ChangedType:16]
                 src/test/pkg/MyClass.java:11: warning: Method test.pkg.MyClass.method7 has changed return type from T to Number [ChangedType:16]
-                src/test/pkg/MyClass.java:13: warning: Method test.pkg.MyClass.method9 has changed return type from X (extends java.lang.Object) to U (extends java.lang.Number) [ChangedType:16]
+                src/test/pkg/MyClass.java:13: warning: Method test.pkg.MyClass.method9 has changed return type from X (extends java.lang.Throwable) to U (extends java.lang.Number) [ChangedType:16]
                 """,
             previousApi = """
                 package test.pkg {
@@ -1335,12 +1335,10 @@ CompatibilityCheckTest : DriverTest() {
     fun `Test Kotlin extensions`() {
         check(
             checkCompatibility = true,
-            extraArguments = arrayOf(
-                "--compatible-output=no",
-                "--omit-common-packages=yes",
-                "--output-kotlin-nulls=yes",
-                "--input-kotlin-nulls=yes"
-            ),
+            inputKotlinStyleNulls = true,
+            outputKotlinStyleNulls = true,
+            omitCommonPackages = true,
+            compatibilityMode = false,
             warnings = "",
             previousApi = """
                 package androidx.content {
@@ -1376,6 +1374,144 @@ CompatibilityCheckTest : DriverTest() {
                                     throw IllegalArgumentException("Illegal value type")
                                 }
                             }
+                        }
+                    }
+                    """
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `Test Kotlin type bounds`() {
+        check(
+            checkCompatibility = true,
+            inputKotlinStyleNulls = false,
+            outputKotlinStyleNulls = true,
+            omitCommonPackages = true,
+            compatibilityMode = false,
+            warnings = "",
+            previousApi = """
+                package androidx.navigation {
+                  public final class NavDestination {
+                    ctor public NavDestination();
+                  }
+                  public class NavDestinationBuilder<D extends androidx.navigation.NavDestination> {
+                    ctor public NavDestinationBuilder(int id);
+                    method public D build();
+                  }
+                }
+                """,
+            sourceFiles = *arrayOf(
+                kotlin(
+                    """
+                    package androidx.navigation
+
+                    open class NavDestinationBuilder<out D : NavDestination>(
+                            id: Int
+                    ) {
+                        open fun build(): D {
+                            TODO()
+                        }
+                    }
+
+                    class NavDestination
+                    """
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `Test inherited methods`() {
+        check(
+            checkCompatibility = true,
+            warnings = """
+                """,
+            previousApi = """
+                package test.pkg {
+                  public class Child1 extends test.pkg.Parent {
+                  }
+                  public class Child2 extends test.pkg.Parent {
+                    method public void method0(java.lang.String, int);
+                    method public void method4(java.lang.String, int);
+                  }
+                  public class Child3 extends test.pkg.Parent {
+                    method public void method1(java.lang.String, int);
+                    method public void method2(java.lang.String, int);
+                  }
+                  public class Parent {
+                    method public void method1(java.lang.String, int);
+                    method public void method2(java.lang.String, int);
+                    method public void method3(java.lang.String, int);
+                  }
+                }
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+
+                    public class Child1 extends Parent {
+                        private Child1() {}
+                        @Override
+                        public void method1(String first, int second) {
+                        }
+                        @Override
+                        public void method2(String first, int second) {
+                        }
+                        @Override
+                        public void method3(String first, int second) {
+                        }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+
+                    public class Child2 extends Parent {
+                        private Child2() {}
+                        @Override
+                        public void method0(String first, int second) {
+                        }
+                        @Override
+                        public void method1(String first, int second) {
+                        }
+                        @Override
+                        public void method2(String first, int second) {
+                        }
+                        @Override
+                        public void method3(String first, int second) {
+                        }
+                        @Override
+                        public void method4(String first, int second) {
+                        }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+
+                    public class Child3 extends Parent {
+                        private Child3() {}
+                        @Override
+                        public void method1(String first, int second) {
+                        }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    public class Parent {
+                        private Parent() { }
+                        public void method1(String first, int second) {
+                        }
+                        public void method2(String first, int second) {
+                        }
+                        public void method3(String first, int second) {
                         }
                     }
                     """

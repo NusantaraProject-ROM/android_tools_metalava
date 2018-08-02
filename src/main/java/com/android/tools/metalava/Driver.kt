@@ -51,6 +51,7 @@ import com.google.common.io.Files
 import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.execution.ParametersListUtil
 import java.io.File
 import java.io.IOException
 import java.io.OutputStream
@@ -106,7 +107,9 @@ fun run(
             if (args.isEmpty()) {
                 arrayOf("--help")
             } else {
-                args
+                val prepend = envVarToArgs(ENV_VAR_METALAVA_PREPEND_ARGS)
+                val append = envVarToArgs(ENV_VAR_METALAVA_APPEND_ARGS)
+                prepend + args + append
             }
 
         compatibility = Compatibility(compat = Options.useCompatMode(args))
@@ -137,6 +140,15 @@ fun run(
     return false
 }
 
+/**
+ * Given an environment variable name pointing to a shell argument string,
+ * returns the parsed argument strings (or empty array if not set)
+ */
+private fun envVarToArgs(varName: String): Array<String> {
+    val value = System.getenv(varName) ?: return emptyArray()
+    return ParametersListUtil.parse(value).toTypedArray()
+}
+
 private fun exit(exitCode: Int = 0) {
     if (options.verbose) {
         options.stdout.println("$PROGRAM_NAME exiting with exit code $exitCode")
@@ -158,7 +170,7 @@ private fun processFlags() {
         val src = File(privateAnnotationsSource, "src${File.separator}main${File.separator}java")
         val source = if (src.isDirectory) src else privateAnnotationsSource
         source.listFiles()?.forEach { file ->
-            rewrite.modifyAnnotationSources(file, File(privateAnnotationsTarget, file.name))
+            rewrite.modifyAnnotationSources(null, file, File(privateAnnotationsTarget, file.name))
         }
     }
 
@@ -359,7 +371,7 @@ private fun processFlags() {
             val src = File(stubAnnotations, "src${File.separator}main${File.separator}java")
             val source = if (src.isDirectory) src else stubAnnotations
             source.listFiles()?.forEach { file ->
-                RewriteAnnotations().copyAnnotations(file, File(it, file.name))
+                RewriteAnnotations().copyAnnotations(codebase, file, File(it, file.name))
             }
         }
     }
@@ -528,7 +540,7 @@ private fun loadFromSources(): Codebase {
     progress("\nProcessing sources: ")
 
     val sources = if (options.sources.isEmpty()) {
-        if (!options.quiet) {
+        if (options.verbose) {
             options.stdout.println("No source files specified: recursively including all sources found in the source path")
         }
         gatherSources(options.sourcePath)

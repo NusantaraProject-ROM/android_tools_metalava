@@ -18,8 +18,10 @@ package com.android.tools.metalava.model.text
 
 import com.android.tools.metalava.model.AnnotationAttribute
 import com.android.tools.metalava.model.AnnotationItem
+import com.android.tools.metalava.model.AnnotationTarget
 import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.DefaultAnnotationAttribute
+import com.android.tools.metalava.model.DefaultAnnotationItem
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.ModifierList
 import com.android.tools.metalava.model.MutableModifierList
@@ -91,8 +93,7 @@ class TextModifiers(
                     DefaultAnnotationAttribute.createList(source.substring(index + 1, source.lastIndexOf(')')))
                 }
             val codebase = codebase
-            val item = object : AnnotationItem {
-                override val codebase = codebase
+            val item = object : DefaultAnnotationItem(codebase) {
                 override fun attributes(): List<AnnotationAttribute> = attributes
                 override fun qualifiedName(): String? = qualifiedName
                 override fun toSource(): String = source
@@ -200,7 +201,7 @@ class TextModifiers(
     override fun toString(): String {
         val item = owner ?: return super.toString()
         val writer = StringWriter()
-        ModifierList.write(writer, this, item)
+        ModifierList.write(writer, this, item, target = AnnotationTarget.STUBS_FILE)
         return writer.toString()
     }
 }

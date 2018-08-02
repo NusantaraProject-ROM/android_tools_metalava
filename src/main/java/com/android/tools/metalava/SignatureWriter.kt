@@ -16,6 +16,7 @@
 
 package com.android.tools.metalava
 
+import com.android.tools.metalava.model.AnnotationTarget
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.ConstructorItem
 import com.android.tools.metalava.model.FieldItem
@@ -24,12 +25,15 @@ import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.ModifierList
 import com.android.tools.metalava.model.PackageItem
 import com.android.tools.metalava.model.ParameterItem
+import com.android.tools.metalava.model.PropertyItem
 import com.android.tools.metalava.model.TypeItem
 import com.android.tools.metalava.model.TypeParameterList
-import com.android.tools.metalava.model.javaEscapeString
 import com.android.tools.metalava.model.visitors.ApiVisitor
 import java.io.PrintWriter
 import java.util.function.Predicate
+
+/** Current signature format. */
+const val SIGNATURE_FORMAT = "2.0"
 
 class SignatureWriter(
     private val writer: PrintWriter,
@@ -45,6 +49,11 @@ class SignatureWriter(
     filterEmit = filterEmit,
     filterReference = filterReference
 ) {
+    init {
+        if (options.includeSignatureFormatVersion) {
+            writer.println("// Signature format: $SIGNATURE_FORMAT\n")
+        }
+    }
 
     override fun visitPackage(pkg: PackageItem) {
         writer.print("package ${pkg.qualifiedName()} {\n\n")
@@ -76,6 +85,15 @@ class SignatureWriter(
         writer.print(field.name())
         field.writeValueWithSemicolon(writer, allowDefaultValue = false, requireInitialValue = false)
         writer.print("\n")
+    }
+
+    override fun visitProperty(property: PropertyItem) {
+        writer.print("    property ")
+        writeModifiers(property)
+        writeType(property, property.type(), property.modifiers)
+        writer.print(' ')
+        writer.print(property.name())
+        writer.print(";\n")
     }
 
     override fun visitMethod(method: MethodItem) {
@@ -157,13 +175,11 @@ class SignatureWriter(
             writer = writer,
             modifiers = item.modifiers,
             item = item,
+            target = AnnotationTarget.SIGNATURE_FILE,
             includeDeprecated = true,
             includeAnnotations = compatibility.annotationsInSignatures,
             skipNullnessAnnotations = options.outputKotlinStyleNulls,
-            omitCommonPackages = options.omitCommonPackages,
-            onlyIncludeSignatureAnnotations = true,
-            onlyIncludeStubAnnotations = false,
-            onlyIncludeClassRetentionAnnotations = false
+            omitCommonPackages = options.omitCommonPackages
         )
     }
 
