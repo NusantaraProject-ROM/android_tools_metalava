@@ -63,6 +63,9 @@ fun addApisFromCodebase(api: Api, apiLevel: Int, codebase: Codebase) {
         }
 
         override fun visitMethod(method: MethodItem) {
+            if (method.isPrivate || method.isPackagePrivate) {
+                return
+            }
             currentClass?.addMethod(
                 method.internalName() +
                     // Use "V" instead of the type of the constructor for backwards compatibility
@@ -72,6 +75,10 @@ fun addApisFromCodebase(api: Api, apiLevel: Int, codebase: Codebase) {
         }
 
         override fun visitField(field: FieldItem) {
+            if (field.isPrivate || field.isPackagePrivate) {
+                return
+            }
+
             // We end up moving constants from interfaces in the codebase but that's not the
             // case in older bytecode
             if (field.isCloned()) {

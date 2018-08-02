@@ -16,6 +16,7 @@
 
 package com.android.tools.metalava.model
 
+import com.android.SdkConstants
 import com.android.tools.metalava.ApiAnalyzer
 import com.android.tools.metalava.JAVA_LANG_ANNOTATION
 import com.android.tools.metalava.JAVA_LANG_ENUM
@@ -161,6 +162,9 @@ interface ClassItem : Item {
     /** The non-constructor methods in this class */
     fun methods(): List<MethodItem>
 
+    /** The properties in this class */
+    fun properties(): List<PropertyItem>
+
     /** The fields in this class */
     fun fields(): List<FieldItem>
 
@@ -241,6 +245,10 @@ interface ClassItem : Item {
 
         for (method in methods()) {
             method.accept(visitor)
+        }
+
+        for (property in properties()) {
+            property.accept(visitor)
         }
 
         if (isEnum()) {
@@ -333,6 +341,21 @@ interface ClassItem : Item {
     }
 
     companion object {
+        /** Looks up the retention policy for the given class */
+        fun findRetention(cls: ClassItem): AnnotationRetention {
+            val modifiers = cls.modifiers
+            val annotation = modifiers.findAnnotation("java.lang.annotation.Retention")
+                ?: modifiers.findAnnotation("kotlin.annotation.Retention")
+            val value = annotation?.findAttribute(SdkConstants.ATTR_VALUE)
+            val source = value?.value?.toSource()
+            return when {
+                source == null -> AnnotationRetention.CLASS // default
+                source.contains("RUNTIME") -> AnnotationRetention.RUNTIME
+                source.contains("SOURCE") -> AnnotationRetention.SOURCE
+                else -> AnnotationRetention.CLASS // default
+            }
+        }
+
         // Same as doclava1 (modulo the new handling when class names match)
         val comparator: Comparator<in ClassItem> = Comparator { o1, o2 ->
             val delta = o1.fullName().compareTo(o2.fullName())
@@ -486,6 +509,9 @@ interface ClassItem : Item {
 
     /** Returns the corresponding compilation unit, if any */
     fun getCompilationUnit(): CompilationUnit? = null
+
+    /** If this class is an annotation type, returns the retention of this class */
+    fun getRetention(): AnnotationRetention
 
     /**
      * Return superclass matching the given predicate. When a superclass doesn't
@@ -712,6 +738,7 @@ class VisitCandidate(private val cls: ClassItem, private val visitor: ApiVisitor
     private val methods: Sequence<MethodItem>
     private val fields: Sequence<FieldItem>
     private val enums: Sequence<FieldItem>
+    private val properties: Sequence<PropertyItem>
 
     init {
         val filterEmit = visitor.filterEmit
@@ -744,6 +771,14 @@ class VisitCandidate(private val cls: ClassItem, private val visitor: ApiVisitor
             enums = emptySequence()
         }
 
+        if (cls.properties().isEmpty()) {
+            properties = emptySequence()
+        } else {
+            properties = cls.properties().asSequence()
+                .filter { filterEmit.test(it) }
+                .sortedWith(PropertyItem.comparator)
+        }
+
         innerClasses = cls.innerClasses()
             .asSequence()
             .sortedWith(ClassItem.classNameSorter())
@@ -762,7 +797,7 @@ class VisitCandidate(private val cls: ClassItem, private val visitor: ApiVisitor
 
     /** Does the body of this class (everything other than the inner classes) emit anything? */
     private fun emitClass(): Boolean {
-        val classEmpty = (constructors.none() && methods.none() && enums.none() && fields.none())
+        val classEmpty = (constructors.none() && methods.none() && enums.none() && fields.none() && properties.none())
         return if (visitor.filterEmit.test(cls)) {
             true
         } else if (!classEmpty) {
@@ -821,6 +856,9 @@ class VisitCandidate(private val cls: ClassItem, private val visitor: ApiVisitor
                 method.accept(visitor)
             }
 
+            for (property in properties) {
+                property.accept(visitor)
+            }
             for (enumConstant in enums) {
                 enumConstant.accept(visitor)
             }

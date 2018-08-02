@@ -18,14 +18,17 @@ package com.android.tools.metalava.model.text
 
 import com.android.tools.metalava.doclava1.SourcePositionInfo
 import com.android.tools.metalava.doclava1.TextCodebase
+import com.android.tools.metalava.model.AnnotationRetention
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.ConstructorItem
 import com.android.tools.metalava.model.FieldItem
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.PackageItem
+import com.android.tools.metalava.model.PropertyItem
 import com.android.tools.metalava.model.TypeItem
 import com.android.tools.metalava.model.TypeParameterList
+import com.android.tools.metalava.model.TypeParameterListOwner
 import java.util.function.Predicate
 
 open class TextClassItem(
@@ -55,8 +58,7 @@ open class TextClassItem(
         public = isPublic, protected = isProtected, private = isPrivate, internal = isInternal,
         static = isStatic, abstract = isAbstract, final = isFinal, sealed = isSealed
     )
-), ClassItem {
-
+), ClassItem, TypeParameterListOwner {
     init {
         @Suppress("LeakingThis")
         (modifiers as TextModifiers).owner = this
@@ -128,14 +130,21 @@ open class TextClassItem(
         return typeInfo?.hasTypeArguments() ?: false
     }
 
+    private var typeParameterList: TypeParameterList? = null
+
     override fun typeParameterList(): TypeParameterList {
-        // TODO: No, handle List<String>[]  (though it's not likely for type parameters)
-        val s = typeInfo.toString()
-        val index = s.indexOf('<')
-        if (index != -1) {
-            return TextTypeParameterList.create(codebase, s.substring(index))
+        if (typeParameterList == null) {
+            val s = typeInfo.toString()
+            // TODO: No, handle List<String>[]  (though it's not likely for type parameters)
+            val index = s.indexOf('<')
+            if (index != -1) {
+                typeParameterList = TextTypeParameterList.create(codebase, this, s.substring(index))
+            } else {
+                typeParameterList = TypeParameterList.NONE
+            }
         }
-        return TypeParameterList.NONE
+
+        return typeParameterList!!
     }
 
     private var superClass: ClassItem? = null
@@ -169,10 +178,12 @@ open class TextClassItem(
     private val constructors = mutableListOf<ConstructorItem>()
     private val methods = mutableListOf<MethodItem>()
     private val fields = mutableListOf<FieldItem>()
+    private val properties = mutableListOf<PropertyItem>()
 
     override fun constructors(): List<ConstructorItem> = constructors
     override fun methods(): List<MethodItem> = methods
     override fun fields(): List<FieldItem> = fields
+    override fun properties(): List<PropertyItem> = properties
 
     fun addInterface(itf: TypeItem) {
         interfaceTypes.add(itf)
@@ -194,6 +205,10 @@ open class TextClassItem(
         fields += field
     }
 
+    fun addProperty(property: TextPropertyItem) {
+        properties += property
+    }
+
     fun addEnumConstant(field: TextFieldItem) {
         field.setEnumConstant(true)
         fields += field
@@ -211,6 +226,19 @@ open class TextClassItem(
         return superClassType
     }
 
+    private var retention: AnnotationRetention? = null
+
+    override fun getRetention(): AnnotationRetention {
+        retention?.let { return it }
+
+        if (!isAnnotationType()) {
+            error("getRetention() should only be called on annotation classes")
+        }
+
+        retention = ClassItem.findRetention(this)
+        return retention!!
+    }
+
     private var fullName: String = name
     override fun simpleName(): String = name.substring(name.lastIndexOf('.') + 1)
     override fun fullName(): String = fullName
@@ -219,13 +247,29 @@ open class TextClassItem(
 
     companion object {
         fun createClassStub(codebase: TextCodebase, name: String): TextClassItem =
-            TextClassItem(codebase = codebase, qualifiedName = name, isPublic = true).also {
-                addStubPackage(
-                    name,
-                    codebase,
-                    it
-                )
+            createStub(codebase, name, isInterface = false)
+
+        fun createInterfaceStub(codebase: TextCodebase, name: String): TextClassItem =
+            createStub(codebase, name, isInterface = true)
+
+        fun createStub(codebase: TextCodebase, name: String, isInterface: Boolean): TextClassItem {
+            val index = if (name.endsWith(">")) name.indexOf('<') else -1
+            val qualifiedName = if (index == -1) name else name.substring(0, index)
+            val cls = TextClassItem(
+                codebase = codebase,
+                qualifiedName = qualifiedName,
+                isInterface = isInterface,
+                isPublic = true
+            )
+
+            addStubPackage(name, codebase, cls)
+
+            if (index != -1) {
+                cls.typeParameterList = TextTypeParameterList.create(codebase, cls, name.substring(index))
             }
+
+            return cls
+        }
 
         private fun addStubPackage(
             name: String,
@@ -241,14 +285,5 @@ open class TextClassItem(
             )
             textClassItem.setContainingPackage(pkg)
         }
-
-        fun createInterfaceStub(codebase: TextCodebase, name: String): TextClassItem =
-            TextClassItem(isInterface = true, codebase = codebase, qualifiedName = name, isPublic = true).also {
-                addStubPackage(
-                    name,
-                    codebase,
-                    it
-                )
-            }
     }
 }

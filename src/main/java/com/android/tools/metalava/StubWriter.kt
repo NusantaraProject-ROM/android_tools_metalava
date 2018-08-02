@@ -19,6 +19,7 @@ package com.android.tools.metalava
 import com.android.tools.metalava.doclava1.ApiPredicate
 import com.android.tools.metalava.doclava1.Errors
 import com.android.tools.metalava.doclava1.FilterPredicate
+import com.android.tools.metalava.model.AnnotationTarget
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.ConstructorItem
@@ -140,9 +141,7 @@ class StubWriter(
                 // Some bug in UAST triggers duplicate nullability annotations
                 // here; make sure the are filtered out
                 filterDuplicates = true,
-                onlyIncludeSignatureAnnotations = false,
-                onlyIncludeStubAnnotations = true,
-                onlyIncludeClassRetentionAnnotations = true,
+                target = AnnotationTarget.STUBS_FILE,
                 writer = writer
             )
             writer.println("package ${pkg.qualifiedName()};")
@@ -307,12 +306,13 @@ class StubWriter(
         }
 
         ModifierList.write(
-            writer, modifiers, item, removeAbstract = removeAbstract, removeFinal = removeFinal,
-            addPublic = addPublic, includeAnnotations = generateAnnotations,
-            onlyIncludeSignatureAnnotations = false,
-            onlyIncludeStubAnnotations = true,
-            onlyIncludeClassRetentionAnnotations = true,
-            separateLines = separateLines // not fields or parameters
+            writer, modifiers, item,
+            target = AnnotationTarget.STUBS_FILE,
+            includeAnnotations = generateAnnotations,
+            removeAbstract = removeAbstract,
+            removeFinal = removeFinal,
+            addPublic = addPublic,
+            separateLines = separateLines
         )
     }
 

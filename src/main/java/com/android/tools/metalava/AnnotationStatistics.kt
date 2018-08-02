@@ -54,11 +54,22 @@ class AnnotationStatistics(val api: Codebase) {
 
     /** Measure the coverage statistics for the API */
     fun count() {
+        // Count of all methods, fields and parameters
         var allMethods = 0
-        var annotatedMethods = 0
         var allFields = 0
-        var annotatedFields = 0
         var allParameters = 0
+
+        // Count of all methods, fields and parameters that requires annotations
+        // (e.g. not primitives, not constructors, etc)
+        var eligibleMethods = 0
+        var eligibleMethodReturns = 0
+        var eligibleFields = 0
+        var eligibleParameters = 0
+
+        // Count of methods, fields and parameters that were actually annotated
+        var annotatedMethods = 0
+        var annotatedMethodReturns = 0
+        var annotatedFields = 0
         var annotatedParameters = 0
 
         api.accept(object : ApiVisitor(api) {
@@ -77,32 +88,43 @@ class AnnotationStatistics(val api: Codebase) {
             }
 
             override fun visitParameter(parameter: ParameterItem) {
+                allParameters++
                 if (!parameter.requiresNullnessInfo()) {
                     return
                 }
-                allParameters++
-                if (parameter.modifiers.annotations().any { it.isNonNull() || it.isNullable() }) {
+                eligibleParameters++
+                if (parameter.hasNullnessInfo()) {
                     annotatedParameters++
                 }
             }
 
             override fun visitField(field: FieldItem) {
+                allFields++
                 if (!field.requiresNullnessInfo()) {
                     return
                 }
-                allFields++
-                if (field.modifiers.annotations().any { it.isNonNull() || it.isNullable() }) {
+                eligibleFields++
+                if (field.hasNullnessInfo()) {
                     annotatedFields++
                 }
             }
 
             override fun visitMethod(method: MethodItem) {
-                if (!method.requiresNullnessInfo()) {
-                    return
-                }
                 allMethods++
-                if (method.modifiers.annotations().any { it.isNonNull() || it.isNullable() }) {
-                    annotatedMethods++
+                if (method.requiresNullnessInfo()) { // No, this includes parameter requirements
+                    eligibleMethods++
+                    if (method.hasNullnessInfo()) {
+                        annotatedMethods++
+                    }
+                }
+
+                // method.requiresNullnessInfo also checks parameters; here we want to consider
+                // only the method modifier list
+                if (!method.isConstructor() && method.returnType()?.primitive != true) {
+                    eligibleMethodReturns++
+                    if (method.modifiers.hasNullnessInfo()) {
+                        annotatedMethodReturns++
+                    }
                 }
             }
         })
@@ -111,11 +133,21 @@ class AnnotationStatistics(val api: Codebase) {
         options.stdout.println(
             """
             Nullness Annotation Coverage Statistics:
-            $annotatedMethods out of $allMethods methods were annotated (${percent(annotatedMethods, allMethods)}%)
-            $annotatedFields out of $allFields fields were annotated (${percent(annotatedFields, allFields)}%)
-            $annotatedParameters out of $allParameters parameters were annotated (${percent(
+            $annotatedFields out of $eligibleFields eligible fields (out of $allFields total fields) were annotated (${percent(
+                annotatedFields,
+                eligibleFields
+            )}%)
+            $annotatedMethods out of $eligibleMethods eligible methods (out of $allMethods total methods) were fully annotated (${percent(
+                annotatedMethods,
+                eligibleMethods
+            )}%)
+                $annotatedMethodReturns out of $eligibleMethodReturns eligible method returns were annotated (${percent(
+                annotatedMethodReturns,
+                eligibleMethodReturns
+            )}%)
+                $annotatedParameters out of $eligibleParameters eligible parameters were annotated (${percent(
                 annotatedParameters,
-                allParameters
+                eligibleParameters
             )}%)
             """.trimIndent()
         )
@@ -251,12 +283,14 @@ class AnnotationStatistics(val api: Codebase) {
         // Top APIs
         printer.println("\nTop referenced un-annotated classes:\n")
 
-        printTable("Qualified Class Name",
+        printTable(
+            "Qualified Class Name",
             "Usage Count",
             classes,
             { (it as ClassItem).qualifiedName() },
             { classCount[it]!! },
-            printer)
+            printer
+        )
 
         if (reportFile != null) {
             printer.close()

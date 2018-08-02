@@ -19,9 +19,11 @@ package com.android.tools.metalava.model.text
 import com.android.tools.metalava.doclava1.TextCodebase
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.TypeParameterItem
+import com.android.tools.metalava.model.TypeParameterListOwner
 
 class TextTypeParameterItem(
     codebase: TextCodebase,
+    private val owner: TypeParameterListOwner?,
     private val typeParameterString: String,
     name: String,
     private var bounds: List<ClassItem>? = null
@@ -31,11 +33,20 @@ class TextTypeParameterItem(
 
     override fun bounds(): List<ClassItem> {
         if (bounds == null) {
-            val boundsString = bounds(typeParameterString)
+            val boundsString = bounds(typeParameterString, owner)
             bounds = if (boundsString.isEmpty()) {
                 emptyList()
             } else {
-                boundsString.mapNotNull { codebase.findClass(it) }.filter { !it.isJavaLangObject() }
+                boundsString.mapNotNull {
+                    val clz = codebase.findClass(it)
+                    if (clz == null && it.contains(".")) {
+                        TextClassItem.createClassStub(codebase, it)
+                    } else {
+                        clz
+                    }
+                }.filter {
+                    !it.isJavaLangObject()
+                }
             }
         }
         return bounds!!
@@ -44,6 +55,7 @@ class TextTypeParameterItem(
     companion object {
         fun create(
             codebase: TextCodebase,
+            owner: TypeParameterListOwner?,
             typeParameterString: String,
             bounds: List<ClassItem>? = null
         ): TextTypeParameterItem {
@@ -59,16 +71,26 @@ class TextTypeParameterItem(
             val name = typeParameterString.substring(0, nameEnd)
             return TextTypeParameterItem(
                 codebase = codebase,
+                owner = owner,
                 typeParameterString = typeParameterString,
                 name = name,
                 bounds = bounds
             )
         }
 
-        fun bounds(typeString: String?): List<String> {
+        fun bounds(typeString: String?, owner: TypeParameterListOwner? = null): List<String> {
             val s = typeString ?: return emptyList()
             val index = s.indexOf("extends ")
             if (index == -1) {
+                // See if this is a type variable that has bounds in the parent
+                val parameters = (owner as? TextMemberItem)?.containingClass()?.typeParameterList()?.typeParameters()
+                    ?: return emptyList()
+                for (p in parameters) {
+                    if (p.simpleName() == s) {
+                        return p.bounds().filter { !it.isJavaLangObject() }.map { it.qualifiedName() }
+                    }
+                }
+
                 return emptyList()
             }
             val list = mutableListOf<String>()
