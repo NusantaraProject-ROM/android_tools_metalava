@@ -20,12 +20,13 @@ import com.android.tools.metalava.model.AnnotationAttribute
 import com.android.tools.metalava.model.AnnotationItem
 import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.DefaultAnnotationAttribute
+import com.android.tools.metalava.model.DefaultAnnotationItem
 
 class TextBackedAnnotationItem(
-    override val codebase: Codebase,
+    codebase: Codebase,
     source: String,
     mapName: Boolean = true
-) : AnnotationItem {
+) : DefaultAnnotationItem(codebase) {
     private val qualifiedName: String?
     private val full: String
     private val attributes: List<AnnotationAttribute>

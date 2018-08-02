@@ -222,7 +222,11 @@ abstract class DriverTest {
          * Whether to include source retention annotations in the stubs (in that case they do not
          * go into the extracted annotations zip file)
          */
-        includeSourceRetentionAnnotations: Boolean = true
+        includeSourceRetentionAnnotations: Boolean = true,
+        /**
+         * Whether to include the signature version in signatures
+         */
+        includeSignatureVersion: Boolean = false
     ) {
         System.setProperty(ENV_VAR_METALAVA_TESTS_RUNNING, VALUE_TRUE)
 
@@ -597,6 +601,7 @@ abstract class DriverTest {
             "--output-kotlin-nulls=${if (outputKotlinStyleNulls) "yes" else "no"}",
             "--input-kotlin-nulls=${if (inputKotlinStyleNulls) "yes" else "no"}",
             "--omit-common-packages=${if (omitCommonPackages) "yes" else "no"}",
+            "--include-signature-version=${if (includeSignatureVersion) "yes" else "no"}",
             *coverageStats,
             *quiet,
             *mergeAnnotationsArgs,

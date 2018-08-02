@@ -25,6 +25,7 @@ import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.PackageItem
 import com.android.tools.metalava.model.ParameterItem
+import com.android.tools.metalava.model.PropertyItem
 import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.android.tools.metalava.model.visitors.VisibleItemVisitor
 import com.intellij.util.containers.Stack
@@ -60,6 +61,7 @@ open class ComparisonVisitor(
     open fun compare(old: ConstructorItem, new: ConstructorItem) {}
     open fun compare(old: MethodItem, new: MethodItem) {}
     open fun compare(old: FieldItem, new: FieldItem) {}
+    open fun compare(old: PropertyItem, new: PropertyItem) {}
     open fun compare(old: ParameterItem, new: ParameterItem) {}
 
     open fun added(new: PackageItem) {}
@@ -67,6 +69,7 @@ open class ComparisonVisitor(
     open fun added(new: ConstructorItem) {}
     open fun added(new: MethodItem) {}
     open fun added(new: FieldItem) {}
+    open fun added(new: PropertyItem) {}
     open fun added(new: ParameterItem) {}
 
     open fun removed(old: PackageItem, from: Item?) {}
@@ -74,6 +77,7 @@ open class ComparisonVisitor(
     open fun removed(old: ConstructorItem, from: ClassItem?) {}
     open fun removed(old: MethodItem, from: ClassItem?) {}
     open fun removed(old: FieldItem, from: ClassItem?) {}
+    open fun removed(old: PropertyItem, from: ClassItem?) {}
     open fun removed(old: ParameterItem, from: MethodItem?) {}
 }
 
@@ -87,14 +91,15 @@ class CodebaseComparator {
         // two trees
         val oldTree = createTree(old, filter)
         val newTree = createTree(new, filter)
-        compare(visitor, oldTree, newTree, null)
+        compare(visitor, oldTree, newTree, null, null)
     }
 
     private fun compare(
         visitor: ComparisonVisitor,
         oldList: List<ItemTree>,
         newList: List<ItemTree>,
-        newParent: Item?
+        newParent: Item?,
+        oldParent: Item?
     ) {
         // Debugging tip: You can print out a tree like this: ItemTree.prettyPrint(list)
         var index1 = 0
@@ -115,7 +120,27 @@ class CodebaseComparator {
                     when {
                         compare > 0 -> {
                             index2++
-                            visitAdded(visitor, new)
+
+                            val inherited =
+                            if (new is MethodItem && oldParent is ClassItem) {
+                                oldParent.findMethod(
+                                    template = new,
+                                    includeSuperClasses = true,
+                                    includeInterfaces = true
+                                )
+                            } else {
+                                null
+                            }
+                            if (inherited != null) {
+                                visitCompare(visitor, inherited, new)
+                                // Compare the children (recurse)
+                                if (inherited.parameters().isNotEmpty()) {
+                                    val parameters = inherited.parameters().map { ItemTree(it) }.toList()
+                                    compare(visitor, parameters, newTree.children, newTree.item(), inherited)
+                                }
+                            } else {
+                                visitAdded(visitor, new)
+                            }
                         }
                         compare < 0 -> {
                             index1++
@@ -125,7 +150,7 @@ class CodebaseComparator {
                             visitCompare(visitor, old, new)
 
                             // Compare the children (recurse)
-                            compare(visitor, oldTree.children, newTree.children, newTree.item())
+                            compare(visitor, oldTree.children, newTree.children, newTree.item(), oldTree.item())
 
                             index1++
                             index2++
@@ -140,7 +165,33 @@ class CodebaseComparator {
             } else if (index2 < length2) {
                 // All the remaining items in newList have been added
                 while (index2 < length2) {
-                    visitAdded(visitor, newList[index2++].item())
+                    val newTree = newList[index2++]
+                    val new = newTree.item()
+
+                    // If it's a method, we may not have added a new method,
+                    // we may simply have inherited it previously and overriding
+                    // it now (or in the case of signature files, identical overrides
+                    // are not explicitly listed and therefore not added to the model)
+                    val inherited =
+                        if (new is MethodItem && oldParent is ClassItem) {
+                            oldParent.findMethod(
+                                template = new,
+                                includeSuperClasses = true,
+                                includeInterfaces = true
+                            )
+                        } else {
+                            null
+                        }
+                    if (inherited != null) {
+                        visitCompare(visitor, inherited, new)
+                        // Compare the children (recurse)
+                        if (inherited.parameters().isNotEmpty()) {
+                            val parameters = inherited.parameters().map { ItemTree(it) }.toList()
+                            compare(visitor, parameters, newTree.children, newTree.item(), inherited)
+                        }
+                    } else {
+                        visitAdded(visitor, new)
+                    }
                 }
             } else {
                 break
@@ -180,6 +231,7 @@ class CodebaseComparator {
             }
             is FieldItem -> visitor.added(item)
             is ParameterItem -> visitor.added(item)
+            is PropertyItem -> visitor.added(item)
         }
     }
 
@@ -203,6 +255,7 @@ class CodebaseComparator {
             }
             is FieldItem -> visitor.removed(item, from as ClassItem?)
             is ParameterItem -> visitor.removed(item, from as MethodItem?)
+            is PropertyItem -> visitor.removed(item, from as ClassItem?)
         }
     }
 
@@ -226,6 +279,7 @@ class CodebaseComparator {
             }
             is FieldItem -> visitor.compare(old, new as FieldItem)
             is ParameterItem -> visitor.compare(old, new as ParameterItem)
+            is PropertyItem -> visitor.compare(old, new as PropertyItem)
         }
     }
 
@@ -241,7 +295,8 @@ class CodebaseComparator {
                 is ClassItem -> 4
                 is ParameterItem -> 5
                 is AnnotationItem -> 6
-                else -> 7
+                is PropertyItem -> 7
+                else -> 8
             }
         }
 
@@ -299,6 +354,9 @@ class CodebaseComparator {
                     is AnnotationItem -> {
                         (item1.qualifiedName() ?: "").compareTo((item2 as AnnotationItem).qualifiedName() ?: "")
                     }
+                    is PropertyItem -> {
+                        item1.name().compareTo((item2 as PropertyItem).name())
+                    }
                     else -> {
                         error("Unexpected item type ${item1.javaClass}")
                     }
@@ -326,13 +384,11 @@ class CodebaseComparator {
     }
 
     private fun createTree(codebase: Codebase, filter: Predicate<Item>? = null): List<ItemTree> {
-        // TODO: Make sure the items are sorted!
         val stack = Stack<ItemTree>()
         val root = ItemTree(null)
         stack.push(root)
 
         val predicate = filter ?: Predicate { true }
-        // TODO: Skip empty packages
         codebase.accept(object : ApiVisitor(
             nestInnerClasses = true,
             inlineInheritedFields = true,

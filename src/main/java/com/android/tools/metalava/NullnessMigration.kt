@@ -21,6 +21,7 @@ import com.android.tools.metalava.model.FieldItem
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.ParameterItem
+import com.android.tools.metalava.model.SUPPORT_TYPE_USE_ANNOTATIONS
 import com.android.tools.metalava.model.TypeItem
 
 /**
@@ -42,22 +43,35 @@ class NullnessMigration : ComparisonVisitor(visitAddedItemsRecursively = true) {
         }
     }
 
+    // Note: We don't override added(new: Item) to mark newly added methods as newly
+    // having nullness annotations: those APIs are themselves new, so there's no reason
+    // to mark the nullness contract as migration (warning- rather than error-severity)
+
     override fun compare(old: MethodItem, new: MethodItem) {
-        val newType = new.returnType() ?: return
-        val oldType = old.returnType() ?: return
-        checkType(oldType, newType)
+        @Suppress("ConstantConditionIf")
+        if (SUPPORT_TYPE_USE_ANNOTATIONS) {
+            val newType = new.returnType() ?: return
+            val oldType = old.returnType() ?: return
+            checkType(oldType, newType)
+        }
     }
 
     override fun compare(old: FieldItem, new: FieldItem) {
-        val newType = new.type()
-        val oldType = old.type()
-        checkType(oldType, newType)
+        @Suppress("ConstantConditionIf")
+        if (SUPPORT_TYPE_USE_ANNOTATIONS) {
+            val newType = new.type()
+            val oldType = old.type()
+            checkType(oldType, newType)
+        }
     }
 
     override fun compare(old: ParameterItem, new: ParameterItem) {
-        val newType = new.type()
-        val oldType = old.type()
-        checkType(oldType, newType)
+        @Suppress("ConstantConditionIf")
+        if (SUPPORT_TYPE_USE_ANNOTATIONS) {
+            val newType = new.type()
+            val oldType = old.type()
+            checkType(oldType, newType)
+        }
     }
 
     private fun hasNullnessInformation(type: TypeItem): Boolean {

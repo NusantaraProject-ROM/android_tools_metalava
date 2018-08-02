@@ -24,13 +24,13 @@ import com.android.SdkConstants.STRING_DEF_ANNOTATION
 import com.android.tools.lint.annotations.Extractor.ANDROID_INT_DEF
 import com.android.tools.lint.annotations.Extractor.ANDROID_LONG_DEF
 import com.android.tools.lint.annotations.Extractor.ANDROID_STRING_DEF
-import com.android.tools.lint.detector.api.startsWith
 import com.android.tools.metalava.ANDROIDX_ANNOTATION_PREFIX
 import com.android.tools.metalava.ANDROID_SUPPORT_ANNOTATION_PREFIX
 import com.android.tools.metalava.JAVA_LANG_PREFIX
 import com.android.tools.metalava.Options
 import com.android.tools.metalava.RECENTLY_NONNULL
 import com.android.tools.metalava.RECENTLY_NULLABLE
+import com.android.tools.metalava.doclava1.ApiPredicate
 import com.android.tools.metalava.options
 import java.util.function.Predicate
 
@@ -53,23 +53,8 @@ interface AnnotationItem {
     /** Generates source code for this annotation (using fully qualified names) */
     fun toSource(): String
 
-    /** Whether this annotation is significant and should be included in signature files */
-    fun isSignificantInSignatures(): Boolean {
-        return includeInSignatures(qualifiedName() ?: return false)
-    }
-
-    /** Whether this annotation is significant and should be included in stub files etc */
-    fun isSignificantInStubs(): Boolean {
-        return includeInStubs(qualifiedName() ?: return false)
-    }
-
-    /**
-     * Whether this annotation has class retention. Only class retention annotations are
-     * inserted into the stubs, the rest are extracted into the separate external annotations file.
-     */
-    fun hasClassRetention(): Boolean {
-        return hasClassRetention(qualifiedName())
-    }
+    /** The applicable targets for this annotation */
+    fun targets(): Set<AnnotationTarget>
 
     /** Attributes of the annotation (may be empty) */
     fun attributes(): List<AnnotationAttribute>
@@ -128,37 +113,6 @@ interface AnnotationItem {
     }
 
     companion object {
-        /** Whether the given annotation name is "significant", e.g. should be included in signature files */
-        fun includeInSignatures(qualifiedName: String?): Boolean {
-            qualifiedName ?: return false
-            if (qualifiedName.startsWith(ANDROID_SUPPORT_ANNOTATION_PREFIX) ||
-                qualifiedName.startsWith(ANDROIDX_ANNOTATION_PREFIX)
-            ) {
-
-                // Don't include typedefs in the stub files.
-                if (qualifiedName.endsWith("IntDef") || qualifiedName.endsWith("StringDef")) {
-                    return false
-                }
-
-                return true
-            }
-            return false
-        }
-
-        /** Whether the given annotation name is "significant", e.g. should be included in signature files */
-        fun includeInStubs(qualifiedName: String?): Boolean {
-            qualifiedName ?: return false
-            if (includeInSignatures(qualifiedName)) {
-                return true
-            }
-
-            return qualifiedName.startsWith("java.lang.") &&
-                !qualifiedName.startsWith("java.lang.invoke.") &&
-                !(qualifiedName.endsWith(".SuppressWarnings") ||
-                    qualifiedName.endsWith(".Override") ||
-                    qualifiedName.endsWith(".Deprecated"))
-        }
-
         /** The simple name of an annotation, which is the annotation name (not qualified name) prefixed by @ */
         fun simpleName(item: AnnotationItem): String {
             val qualifiedName = item.qualifiedName() ?: return ""
@@ -379,6 +333,92 @@ interface AnnotationItem {
             }
         }
 
+        /** The applicable targets for this annotation */
+        fun computeTargets(annotation: AnnotationItem, codebase: Codebase): Set<AnnotationTarget> {
+            val qualifiedName = annotation.qualifiedName() ?: return NO_ANNOTATION_TARGETS
+            when (qualifiedName) {
+
+            // The typedef annotations are special: they should not be in the signature
+            // files, but we want to include them in the external annotations file such that tools
+            // can enforce them.
+                "android.support.annotation.IntDef",
+                "android.annotation.IntDef",
+                "androidx.annotation.IntDef",
+                "android.support.annotation.StringDef",
+                "android.annotation.StringDef",
+                "androidx.annotation.StringDef",
+                "android.support.annotation.LongDef",
+                "android.annotation.LongDef",
+                "androidx.annotation.LongDef" -> return ANNOTATION_EXTERNAL_ONLY
+
+            // Skip known annotations that we (a) never want in external annotations and (b) we are
+            // specially overwriting anyway in the stubs (and which are (c) not API significant)
+                "java.lang.annotation.Native",
+                "java.lang.SuppressWarnings",
+                "java.lang.Deprecated", // tracked separately as a pseudo-modifier
+                "java.lang.Override" -> return NO_ANNOTATION_TARGETS
+
+            // Below this when-statement we perform the correct lookup: check API predicate, and check
+            // that retention is class or runtime, but we've hardcoded the answers here
+            // for some common annotations.
+
+                "android.view.ViewDebug.ExportedProperty",
+                "android.widget.RemoteViews.RemoteView",
+                "android.view.ViewDebug.CapturedViewProperty",
+
+                "java.lang.FunctionalInterface",
+                "java.lang.SafeVarargs",
+                "java.lang.annotation.Documented",
+                "java.lang.annotation.Inherited",
+                "java.lang.annotation.Repeatable",
+                "java.lang.annotation.Retention",
+                "java.lang.annotation.Target" -> return ANNOTATION_IN_STUBS
+            }
+
+            if (qualifiedName.startsWith("android.annotation.")) {
+                // internal annotations not mapped to androidx: things like @SystemApi. Skip from
+                // stubs, external annotations, signature files, etc.
+                return NO_ANNOTATION_TARGETS
+            }
+
+            // @RecentlyNullable and @RecentlyNonNull are specially recognized annotations by the Kotlin
+            // compiler: they always go in the stubs.
+            if (qualifiedName == "androidx.annotation.RecentlyNullable" ||
+                qualifiedName == "androidx.annotation.RecentlyNonNull"
+            ) {
+                return ANNOTATION_IN_STUBS
+            }
+
+            // Determine the retention of the annotation: source retention annotations go
+            // in the external annotations file, class and runtime annotations go in
+            // the stubs files (except for the androidx annotations which are not included
+            // in the SDK and therefore cannot be referenced from it due to apt's unfortunate
+            // habit of loading all annotation classes it encounters.)
+
+            if (qualifiedName.startsWith("androidx.annotation.")) {
+                if (options.includeSourceRetentionAnnotations) {
+                    return ANNOTATION_IN_STUBS
+                }
+
+                return ANNOTATION_EXTERNAL
+            }
+
+            // See if the annotation is pointing to an annotation class that is part of the API; if not, skip it.
+            val cls = codebase.findClass(qualifiedName) ?: return NO_ANNOTATION_TARGETS
+            if (!ApiPredicate(codebase).test(cls)) {
+                return NO_ANNOTATION_TARGETS
+            }
+
+            if (cls.isAnnotationType()) {
+                val retention = cls.getRetention()
+                if (retention == AnnotationRetention.RUNTIME || retention == AnnotationRetention.CLASS) {
+                    return ANNOTATION_IN_STUBS
+                }
+            }
+
+            return ANNOTATION_EXTERNAL
+        }
+
         /**
          * Given a "full" annotation name, shortens it by removing redundant package names.
          * This is intended to be used by the [Options.omitCommonPackages] flag
@@ -418,24 +458,18 @@ interface AnnotationItem {
                 }
             }
         }
+    }
+}
 
-        fun hasClassRetention(qualifiedName: String?): Boolean {
-            // For now, we treat everything except the recently nullable annotations
-            // as source retention; this works around the bug that we don't want to
-            // reference (from the .class files) annotations that aren't part of the SDK
-            // except for those that we include with the stubs
+/** Default implementation of an annotation item */
+abstract class DefaultAnnotationItem(override val codebase: Codebase) : AnnotationItem {
+    private var targets: Set<AnnotationTarget>? = null
 
-            qualifiedName ?: return false
-
-            return when (qualifiedName) {
-                "androidx.annotation.RecentlyNullable",
-                "androidx.annotation.RecentlyNonNull" -> true
-                else -> qualifiedName.startsWith("java.") ||
-                    qualifiedName.startsWith("javax.") ||
-                    qualifiedName.startsWith("kotlin.") ||
-                    qualifiedName.startsWith("kotlinx.")
-            }
+    override fun targets(): Set<AnnotationTarget> {
+        if (targets == null) {
+            targets = AnnotationItem.computeTargets(this, codebase)
         }
+        return targets!!
     }
 }
 

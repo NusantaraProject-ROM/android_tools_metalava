@@ -24,6 +24,7 @@ import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.ParameterItem
 import com.android.tools.metalava.model.TypeItem
 import com.android.tools.metalava.model.TypeParameterList
+import com.android.tools.metalava.model.TypeParameterListOwner
 import java.util.function.Predicate
 
 open class TextMethodItem(
@@ -58,7 +59,7 @@ open class TextMethodItem(
         synchronized = isSynchronized, native = isNative, default = isDefault, strictfp = isStrictFp,
         infix = isInfix, operator = isOperator, inline = isInline
     )
-), MethodItem {
+), MethodItem, TypeParameterListOwner {
 
     init {
         @Suppress("LeakingThis")
@@ -140,7 +141,7 @@ open class TextMethodItem(
 
     fun setTypeParameterList(typeParameterList: String?) {
         this.typeParameterList = if (typeParameterList != null) {
-            TextTypeParameterList.create(codebase, typeParameterList)
+            TextTypeParameterList.create(codebase, this, typeParameterList)
         } else {
             TypeParameterList.NONE
         }

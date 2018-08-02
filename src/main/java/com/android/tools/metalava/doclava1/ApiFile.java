@@ -26,6 +26,7 @@ import com.android.tools.metalava.model.text.TextMethodItem;
 import com.android.tools.metalava.model.text.TextPackageItem;
 import com.android.tools.metalava.model.text.TextParameterItem;
 import com.android.tools.metalava.model.text.TextParameterItemKt;
+import com.android.tools.metalava.model.text.TextPropertyItem;
 import com.android.tools.metalava.model.text.TextTypeItem;
 import com.android.tools.metalava.model.text.TextTypeParameterList;
 import com.google.common.base.Charsets;
@@ -276,6 +277,9 @@ public class ApiFile {
             } else if ("enum_constant".equals(token)) {
                 token = tokenizer.requireToken();
                 parseField(api, tokenizer, cl, token, true);
+            } else if ("property".equals(token)) {
+                token = tokenizer.requireToken();
+                parseProperty(api, tokenizer, cl, token);
             } else {
                 throw new ApiParseException("expected ctor, enum_constant, field or method", tokenizer);
             }
@@ -559,6 +563,9 @@ public class ApiFile {
             returnType, tokenizer.pos(), annotations);
         method.setDeprecated(isDeprecated);
         method.setTypeParameterList(typeParameterList);
+        if (typeParameterList instanceof TextTypeParameterList) {
+            ((TextTypeParameterList)typeParameterList).setOwner(method);
+        }
         token = tokenizer.requireToken();
         if (!"(".equals(token)) {
             throw new ApiParseException("expected (, was " + token, tokenizer);
@@ -746,6 +753,94 @@ public class ApiFile {
         }
     }
 
+    private static void parseProperty(TextCodebase api, Tokenizer tokenizer, TextClassItem cl, String token)
+        throws ApiParseException {
+        boolean isPublic = false;
+        boolean isProtected = false;
+        boolean isPrivate = false;
+        boolean isInternal = false;
+        boolean isStatic = false;
+        boolean isFinal = false;
+        boolean isDeprecated = false;
+        boolean isTransient = false;
+        boolean isVolatile = false;
+        String type;
+        String name;
+
+        // Metalava: including annotations in file now
+        List<String> annotations = null;
+        Pair<String, List<String>> result = getAnnotations(tokenizer, token);
+        if (result != null) {
+            token = result.component1();
+            annotations = result.component2();
+        }
+
+        processModifiers:
+        while (true) {
+            switch (token) {
+                case "public":
+                    isPublic = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "protected":
+                    isProtected = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "private":
+                    isPrivate = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "internal":
+                    isInternal = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "static":
+                    isStatic = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "final":
+                    isFinal = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "deprecated":
+                    isDeprecated = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "transient":
+                    isTransient = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "volatile":
+                    isVolatile = true;
+                    token = tokenizer.requireToken();
+                    break;
+                default:
+                    break processModifiers;
+            }
+        }
+
+        assertIdent(tokenizer, token);
+
+        Pair<String, List<String>> kotlinTypeSuffix = processKotlinTypeSuffix(api, token, annotations);
+        token = kotlinTypeSuffix.getFirst();
+        annotations = kotlinTypeSuffix.getSecond();
+        type = token;
+        TextTypeItem typeInfo = api.obtainTypeFromString(type);
+
+        token = tokenizer.requireToken();
+        assertIdent(tokenizer, token);
+        name = token;
+        token = tokenizer.requireToken();
+        if (!";".equals(token)) {
+            throw new ApiParseException("expected ; found " + token, tokenizer);
+        }
+
+        TextPropertyItem property = new TextPropertyItem(api, name, cl, isPublic, isProtected, isPrivate, isInternal, isFinal, isStatic,
+            isTransient, isVolatile, typeInfo, tokenizer.pos(), annotations);
+        property.setDeprecated(isDeprecated);
+        cl.addProperty(property);
+    }
+
     private static TypeParameterList parseTypeParameterList(TextCodebase codebase, Tokenizer tokenizer) throws ApiParseException {
         String token;
 
@@ -764,7 +859,7 @@ public class ApiFile {
         if (typeParameterList.isEmpty()) {
             return TypeParameterList.Companion.getNONE();
         } else {
-            return TextTypeParameterList.Companion.create(codebase, typeParameterList);
+            return TextTypeParameterList.Companion.create(codebase, null, typeParameterList);
         }
     }
 
