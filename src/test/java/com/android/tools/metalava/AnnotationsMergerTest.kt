@@ -23,6 +23,7 @@ class AnnotationsMergerTest : DriverTest() {
     // TODO: Test what happens when we have conflicting data
     //   - NULLABLE_SOURCE on one non null on the other
     //   - annotation specified with different parameters (e.g @Size(4) vs @Size(6))
+    // Test with jar file
 
     @Test
     fun `Signature files contain annotations`() {

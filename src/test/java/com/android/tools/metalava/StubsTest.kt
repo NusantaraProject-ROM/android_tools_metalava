@@ -3109,7 +3109,7 @@ class StubsTest : DriverTest() {
             warnings = "",
             api = """
                 package test.pkg {
-                  public @interface ExportedProperty {
+                  @java.lang.annotation.Target({java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD}) @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME) public @interface ExportedProperty {
                     method public abstract String! category() default "";
                     method public abstract float floating() default 1.0f;
                     method public abstract boolean formatToHexString() default false;
@@ -3128,13 +3128,13 @@ class StubsTest : DriverTest() {
                     method public abstract String! prefix() default "";
                     method public abstract boolean resolveId() default false;
                     method public abstract byte small() default 1;
-                    method public abstract int unit() default test.pkg.ExportedProperty.PX;
+                    method @test.pkg.ExportedProperty.InnerAnnotation public abstract int unit() default test.pkg.ExportedProperty.PX;
                     method public abstract test.pkg.ExportedProperty.InnerAnnotation! value() default @test.pkg.ExportedProperty.InnerAnnotation;
                     field public static final int DP = 0; // 0x0
                     field public static final int PX = 1; // 0x1
                     field public static final int SP = 2; // 0x2
                   }
-                  public static @interface ExportedProperty.InnerAnnotation {
+                  @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.SOURCE) public static @interface ExportedProperty.InnerAnnotation {
                   }
                 }
             """,

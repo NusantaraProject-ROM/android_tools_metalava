@@ -236,18 +236,18 @@ class NullnessMigrationTest : DriverTest() {
                 )
             ),
             api = """
-                    package libcore.util {
-                      public @interface NonNull {
-                        method public abstract int from() default java.lang.Integer.MIN_VALUE;
-                        method public abstract int to() default java.lang.Integer.MAX_VALUE;
-                      }
-                    }
-                    package test.pkg {
-                      public class Test {
-                        ctor public Test();
-                        method @NonNull public Object compute();
-                      }
-                    }
+                package libcore.util {
+                  @java.lang.annotation.Documented @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.SOURCE) public @interface NonNull {
+                    method public abstract int from() default java.lang.Integer.MIN_VALUE;
+                    method public abstract int to() default java.lang.Integer.MAX_VALUE;
+                  }
+                }
+                package test.pkg {
+                  public class Test {
+                    ctor public Test();
+                    method @NonNull public Object compute();
+                  }
+                }
                 """
         )
     }
@@ -554,6 +554,113 @@ class NullnessMigrationTest : DriverTest() {
                     """
                 )
             }
+        )
+    }
+
+    @Test
+    fun `Test inherited methods`() {
+        check(
+            migrateNulls = true,
+            warnings = """
+                """,
+            previousApi = """
+                package test.pkg {
+                  public class Child1 extends test.pkg.Parent {
+                  }
+                  public class Child2 extends test.pkg.Parent {
+                    method public void method0(java.lang.String, int);
+                    method public void method4(java.lang.String, int);
+                  }
+                  public class Parent {
+                    method public void method1(java.lang.String, int);
+                    method public void method2(java.lang.String, int);
+                    method public void method3(java.lang.String, int);
+                  }
+                }
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+
+                    import androidx.annotation.NonNull;
+
+                    public class Child1 extends Parent {
+                        private Child1() {}
+                        @Override
+                        public void method1(@NonNull String first, int second) {
+                        }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+
+                    import androidx.annotation.NonNull;
+
+                    public class Child2 extends Parent {
+                        private Child2() {}
+                        @Override
+                        public void method0(String first, int second) {
+                        }
+                        @Override
+                        public void method1(String first, int second) {
+                        }
+                        @Override
+                        public void method2(@NonNull String first, int second) {
+                        }
+                        @Override
+                        public void method3(String first, int second) {
+                        }
+                        @Override
+                        public void method4(String first, int second) {
+                        }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+
+                    import androidx.annotation.Nullable;
+                    import androidx.annotation.NonNull;
+
+                    public class Parent {
+                        private Parent() { }
+                        public void method1(String first, int second) {
+                        }
+                        public void method2(@NonNull String first, int second) {
+                        }
+                        public void method3(String first, int second) {
+                        }
+                    }
+                    """
+                ),
+                androidxNonNullSource
+            ),
+            stubs = arrayOf(
+                """
+                package test.pkg;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class Child1 extends test.pkg.Parent {
+                Child1() { throw new RuntimeException("Stub!"); }
+                public void method1(@androidx.annotation.RecentlyNonNull java.lang.String first, int second) { throw new RuntimeException("Stub!"); }
+                }
+                """,
+                """
+                package test.pkg;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class Child2 extends test.pkg.Parent {
+                Child2() { throw new RuntimeException("Stub!"); }
+                public void method0(java.lang.String first, int second) { throw new RuntimeException("Stub!"); }
+                public void method1(java.lang.String first, int second) { throw new RuntimeException("Stub!"); }
+                public void method2(@androidx.annotation.RecentlyNonNull java.lang.String first, int second) { throw new RuntimeException("Stub!"); }
+                public void method3(java.lang.String first, int second) { throw new RuntimeException("Stub!"); }
+                public void method4(java.lang.String first, int second) { throw new RuntimeException("Stub!"); }
+                }
+                """
+            )
         )
     }
 }

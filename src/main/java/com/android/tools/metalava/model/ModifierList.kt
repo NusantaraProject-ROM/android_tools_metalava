@@ -181,6 +181,7 @@ interface ModifierList {
             writer: Writer,
             modifiers: ModifierList,
             item: Item,
+            target: AnnotationTarget,
             // TODO: "deprecated" isn't a modifier; clarify method name
             includeDeprecated: Boolean = false,
             includeAnnotations: Boolean = true,
@@ -189,10 +190,7 @@ interface ModifierList {
             removeAbstract: Boolean = false,
             removeFinal: Boolean = false,
             addPublic: Boolean = false,
-            separateLines: Boolean = false,
-            onlyIncludeSignatureAnnotations: Boolean = true,
-            onlyIncludeStubAnnotations: Boolean = false,
-            onlyIncludeClassRetentionAnnotations: Boolean = false
+            separateLines: Boolean = false
         ) {
 
             val list = if (removeAbstract || removeFinal || addPublic) {
@@ -215,15 +213,18 @@ interface ModifierList {
             }
 
             if (includeAnnotations) {
+                if (includeDeprecated && item.deprecated && !options.compatOutput) {
+                    writer.write("@Deprecated")
+                    writer.write(if (separateLines) "\n" else " ")
+                }
+
                 writeAnnotations(
                     list = list,
                     skipNullnessAnnotations = skipNullnessAnnotations,
                     omitCommonPackages = omitCommonPackages,
                     separateLines = separateLines,
                     writer = writer,
-                    onlyIncludeSignatureAnnotations = onlyIncludeSignatureAnnotations,
-                    onlyIncludeStubAnnotations = onlyIncludeStubAnnotations,
-                    onlyIncludeClassRetentionAnnotations = onlyIncludeClassRetentionAnnotations
+                    target = target
                 )
             }
 
@@ -295,7 +296,7 @@ interface ModifierList {
                     writer.write("native ")
                 }
 
-                if (item.deprecated && includeDeprecated) {
+                if (item.deprecated && includeDeprecated && options.compatOutput) {
                     writer.write("deprecated ")
                 }
 
@@ -315,7 +316,7 @@ interface ModifierList {
                     writer.write("volatile ")
                 }
             } else {
-                if (item.deprecated && includeDeprecated) {
+                if (item.deprecated && includeDeprecated && options.compatOutput) {
                     writer.write("deprecated ")
                 }
 
@@ -396,24 +397,22 @@ interface ModifierList {
             separateLines: Boolean = false,
             filterDuplicates: Boolean = false,
             writer: Writer,
-            onlyIncludeSignatureAnnotations: Boolean = true,
-            onlyIncludeStubAnnotations: Boolean = true,
-            onlyIncludeClassRetentionAnnotations: Boolean = false
+            target: AnnotationTarget
         ) {
             val annotations = list.annotations()
+
+            // Ensure stable signature file order
+            if (annotations.size > 2) {
+                annotations.sortedBy { it.qualifiedName() }
+            }
+
             if (annotations.isNotEmpty()) {
                 var index = -1
                 for (annotation in annotations) {
                     index++
-                    if (onlyIncludeSignatureAnnotations && !annotation.isSignificantInSignatures()) {
+                    if (!annotation.targets().contains(target)) {
                         continue
-                    } else if (onlyIncludeStubAnnotations && !annotation.isSignificantInStubs()) {
-                        continue
-                    } else if (onlyIncludeClassRetentionAnnotations && !annotation.hasClassRetention() &&
-                        !options.includeSourceRetentionAnnotations
-                    ) {
-                        continue
-                    } else if ((annotation.isNonNull() || annotation.isNullable())) {
+                    } else if ((annotation.isNullnessAnnotation())) {
                         if (skipNullnessAnnotations) {
                             continue
                         }

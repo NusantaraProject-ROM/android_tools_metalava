@@ -17,14 +17,17 @@
 package com.android.tools.metalava.model.psi
 
 import com.android.tools.metalava.compatibility
+import com.android.tools.metalava.model.AnnotationRetention
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.CompilationUnit
 import com.android.tools.metalava.model.ConstructorItem
 import com.android.tools.metalava.model.FieldItem
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.PackageItem
+import com.android.tools.metalava.model.PropertyItem
 import com.android.tools.metalava.model.TypeItem
 import com.android.tools.metalava.model.TypeParameterList
+import com.android.tools.metalava.options
 import com.intellij.lang.jvm.types.JvmReferenceType
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
@@ -35,6 +38,8 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.util.PsiUtil
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.uast.UMethod
 
 open class PsiClassItem(
     override val codebase: PsiBasedCodebase,
@@ -141,6 +146,7 @@ open class PsiClassItem(
     private lateinit var interfaceTypes: List<TypeItem>
     private lateinit var constructors: List<PsiConstructorItem>
     private lateinit var methods: List<PsiMethodItem>
+    private lateinit var properties: List<PsiPropertyItem>
     private lateinit var fields: List<FieldItem>
 
     /**
@@ -154,6 +160,7 @@ open class PsiClassItem(
     override fun innerClasses(): List<PsiClassItem> = innerClasses
     override fun constructors(): List<PsiConstructorItem> = constructors
     override fun methods(): List<PsiMethodItem> = methods
+    override fun properties(): List<PropertyItem> = properties
     override fun fields(): List<FieldItem> = fields
 
     override fun toType(): TypeItem {
@@ -341,6 +348,19 @@ open class PsiClassItem(
         (methods as MutableList<PsiMethodItem>).add(method as PsiMethodItem)
     }
 
+    private var retention: AnnotationRetention? = null
+
+    override fun getRetention(): AnnotationRetention {
+        retention?.let { return it }
+
+        if (!isAnnotationType()) {
+            error("getRetention() should only be called on annotation classes")
+        }
+
+        retention = ClassItem.findRetention(this)
+        return retention!!
+    }
+
     override fun hashCode(): Int = qualifiedName.hashCode()
 
     override fun toString(): String = "class ${qualifiedName()}"
@@ -378,6 +398,16 @@ open class PsiClassItem(
 
             if (classType == ClassType.ENUM) {
                 addEnumMethods(codebase, item, psiClass, methods)
+            } else if (classType == ClassType.ANNOTATION_TYPE && !options.compatOutput &&
+                modifiers.findAnnotation("java.lang.annotation.Retention") == null
+            ) {
+                // By policy, include explicit retention policy annotation if missing
+                modifiers.addAnnotation(
+                    codebase.createAnnotation(
+                        "@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS)",
+                        item, false
+                    )
+                )
             }
 
             val constructors: MutableList<PsiConstructorItem> = ArrayList(5)
@@ -426,6 +456,30 @@ open class PsiClassItem(
             item.constructors = constructors
             item.methods = methods
             item.fields = fields
+
+            item.properties = emptyList()
+            if (isKotlin(psiClass)) {
+                // Try to initialize the Kotlin properties
+                val properties = mutableListOf<PsiPropertyItem>()
+                for (method in psiMethods) {
+                    if (method is UMethod) {
+                        if (method.modifierList.hasModifierProperty(PsiModifier.STATIC)) {
+                            // Skip extension properties
+                            continue
+                        }
+                        val sourcePsi = method.sourcePsi
+                        if (sourcePsi is KtProperty) {
+                            if (method.name.startsWith("set")) {
+                                continue
+                            }
+                            val name = sourcePsi.name ?: continue
+                            val psiType = method.returnType ?: continue
+                            properties.add(PsiPropertyItem.create(codebase, item, name, psiType, method))
+                        }
+                    }
+                }
+                item.properties = properties
+            }
 
             val psiInnerClasses = psiClass.innerClasses
             item.innerClasses = if (psiInnerClasses.isEmpty()) {

@@ -54,7 +54,6 @@ import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.javadoc.PsiDocTag
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
-import org.intellij.lang.annotations.Language
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.UastContext
 import java.io.File
@@ -652,7 +651,7 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
     private fun getFactory() = JavaPsiFacade.getElementFactory(project)
 
     override fun createAnnotation(
-        @Language("JAVA") source: String,
+        source: String,
         context: Item?,
         mapName: Boolean
     ): PsiAnnotationItem {

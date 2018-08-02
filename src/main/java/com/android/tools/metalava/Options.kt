@@ -111,6 +111,7 @@ private const val ARG_COPY_ANNOTATIONS = "--copy-annotations"
 private const val ARG_INCLUDE_ANNOTATION_CLASSES = "--include-annotation-classes"
 private const val ARG_REWRITE_ANNOTATIONS = "--rewrite-annotations"
 private const val ARG_INCLUDE_SOURCE_RETENTION = "--include-source-retention"
+private const val ARG_INCLUDE_SIG_VERSION = "--include-signature-version"
 
 class Options(
     args: Array<String>,
@@ -375,6 +376,9 @@ class Options(
 
     /** Level to include for javadoc */
     var docLevel = DocLevel.PROTECTED
+
+    /** Whether to include the signature file format version number ([SIGNATURE_FORMAT]) in signature files */
+    var includeSignatureFormatVersion: Boolean = !compatOutput
 
     /**
      * Whether to omit locations for warnings and errors. This is not a flag exposed to users
@@ -843,6 +847,10 @@ class Options(
                         compatOutput = if (arg == ARGS_COMPAT_OUTPUT)
                             true
                         else yesNo(arg.substring(ARGS_COMPAT_OUTPUT.length + 1))
+                    } else if (arg.startsWith(ARG_INCLUDE_SIG_VERSION)) {
+                        includeSignatureFormatVersion = if (arg == ARG_INCLUDE_SIG_VERSION)
+                            true
+                        else yesNo(arg.substring(ARG_INCLUDE_SIG_VERSION.length + 1))
                     } else if (arg.startsWith("-")) {
                         // Compatibility flag; map to mutable properties in the Compatibility
                         // class and assign it
@@ -986,14 +994,21 @@ class Options(
 
         if (compatOutput && outputKotlinStyleNulls) {
             throw DriverException(
-                stderr = "$ARG_OUTPUT_KOTLIN_NULLS should not be combined with " +
+                stderr = "$ARG_OUTPUT_KOTLIN_NULLS=yes should not be combined with " +
                     "$ARGS_COMPAT_OUTPUT=yes"
             )
         }
 
         if (compatOutput && outputDefaultValues) {
             throw DriverException(
-                stderr = "$ARG_OUTPUT_DEFAULT_VALUES should not be combined with " +
+                stderr = "$ARG_OUTPUT_DEFAULT_VALUES=yes should not be combined with " +
+                    "$ARGS_COMPAT_OUTPUT=yes"
+            )
+        }
+
+        if (compatOutput && includeSignatureFormatVersion) {
+            throw DriverException(
+                stderr = "$ARG_INCLUDE_SIG_VERSION=yes should not be combined with " +
                     "$ARGS_COMPAT_OUTPUT=yes"
             )
         }
@@ -1260,6 +1275,8 @@ class Options(
             "$ARG_OMIT_COMMON_PACKAGES[=yes|no]", "Skip common package prefixes like java.lang.* and " +
                 "kotlin.* in signature files, along with packages for well known annotations like @Nullable and " +
                 "@NonNull.",
+            "$ARG_INCLUDE_SIG_VERSION[=yes|no]", "Whether the signature files should include a comment listing " +
+                "the format version of the signature file.",
 
             "$ARG_PROGUARD <file>", "Write a ProGuard keep file for the API",
             "$ARG_SDK_VALUES <dir>", "Write SDK values files to the given directory",

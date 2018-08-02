@@ -22,6 +22,7 @@ import com.android.tools.lint.client.api.AnnotationLookup
 import com.android.tools.lint.detector.api.ConstantEvaluator
 import com.android.tools.metalava.doclava1.Errors
 import com.android.tools.metalava.model.AnnotationItem
+import com.android.tools.metalava.model.AnnotationTarget
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.FieldItem
@@ -189,7 +190,7 @@ class ExtractAnnotations(
                 if (annotation.isTypeDefAnnotation()) {
                     // Imported typedef
                     addItem(item, AnnotationHolder(null, annotation, null))
-                } else if (annotation.isSignificantInStubs() && !annotation.hasClassRetention() &&
+                } else if (annotation.targets().contains(AnnotationTarget.EXTERNAL_ANNOTATIONS_FILE) &&
                     !options.includeSourceRetentionAnnotations
                 ) {
                     addItem(item, AnnotationHolder(null, annotation, null))
@@ -364,7 +365,10 @@ class ExtractAnnotations(
                     if (i > 0) {
                         sb.append(',').append(' ')
                     }
-                    val type = parameterList[i].type().toTypeString().replace(" ", "")
+                    val type = parameterList[i].type().toTypeString()
+                        .replace(" ", "")
+                        .replace("?extends", "? extends ")
+                        .replace("?super", "? super ")
                     sb.append(type)
                     i++
                 }
@@ -373,11 +377,11 @@ class ExtractAnnotations(
             }
 
             is FieldItem -> {
-                return escapeXml(containingClass().qualifiedName()) + ' '.toString() + name()
+                return escapeXml(containingClass().qualifiedName()) + " " + name()
             }
 
             is ParameterItem -> {
-                return containingMethod().getExternalAnnotationSignature() + ' '.toString() + this.parameterIndex
+                return containingMethod().getExternalAnnotationSignature() + " " + this.parameterIndex
             }
         }
 
