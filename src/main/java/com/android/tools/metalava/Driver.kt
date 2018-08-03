@@ -531,12 +531,6 @@ private fun loadFromSignatureFiles(
 }
 
 private fun loadFromSources(): Codebase {
-    val projectEnvironment = createProjectEnvironment()
-
-    // Push language level to PSI handler
-    projectEnvironment.project.getComponent(LanguageLevelProjectExtension::class.java)?.languageLevel =
-        options.javaLanguageLevel
-
     progress("\nProcessing sources: ")
 
     val sources = if (options.sources.isEmpty()) {
@@ -548,28 +542,8 @@ private fun loadFromSources(): Codebase {
         options.sources
     }
 
-    val joined = mutableListOf<File>()
-    joined.addAll(options.sourcePath.map { it.absoluteFile })
-    joined.addAll(options.classpath.map { it.absoluteFile })
-    // Add in source roots implied by the source files
-    extractRoots(sources, joined)
-
-    // Create project environment with those paths
-    projectEnvironment.registerPaths(joined)
-    val project = projectEnvironment.project
-
-    val kotlinFiles = sources.filter { it.path.endsWith(SdkConstants.DOT_KT) }
-    KotlinLintAnalyzerFacade().analyze(kotlinFiles, joined, project)
-
-    val units = Extractor.createUnitsForFiles(project, sources)
-    val packageDocs = gatherHiddenPackagesFromJavaDocs(options.sourcePath)
-
     progress("\nReading Codebase: ")
-
-    val codebase = PsiBasedCodebase("Codebase loaded from source folders")
-    codebase.initialize(project, units, packageDocs)
-    codebase.manifest = options.manifest
-    codebase.apiLevel = options.currentApiLevel
+    val codebase = parseSources(sources, "Codebase loaded from source folders")
 
     progress("\nAnalyzing API: ")
 
@@ -603,6 +577,41 @@ private fun loadFromSources(): Codebase {
     progress("\nPerforming misc API checks: ")
     analyzer.performChecks()
 
+    return codebase
+}
+
+/**
+ * Returns a codebase initialized from the given Java or Kotlin source files, with the given
+ * description. The codebase will use a project environment initialized according to the current
+ * [options].
+ */
+internal fun parseSources(sources: List<File>, description: String): PsiBasedCodebase {
+    val projectEnvironment = createProjectEnvironment()
+    val project = projectEnvironment.project
+
+    // Push language level to PSI handler
+    project.getComponent(LanguageLevelProjectExtension::class.java)?.languageLevel =
+            options.javaLanguageLevel
+
+    val joined = mutableListOf<File>()
+    joined.addAll(options.sourcePath.map { it.absoluteFile })
+    joined.addAll(options.classpath.map { it.absoluteFile })
+    // Add in source roots implied by the source files
+    extractRoots(options.sources, joined)
+
+    // Create project environment with those paths
+    projectEnvironment.registerPaths(joined)
+
+    val kotlinFiles = sources.filter { it.path.endsWith(SdkConstants.DOT_KT) }
+    KotlinLintAnalyzerFacade().analyze(kotlinFiles, joined, project)
+
+    val units = Extractor.createUnitsForFiles(project, sources)
+    val packageDocs = gatherHiddenPackagesFromJavaDocs(options.sourcePath)
+
+    val codebase = PsiBasedCodebase(description)
+    codebase.initialize(project, units, packageDocs)
+    codebase.manifest = options.manifest
+    codebase.apiLevel = options.currentApiLevel
     return codebase
 }
 
