@@ -1236,8 +1236,8 @@ class Options(
 
             "$ARG_MERGE_ANNOTATIONS <file>", "An external annotations file to merge and overlay " +
                 "the sources, or a directory of such files. Formats supported are: IntelliJ's " +
-                "external annotations database format, .jar or .zip files containing those, and " +
-                "Android signature files.",
+                "external annotations database format, .jar or .zip files containing those, " +
+                "Android signature files, and Java stub files.",
 
             "$ARG_INPUT_API_JAR <file>", "A .jar file to read APIs from directly",
 

@@ -80,15 +80,23 @@ class AnnotationsMerger(
     private val codebase: Codebase
 ) {
     fun merge(mergeAnnotations: List<File>) {
-        mergeAnnotations.forEach { mergeExisting(it) }
+        val javaStubFiles = mutableListOf<File>()
+        mergeAnnotations.forEach { mergeExisting(it, javaStubFiles) }
+        mergeAnnotationsFromJavaStubFiles(javaStubFiles)
     }
 
-    private fun mergeExisting(file: File) {
+    /**
+     * Merges annotations from `file`, or from all the files under it if `file` is a directory.
+     * Exception: Java stub files are not merged by this method, instead they are added to
+     * `javaStubFiles` and should be merged by [mergeAnnotationsFromJavaStubFiles] later (so that
+     * all the Java stubs can be loaded as a single codebase).
+     */
+    private fun mergeExisting(file: File, javaStubFiles: MutableList<File>) {
         if (file.isDirectory) {
             val files = file.listFiles()
             if (files != null) {
                 for (child in files) {
-                    mergeExisting(child)
+                    mergeExisting(child, javaStubFiles)
                 }
             }
         } else if (file.isFile) {
@@ -101,6 +109,8 @@ class AnnotationsMerger(
                 } catch (e: IOException) {
                     error("Aborting: I/O problem during transform: " + e.toString())
                 }
+            } else if (file.path.endsWith(".java")) {
+                javaStubFiles.add(file)
             } else if (file.path.endsWith(".txt") ||
                 file.path.endsWith(".signatures") ||
                 file.path.endsWith(".api")
@@ -167,41 +177,52 @@ class AnnotationsMerger(
             val supportsStagedNullability = true
             val signatureCodebase = ApiFile.parseApi(File(path), kotlinStyleNulls, supportsStagedNullability)
             signatureCodebase.description = "Signature files for annotation merger: loaded from $path"
-            val visitor = object : ComparisonVisitor() {
-                override fun compare(old: Item, new: Item) {
-                    val newModifiers = new.modifiers
-                    for (annotation in old.modifiers.annotations()) {
-                        var addAnnotation = false
-                        if (annotation.isNullnessAnnotation()) {
-                            if (!newModifiers.hasNullnessInfo()) {
-                                addAnnotation = true
-                            }
-                        } else {
-                            // TODO: Check for other incompatibilities than nullness?
-                            val qualifiedName = annotation.qualifiedName() ?: continue
-                            if (newModifiers.findAnnotation(qualifiedName) == null) {
-                                addAnnotation = true
-                            }
-                        }
-
-                        if (addAnnotation) {
-                            // Don't map annotation names - this would turn newly non null back into non null
-                            new.mutableModifiers().addAnnotation(
-                                new.codebase.createAnnotation(
-                                    annotation.toSource(),
-                                    new,
-                                    mapName = false
-                                )
-                            )
-                        }
-                    }
-                }
-            }
-            CodebaseComparator().compare(visitor, signatureCodebase, codebase, ApiPredicate(signatureCodebase))
+            mergeAnnotationsFromCodebase(signatureCodebase)
         } catch (ex: ApiParseException) {
             val message = "Unable to parse signature file $path: ${ex.message}"
             throw DriverException(message)
         }
+    }
+
+    private fun mergeAnnotationsFromJavaStubFiles(sources: List<File>) {
+        // TODO: We really want to fail, or at least issue a warning, if there are errors in the sources.
+        val externalCodebase = parseSources(sources, "Codebase loaded from stubs")
+        mergeAnnotationsFromCodebase(externalCodebase)
+    }
+
+    private fun mergeAnnotationsFromCodebase(externalCodebase: Codebase) {
+        val visitor = object : ComparisonVisitor() {
+            override fun compare(old: Item, new: Item) {
+                val newModifiers = new.modifiers
+                for (annotation in old.modifiers.annotations()) {
+                    var addAnnotation = false
+                    if (annotation.isNullnessAnnotation()) {
+                        if (!newModifiers.hasNullnessInfo()) {
+                            addAnnotation = true
+                        }
+                    } else {
+                        // TODO: Check for other incompatibilities than nullness?
+                        val qualifiedName = annotation.qualifiedName() ?: continue
+                        if (newModifiers.findAnnotation(qualifiedName) == null) {
+                            addAnnotation = true
+                        }
+                    }
+
+                    if (addAnnotation) {
+                        // Don't map annotation names - this would turn newly non null back into non null
+                        new.mutableModifiers().addAnnotation(
+                                new.codebase.createAnnotation(
+                                        annotation.toSource(),
+                                        new,
+                                        mapName = false
+                                )
+                        )
+                    }
+                }
+            }
+        }
+        CodebaseComparator().compare(
+                visitor, externalCodebase, codebase, ApiPredicate(externalCodebase))
     }
 
     internal fun error(message: String) {
