@@ -18,4 +18,6 @@ package com.android.tools.metalava.model
 
 interface TypeParameterListOwner {
     fun typeParameterList(): TypeParameterList
+    /** Given a variable in this owner, resolves to a type parameter item */
+    fun resolveParameter(variable: String): TypeParameterItem?
 }

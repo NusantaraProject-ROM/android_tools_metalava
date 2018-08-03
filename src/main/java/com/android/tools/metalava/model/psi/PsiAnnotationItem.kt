@@ -28,6 +28,8 @@ import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.DefaultAnnotationItem
 import com.android.tools.metalava.model.Item
+import com.android.tools.metalava.model.psi.CodePrinter.Companion.constantToExpression
+import com.android.tools.metalava.model.psi.CodePrinter.Companion.constantToSource
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiAnnotationMemberValue
 import com.intellij.psi.PsiArrayInitializerMemberValue

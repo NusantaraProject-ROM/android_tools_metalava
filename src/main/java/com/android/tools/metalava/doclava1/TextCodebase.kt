@@ -16,6 +16,7 @@
 
 package com.android.tools.metalava.doclava1
 
+import com.android.ide.common.repository.GradleVersion
 import com.android.tools.metalava.CodebaseComparator
 import com.android.tools.metalava.ComparisonVisitor
 import com.android.tools.metalava.JAVA_LANG_ANNOTATION
@@ -58,6 +59,12 @@ class TextCodebase : DefaultCodebase() {
     override var description = "Codebase"
 
     override fun trustedApi(): Boolean = true
+
+    /**
+     * Signature file format version, if found. Type "GradleVersion" is misleading; it's just a convenient
+     * version class.
+     */
+    var format: GradleVersion = GradleVersion.parse("1.0") // not specifying format: assumed to be doclava, 1.0
 
     override fun getPackages(): PackageList {
         val list = ArrayList<PackageItem>(mPackages.values)

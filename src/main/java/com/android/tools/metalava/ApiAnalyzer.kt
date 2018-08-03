@@ -491,6 +491,8 @@ class ApiAnalyzer(
                     method.documentation
              */
             method.inheritedMethod = true
+            method.inheritedFrom = it.containingClass()
+
             // The documentation may use relative references to classes in import statements
             // in the original class, so expand the documentation to be fully qualified
             method.documentation = it.fullyQualifiedDocumentation()
