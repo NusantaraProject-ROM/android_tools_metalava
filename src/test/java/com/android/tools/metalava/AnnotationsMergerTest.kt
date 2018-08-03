@@ -171,4 +171,41 @@ class AnnotationsMergerTest : DriverTest() {
                 """
         )
     }
+
+    @Test
+    fun `Merge Java stub files`() {
+        check(
+            sourceFiles = *arrayOf(
+                    java(
+                            """
+                package test.pkg;
+
+                public interface Appendable {
+                    Appendable append(CharSequence csq) throws IOException;
+                }
+                """
+                    )
+            ),
+            compatibilityMode = false,
+            outputKotlinStyleNulls = false,
+            omitCommonPackages = false,
+            mergeJavaStubAnnotations = """
+                package test.pkg;
+
+                import libcore.util.NonNull;
+                import libcore.util.Nullable;
+
+                public interface Appendable {
+                    @NonNull Appendable append(@Nullable java.lang.CharSequence csq);
+                }
+                """,
+            api = """
+                package test.pkg {
+                  public interface Appendable {
+                    method @androidx.annotation.NonNull public test.pkg.Appendable append(@androidx.annotation.Nullable java.lang.CharSequence);
+                  }
+                }
+                """
+        )
+    }
 }
