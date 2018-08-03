@@ -193,7 +193,7 @@ class RewriteAnnotations {
     }
 
     private fun rewriteJar(file: File) {
-        val temp = File(file.name + ".temp-$PROGRAM_NAME")
+        val temp = File(file.path + ".temp-$PROGRAM_NAME")
         rewriteJar(file, temp)
         file.delete()
         temp.renameTo(file)
