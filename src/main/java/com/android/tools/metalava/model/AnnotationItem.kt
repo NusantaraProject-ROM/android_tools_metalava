@@ -127,7 +127,7 @@ interface AnnotationItem {
             qualifiedName ?: return null
 
             when (qualifiedName) {
-            // Resource annotations
+                // Resource annotations
                 "android.support.annotation.AnimRes",
                 "android.annotation.AnimRes" -> return "androidx.annotation.AnimRes"
                 "android.support.annotation.AnimatorRes",
@@ -175,7 +175,7 @@ interface AnnotationItem {
                 "android.support.annotation.XmlRes",
                 "android.annotation.XmlRes" -> return "androidx.annotation.XmlRes"
 
-            // Threading
+                // Threading
                 "android.support.annotation.AnyThread",
                 "android.annotation.AnyThread" -> return "androidx.annotation.AnyThread"
                 "android.support.annotation.BinderThread",
@@ -187,7 +187,7 @@ interface AnnotationItem {
                 "android.support.annotation.WorkerThread",
                 "android.annotation.WorkerThread" -> return "androidx.annotation.WorkerThread"
 
-            // Colors
+                // Colors
                 "android.support.annotation.ColorInt",
                 "android.annotation.ColorInt" -> return "androidx.annotation.ColorInt"
                 "android.support.annotation.ColorLong",
@@ -195,7 +195,7 @@ interface AnnotationItem {
                 "android.support.annotation.HalfFloat",
                 "android.annotation.HalfFloat" -> return "androidx.annotation.HalfFloat"
 
-            // Ranges and sizes
+                // Ranges and sizes
                 "android.support.annotation.FloatRange",
                 "android.annotation.FloatRange" -> return "androidx.annotation.FloatRange"
                 "android.support.annotation.IntRange",
@@ -207,7 +207,7 @@ interface AnnotationItem {
                 "android.support.annotation.Dimension",
                 "android.annotation.Dimension" -> return "androidx.annotation.Dimension"
 
-            // Null
+                // Null
                 "android.support.annotation.NonNull",
                 "android.annotation.NonNull" -> return "androidx.annotation.NonNull"
                 "android.support.annotation.Nullable",
@@ -217,7 +217,7 @@ interface AnnotationItem {
                 "org.jetbrains.annotations.NotNull" -> return "androidx.annotation.NonNull"
                 "org.jetbrains.annotations.Nullable" -> return "androidx.annotation.Nullable"
 
-            // Typedefs
+                // Typedefs
                 "android.support.annotation.IntDef",
                 "android.annotation.IntDef" -> return "androidx.annotation.IntDef"
                 "android.support.annotation.StringDef",
@@ -225,7 +225,7 @@ interface AnnotationItem {
                 "android.support.annotation.LongDef",
                 "android.annotation.LongDef" -> return "androidx.annotation.LongDef"
 
-            // Misc
+                // Misc
                 "android.support.annotation.CallSuper",
                 "android.annotation.CallSuper" -> return "androidx.annotation.CallSuper"
                 "android.support.annotation.CheckResult",
@@ -235,7 +235,7 @@ interface AnnotationItem {
                 "android.annotation.RequiresPermission.Read" -> return "androidx.annotation.RequiresPermission.Read"
                 "android.annotation.RequiresPermission.Write" -> return "androidx.annotation.RequiresPermission.Write"
 
-            // These aren't support annotations, but could/should be:
+                // These aren't support annotations, but could/should be:
                 "android.annotation.CurrentTimeMillisLong",
                 "android.annotation.DurationMillisLong",
                 "android.annotation.ElapsedRealtimeLong",
@@ -266,36 +266,36 @@ interface AnnotationItem {
                     }
                 }
 
-            // Included for analysis, but should not be exported:
+                // Included for analysis, but should not be exported:
                 "android.annotation.BroadcastBehavior",
                 "android.annotation.SdkConstant",
                 "android.annotation.RequiresFeature",
                 "android.annotation.SystemService" -> return qualifiedName
 
-            // Should not be mapped to a different package name:
+                // Should not be mapped to a different package name:
                 "android.annotation.TargetApi",
                 "android.annotation.SuppressLint" -> return qualifiedName
 
-            // We only change recently/newly nullable annotation if the codebase supports it
+                // We only change recently/newly nullable annotation if the codebase supports it
                 RECENTLY_NULLABLE -> return if (codebase.supportsStagedNullability) qualifiedName else "androidx.annotation.Nullable"
                 RECENTLY_NONNULL -> return if (codebase.supportsStagedNullability) qualifiedName else "androidx.annotation.NonNull"
 
                 else -> {
                     // Some new annotations added to the platform: assume they are support annotations?
                     return when {
-                    // Special Kotlin annotations recognized by the compiler: map to supported package name
+                        // Special Kotlin annotations recognized by the compiler: map to supported package name
                         qualifiedName.endsWith(".ParameterName") || qualifiedName.endsWith(".DefaultValue") ->
                             "kotlin.annotations.jvm.internal${qualifiedName.substring(qualifiedName.lastIndexOf('.'))}"
 
-                    // Other third party nullness annotations?
+                        // Other third party nullness annotations?
                         isNullableAnnotation(qualifiedName) -> "androidx.annotation.Nullable"
                         isNonNullAnnotation(qualifiedName) -> "androidx.annotation.NonNull"
 
-                    // Support library annotations are all included, as is the built-in stuff like @Retention
+                        // Support library annotations are all included, as is the built-in stuff like @Retention
                         qualifiedName.startsWith(ANDROIDX_ANNOTATION_PREFIX) -> return qualifiedName
                         qualifiedName.startsWith(JAVA_LANG_PREFIX) -> return qualifiedName
 
-                    // Unknown Android platform annotations
+                        // Unknown Android platform annotations
                         qualifiedName.startsWith("android.annotation.") -> {
                             // Remove, unless specifically included in --showAnnotations
                             return if (options.showAnnotations.contains(qualifiedName)) {
@@ -338,9 +338,9 @@ interface AnnotationItem {
             val qualifiedName = annotation.qualifiedName() ?: return NO_ANNOTATION_TARGETS
             when (qualifiedName) {
 
-            // The typedef annotations are special: they should not be in the signature
-            // files, but we want to include them in the external annotations file such that tools
-            // can enforce them.
+                // The typedef annotations are special: they should not be in the signature
+                // files, but we want to include them in the external annotations file such that tools
+                // can enforce them.
                 "android.support.annotation.IntDef",
                 "android.annotation.IntDef",
                 "androidx.annotation.IntDef",
@@ -351,16 +351,16 @@ interface AnnotationItem {
                 "android.annotation.LongDef",
                 "androidx.annotation.LongDef" -> return ANNOTATION_EXTERNAL_ONLY
 
-            // Skip known annotations that we (a) never want in external annotations and (b) we are
-            // specially overwriting anyway in the stubs (and which are (c) not API significant)
+                // Skip known annotations that we (a) never want in external annotations and (b) we are
+                // specially overwriting anyway in the stubs (and which are (c) not API significant)
                 "java.lang.annotation.Native",
                 "java.lang.SuppressWarnings",
                 "java.lang.Deprecated", // tracked separately as a pseudo-modifier
                 "java.lang.Override" -> return NO_ANNOTATION_TARGETS
 
-            // Below this when-statement we perform the correct lookup: check API predicate, and check
-            // that retention is class or runtime, but we've hardcoded the answers here
-            // for some common annotations.
+                // Below this when-statement we perform the correct lookup: check API predicate, and check
+                // that retention is class or runtime, but we've hardcoded the answers here
+                // for some common annotations.
 
                 "android.view.ViewDebug.ExportedProperty",
                 "android.widget.RemoteViews.RemoteView",
@@ -448,7 +448,7 @@ interface AnnotationItem {
          */
         fun unshortenAnnotation(source: String): String {
             return when {
-            // These 3 annotations are in the android.annotation. package, not android.support.annotation
+                // These 3 annotations are in the android.annotation. package, not android.support.annotation
                 source.startsWith("@SystemService") ||
                     source.startsWith("@TargetApi") ||
                     source.startsWith("@SuppressLint") ->
