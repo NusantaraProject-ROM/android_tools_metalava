@@ -922,6 +922,23 @@ public class ApiFile {
             String defaultValue = TextParameterItemKt.NO_DEFAULT_VALUE;
             if ("=".equals(token)) {
                 defaultValue = tokenizer.requireToken(true);
+                if (defaultValue.equals("{")) {
+                    StringBuilder sb = new StringBuilder(defaultValue);
+                    int balance = 1;
+                    while (balance  > 0) {
+                        token = tokenizer.requireToken(false, false);
+                        sb.append(token);
+                        if (token.equals("{")) {
+                            balance++;
+                        } else if (token.equals("}")) {
+                            balance--;
+                            if (balance == 0) {
+                                break;
+                            }
+                        }
+                    }
+                    defaultValue = sb.toString();
+                }
                 token = tokenizer.requireToken();
             }
 
@@ -1049,7 +1066,11 @@ public class ApiFile {
         }
 
         public String requireToken(boolean parenIsSep) throws ApiParseException {
-            final String token = getToken(parenIsSep);
+            return requireToken(parenIsSep, true);
+        }
+
+        public String requireToken(boolean parenIsSep, boolean eatWhitespace) throws ApiParseException {
+            final String token = getToken(parenIsSep, eatWhitespace);
             if (token != null) {
                 return token;
             } else {
@@ -1070,7 +1091,13 @@ public class ApiFile {
         }
 
         public String getToken(boolean parenIsSep) throws ApiParseException {
-            eatWhitespaceAndComments();
+            return getToken(parenIsSep, true);
+        }
+
+        public String getToken(boolean parenIsSep, boolean eatWhitespace) throws ApiParseException {
+            if (eatWhitespace) {
+                eatWhitespaceAndComments();
+            }
             if (mPos >= mBuf.length) {
                 return null;
             }
