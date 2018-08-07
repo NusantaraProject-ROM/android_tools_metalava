@@ -43,6 +43,27 @@ class ApiFromTextTest : DriverTest() {
     }
 
     @Test
+    fun `Handle lambas as default values`() {
+        val source = """
+            // Signature format: 2.0
+            package androidx.collection {
+              public final class LruCacheKt {
+                ctor public LruCacheKt();
+                method public static <K, V> androidx.collection.LruCache<K,V> lruCache(int maxSize, kotlin.jvm.functions.Function2<? super K,? super V,java.lang.Integer> sizeOf = { _, _ -> 1 }, kotlin.jvm.functions.Function1<? super K,? extends V> create = { null as V? }, kotlin.jvm.functions.Function4<? super java.lang.Boolean,? super K,? super V,? super V,kotlin.Unit> onEntryRemoved = { _, _, _, _ -> });
+              }
+            }
+        """
+
+        check(
+            compatibilityMode = false,
+            inputKotlinStyleNulls = true,
+            signatureSource = source,
+            includeSignatureVersion = true,
+            api = source
+        )
+    }
+
+    @Test
     fun `Annotation signatures requiring more complicated token matching`() {
         val source = """
                 package test {
