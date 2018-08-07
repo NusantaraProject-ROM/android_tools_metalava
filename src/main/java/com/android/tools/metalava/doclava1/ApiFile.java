@@ -922,10 +922,10 @@ public class ApiFile {
             String defaultValue = TextParameterItemKt.NO_DEFAULT_VALUE;
             if ("=".equals(token)) {
                 defaultValue = tokenizer.requireToken(true);
+                StringBuilder sb = new StringBuilder(defaultValue);
                 if (defaultValue.equals("{")) {
-                    StringBuilder sb = new StringBuilder(defaultValue);
                     int balance = 1;
-                    while (balance  > 0) {
+                    while (balance > 0) {
                         token = tokenizer.requireToken(false, false);
                         sb.append(token);
                         if (token.equals("{")) {
@@ -937,9 +937,27 @@ public class ApiFile {
                             }
                         }
                     }
-                    defaultValue = sb.toString();
+                    token = tokenizer.requireToken();
+                } else {
+                    int balance = defaultValue.equals("(") ? 1 : 0;
+                    while (true) {
+                        token = tokenizer.requireToken(true, false);
+                        if (token.endsWith(",") || token.endsWith(")") && balance <= 0)  {
+                            if (token.length() > 1) {
+                                sb.append(token.substring(0, token.length() - 1));
+                                token = Character.toString(token.charAt(token.length() - 1));
+                            }
+                            break;
+                        }
+                        sb.append(token);
+                        if (token.equals("(")) {
+                            balance++;
+                        } else if (token.equals(")")) {
+                            balance--;
+                        }
+                    }
                 }
-                token = tokenizer.requireToken();
+                defaultValue = sb.toString();
             }
 
             if (",".equals(token)) {
