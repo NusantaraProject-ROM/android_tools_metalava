@@ -603,7 +603,7 @@ internal fun parseSources(sources: List<File>, description: String): PsiBasedCod
     projectEnvironment.registerPaths(joined)
 
     val kotlinFiles = sources.filter { it.path.endsWith(SdkConstants.DOT_KT) }
-    KotlinLintAnalyzerFacade().analyze(kotlinFiles, joined, project)
+    val trace = KotlinLintAnalyzerFacade().analyze(kotlinFiles, joined, project)
 
     val units = Extractor.createUnitsForFiles(project, sources)
     val packageDocs = gatherHiddenPackagesFromJavaDocs(options.sourcePath)
@@ -612,6 +612,7 @@ internal fun parseSources(sources: List<File>, description: String): PsiBasedCod
     codebase.initialize(project, units, packageDocs)
     codebase.manifest = options.manifest
     codebase.apiLevel = options.currentApiLevel
+    codebase.bindingContext = trace.bindingContext
     return codebase
 }
 
@@ -637,7 +638,7 @@ private fun loadFromJarFile(apiJar: File, manifest: File? = null): Codebase {
     projectEnvironment.registerPaths(listOf(apiJar))
 
     val kotlinFiles = emptyList<File>()
-    KotlinLintAnalyzerFacade().analyze(kotlinFiles, listOf(apiJar), project)
+    val trace = KotlinLintAnalyzerFacade().analyze(kotlinFiles, listOf(apiJar), project)
 
     val codebase = PsiBasedCodebase()
     codebase.description = "Codebase loaded from $apiJar"
@@ -647,6 +648,7 @@ private fun loadFromJarFile(apiJar: File, manifest: File? = null): Codebase {
     }
     val analyzer = ApiAnalyzer(codebase)
     analyzer.mergeExternalAnnotations()
+    codebase.bindingContext = trace.bindingContext
     return codebase
 }
 

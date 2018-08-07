@@ -16,7 +16,6 @@
 
 package com.android.tools.metalava.model.psi
 
-import com.android.tools.metalava.ExtractAnnotations
 import com.android.tools.metalava.compatibility
 import com.android.tools.metalava.model.AnnotationTarget
 import com.android.tools.metalava.model.ClassItem
@@ -218,7 +217,7 @@ open class PsiMethodItem(
         if (psiMethod is PsiAnnotationMethod) {
             val value = psiMethod.defaultValue
             if (value != null) {
-                return ExtractAnnotations.toSourceExpression(value, this)
+                return toSourceExpression(value, this)
             }
         }
 

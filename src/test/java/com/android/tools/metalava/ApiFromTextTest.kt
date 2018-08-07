@@ -45,11 +45,43 @@ class ApiFromTextTest : DriverTest() {
     @Test
     fun `Handle lambas as default values`() {
         val source = """
-            // Signature format: 2.0
+            // Signature format: $SIGNATURE_FORMAT
             package androidx.collection {
               public final class LruCacheKt {
                 ctor public LruCacheKt();
                 method public static <K, V> androidx.collection.LruCache<K,V> lruCache(int maxSize, kotlin.jvm.functions.Function2<? super K,? super V,java.lang.Integer> sizeOf = { _, _ -> 1 }, kotlin.jvm.functions.Function1<? super K,? extends V> create = { null as V? }, kotlin.jvm.functions.Function4<? super java.lang.Boolean,? super K,? super V,? super V,kotlin.Unit> onEntryRemoved = { _, _, _, _ -> });
+              }
+            }
+        """
+
+        check(
+            compatibilityMode = false,
+            inputKotlinStyleNulls = true,
+            signatureSource = source,
+            includeSignatureVersion = true,
+            api = source
+        )
+    }
+
+    @Test
+    fun `Handle complex expressions as default values`() {
+        val source = """
+            // Signature format: $SIGNATURE_FORMAT
+            package androidx.paging {
+              public final class PagedListConfigKt {
+                ctor public PagedListConfigKt();
+                method public static androidx.paging.PagedList.Config Config(int pageSize, int prefetchDistance = pageSize, boolean enablePlaceholders = true, int initialLoadSizeHint = pageSize * PagedList.Config.Builder.DEFAULT_INITIAL_PAGE_MULTIPLIER, int maxSize = PagedList.Config.MAX_SIZE_UNBOUNDED);
+              }
+              public final class PagedListKt {
+                ctor public PagedListKt();
+                method public static <Key, Value> androidx.paging.PagedList<Value> PagedList(androidx.paging.DataSource<Key,Value> dataSource, androidx.paging.PagedList.Config config, java.util.concurrent.Executor notifyExecutor, java.util.concurrent.Executor fetchExecutor, androidx.paging.PagedList.BoundaryCallback<Value>? boundaryCallback = null, Key? initialKey = null);
+              }
+            }
+            package test.pkg {
+              public final class Foo {
+                ctor public Foo();
+                method public void method1(int p = 42, Integer? int2 = null, int p1 = 42, String str = "hello world", java.lang.String... args);
+                method public void method2(int p, int int2 = (2 * int) * some.other.pkg.Constants.Misc.SIZE);
               }
             }
         """

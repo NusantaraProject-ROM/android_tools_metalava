@@ -232,8 +232,7 @@ class KotlinInteropChecks {
         if (parameters.isNotEmpty() && method.isJava()) {
             // Public java parameter names should also not use Kotlin keywords as names
             for (parameter in parameters) {
-                val defaultValue = parameter.defaultValue()
-                if (defaultValue != null) {
+                if (parameter.hasDefaultValue()) {
                     haveDefault = true
                     break
                 }
