@@ -155,9 +155,32 @@ class ApiFileTest : DriverTest() {
                 kotlin(
                     """
                     package test.pkg
+                    import some.other.pkg.Constants.Misc.SIZE
 
                     class Foo {
-                        fun error(int: Int = 42, int2: Int? = null, byte: Int = 42, vararg args: String) { }
+                        fun method1(int: Int = 42,
+                            int2: Int? = null,
+                            byte: Int = 2 * 21,
+                            str: String = "hello " + "world",
+                            vararg args: String) { }
+
+                        fun method2(int: Int, int2: Int = (2*int) * SIZE) { }
+
+                        fun method3(str: String, int: Int, int2: Int = double(int) + str.length) { }
+
+                        companion object {
+                            fun double(int: Int) = 2 * int
+                        }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package some.other.pkg;
+                    public class Constants {
+                        public static class Misc {
+                            public static final int SIZE = 5;
+                        }
                     }
                     """
                 )
@@ -167,11 +190,17 @@ class ApiFileTest : DriverTest() {
                 package test.pkg {
                   public final class Foo {
                     ctor public Foo();
-                    method public void error(int p = 42, Integer? int2 = null, int p1 = 42, java.lang.String... args);
+                    method public void method1(int p = 42, Integer? int2 = null, int p1 = 42, String str = "hello world", java.lang.String... args);
+                    method public void method2(int p, int int2 = (2 * int) * some.other.pkg.Constants.Misc.SIZE);
+                    method public void method3(String str, int p, int int2 = double(int) + str.length);
+                    field public static final test.pkg.Foo.Companion! Companion;
+                  }
+                  public static final class Foo.Companion {
+                    method public int double(int p);
                   }
                 }
                 """,
-            extraArguments = arrayOf("--hide-package", "androidx.annotation"),
+            extraArguments = arrayOf("--hide-package", "androidx.annotation", "--hide-package", "some.other.pkg"),
             includeSignatureVersion = true,
             checkDoclava1 = false /* doesn't support default Values */
         )

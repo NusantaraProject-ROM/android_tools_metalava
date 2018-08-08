@@ -19,10 +19,14 @@ package com.android.tools.metalava.model.psi
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.ParameterItem
 import com.android.tools.metalava.model.TypeItem
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiParameter
+import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UastContext
 import org.jetbrains.uast.kotlin.declarations.KotlinUMethod
 
 class PsiParameterItem(
@@ -62,7 +66,7 @@ class PsiParameterItem(
 
     override fun hasDefaultValue(): Boolean {
         return if (isKotlin(psiParameter)) {
-            getKtParameter()?.hasDefaultValue() ?: false
+            getKtParameter()?.hasDefaultValue() ?: false && defaultValue() != INVALID_VALUE
         } else {
             // Java: Look for @ParameterName annotation
             modifiers.annotations().any { it.isDefaultValue() }
@@ -107,14 +111,46 @@ class PsiParameterItem(
         return null
     }
 
+    private var defaultValue: String? = null
+
     override fun defaultValue(): String? {
+        if (defaultValue == null) {
+            defaultValue = computeDefaultValue()
+        }
+        return defaultValue
+    }
+
+    private fun computeDefaultValue(): String? {
         if (isKotlin(psiParameter)) {
             val ktParameter = getKtParameter() ?: return null
             if (ktParameter.hasDefaultValue()) {
-                return ktParameter.defaultValue?.text
+                val defaultValue = ktParameter.defaultValue ?: return null
+                if (defaultValue is KtConstantExpression) {
+                    return defaultValue.text
+                }
+
+                val uastContext = ServiceManager.getService(psiParameter.project, UastContext::class.java)
+                    ?: error("UastContext not found")
+                val defaultExpression: UExpression = uastContext.convertElement(
+                    defaultValue, null,
+                    UExpression::class.java
+                ) as? UExpression ?: return INVALID_VALUE
+                val constant = defaultExpression.evaluate()
+                if (constant != null) {
+                    return constantToSource(constant)
+                } else {
+                    // Expression: Compute from UAST rather than just using the source text
+                    // such that we can ensure references are fully qualified etc.
+                    return toSourceString(
+                        value = defaultExpression,
+                        inlineFieldValues = true,
+                        skipUnknown = false,
+                        inlineConstants = true
+                    )
+                }
             }
 
-            return null
+            return INVALID_VALUE
         } else {
             // Java: Look for @ParameterName annotation
             val annotation = modifiers.annotations().firstOrNull { it.isDefaultValue() }
@@ -192,5 +228,11 @@ class PsiParameterItem(
         ): List<PsiParameterItem> {
             return original.map { create(codebase, it as PsiParameterItem) }
         }
+
+        /**
+         * Private marker return value from [#computeDefaultValue] signifying that the parameter
+         * has a default value but we were unable to compute a suitable static string representation for it
+         */
+        private const val INVALID_VALUE = "__invalid_value__"
     }
 }

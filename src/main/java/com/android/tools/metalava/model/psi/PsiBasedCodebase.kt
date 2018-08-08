@@ -54,6 +54,7 @@ import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.javadoc.PsiDocTag
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.UastContext
 import java.io.File
@@ -70,6 +71,8 @@ const val METHOD_ESTIMATE = 1000
 
 open class PsiBasedCodebase(override var description: String = "Unknown") : DefaultCodebase() {
     lateinit var project: Project
+
+    var bindingContext: BindingContext? = null
 
     /** Map from class name to class item */
     protected val classMap: MutableMap<String, PsiClassItem> = HashMap(CLASS_ESTIMATE)

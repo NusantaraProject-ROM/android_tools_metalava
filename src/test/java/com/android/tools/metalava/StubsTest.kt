@@ -3118,7 +3118,7 @@ class StubsTest : DriverTest() {
                     method public abstract boolean hasAdjacentMapping() default false;
                     method public abstract int integer() default 1;
                     method public abstract double large_floating() default 1.0;
-                    method public abstract long large_integer() default 1;
+                    method public abstract long large_integer() default 1L;
                     method public abstract char letter() default 'a';
                     method public abstract char[]! letters1() default {};
                     method public abstract char[]! letters2() default {'a', 'b', 'c'};
@@ -3169,7 +3169,7 @@ class StubsTest : DriverTest() {
                 public test.pkg.ExportedProperty.InnerAnnotation value() default @test.pkg.ExportedProperty.InnerAnnotation;
                 public char letter() default 'a';
                 public int integer() default 1;
-                public long large_integer() default 1;
+                public long large_integer() default 1L;
                 public float floating() default 1.0f;
                 public double large_floating() default 1.0;
                 public byte small() default 1;
