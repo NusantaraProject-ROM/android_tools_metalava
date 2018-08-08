@@ -19,7 +19,6 @@ package com.android.tools.metalava
 import com.android.SdkConstants
 import com.android.tools.lint.annotations.Extractor
 import com.android.tools.lint.client.api.AnnotationLookup
-import com.android.tools.lint.detector.api.ConstantEvaluator
 import com.android.tools.metalava.doclava1.Errors
 import com.android.tools.metalava.model.AnnotationItem
 import com.android.tools.metalava.model.AnnotationTarget
@@ -31,37 +30,24 @@ import com.android.tools.metalava.model.MemberItem
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.PackageItem
 import com.android.tools.metalava.model.ParameterItem
-import com.android.tools.metalava.model.canonicalizeFloatingPointString
-import com.android.tools.metalava.model.javaEscapeString
 import com.android.tools.metalava.model.psi.PsiAnnotationItem
 import com.android.tools.metalava.model.psi.PsiClassItem
+import com.android.tools.metalava.model.psi.toSourceString
 import com.android.tools.metalava.model.visitors.ApiVisitor
-import com.android.utils.XmlUtils
 import com.google.common.base.Charsets
 import com.google.common.xml.XmlEscapers
 import com.intellij.psi.PsiAnnotation
-import com.intellij.psi.PsiAnnotationMemberValue
-import com.intellij.psi.PsiArrayInitializerMemberValue
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiClassObjectAccessExpression
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
-import com.intellij.psi.PsiLiteral
 import com.intellij.psi.PsiNameValuePair
-import com.intellij.psi.PsiReference
-import com.intellij.psi.PsiTypeCastExpression
 import org.jetbrains.uast.UAnnotation
-import org.jetbrains.uast.UBinaryExpressionWithType
-import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.ULiteralExpression
 import org.jetbrains.uast.UNamedExpression
 import org.jetbrains.uast.UReferenceExpression
 import org.jetbrains.uast.UastEmptyExpression
 import org.jetbrains.uast.java.JavaUAnnotation
 import org.jetbrains.uast.java.expressions.JavaUAnnotationCallExpression
-import org.jetbrains.uast.util.isArrayInitializer
-import org.jetbrains.uast.util.isTypeCast
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -508,126 +494,28 @@ class ExtractAnnotations(
         writer.println("    </annotation>")
     }
 
-    private fun attributeString(value: UExpression?, inlineConstants: Boolean): String? {
-        value ?: return null
-        val sb = StringBuilder()
-        return if (appendExpression(sb, value, inlineConstants)) {
-            sb.toString()
-        } else {
-            null
-        }
-    }
-
-    private fun appendExpression(
-        sb: StringBuilder,
-        expression: UExpression,
+    private fun attributeString(
+        value: UExpression?,
         inlineConstants: Boolean
-    ): Boolean {
-        if (expression.isArrayInitializer()) {
-            val call = expression as UCallExpression
-            val initializers = call.valueArguments
-            sb.append('{')
-            var first = true
-            val initialLength = sb.length
-            for (e in initializers) {
-                val length = sb.length
-                if (first) {
-                    first = false
+    ): String? {
+        return toSourceString(value = value, inlineFieldValues = inlineConstants,
+            inlineConstants = inlineConstants, skipUnknown = true, filterFields = { fieldName, qualifiedName ->
+                val cls = codebase.findClass(qualifiedName)
+                val fld = cls?.findField(fieldName, true)
+                if (fld == null || !filterReference.test(fld)) {
+                    // This field is not visible: remove from typedef
+                    if (fld != null) {
+                        reporter.report(
+                            Errors.HIDDEN_TYPEDEF_CONSTANT, fld,
+                            "Typedef class references hidden field $fld: removed from typedef metadata"
+                        )
+                    }
+                    false
                 } else {
-                    sb.append(", ")
+                    true
                 }
-                val appended = appendExpression(sb, e, inlineConstants)
-                if (!appended) {
-                    // trunk off comma if it bailed for some reason (e.g. constant
-                    // filtered out by API etc)
-                    sb.setLength(length)
-                    if (length == initialLength) {
-                        first = true
-                    }
-                }
-            }
-            sb.append('}')
-            return sb.length != 2
-        } else if (expression is UReferenceExpression) {
-            val resolved = expression.resolve()
-            if (resolved is PsiField) {
-                val field = resolved as PsiField?
-                if (!inlineConstants) {
-                    // Inline constants
-                    val value = field!!.computeConstantValue()
-                    if (appendLiteralValue(sb, value)) {
-                        return true
-                    }
-                }
-
-                val declaringClass = field!!.containingClass
-                if (declaringClass == null) {
-                    error("No containing class found for " + field.name)
-                    return false
-                }
-                val qualifiedName = declaringClass.qualifiedName
-                val fieldName = field.name
-
-                if (qualifiedName != null) {
-                    val cls = codebase.findClass(qualifiedName)
-                    val fld = cls?.findField(fieldName, true)
-                    if (fld == null || !filterReference.test(fld)) {
-                        // This field is not visible: remove from typedef
-                        if (fld != null) {
-                            reporter.report(
-                                Errors.HIDDEN_TYPEDEF_CONSTANT, fld,
-                                "Typedef class references hidden field $fld: removed from typedef metadata"
-                            )
-                        }
-                        return false
-                    }
-                    sb.append(qualifiedName)
-                    sb.append('.')
-                    sb.append(fieldName)
-                    return true
-                }
-                return false
-            } else {
-                warning("Unexpected reference to $expression")
-                return false
-            }
-        } else if (expression is ULiteralExpression) {
-            val literalValue = expression.value
-            if (appendLiteralValue(sb, literalValue)) {
-                return true
-            }
-        } else if (expression is UBinaryExpressionWithType) {
-            if ((expression).isTypeCast()) {
-                val operand = expression.operand
-                return appendExpression(sb, operand, inlineConstants)
-            }
-            return false
-        }
-
-        // For example, binary expressions like 3 + 4
-        val literalValue = ConstantEvaluator.evaluate(null, expression)
-        if (literalValue != null) {
-            if (appendLiteralValue(sb, literalValue)) {
-                return true
-            }
-        }
-
-        warning("Unexpected annotation expression of type ${expression.javaClass} and is $expression")
-
-        return false
-    }
-
-    private fun appendLiteralValue(sb: StringBuilder, literalValue: Any?): Boolean {
-        if (literalValue is Number || literalValue is Boolean) {
-            sb.append(literalValue.toString())
-            return true
-        } else if (literalValue is String || literalValue is Char) {
-            sb.append('"')
-            XmlUtils.appendXmlAttributeValue(sb, literalValue.toString())
-            sb.append('"')
-            return true
-        }
-        return false
+            }, warning = { warning(it) }
+        )
     }
 
     private fun isInlinedConstant(annotationItem: AnnotationItem): Boolean {
@@ -643,134 +531,5 @@ class ExtractAnnotations(
 
     private fun error(string: String) {
         reporter.report(Severity.WARNING, null as PsiElement?, string, Errors.ANNOTATION_EXTRACTION)
-    }
-
-    companion object {
-        /** Given an annotation member value, returns the corresponding Java source expression */
-        fun toSourceExpression(value: PsiAnnotationMemberValue, owner: Item): String {
-            val sb = StringBuilder()
-            appendSourceExpression(value, sb, owner)
-            return sb.toString()
-        }
-
-        private fun appendSourceExpression(value: PsiAnnotationMemberValue, sb: StringBuilder, owner: Item): Boolean {
-            if (value is PsiReference) {
-                val resolved = value.resolve()
-                if (resolved is PsiField) {
-                    sb.append(resolved.containingClass?.qualifiedName).append('.').append(resolved.name)
-                    return true
-                }
-            } else if (value is PsiLiteral) {
-                return appendSourceLiteral(value.value, sb, owner)
-            } else if (value is PsiClassObjectAccessExpression) {
-                sb.append(value.operand.type.canonicalText).append(".class")
-                return true
-            } else if (value is PsiArrayInitializerMemberValue) {
-                sb.append('{')
-                var first = true
-                val initialLength = sb.length
-                for (e in value.initializers) {
-                    val length = sb.length
-                    if (first) {
-                        first = false
-                    } else {
-                        sb.append(", ")
-                    }
-                    val appended = appendSourceExpression(e, sb, owner)
-                    if (!appended) {
-                        // trunk off comma if it bailed for some reason (e.g. constant
-                        // filtered out by API etc)
-                        sb.setLength(length)
-                        if (length == initialLength) {
-                            first = true
-                        }
-                    }
-                }
-                sb.append('}')
-                return true
-            } else if (value is PsiAnnotation) {
-                sb.append('@').append(value.qualifiedName)
-                return true
-            } else {
-                if (value is PsiTypeCastExpression) {
-                    val type = value.castType?.type
-                    val operand = value.operand
-                    if (type != null && operand is PsiAnnotationMemberValue) {
-                        sb.append('(')
-                        sb.append(type.canonicalText)
-                        sb.append(')')
-                        return appendSourceExpression(operand, sb, owner)
-                    }
-                }
-                val constant = ConstantEvaluator.evaluate(null, value)
-                if (constant != null) {
-                    return appendSourceLiteral(constant, sb, owner)
-                }
-            }
-            reporter.report(Errors.INTERNAL_ERROR, owner, "Unexpected annotation default value $value")
-            return false
-        }
-
-        private fun appendSourceLiteral(v: Any?, sb: StringBuilder, owner: Item): Boolean {
-            if (v == null) {
-                sb.append("null")
-                return true
-            }
-            when (v) {
-                is Int, is Long, is Boolean, is Byte, is Short -> {
-                    sb.append(v.toString())
-                    return true
-                }
-                is String -> {
-                    sb.append('"').append(javaEscapeString(v)).append('"')
-                    return true
-                }
-                is Float -> {
-                    return when (v) {
-                        Float.POSITIVE_INFINITY -> {
-                            // This convention (displaying fractions) is inherited from doclava
-                            sb.append("(1.0f/0.0f)"); true
-                        }
-                        Float.NEGATIVE_INFINITY -> {
-                            sb.append("(-1.0f/0.0f)"); true
-                        }
-                        Float.NaN -> {
-                            sb.append("(0.0f/0.0f)"); true
-                        }
-                        else -> {
-                            sb.append(canonicalizeFloatingPointString(v.toString()) + "f")
-                            true
-                        }
-                    }
-                }
-                is Double -> {
-                    return when (v) {
-                        Double.POSITIVE_INFINITY -> {
-                            // This convention (displaying fractions) is inherited from doclava
-                            sb.append("(1.0/0.0)"); true
-                        }
-                        Double.NEGATIVE_INFINITY -> {
-                            sb.append("(-1.0/0.0)"); true
-                        }
-                        Double.NaN -> {
-                            sb.append("(0.0/0.0)"); true
-                        }
-                        else -> {
-                            sb.append(canonicalizeFloatingPointString(v.toString()))
-                            true
-                        }
-                    }
-                }
-                is Char -> {
-                    sb.append('\'').append(javaEscapeString(v.toString())).append('\'')
-                    return true
-                }
-                else -> {
-                    reporter.report(Errors.INTERNAL_ERROR, owner, "Unexpected literal value $v")
-                }
-            }
-
-            return false
-        }
     }
 }
