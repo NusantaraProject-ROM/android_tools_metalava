@@ -28,6 +28,7 @@ import com.android.utils.XmlUtils
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiAnnotationMemberValue
 import com.intellij.psi.PsiArrayInitializerMemberValue
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassObjectAccessExpression
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
@@ -35,6 +36,7 @@ import com.intellij.psi.PsiLiteral
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiTypeCastExpression
 import com.intellij.psi.PsiVariable
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UBinaryExpression
 import org.jetbrains.uast.UBinaryExpressionWithType
@@ -46,6 +48,7 @@ import org.jetbrains.uast.ULiteralExpression
 import org.jetbrains.uast.UReferenceExpression
 import org.jetbrains.uast.UUnaryExpression
 import org.jetbrains.uast.util.isArrayInitializer
+import org.jetbrains.uast.util.isConstructorCall
 import org.jetbrains.uast.util.isTypeCast
 import java.util.function.Predicate
 
@@ -292,7 +295,13 @@ open class CodePrinter(
                     }
                 }
 
-                sb.append(" }")
+                // Special case: Turn empty lambda {  } into {}
+                if (sb.length > 2) {
+                    sb.append(' ')
+                } else {
+                    sb.setLength(1)
+                }
+                sb.append('}')
                 return true
             } else {
                 if (appendExpression(sb, body)) {
@@ -314,6 +323,28 @@ open class CodePrinter(
                 }
             }
             sb.append('}')
+            return true
+        } else if (expression.isConstructorCall()) {
+            val call = expression as UCallExpression
+            val resolved = call.classReference?.resolve()
+            if (resolved is PsiClass) {
+                sb.append(resolved.qualifiedName)
+            } else {
+                sb.append(call.classReference?.resolvedName)
+            }
+            sb.append('(')
+            var first = true
+            for (arg in call.valueArguments) {
+                if (first) {
+                    first = false
+                } else {
+                    sb.append(", ")
+                }
+                if (!appendExpression(sb, arg)) {
+                    return false
+                }
+            }
+            sb.append(')')
             return true
         } else {
             sb.append(expression.asSourceString())
@@ -396,6 +427,13 @@ open class CodePrinter(
                 }
                 is Char -> {
                     return String.format("'%s'", javaEscapeString(value.toString()))
+                }
+
+                is kotlin.Pair<*, *> -> {
+                    val first = value.first
+                    if (first is ClassId) {
+                        return first.packageFqName.asString() + "." + first.relativeClassName.asString()
+                    }
                 }
             }
 
