@@ -137,7 +137,7 @@ class PsiParameterItem(
                     UExpression::class.java
                 ) as? UExpression ?: return INVALID_VALUE
                 val constant = defaultExpression.evaluate()
-                return if (constant != null) {
+                return if (constant != null && constant !is kotlin.Pair<*, *>) {
                     constantToSource(constant)
                 } else {
                     // Expression: Compute from UAST rather than just using the source text
