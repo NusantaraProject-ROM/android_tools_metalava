@@ -120,27 +120,7 @@ class CodebaseComparator {
                     when {
                         compare > 0 -> {
                             index2++
-
-                            val inherited =
-                            if (new is MethodItem && oldParent is ClassItem) {
-                                oldParent.findMethod(
-                                    template = new,
-                                    includeSuperClasses = true,
-                                    includeInterfaces = true
-                                )
-                            } else {
-                                null
-                            }
-                            if (inherited != null) {
-                                visitCompare(visitor, inherited, new)
-                                // Compare the children (recurse)
-                                if (inherited.parameters().isNotEmpty()) {
-                                    val parameters = inherited.parameters().map { ItemTree(it) }.toList()
-                                    compare(visitor, parameters, newTree.children, newTree.item(), inherited)
-                                }
-                            } else {
-                                visitAdded(visitor, new)
-                            }
+                            visitAdded(new, oldParent, visitor, newTree)
                         }
                         compare < 0 -> {
                             index1++
@@ -168,34 +148,44 @@ class CodebaseComparator {
                     val newTree = newList[index2++]
                     val new = newTree.item()
 
-                    // If it's a method, we may not have added a new method,
-                    // we may simply have inherited it previously and overriding
-                    // it now (or in the case of signature files, identical overrides
-                    // are not explicitly listed and therefore not added to the model)
-                    val inherited =
-                        if (new is MethodItem && oldParent is ClassItem) {
-                            oldParent.findMethod(
-                                template = new,
-                                includeSuperClasses = true,
-                                includeInterfaces = true
-                            )
-                        } else {
-                            null
-                        }
-                    if (inherited != null) {
-                        visitCompare(visitor, inherited, new)
-                        // Compare the children (recurse)
-                        if (inherited.parameters().isNotEmpty()) {
-                            val parameters = inherited.parameters().map { ItemTree(it) }.toList()
-                            compare(visitor, parameters, newTree.children, newTree.item(), inherited)
-                        }
-                    } else {
-                        visitAdded(visitor, new)
-                    }
+                    visitAdded(new, oldParent, visitor, newTree)
                 }
             } else {
                 break
             }
+        }
+    }
+
+    private fun visitAdded(
+        new: Item,
+        oldParent: Item?,
+        visitor: ComparisonVisitor,
+        newTree: ItemTree
+    ) {
+        // If it's a method, we may not have added a new method,
+        // we may simply have inherited it previously and overriding
+        // it now (or in the case of signature files, identical overrides
+        // are not explicitly listed and therefore not added to the model)
+        val inherited =
+            if (new is MethodItem && oldParent is ClassItem) {
+                oldParent.findMethod(
+                    template = new,
+                    includeSuperClasses = true,
+                    includeInterfaces = true
+                )?.duplicate(oldParent)
+            } else {
+                null
+            }
+
+        if (inherited != null) {
+            visitCompare(visitor, inherited, new)
+            // Compare the children (recurse)
+            if (inherited.parameters().isNotEmpty()) {
+                val parameters = inherited.parameters().map { ItemTree(it) }.toList()
+                compare(visitor, parameters, newTree.children, newTree.item(), inherited)
+            }
+        } else {
+            visitAdded(visitor, new)
         }
     }
 

@@ -182,7 +182,7 @@ interface ClassItem : Item {
     /** Whether this class is an enum */
     fun isEnum(): Boolean
 
-    /** Whether this class is an interface */
+    /** Whether this class is a regular class (not an interface, not an enum, etc) */
     fun isClass(): Boolean = !isInterface() && !isAnnotationType() && !isEnum()
 
     /** The containing class, for inner classes */
@@ -498,7 +498,7 @@ interface ClassItem : Item {
             if (index != -1) {
                 parameterString = parameterString.substring(0, index)
             }
-            val parameter = parameters[i].type().toErasedTypeString()
+            val parameter = parameters[i].type().toErasedTypeString(method)
             if (parameter != parameterString) {
                 return false
             }
@@ -771,10 +771,10 @@ class VisitCandidate(private val cls: ClassItem, private val visitor: ApiVisitor
             enums = emptySequence()
         }
 
-        if (cls.properties().isEmpty()) {
-            properties = emptySequence()
+        properties = if (cls.properties().isEmpty()) {
+            emptySequence()
         } else {
-            properties = cls.properties().asSequence()
+            cls.properties().asSequence()
                 .filter { filterEmit.test(it) }
                 .sortedWith(PropertyItem.comparator)
         }

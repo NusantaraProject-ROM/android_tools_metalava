@@ -48,11 +48,12 @@ interface TypeItem {
     fun toTypeString(
         outerAnnotations: Boolean = false,
         innerAnnotations: Boolean = outerAnnotations,
-        erased: Boolean = false
+        erased: Boolean = false,
+        context: Item? = null
     ): String
 
     /** Alias for [toTypeString] with erased=true */
-    fun toErasedTypeString(): String
+    fun toErasedTypeString(context: Item? = null): String
 
     /** Returns the internal name of the type, as seen in bytecode */
     fun internalName(): String {

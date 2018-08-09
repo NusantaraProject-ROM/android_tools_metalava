@@ -19,6 +19,7 @@ package com.android.tools.metalava.model.psi
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.ParameterItem
 import com.android.tools.metalava.model.TypeItem
+import com.android.tools.metalava.model.psi.CodePrinter.Companion.constantToSource
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiParameter
 import org.jetbrains.kotlin.psi.KtConstantExpression
@@ -136,17 +137,12 @@ class PsiParameterItem(
                     UExpression::class.java
                 ) as? UExpression ?: return INVALID_VALUE
                 val constant = defaultExpression.evaluate()
-                if (constant != null) {
-                    return constantToSource(constant)
+                return if (constant != null) {
+                    constantToSource(constant)
                 } else {
                     // Expression: Compute from UAST rather than just using the source text
                     // such that we can ensure references are fully qualified etc.
-                    return toSourceString(
-                        value = defaultExpression,
-                        inlineFieldValues = true,
-                        skipUnknown = false,
-                        inlineConstants = true
-                    )
+                    codebase.printer.toSourceString(defaultExpression)
                 }
             }
 

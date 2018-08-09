@@ -137,21 +137,18 @@ Generating Stubs:
                                        class in that API.
 
 Diffs and Checks:
---previous-api <signature file>        A signature file for the previous version of this
-                                       API to apply diffs with
 --input-kotlin-nulls[=yes|no]          Whether the signature file being read should be
                                        interpreted as having encoded its types using
                                        Kotlin style types: a suffix of "?" for nullable
                                        types, no suffix for non nullable types, and "!"
                                        for unknown. The default is no.
---check-compatibility                  Check compatibility with the previous API
+--check-compatibility <api file>       Check compatibility with the current checked in
+                                       API
 --check-kotlin-interop                 Check API intended to be used from both Kotlin and
                                        Java for interoperability issues
---current-api <signature file>         A signature file for the current version of this
-                                       API to check compatibility with. If not specified,
-                                       --previous-api will be used instead.
---migrate-nullness                     Compare nullness information with the previous API
-                                       and mark newly annotated APIs as under migration.
+--migrate-nullness <api file>          Compare nullness information with the previous
+                                       stable API and mark newly annotated APIs as under
+                                       migration.
 --warnings-as-errors                   Promote all warnings to errors
 --lints-as-errors                      Promote all API lint warnings to errors
 --error <id>                           Report issues of the given id as errors

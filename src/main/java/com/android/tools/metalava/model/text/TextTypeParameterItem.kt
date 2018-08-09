@@ -18,6 +18,7 @@ package com.android.tools.metalava.model.text
 
 import com.android.tools.metalava.doclava1.TextCodebase
 import com.android.tools.metalava.model.ClassItem
+import com.android.tools.metalava.model.DefaultModifierList
 import com.android.tools.metalava.model.TypeParameterItem
 import com.android.tools.metalava.model.TypeParameterListOwner
 
@@ -28,7 +29,12 @@ class TextTypeParameterItem(
     name: String,
     private var bounds: List<ClassItem>? = null
 ) :
-    TextClassItem(codebase = codebase, isPublic = true, name = name, qualifiedName = name),
+    TextClassItem(
+        codebase = codebase,
+        modifiers = TextModifiers(codebase, DefaultModifierList.PUBLIC),
+        name = name,
+        qualifiedName = name
+    ),
     TypeParameterItem {
 
     override fun bounds(): List<ClassItem> {
@@ -123,7 +129,19 @@ class TextTypeParameterItem(
         private fun add(list: MutableList<String>, s: String, from: Int, to: Int) {
             for (i in from until to) {
                 if (!Character.isWhitespace(s[i])) {
-                    list.add(s.substring(i, to))
+                    var end = to
+                    while (end > i && s[end - 1].isWhitespace()) {
+                        end--
+                    }
+                    var begin = i
+                    while (begin < end && s[begin].isWhitespace()) {
+                        begin++
+                    }
+                    if (begin == end) {
+                        return
+                    }
+                    val element = s.substring(begin, end)
+                    list.add(element)
                     return
                 }
             }

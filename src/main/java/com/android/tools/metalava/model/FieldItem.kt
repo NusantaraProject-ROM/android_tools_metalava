@@ -38,6 +38,12 @@ interface FieldItem : MemberItem {
     fun isEnumConstant(): Boolean
 
     /**
+     * If this field is copied from a super class (typically via [duplicate]) this
+     * field points to the original class it was copied from
+     */
+    var inheritedFrom: ClassItem?
+
+    /**
      * Duplicates this field item. Used when we need to insert inherited fields from
      * interfaces etc.
      */
