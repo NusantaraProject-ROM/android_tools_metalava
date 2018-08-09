@@ -30,36 +30,9 @@ class TextPropertyItem(
     private val type: TextTypeItem,
     position: SourcePositionInfo
 ) : TextMemberItem(codebase, name, containingClass, position, modifiers), PropertyItem {
-    constructor(
-        codebase: TextCodebase,
-        name: String,
-        containingClass: TextClassItem,
-        isPublic: Boolean,
-        isProtected: Boolean,
-        isPrivate: Boolean,
-        isInternal: Boolean,
-        isFinal: Boolean,
-        isStatic: Boolean,
-        isTransient: Boolean,
-        isVolatile: Boolean,
-        type: TextTypeItem,
-        position: SourcePositionInfo,
-        annotations: List<String>?
-    ) :
-        this(
-            codebase, name, containingClass,
-            TextModifiers(
-                codebase = codebase,
-                annotationStrings = annotations,
-                public = isPublic, protected = isProtected, private = isPrivate, internal = isInternal,
-                static = isStatic, final = isFinal, transient = isTransient, volatile = isVolatile
-            ),
-            type,
-            position
-        )
 
     init {
-        modifiers.owner = this
+        modifiers.setOwner(this)
     }
 
     override fun equals(other: Any?): Boolean {

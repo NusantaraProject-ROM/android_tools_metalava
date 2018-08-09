@@ -199,6 +199,8 @@ public class Errors {
     public static final Error HIDDEN_TYPEDEF_CONSTANT = new Error(148, ERROR);
     public static final Error EXPECTED_PLATFORM_TYPE = new Error(149, WARNING);
     public static final Error INTERNAL_ERROR = new Error(150, ERROR);
+    public static final Error RETURNING_UNEXPECTED_CONSTANT = new Error(151, WARNING);
+    public static final Error DEPRECATED_OPTION = new Error(152, WARNING);
 
     static {
         // Attempt to initialize error names based on the field names
@@ -229,7 +231,7 @@ public class Errors {
             code = Integer.parseInt(id);
         }
         for (Error e : sErrors) {
-            if (e.code == code || e.name.equalsIgnoreCase(id)) {
+            if (e.code == code || id.equalsIgnoreCase(e.name)) {
                 e.setLevel(level);
                 return true;
             }

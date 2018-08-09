@@ -19,15 +19,16 @@ package com.android.tools.metalava.model.text
 import com.android.tools.metalava.doclava1.SourcePositionInfo
 import com.android.tools.metalava.doclava1.TextCodebase
 import com.android.tools.metalava.model.ClassItem
+import com.android.tools.metalava.model.DefaultModifierList
 import com.android.tools.metalava.model.PackageItem
 
 class TextPackageItem(
     codebase: TextCodebase,
     private val name: String,
     position: SourcePositionInfo
-) : TextItem(codebase, position, modifiers = TextModifiers(codebase = codebase, public = true)), PackageItem {
+) : TextItem(codebase, position, modifiers = TextModifiers(codebase, DefaultModifierList.PUBLIC)), PackageItem {
     init {
-        (modifiers as TextModifiers).owner = this
+        modifiers.setOwner(this)
     }
 
     private val classes = ArrayList<TextClassItem>(100)

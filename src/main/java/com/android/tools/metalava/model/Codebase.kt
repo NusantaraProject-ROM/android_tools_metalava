@@ -22,6 +22,7 @@ import com.android.SdkConstants.TAG_PERMISSION
 import com.android.tools.metalava.CodebaseComparator
 import com.android.tools.metalava.ComparisonVisitor
 import com.android.tools.metalava.doclava1.Errors
+import com.android.tools.metalava.model.psi.CodePrinter
 import com.android.tools.metalava.model.text.TextBackedAnnotationItem
 import com.android.tools.metalava.model.visitors.ItemVisitor
 import com.android.tools.metalava.model.visitors.TypeVisitor
@@ -154,6 +155,12 @@ interface Codebase {
      * when the codebase is not loaded from source, such as from .jar files or
      * from signature files) */
     var units: List<PsiFile>
+
+    /**
+     * Printer which can convert PSI, UAST and constants into source code,
+     * with ability to filter out elements that are not part of a codebase etc
+     */
+    val printer: CodePrinter
 }
 
 abstract class DefaultCodebase : Codebase {
@@ -163,6 +170,7 @@ abstract class DefaultCodebase : Codebase {
     override var supportsStagedNullability: Boolean = true
     override var units: List<PsiFile> = emptyList()
     override var apiLevel: Int = -1
+    override val printer = CodePrinter(this)
 
     override fun getPermissionLevel(name: String): String? {
         if (permissions == null) {

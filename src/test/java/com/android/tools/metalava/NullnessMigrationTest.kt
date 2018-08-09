@@ -54,7 +54,6 @@ class NullnessMigrationTest : DriverTest() {
     @Test
     fun `Method which is now marked null should be marked as recently migrated null`() {
         check(
-            migrateNulls = true,
             outputKotlinStyleNulls = false,
             compatibilityMode = false,
             signatureSource = """
@@ -64,7 +63,7 @@ class NullnessMigrationTest : DriverTest() {
                   }
                 }
                 """,
-            previousApi = """
+            migrateNullsApi = """
                 package test.pkg {
                   public abstract class MyTest {
                     method public Double convert1(Float);
@@ -84,7 +83,6 @@ class NullnessMigrationTest : DriverTest() {
     @Test
     fun `Parameter which is now marked null should be marked as recently migrated null`() {
         check(
-            migrateNulls = true,
             outputKotlinStyleNulls = false,
             compatibilityMode = false,
             signatureSource = """
@@ -94,7 +92,7 @@ class NullnessMigrationTest : DriverTest() {
                   }
                 }
                 """,
-            previousApi = """
+            migrateNullsApi = """
                 package test.pkg {
                   public abstract class MyTest {
                     method public Double convert1(Float);
@@ -114,7 +112,6 @@ class NullnessMigrationTest : DriverTest() {
     @Test
     fun `Comprehensive check of migration`() {
         check(
-            migrateNulls = true,
             outputKotlinStyleNulls = false,
             compatibilityMode = false,
             signatureSource = """
@@ -129,7 +126,7 @@ class NullnessMigrationTest : DriverTest() {
                   }
                 }
                 """,
-            previousApi = """
+            migrateNullsApi = """
                 package test.pkg {
                   public class MyTest {
                     ctor public MyTest();
@@ -159,7 +156,6 @@ class NullnessMigrationTest : DriverTest() {
     @Test
     fun `Comprehensive check of migration, Kotlin-style output`() {
         check(
-            migrateNulls = true,
             outputKotlinStyleNulls = true,
             compatibilityMode = false,
             signatureSource = """
@@ -174,7 +170,7 @@ class NullnessMigrationTest : DriverTest() {
                   }
                 }
                 """,
-            previousApi = """
+            migrateNullsApi = """
                 package test.pkg {
                   public class MyTest {
                     ctor public MyTest();
@@ -357,7 +353,6 @@ class NullnessMigrationTest : DriverTest() {
         check(
             outputKotlinStyleNulls = false,
             compatibilityMode = false,
-            migrateNulls = true,
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -378,7 +373,7 @@ class NullnessMigrationTest : DriverTest() {
             ),
             extraArguments = arrayOf("--hide-package", "androidx.annotation"),
             // TODO: Handle multiple nullness annotations
-            previousApi =
+            migrateNullsApi =
             """
                 package test.pkg {
                   public class Foo {
@@ -428,7 +423,6 @@ class NullnessMigrationTest : DriverTest() {
         check(
             outputKotlinStyleNulls = false,
             compatibilityMode = false,
-            migrateNulls = true,
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -447,7 +441,7 @@ class NullnessMigrationTest : DriverTest() {
             ),
             extraArguments = arrayOf("--hide-package", "androidx.annotation"),
             // TODO: Handle multiple nullness annotations
-            previousApi =
+            migrateNullsApi =
             """
                 package test.pkg {
                   public class Foo {
@@ -493,7 +487,6 @@ class NullnessMigrationTest : DriverTest() {
         check(
             outputKotlinStyleNulls = false,
             compatibilityMode = false,
-            migrateNulls = true,
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -515,7 +508,7 @@ class NullnessMigrationTest : DriverTest() {
                 androidxNonNullSource,
                 androidxNullableSource
             ),
-            previousApi = """
+            migrateNullsApi = """
                 package test.pkg {
                   public class Foo {
                     ctor public Foo();
@@ -560,10 +553,9 @@ class NullnessMigrationTest : DriverTest() {
     @Test
     fun `Test inherited methods`() {
         check(
-            migrateNulls = true,
             warnings = """
                 """,
-            previousApi = """
+            migrateNullsApi = """
                 package test.pkg {
                   public class Child1 extends test.pkg.Parent {
                   }
