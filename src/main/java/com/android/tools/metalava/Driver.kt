@@ -254,12 +254,6 @@ private fun processFlags() {
                 )
             }
 
-        // If configured, compares the new API with the previous API and reports
-        // any incompatibilities.
-        if (options.checkCompatibility && options.currentApi == null) { // otherwise checked against currentApi above
-            CompatibilityCheck.checkCompatibility(codebase, previous)
-        }
-
         // If configured, checks for newly added nullness information compared
         // to the previous stable API and marks the newly annotated elements
         // as migrated (which will cause the Kotlin compiler to treat problems

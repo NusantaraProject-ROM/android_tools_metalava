@@ -30,21 +30,28 @@ import com.android.tools.metalava.model.MemberItem
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.PackageItem
 import com.android.tools.metalava.model.ParameterItem
+import com.android.tools.metalava.model.psi.CodePrinter
 import com.android.tools.metalava.model.psi.PsiAnnotationItem
 import com.android.tools.metalava.model.psi.PsiClassItem
-import com.android.tools.metalava.model.psi.toSourceString
+import com.android.tools.metalava.model.psi.PsiMethodItem
 import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.google.common.base.Charsets
 import com.google.common.xml.XmlEscapers
+import com.intellij.psi.JavaRecursiveElementVisitor
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
+import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiNameValuePair
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiReturnStatement
 import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UNamedExpression
 import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.USimpleNameReferenceExpression
 import org.jetbrains.uast.UastEmptyExpression
 import org.jetbrains.uast.java.JavaUAnnotation
 import org.jetbrains.uast.java.expressions.JavaUAnnotationCallExpression
@@ -73,6 +80,20 @@ class ExtractAnnotations(
         val annotationClass: ClassItem?,
         val annotationItem: AnnotationItem,
         val uAnnotation: UAnnotation?
+    )
+
+    private val fieldNamePrinter = CodePrinter(
+        codebase = codebase,
+        filterReference = filterReference,
+        inlineFieldValues = false,
+        skipUnknown = true
+    )
+
+    private val fieldValuePrinter = CodePrinter(
+        codebase = codebase,
+        filterReference = filterReference,
+        inlineFieldValues = true,
+        skipUnknown = true
     )
 
     private val classToAnnotationHolder = mutableMapOf<String, AnnotationHolder>()
@@ -224,11 +245,73 @@ class ExtractAnnotations(
                         )
                         classToAnnotationHolder[className] = result
                         addItem(item, result)
+
+                        if (item is PsiMethodItem && result.uAnnotation != null) {
+                            verifyReturnedConstants(item, result.uAnnotation, result, className)
+                        }
+
                         continue
                     }
                 }
             }
         }
+    }
+
+    /**
+     * Given a method whose return value is annotated with a typedef, runs checks on the typedef
+     * and flags any returned constants not in the list.
+     */
+    private fun verifyReturnedConstants(
+        item: PsiMethodItem,
+        uAnnotation: UAnnotation,
+        result: AnnotationHolder,
+        className: String
+    ) {
+        val method = item.psiMethod
+        if (method.body != null) {
+            method.body?.accept(object : JavaRecursiveElementVisitor() {
+                private var constants: List<String>? = null
+
+                override fun visitReturnStatement(statement: PsiReturnStatement) {
+                    val value = statement.returnValue
+                    if (value is PsiReferenceExpression) {
+                        val resolved = value.resolve() as? PsiField ?: return
+                        val modifiers = resolved.modifierList ?: return
+                        if (modifiers.hasModifierProperty(PsiModifier.STATIC) &&
+                            modifiers.hasModifierProperty(PsiModifier.FINAL)
+                        ) {
+                            if (resolved.type.arrayDimensions > 0) {
+                                return
+                            }
+                            val name = resolved.name
+
+                            // Make sure this is one of the allowed annotations
+                            val names = constants ?: run {
+                                constants = computeValidConstantNames(uAnnotation)
+                                constants!!
+                            }
+                            if (names.isNotEmpty() && !names.contains(name)) {
+                                val expected = names.joinToString { it }
+                                reporter.report(
+                                    Errors.RETURNING_UNEXPECTED_CONSTANT, value as PsiElement,
+                                    "Returning unexpected constant $name; is @${result.annotationClass?.simpleName()
+                                        ?: className} missing this constant? Expected one of $expected"
+                                )
+                            }
+                        }
+                    }
+                }
+            })
+        }
+    }
+
+    private fun computeValidConstantNames(annotation: UAnnotation): List<String> {
+        val constants = annotation.findAttributeValue(SdkConstants.ATTR_VALUE) ?: return emptyList()
+        if (constants is UCallExpression) {
+            return constants.valueArguments.mapNotNull { (it as? USimpleNameReferenceExpression)?.identifier }.toList()
+        }
+
+        return emptyList()
     }
 
     private fun hasSourceRetention(annotationClass: ClassItem): Boolean {
@@ -498,24 +581,14 @@ class ExtractAnnotations(
         value: UExpression?,
         inlineConstants: Boolean
     ): String? {
-        return toSourceString(value = value, inlineFieldValues = inlineConstants,
-            inlineConstants = inlineConstants, skipUnknown = true, filterFields = { fieldName, qualifiedName ->
-                val cls = codebase.findClass(qualifiedName)
-                val fld = cls?.findField(fieldName, true)
-                if (fld == null || !filterReference.test(fld)) {
-                    // This field is not visible: remove from typedef
-                    if (fld != null) {
-                        reporter.report(
-                            Errors.HIDDEN_TYPEDEF_CONSTANT, fld,
-                            "Typedef class references hidden field $fld: removed from typedef metadata"
-                        )
-                    }
-                    false
-                } else {
-                    true
-                }
-            }, warning = { warning(it) }
-        )
+        val printer =
+            if (inlineConstants) {
+                fieldValuePrinter
+            } else {
+                fieldNamePrinter
+            }
+
+        return printer.toSourceString(value)
     }
 
     private fun isInlinedConstant(annotationItem: AnnotationItem): Boolean {
@@ -526,10 +599,10 @@ class ExtractAnnotations(
     private val sortAnnotations: Boolean = true
 
     private fun warning(string: String) {
-        reporter.report(Severity.ERROR, null as PsiElement?, string, Errors.ANNOTATION_EXTRACTION)
+        reporter.report(Severity.WARNING, null as PsiElement?, string, Errors.ANNOTATION_EXTRACTION)
     }
 
     private fun error(string: String) {
-        reporter.report(Severity.WARNING, null as PsiElement?, string, Errors.ANNOTATION_EXTRACTION)
+        reporter.report(Severity.ERROR, null as PsiElement?, string, Errors.ANNOTATION_EXTRACTION)
     }
 }

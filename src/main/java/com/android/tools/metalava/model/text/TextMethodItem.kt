@@ -23,6 +23,7 @@ import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.ParameterItem
 import com.android.tools.metalava.model.TypeItem
+import com.android.tools.metalava.model.TypeParameterItem
 import com.android.tools.metalava.model.TypeParameterList
 import com.android.tools.metalava.model.TypeParameterListOwner
 import java.util.function.Predicate
@@ -31,39 +32,16 @@ open class TextMethodItem(
     codebase: TextCodebase,
     name: String,
     containingClass: TextClassItem,
-    isPublic: Boolean,
-    isProtected: Boolean,
-    isPrivate: Boolean,
-    isInternal: Boolean,
-    isFinal: Boolean,
-    isStatic: Boolean,
-    isAbstract: Boolean,
-    isSynchronized: Boolean,
-    isNative: Boolean,
-    isDefault: Boolean,
-    isStrictFp: Boolean,
-    isInfix: Boolean,
-    isOperator: Boolean,
-    isInline: Boolean,
+    modifiers: TextModifiers,
     private val returnType: TextTypeItem?,
-    position: SourcePositionInfo,
-    annotations: List<String>?
+    position: SourcePositionInfo
 ) : TextMemberItem(
-    // Explicitly coerce 'final' state of Java6-compiled enum values() method, to match
-    // the Java5-emitted base API description.
     codebase, name, containingClass, position,
-    modifiers = TextModifiers(
-        codebase = codebase,
-        annotationStrings = annotations, public = isPublic, protected = isProtected, internal = isInternal,
-        private = isPrivate, static = isStatic, final = isFinal, abstract = isAbstract,
-        synchronized = isSynchronized, native = isNative, default = isDefault, strictfp = isStrictFp,
-        infix = isInfix, operator = isOperator, inline = isInline
-    )
+    modifiers = modifiers
 ), MethodItem, TypeParameterListOwner {
-
     init {
         @Suppress("LeakingThis")
-        (modifiers as TextModifiers).owner = this
+        modifiers.setOwner(this)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -149,7 +127,44 @@ open class TextMethodItem(
 
     override fun typeParameterList(): TypeParameterList = typeParameterList
 
-    override fun duplicate(targetContainingClass: ClassItem): MethodItem = codebase.unsupported()
+    override fun resolveParameter(variable: String): TypeParameterItem? {
+        for (t in typeParameterList.typeParameters()) {
+            if (t.simpleName() == variable) {
+                return t
+            }
+        }
+
+        return (containingClass() as TextClassItem).resolveParameter(variable)
+    }
+
+    override fun duplicate(targetContainingClass: ClassItem): MethodItem {
+        val duplicated = TextMethodItem(codebase, name(), targetContainingClass as TextClassItem,
+            modifiers.duplicate(), returnType, position)
+        duplicated.inheritedFrom = containingClass()
+
+        // Preserve flags that may have been inherited (propagated) from surrounding packages
+        if (targetContainingClass.hidden) {
+            duplicated.hidden = true
+        }
+        if (targetContainingClass.removed) {
+            duplicated.removed = true
+        }
+        if (targetContainingClass.docOnly) {
+            duplicated.docOnly = true
+        }
+
+        duplicated.varargs = varargs
+        duplicated.setDeprecated(deprecated)
+        duplicated.annotationDefault = annotationDefault
+        duplicated.throwsTypes.addAll(throwsTypes)
+        duplicated.throwsClasses = throwsClasses
+        duplicated.typeParameterList = typeParameterList
+        // Consider cloning these: they have back references to the parent method (though it's
+        // unlikely anyone will care about the difference in parent methods)
+        duplicated.parameters.addAll(parameters)
+
+        return duplicated
+    }
 
     private val throwsTypes = mutableListOf<String>()
     private val parameters = mutableListOf<TextParameterItem>()
@@ -186,6 +201,7 @@ open class TextMethodItem(
     override fun isExtensionMethod(): Boolean = codebase.unsupported()
 
     override var inheritedMethod: Boolean = false
+    override var inheritedFrom: ClassItem? = null
 
     override fun toString(): String =
         "${if (isConstructor()) "Constructor" else "Method"} ${containingClass().qualifiedName()}.${name()}(${parameters().joinToString {

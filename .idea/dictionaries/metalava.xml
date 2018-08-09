@@ -24,6 +24,7 @@
       <w>ident</w>
       <w>includeable</w>
       <w>inheritdoc</w>
+      <w>initializers</w>
       <w>interop</w>
       <w>jaif</w>
       <w>javadocs</w>

@@ -59,7 +59,7 @@ import java.util.function.Predicate
  */
 class AnnotationsDiffer(
     private val superset: Codebase,
-    private val codebase: Codebase
+    codebase: Codebase
 ) {
     private val relevant = HashSet<Item>(1000)
 

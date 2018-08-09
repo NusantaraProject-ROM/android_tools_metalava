@@ -163,14 +163,12 @@ abstract class DriverTest {
         @Language("TEXT") signatureSource: String? = null,
         /** An optional API jar file content to load **instead** of Java/Kotlin source files */
         apiJar: File? = null,
-        /** An optional API signature representing the previous API level to diff */
-        @Language("TEXT") previousApi: String? = null,
+        /** An optional API signature to check the current API's compatibility with */
+        @Language("TEXT") checkCompatibilityApi: String? = null,
+        /** An optional API signature to compute nullness migration status from */
+        @Language("TEXT") migrateNullsApi: String? = null,
         /** An optional Proguard keep file to generate */
         @Language("Proguard") proguard: String? = null,
-        /** Whether we should migrate nullness information */
-        migrateNulls: Boolean = false,
-        /** Whether we should check compatibility */
-        checkCompatibility: Boolean = false,
         /** Show annotations (--show-annotation arguments) */
         showAnnotations: Array<String> = emptyArray(),
         /** If using [showAnnotations], whether to include unannotated */
@@ -262,7 +260,7 @@ abstract class DriverTest {
         Errors.resetLevels()
 
         /** Expected output if exiting with an error code */
-        val expectedFail = if (checkCompatibility) {
+        val expectedFail = if (checkCompatibilityApi != null) {
             "Aborting: Found compatibility problems with --check-compatibility"
         } else {
             ""
@@ -331,23 +329,30 @@ abstract class DriverTest {
             emptyArray()
         }
 
-        val previousApiFile = if (previousApi != null) {
-            val prevApiJar = File(previousApi)
-            if (prevApiJar.isFile) {
-                prevApiJar
+        val checkCompatibilityApiFile = if (checkCompatibilityApi != null) {
+            val jar = File(checkCompatibilityApi)
+            if (jar.isFile) {
+                jar
             } else {
-                val file = File(project, "previous-api.txt")
-                Files.asCharSink(file, Charsets.UTF_8).write(previousApi.trimIndent())
+                val file = File(project, "current-api.txt")
+                Files.asCharSink(file, Charsets.UTF_8).write(checkCompatibilityApi.trimIndent())
                 file
             }
         } else {
             null
         }
 
-        val previousApiArgs = if (previousApiFile != null) {
-            arrayOf("--previous-api", previousApiFile.path)
+        val migrateNullsApiFile = if (migrateNullsApi != null) {
+            val jar = File(migrateNullsApi)
+            if (jar.isFile) {
+                jar
+            } else {
+                val file = File(project, "stable-api.txt")
+                Files.asCharSink(file, Charsets.UTF_8).write(migrateNullsApi.trimIndent())
+                file
+            }
         } else {
-            emptyArray()
+            null
         }
 
         val manifestFileArgs = if (manifest != null) {
@@ -358,14 +363,14 @@ abstract class DriverTest {
             emptyArray()
         }
 
-        val migrateNullsArguments = if (migrateNulls) {
-            arrayOf("--migrate-nullness")
+        val migrateNullsArguments = if (migrateNullsApiFile != null) {
+            arrayOf("--migrate-nullness", migrateNullsApiFile.path)
         } else {
             emptyArray()
         }
 
-        val checkCompatibilityArguments = if (checkCompatibility) {
-            arrayOf("--check-compatibility")
+        val checkCompatibilityArguments = if (checkCompatibilityApiFile != null) {
+            arrayOf("--check-compatibility", checkCompatibilityApiFile.path)
         } else {
             emptyArray()
         }
@@ -623,7 +628,6 @@ abstract class DriverTest {
             *mergeAnnotationsArgs,
             *signatureAnnotationsArgs,
             *javaStubAnnotationsArgs,
-            *previousApiArgs,
             *migrateNullsArguments,
             *checkCompatibilityArguments,
             *proguardKeepArguments,
