@@ -64,6 +64,40 @@ class ApiFromTextTest : DriverTest() {
     }
 
     @Test
+    fun `Handle enum constants as default values`() {
+        val source = """
+            // Signature format: $SIGNATURE_FORMAT
+            package test.pkg {
+              public final class Foo {
+                ctor public Foo();
+                method public android.graphics.Bitmap? drawToBitmap(android.view.View, android.graphics.Bitmap.Config config = android.graphics.Bitmap.Config.ARGB_8888);
+                method public void emptyLambda(kotlin.jvm.functions.Function0<kotlin.Unit> sizeOf = {});
+                method public void method1(int p = 42, Integer? int2 = null, int p1 = 42, String str = "hello world", java.lang.String... args);
+                method public void method2(int p, int int2 = (2 * int) * some.other.pkg.Constants.Misc.SIZE);
+                method public void method3(String str, int p, int int2 = double(int) + str.length);
+                field public static final test.pkg.Foo.Companion! Companion;
+              }
+              public static final class Foo.Companion {
+                method public int double(int p);
+                method public void print(test.pkg.Foo foo = test.pkg.Foo());
+              }
+              public final class LruCacheKt {
+                ctor public LruCacheKt();
+                method public static <K, V> android.util.LruCache<K,V> lruCache(int maxSize, kotlin.jvm.functions.Function2<? super K,? super V,java.lang.Integer> sizeOf = { _, _ -> 1 }, kotlin.jvm.functions.Function1<? super K,? extends V> create = { (V)null }, kotlin.jvm.functions.Function4<? super java.lang.Boolean,? super K,? super V,? super V,kotlin.Unit> onEntryRemoved = { _, _, _, _ ->  });
+              }
+            }
+            """
+
+        check(
+            compatibilityMode = false,
+            inputKotlinStyleNulls = true,
+            signatureSource = source,
+            includeSignatureVersion = true,
+            api = source
+        )
+    }
+
+    @Test
     fun `Handle complex expressions as default values`() {
         val source = """
             // Signature format: $SIGNATURE_FORMAT
