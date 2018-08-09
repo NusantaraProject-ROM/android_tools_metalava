@@ -16,6 +16,7 @@
 
 package com.android.tools.metalava.model
 
+import com.android.tools.metalava.doclava1.TextCodebase
 import com.android.tools.metalava.model.visitors.ItemVisitor
 import com.android.tools.metalava.model.visitors.TypeVisitor
 import java.util.LinkedHashSet
@@ -138,6 +139,12 @@ interface MethodItem : MemberItem {
     var inheritedMethod: Boolean
 
     /**
+     * If this method is inherited from a super class (typically via [duplicate]) this
+     * field points to the original class it was inherited from
+     */
+    var inheritedFrom: ClassItem?
+
+    /**
      * Duplicates this field item. Used when we need to insert inherited fields from
      * interfaces etc.
      */
@@ -236,7 +243,8 @@ interface MethodItem : MemberItem {
                 val p2n = p2.size
                 for (i in 0 until minOf(p1n, p2n)) {
                     val compareTypes =
-                        p1[i].type().toTypeString().compareTo(p2[i].type().toTypeString(), ignoreCase = true)
+                        p1[i].type().toTypeString()
+                            .compareTo(p2[i].type().toTypeString(), ignoreCase = true)
                     if (compareTypes != 0) {
                         return compareTypes
                     }
@@ -444,9 +452,23 @@ interface MethodItem : MemberItem {
         for (i in 0 until parameters1.size) {
             val parameter1 = parameters1[i]
             val parameter2 = parameters2[i]
-            val type1 = parameter1.type().toErasedTypeString()
-            val type2 = parameter2.type().toErasedTypeString()
+            val typeString1 = parameter1.type().toString()
+            val typeString2 = parameter2.type().toString()
+            if (typeString1 == typeString2) {
+                continue
+            }
+            val type1 = parameter1.type().toErasedTypeString(this)
+            val type2 = parameter2.type().toErasedTypeString(other)
+
             if (type1 != type2) {
+                // Workaround for signature-based codebase, where we can't always resolve generic
+                // parameters: if we see a mismatch here which looks like a failure to erase say T into
+                // java.lang.Object, don't treat that as a mismatch. (Similar common case: T[] and Object[])
+                if (typeString1[0].isUpperCase() &&
+                    typeString1.length == 1 || !typeString2[1].isLetterOrDigit() &&
+                    parameter1.codebase is TextCodebase) {
+                    continue
+                }
                 return false
             }
         }

@@ -21,6 +21,7 @@ import com.android.tools.metalava.NullnessMigration.Companion.isNullable
 import com.android.tools.metalava.doclava1.ApiPredicate
 import com.android.tools.metalava.doclava1.Errors
 import com.android.tools.metalava.doclava1.Errors.Error
+import com.android.tools.metalava.doclava1.TextCodebase
 import com.android.tools.metalava.model.AnnotationItem
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.Codebase
@@ -31,6 +32,7 @@ import com.android.tools.metalava.model.PackageItem
 import com.android.tools.metalava.model.ParameterItem
 import com.android.tools.metalava.model.TypeItem
 import com.intellij.psi.PsiField
+import java.util.function.Predicate
 
 /**
  * Compares the current API with a previous version and makes sure
@@ -39,7 +41,20 @@ import com.intellij.psi.PsiField
  *
  * TODO: Only allow nullness changes on final classes!
  */
-class CompatibilityCheck : ComparisonVisitor() {
+class CompatibilityCheck(
+    val filterReference: Predicate<Item>,
+    oldCodebase: Codebase
+) : ComparisonVisitor() {
+
+    /** In old signature files, methods inherited from hidden super classes
+     * are not included. An example of this is StringBuilder.setLength.
+     * More details about this are listed in Compatibility.skipInheritedMethods.
+     * We may see these in the codebase but not in the (old) signature files,
+     * so in these cases we want to ignore certain changes such as considering
+     * StringBuilder.setLength a newly added method.
+     */
+    private val comparingWithPartialSignatures = oldCodebase is TextCodebase && oldCodebase.format.major < 2
+
     var foundProblems = false
 
     override fun compare(old: Item, new: Item) {
@@ -163,7 +178,7 @@ class CompatibilityCheck : ComparisonVisitor() {
             }
         }
 
-        for (iface in new.interfaceTypes()) {
+        for (iface in new.filteredInterfaceTypes(filterReference)) {
             val qualifiedName = iface.asClass()?.qualifiedName() ?: continue
             if (!old.implements(qualifiedName)) {
                 report(
@@ -174,7 +189,7 @@ class CompatibilityCheck : ComparisonVisitor() {
 
         if (!oldModifiers.isSealed() && newModifiers.isSealed()) {
             report(Errors.ADD_SEALED, new, "Cannot add `sealed` modifier to ${describe(new)}: Incompatible change")
-        } else if (oldModifiers.isAbstract() != newModifiers.isAbstract()) {
+        } else if (old.isClass() && oldModifiers.isAbstract() != newModifiers.isAbstract()) {
             report(
                 Errors.CHANGED_ABSTRACT, new, "${describe(new, capitalize = true)} changed abstract qualifier"
             )
@@ -347,7 +362,23 @@ class CompatibilityCheck : ComparisonVisitor() {
         // Check for changes in abstract, but only for regular classes; older signature files
         // sometimes describe interface methods as abstract
         if (new.containingClass().isClass()) {
-            if (oldModifiers.isAbstract() != newModifiers.isAbstract()) {
+            if (oldModifiers.isAbstract() != newModifiers.isAbstract() &&
+                // In old signature files, overridden methods of abstract methods declared
+                // in super classes are sometimes omitted by doclava. This means that the method
+                // looks (from the signature file perspective) like it has not been implemented,
+                // whereas in reality it has. For just one example of this, consider
+                // FragmentBreadCrumbs.onLayout: it's a concrete implementation in that class
+                // of the inherited method from ViewGroup. However, in the signature file,
+                // FragmentBreadCrumbs does not list this method; it's only listed (as abstract)
+                // in the super class. In this scenario, the compatibility check would believe
+                // the old method in FragmentBreadCrumbs is abstract and the new method is not,
+                // which is not the case. Therefore, if the old method is coming from a signature
+                // file based codebase with an old format, we omit abstract change warnings.
+                // The reverse situation can also happen: AbstractSequentialList defines listIterator
+                // as abstract, but it's not recorded as abstract in the signature files anywhere,
+                // so we treat this as a nearly abstract method, which it is not.
+                (old.inheritedFrom == null || !comparingWithPartialSignatures)
+            ) {
                 report(
                     Errors.CHANGED_ABSTRACT, new, "${describe(new, capitalize = true)} has changed 'abstract' qualifier"
                 )
@@ -362,8 +393,12 @@ class CompatibilityCheck : ComparisonVisitor() {
 
         // Check changes to final modifier. But skip enums where it varies between signature files and PSI
         // whether the methods are considered final.
-        if (!new.containingClass().isEnum()) {
-            if (!oldModifiers.isStatic()) {
+        if (!new.containingClass().isEnum() && !oldModifiers.isStatic()) {
+            // Skip changes in final; modifier change could come from inherited
+            // implementation from hidden super class. An example of this
+            // is SpannableString.charAt whose implementation comes from
+            // SpannableStringInternal.
+            if (old.inheritedFrom == null || !comparingWithPartialSignatures) {
                 // Compiler-generated methods vary in their 'final' qualifier between versions of
                 // the compiler, so this check needs to be quite narrow. A change in 'final'
                 // status of a method is only relevant if (a) the method is not declared 'static'
@@ -434,7 +469,7 @@ class CompatibilityCheck : ComparisonVisitor() {
             }
         }
 
-        for (exec in new.throwsTypes()) {
+        for (exec in new.filteredThrowsTypes(filterReference)) {
             // exclude 'throws' changes to finalize() overrides with no arguments
             if (!old.throws(exec.qualifiedName())) {
                 if (old.name() != "finalize" || old.parameters().isNotEmpty()) {
@@ -562,6 +597,15 @@ class CompatibilityCheck : ComparisonVisitor() {
     }
 
     override fun added(new: MethodItem) {
+        // In old signature files, methods inherited from hidden super classes
+        // are not included. An example of this is StringBuilder.setLength.
+        // More details about this are listed in Compatibility.skipInheritedMethods.
+        // We may see these in the codebase but not in the (old) signature files,
+        // so skip these -- they're not really "added".
+        if (new.inheritedFrom != null && comparingWithPartialSignatures) {
+            return
+        }
+
         // *Overriding* methods from super classes that are outside the
         // API is OK (e.g. overriding toString() from java.lang.Object)
         val superMethods = new.superMethods()
@@ -591,6 +635,18 @@ class CompatibilityCheck : ComparisonVisitor() {
     }
 
     override fun added(new: FieldItem) {
+        val codebase = new.codebase
+        if (new.inheritedFrom != null &&
+            // In old signature files, methods inherited from hidden super classes
+            // are not included. An example of this is StringBuilder.setLength.
+            // More details about this are listed in Compatibility.skipInheritedMethods.
+            // We may see these in the codebase but not in the (old) signature files,
+            // so skip these -- they're not really "added".
+            (codebase is TextCodebase && codebase.format.major < 2)
+        ) {
+            return
+        }
+
         handleAdded(Errors.ADDED_FIELD, new)
     }
 
@@ -753,14 +809,16 @@ class CompatibilityCheck : ComparisonVisitor() {
         item: Item,
         message: String
     ) {
-        reporter.report(error, item, message)
-        foundProblems = true
+        if (reporter.report(error, item, message)) {
+            foundProblems = true
+        }
     }
 
     companion object {
         fun checkCompatibility(codebase: Codebase, previous: Codebase) {
-            val checker = CompatibilityCheck()
-            CodebaseComparator().compare(checker, previous, codebase, ApiPredicate(codebase))
+            val filter = ApiPredicate(codebase)
+            val checker = CompatibilityCheck(filter, previous)
+            CodebaseComparator().compare(checker, previous, codebase, filter)
             if (checker.foundProblems) {
                 throw DriverException(
                     exitCode = -1,

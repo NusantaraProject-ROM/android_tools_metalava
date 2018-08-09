@@ -304,8 +304,8 @@ class Options(
     var generateAnnotations = false
 
     /**
-     * A signature file for the previous version of this API (for nullness
-     * migration, possibly for compatibility checking (if [currentApi] is not defined), etc.)
+     * A signature file for the previous stable version of this API (for nullness
+     * migration, etc)
      */
     var previousApi: File? = null
 
@@ -561,13 +561,46 @@ class Options(
                 ARG_INCLUDE_ANNOTATION_CLASSES -> copyStubAnnotationsFrom = stringToExistingDir(getValue(args, ++index))
                 ARG_INCLUDE_SOURCE_RETENTION -> includeSourceRetentionAnnotations = true
 
-                ARG_PREVIOUS_API -> previousApi = stringToExistingFile(getValue(args, ++index))
-                ARG_CURRENT_API -> currentApi = stringToExistingFile(getValue(args, ++index))
+                ARG_PREVIOUS_API -> {
+                    previousApi = stringToExistingFile(getValue(args, ++index))
+                    /* Don't flag this yet: allow a short quiet grace period
+                    reporter.report(Errors.DEPRECATED_OPTION, null as File?,
+                        "$ARG_PREVIOUS_API is deprecated; instead " +
+                        "use $ARG_MIGRATE_NULLNESS $previousApi")
+                    */
+                }
 
-                ARG_MIGRATE_NULLNESS -> migrateNulls = true
+                ARG_CURRENT_API -> {
+                    currentApi = stringToExistingFile(getValue(args, ++index))
+                    /* Don't flag this yet: allow a short quiet grace period
+                    reporter.report(Errors.DEPRECATED_OPTION, null as File?,
+                        "$ARG_CURRENT_API is deprecated; instead " +
+                            "use $ARG_CHECK_COMPATIBILITY $currentApi")
+                    */
+                }
+
+                ARG_MIGRATE_NULLNESS -> {
+                    migrateNulls = true
+                    // See if the next argument specifies the nullness API codebase
+                    if (index < args.size - 1) {
+                        val file = fileForPath(args[index + 1])
+                        if (file.isFile) {
+                            index++
+                            previousApi = file
+                        }
+                    }
+                }
 
                 ARG_CHECK_COMPATIBILITY -> {
                     checkCompatibility = true
+                    // See if the next argument specifies the compatibility check
+                    if (index < args.size - 1) {
+                        val file = fileForPath(args[index + 1])
+                        if (file.isFile) {
+                            index++
+                            currentApi = file
+                        }
+                    }
                 }
 
                 ARG_ANNOTATION_COVERAGE_STATS -> dumpAnnotationStatistics = true
@@ -1301,19 +1334,14 @@ class Options(
                 "level stub class in that API.",
 
             "", "\nDiffs and Checks:",
-            "$ARG_PREVIOUS_API <signature file>", "A signature file for the previous version of this " +
-                "API to apply diffs with",
             "$ARG_INPUT_KOTLIN_NULLS[=yes|no]", "Whether the signature file being read should be " +
                 "interpreted as having encoded its types using Kotlin style types: a suffix of \"?\" for nullable " +
                 "types, no suffix for non nullable types, and \"!\" for unknown. The default is no.",
-            ARG_CHECK_COMPATIBILITY, "Check compatibility with the previous API",
+            "$ARG_CHECK_COMPATIBILITY <api file>", "Check compatibility with the current checked in API",
             ARG_CHECK_KOTLIN_INTEROP, "Check API intended to be used from both Kotlin and Java for interoperability " +
                 "issues",
-            "$ARG_CURRENT_API <signature file>", "A signature file for the current version of this " +
-                "API to check compatibility with. If not specified, $ARG_PREVIOUS_API will be used " +
-                "instead.",
-            ARG_MIGRATE_NULLNESS, "Compare nullness information with the previous API and mark newly " +
-                "annotated APIs as under migration.",
+            "$ARG_MIGRATE_NULLNESS <api file>", "Compare nullness information with the previous stable API " +
+                "and mark newly annotated APIs as under migration.",
             ARG_WARNINGS_AS_ERRORS, "Promote all warnings to errors",
             ARG_LINTS_AS_ERRORS, "Promote all API lint warnings to errors",
             "$ARG_ERROR <id>", "Report issues of the given id as errors",

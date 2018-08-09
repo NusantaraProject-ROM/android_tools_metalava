@@ -75,6 +75,7 @@ open class PsiMethodItem(
     internal var source: PsiMethodItem? = null
 
     override var inheritedMethod: Boolean = false
+    override var inheritedFrom: ClassItem? = null
 
     override fun name(): String = name
     override fun containingClass(): PsiClassItem = containingClass
@@ -217,7 +218,7 @@ open class PsiMethodItem(
         if (psiMethod is PsiAnnotationMethod) {
             val value = psiMethod.defaultValue
             if (value != null) {
-                return toSourceExpression(value, this)
+                return codebase.printer.toSourceExpression(value, this)
             }
         }
 
@@ -227,7 +228,9 @@ open class PsiMethodItem(
     override fun duplicate(targetContainingClass: ClassItem): PsiMethodItem {
         val duplicated = create(codebase, targetContainingClass as PsiClassItem, psiMethod)
 
-        // Preserve flags that may have been inherited (propagated) fro surrounding packages
+        duplicated.inheritedFrom = containingClass
+
+        // Preserve flags that may have been inherited (propagated) from surrounding packages
         if (targetContainingClass.hidden) {
             duplicated.hidden = true
         }

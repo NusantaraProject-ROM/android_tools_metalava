@@ -51,6 +51,7 @@ open class ApiVisitor(
 
     /** The filter to use to determine if we should emit an item */
     val filterEmit: Predicate<Item>,
+
     /** The filter to use to determine if we should emit a reference to an item */
     val filterReference: Predicate<Item>,
 

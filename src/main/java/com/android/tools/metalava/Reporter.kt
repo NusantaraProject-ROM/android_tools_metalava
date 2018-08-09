@@ -68,37 +68,37 @@ enum class Severity(private val displayName: String) {
 open class Reporter(private val rootFolder: File? = null) {
     var hasErrors = false
 
-    fun error(item: Item?, message: String, id: Errors.Error? = null) {
-        error(item?.psi(), message, id)
+    fun error(item: Item?, message: String, id: Errors.Error? = null): Boolean {
+        return error(item?.psi(), message, id)
     }
 
-    fun warning(item: Item?, message: String, id: Errors.Error? = null) {
-        warning(item?.psi(), message, id)
+    fun warning(item: Item?, message: String, id: Errors.Error? = null): Boolean {
+        return warning(item?.psi(), message, id)
     }
 
-    fun error(element: PsiElement?, message: String, id: Errors.Error? = null) {
+    fun error(element: PsiElement?, message: String, id: Errors.Error? = null): Boolean {
         // Using lowercase since that's the convention doclava1 is using
-        report(ERROR, element, message, id)
+        return report(ERROR, element, message, id)
     }
 
-    fun warning(element: PsiElement?, message: String, id: Errors.Error? = null) {
-        report(WARNING, element, message, id)
+    fun warning(element: PsiElement?, message: String, id: Errors.Error? = null): Boolean {
+        return report(WARNING, element, message, id)
     }
 
-    fun report(id: Errors.Error, element: PsiElement?, message: String) {
-        report(id.level, element, message, id)
+    fun report(id: Errors.Error, element: PsiElement?, message: String): Boolean {
+        return report(id.level, element, message, id)
     }
 
-    fun report(id: Errors.Error, file: File?, message: String) {
-        report(id.level, file?.path, message, id)
+    fun report(id: Errors.Error, file: File?, message: String): Boolean {
+        return report(id.level, file?.path, message, id)
     }
 
-    fun report(id: Errors.Error, item: Item?, message: String) {
+    fun report(id: Errors.Error, item: Item?, message: String): Boolean {
         if (isSuppressed(id, item)) {
-            return
+            return false
         }
 
-        when (item) {
+        return when (item) {
             is PsiItem -> {
                 var psi = item.psi()
 
@@ -205,12 +205,12 @@ open class Reporter(private val rootFolder: File? = null) {
         return line
     }
 
-    open fun report(severity: Severity, element: PsiElement?, message: String, id: Errors.Error? = null) {
+    open fun report(severity: Severity, element: PsiElement?, message: String, id: Errors.Error? = null): Boolean {
         if (severity == HIDDEN) {
-            return
+            return false
         }
 
-        report(severity, elementToLocation(element), message, id)
+        return report(severity, elementToLocation(element), message, id)
     }
 
     open fun report(
@@ -219,9 +219,9 @@ open class Reporter(private val rootFolder: File? = null) {
         message: String,
         id: Errors.Error? = null,
         color: Boolean = options.color
-    ) {
+    ): Boolean {
         if (severity == HIDDEN) {
-            return
+            return false
         }
 
         val effectiveSeverity =
@@ -289,6 +289,7 @@ open class Reporter(private val rootFolder: File? = null) {
             }
         }
         print(sb.toString())
+        return true
     }
 
     open fun print(message: String) {

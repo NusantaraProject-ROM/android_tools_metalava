@@ -432,7 +432,7 @@ class StubWriter(
                         writer.write(", ")
                     }
                     val type = parameter.type()
-                    val typeString = type.toErasedTypeString()
+                    val typeString = type.toErasedTypeString(it)
                     if (!type.primitive) {
                         if (includeCasts) {
                             writer.write("(")
@@ -502,7 +502,12 @@ class StubWriter(
         generateTypeParameterList(typeList = method.typeParameterList(), addSpace = true)
 
         val returnType = method.returnType()
-        writer.print(returnType?.toTypeString(outerAnnotations = false, innerAnnotations = generateAnnotations))
+        writer.print(
+            returnType?.toTypeString(
+                outerAnnotations = false,
+                innerAnnotations = generateAnnotations
+            )
+        )
 
         writer.print(' ')
         writer.print(method.name())
@@ -536,7 +541,12 @@ class StubWriter(
 
         appendDocumentation(field, writer)
         appendModifiers(field, false, false)
-        writer.print(field.type().toTypeString(outerAnnotations = false, innerAnnotations = generateAnnotations))
+        writer.print(
+            field.type().toTypeString(
+                outerAnnotations = false,
+                innerAnnotations = generateAnnotations
+            )
+        )
         writer.print(' ')
         writer.print(field.name())
         val needsInitialization =

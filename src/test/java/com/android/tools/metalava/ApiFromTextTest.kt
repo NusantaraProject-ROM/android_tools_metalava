@@ -82,6 +82,7 @@ class ApiFromTextTest : DriverTest() {
                 ctor public Foo();
                 method public void method1(int p = 42, Integer? int2 = null, int p1 = 42, String str = "hello world", java.lang.String... args);
                 method public void method2(int p, int int2 = (2 * int) * some.other.pkg.Constants.Misc.SIZE);
+                method public void method3(str: String = "unbalanced), string", str2: String = ",");
               }
             }
         """
