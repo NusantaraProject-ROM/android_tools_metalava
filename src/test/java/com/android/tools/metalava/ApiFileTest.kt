@@ -156,6 +156,8 @@ class ApiFileTest : DriverTest() {
                     """
                     package test.pkg
                     import some.other.pkg.Constants.Misc.SIZE
+                    import android.graphics.Bitmap
+                    import android.view.View
 
                     class Foo {
                         fun method1(int: Int = 42,
@@ -168,8 +170,13 @@ class ApiFileTest : DriverTest() {
 
                         fun method3(str: String, int: Int, int2: Int = double(int) + str.length) { }
 
+                        fun emptyLambda(sizeOf: () -> Unit = {  }) {}
+
+                        fun View.drawToBitmap(config: Bitmap.Config = Bitmap.Config.ARGB_8888): Bitmap? = null
+
                         companion object {
                             fun double(int: Int) = 2 * int
+                            fun print(foo: Foo = Foo()) { println(foo) }
                         }
                     }
                     """
@@ -190,6 +197,8 @@ class ApiFileTest : DriverTest() {
                 package test.pkg {
                   public final class Foo {
                     ctor public Foo();
+                    method public android.graphics.Bitmap? drawToBitmap(android.view.View, android.graphics.Bitmap.Config config = android.graphics.Bitmap.Config.ARGB_8888);
+                    method public void emptyLambda(kotlin.jvm.functions.Function0<kotlin.Unit> sizeOf = {});
                     method public void method1(int p = 42, Integer? int2 = null, int p1 = 42, String str = "hello world", java.lang.String... args);
                     method public void method2(int p, int int2 = (2 * int) * some.other.pkg.Constants.Misc.SIZE);
                     method public void method3(String str, int p, int int2 = double(int) + str.length);
@@ -197,6 +206,7 @@ class ApiFileTest : DriverTest() {
                   }
                   public static final class Foo.Companion {
                     method public int double(int p);
+                    method public void print(test.pkg.Foo foo = test.pkg.Foo());
                   }
                 }
                 """,
