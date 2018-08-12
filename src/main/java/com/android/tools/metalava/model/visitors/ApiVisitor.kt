@@ -61,7 +61,16 @@ open class ApiVisitor(
      * Typically these are not included in signature files, but when generating
      * stubs we need to include them.
      */
-    val includeEmptyOuterClasses: Boolean = false
+    val includeEmptyOuterClasses: Boolean = false,
+
+    /**
+     * Whether this visitor should visit elements that have not been
+     * annotated with one of the annotations passed in using the
+     * --show-annotation flag. This is normally true, but signature files
+     * sometimes sets this to false to make the signature file only contain
+     * the "diff" of the annotated API relative to the base API.
+     */
+    val showUnannotated: Boolean = true
 ) : ItemVisitor(visitConstructorsAsMethods, nestInnerClasses) {
     constructor(
         codebase: Codebase,
