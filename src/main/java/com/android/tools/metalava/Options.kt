@@ -199,7 +199,10 @@ class Options(
     /** Whether to include APIs with annotations (intended for documentation purposes) */
     var showAnnotations = mutableShowAnnotations
 
-    /** Whether to include unannotated elements if {@link #showAnnotations} is set */
+    /**
+     * Whether to include unannotated elements if {@link #showAnnotations} is set.
+     * Note: This only applies to signature files, not stub files.
+     */
     var showUnannotated = false
 
     /** Whether to validate the API for Kotlin interop */
