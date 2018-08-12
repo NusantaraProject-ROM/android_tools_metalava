@@ -170,19 +170,25 @@ class ApiFromTextTest : DriverTest() {
 
     @Test
     fun `Native and strictfp keywords`() {
-        val source = """
-                package test.pkg {
-                  public class MyTest {
-                    method public native float dotWithNormal(float, float, float);
-                    method public static strictfp double toDegrees(double);
-                  }
-                }
-                """
         check(
             compatibilityMode = false,
             outputKotlinStyleNulls = false,
-            signatureSource = source,
-            api = source
+            signatureSource = """
+                    package test.pkg {
+                      public class MyTest {
+                        method public native float dotWithNormal(float, float, float);
+                        method public static strictfp double toDegrees(double);
+                      }
+                    }
+                    """,
+            api = """
+                    package test.pkg {
+                      public class MyTest {
+                        method public float dotWithNormal(float, float, float);
+                        method public static double toDegrees(double);
+                      }
+                    }
+                    """
         )
     }
 
