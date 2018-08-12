@@ -1131,8 +1131,8 @@ class ApiFileTest : DriverTest() {
                     package test.pkg {
                       public abstract class Foo {
                         ctor public Foo();
-                        method public static final deprecated synchronized strictfp void method1();
-                        method public static final native deprecated synchronized void method2();
+                        method public static final deprecated synchronized void method1();
+                        method public static final deprecated synchronized void method2();
                       }
                       protected static final deprecated class Foo.Inner1 {
                         ctor protected Foo.Inner1();
@@ -1221,8 +1221,8 @@ class ApiFileTest : DriverTest() {
                 package test.pkg {
                   public abstract class Foo {
                     ctor public Foo();
-                    method @Deprecated public static final synchronized strictfp void method1();
-                    method @Deprecated public static final synchronized native void method2();
+                    method @Deprecated public static final synchronized void method1();
+                    method @Deprecated public static final synchronized void method2();
                   }
                   @Deprecated protected static final class Foo.Inner1 {
                     ctor protected Foo.Inner1();

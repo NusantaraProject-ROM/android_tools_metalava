@@ -292,7 +292,7 @@ interface ModifierList {
                     writer.write("abstract ")
                 }
 
-                if (!compatibility.skipNativeModifier && list.isNative()) {
+                if (list.isNative() && (target == AnnotationTarget.STUBS_FILE || !compatibility.skipNativeModifier)) {
                     writer.write("native ")
                 }
 
@@ -380,7 +380,7 @@ interface ModifierList {
                     writer.write("synchronized ")
                 }
 
-                if (!compatibility.skipNativeModifier && list.isNative()) {
+                if (list.isNative() && (target == AnnotationTarget.STUBS_FILE || !compatibility.skipNativeModifier)) {
                     writer.write("native ")
                 }
 

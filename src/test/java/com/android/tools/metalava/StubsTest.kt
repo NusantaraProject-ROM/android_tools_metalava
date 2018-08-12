@@ -449,7 +449,7 @@ class StubsTest : DriverTest() {
                 public abstract class Foo {
                 public Foo() { throw new RuntimeException("Stub!"); }
                 @Deprecated
-                public static final synchronized strictfp void method1() { throw new RuntimeException("Stub!"); }
+                public static final synchronized void method1() { throw new RuntimeException("Stub!"); }
                 @Deprecated
                 public static final synchronized native void method2();
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
