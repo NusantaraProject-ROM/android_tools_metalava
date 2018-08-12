@@ -26,7 +26,7 @@ class ApiPredicate(
      * This is typically useful when generating "current.txt", when no
      * [Options.showAnnotations] have been defined.
      */
-    private val ignoreShown: Boolean = options.showUnannotated,
+    val ignoreShown: Boolean = options.showUnannotated,
 
     /**
      * Set if the value of [MemberItem.removed] should be ignored.

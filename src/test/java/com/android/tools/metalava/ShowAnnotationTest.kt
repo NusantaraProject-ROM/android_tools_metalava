@@ -163,4 +163,77 @@ class ShowAnnotationTest : DriverTest() {
                 """
         )
     }
+
+    @Test
+    fun `Include interface-inherited fields in stubs`() {
+        // When applying an annotations filter (-showAnnotation X), doclava
+        // deliberately made the signature files *only* include annotated
+        // elements, e.g. they're just showing the "diffs" between the base API
+        // and the additional API made visible with annotations. However,
+        // in the *stubs*, we have to include everything.
+        check(
+            checkDoclava1 = true,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg2;
+
+                    import test.pkg1.MyParent;
+                    public class MyChild extends MyParent {
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg1;
+                    import java.io.Closeable;
+                    @SuppressWarnings("WeakerAccess")
+                    public class MyParent implements MyConstants, Closeable {
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg1;
+                    interface MyConstants {
+                        long CONSTANT1 = 12345;
+                        long CONSTANT2 = 67890;
+                        long CONSTANT3 = 42;
+                    }
+                    """
+                )
+            ),
+            stubs = arrayOf(
+                """
+                package test.pkg2;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class MyChild extends test.pkg1.MyParent {
+                public MyChild() { throw new RuntimeException("Stub!"); }
+                public static final long CONSTANT1 = 12345L; // 0x3039L
+                public static final long CONSTANT2 = 67890L; // 0x10932L
+                public static final long CONSTANT3 = 42L; // 0x2aL
+                }
+            """.trimIndent(),
+                """
+                package test.pkg1;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class MyParent implements java.io.Closeable {
+                public MyParent() { throw new RuntimeException("Stub!"); }
+                public static final long CONSTANT1 = 12345L; // 0x3039L
+                public static final long CONSTANT2 = 67890L; // 0x10932L
+                public static final long CONSTANT3 = 42L; // 0x2aL
+                }
+                """.trimIndent()
+            ),
+            // Empty API: showUnannotated=false
+            api = """
+                """,
+            includeSystemApiAnnotations = true,
+            extraArguments = arrayOf(
+                "--show-annotation", "android.annotation.TestApi",
+                "--hide-package", "android.annotation",
+                "--hide-package", "android.support.annotation"
+            )
+        )
+    }
 }

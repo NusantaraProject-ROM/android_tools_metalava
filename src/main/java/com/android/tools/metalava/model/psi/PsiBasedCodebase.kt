@@ -960,9 +960,8 @@ class FilteredClassView(
     init {
         constructors = cls.constructors().asSequence().filter { filterEmit.test(it) }
         methods = cls.methods().asSequence().filter { filterEmit.test(it) }
-        // fields = cls.fields().asSequence().filter { filterEmit.test(it) }
 
-        fields = cls.filteredFields(filterEmit).asSequence()
+        fields = cls.filteredFields(filterEmit, true).asSequence()
         innerClasses = cls.innerClasses()
             .asSequence()
             .filterIsInstance(PsiClassItem::class.java)
