@@ -25,7 +25,6 @@ import com.android.tools.metalava.compatibility
 import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.android.tools.metalava.model.visitors.ItemVisitor
 import com.android.tools.metalava.model.visitors.TypeVisitor
-import com.android.tools.metalava.options
 import com.google.common.base.Splitter
 import java.util.ArrayList
 import java.util.LinkedHashSet
@@ -577,9 +576,9 @@ interface ClassItem : Item {
      * Return fields matching the given predicate. Also clones fields from
      * ancestors that would match had they been defined in this class.
      */
-    fun filteredFields(predicate: Predicate<Item>): List<FieldItem> {
+    fun filteredFields(predicate: Predicate<Item>, showUnannotated: Boolean): List<FieldItem> {
         val fields = LinkedHashSet<FieldItem>()
-        if (options.showUnannotated) {
+        if (showUnannotated) {
             for (clazz in allInterfaces()) {
                 if (!clazz.isInterface()) {
                     continue
@@ -753,7 +752,7 @@ class VisitCandidate(private val cls: ClassItem, private val visitor: ApiVisitor
 
         val fieldSequence =
             if (visitor.inlineInheritedFields) {
-                cls.filteredFields(filterEmit).asSequence()
+                cls.filteredFields(filterEmit, visitor.showUnannotated).asSequence()
             } else {
                 cls.fields().asSequence()
                     .filter { filterEmit.test(it) }
