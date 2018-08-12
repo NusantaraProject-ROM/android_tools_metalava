@@ -50,7 +50,8 @@ class SignatureWriter(
     methodComparator = MethodItem.comparator,
     fieldComparator = FieldItem.comparator,
     filterEmit = filterEmit,
-    filterReference = filterReference
+    filterReference = filterReference,
+    showUnannotated = options.showUnannotated
 ) {
     init {
         if (options.includeSignatureFormatVersion) {
