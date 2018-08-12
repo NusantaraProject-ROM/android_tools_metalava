@@ -58,10 +58,10 @@ class Compatibility(
     var nonstandardModifierOrder: Boolean = compat
 
     /** In signature files, skip the native modifier from the modifier lists */
-    var skipNativeModifier: Boolean = false
+    var skipNativeModifier: Boolean = true
 
     /** In signature files, skip the strictfp modifier from the modifier lists */
-    var skipStrictFpModifier: Boolean = false
+    var skipStrictFpModifier: Boolean = true
 
     /** Whether to include instance methods in annotation classes for the annotation properties */
     var skipAnnotationInstanceMethods: Boolean = compat
