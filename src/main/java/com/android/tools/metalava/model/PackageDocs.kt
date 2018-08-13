@@ -16,6 +16,11 @@
 
 package com.android.tools.metalava.model
 
-data class PackageDocs(val packageDocs: MutableMap<String, String>, val hiddenPackages: MutableSet<String>) {
-    fun getDocs(pkg: PackageItem): String? = packageDocs[pkg.qualifiedName()]
+data class PackageDocs(
+    val packageDocs: MutableMap<String, String>,
+    val overviewDocs: MutableMap<String, String>,
+    val hiddenPackages: MutableSet<String>
+) {
+    fun getPackageDocumentation(pkg: PackageItem): String? = packageDocs[pkg.qualifiedName()]
+    fun getOverviewDocumentation(pkg: PackageItem): String? = overviewDocs[pkg.qualifiedName()]
 }
