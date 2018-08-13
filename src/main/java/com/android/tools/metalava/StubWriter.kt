@@ -46,7 +46,7 @@ class StubWriter(
     private val stubsDir: File,
     private val generateAnnotations: Boolean = false,
     private val preFiltered: Boolean = true,
-    docStubs: Boolean
+    private val docStubs: Boolean
 ) : ApiVisitor(
     visitConstructorsAsMethods = false,
     nestInnerClasses = true,
@@ -94,10 +94,36 @@ class StubWriter(
 
         writePackageInfo(pkg)
 
-        codebase.getPackageDocs()?.getDocs(pkg)?.let { writeDocOverview(pkg, it) }
+        if (docStubs) {
+            codebase.getPackageDocs()?.let { packageDocs ->
+                packageDocs.getOverviewDocumentation(pkg)?.let { writeDocOverview(pkg, it) }
+                packageDocs.getPackageDocumentation(pkg)?.let { writePackageDocs(pkg, it) }
+            }
+        }
     }
 
-    private fun writeDocOverview(pkg: PackageItem, content: String) {
+    private fun writePackageDocs(pkg: PackageItem, content: String) {
+        if (content.isBlank()) {
+            return
+        }
+
+        val sourceFile = File(getPackageDir(pkg), "package.html")
+        val writer = try {
+            PrintWriter(BufferedWriter(FileWriter(sourceFile)))
+        } catch (e: IOException) {
+            reporter.report(Errors.IO_ERROR, sourceFile, "Cannot open file for write.")
+            return
+        }
+
+        // Should we include this in our stub list?
+        //     startFile(sourceFile)
+
+        writer.println(content)
+        writer.flush()
+        writer.close()
+    }
+
+    fun writeDocOverview(pkg: PackageItem, content: String) {
         if (content.isBlank()) {
             return
         }

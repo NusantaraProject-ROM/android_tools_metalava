@@ -585,7 +585,7 @@ internal fun parseSources(sources: List<File>, description: String): PsiBasedCod
 
     // Push language level to PSI handler
     project.getComponent(LanguageLevelProjectExtension::class.java)?.languageLevel =
-            options.javaLanguageLevel
+        options.javaLanguageLevel
 
     val joined = mutableListOf<File>()
     joined.addAll(options.sourcePath.map { it.absoluteFile })
@@ -653,7 +653,8 @@ private fun createProjectEnvironment(): LintCoreProjectEnvironment {
 
     if (!assertionsEnabled() &&
         System.getenv(ENV_VAR_METALAVA_DUMP_ARGV) == null &&
-        !java.lang.Boolean.getBoolean(ENV_VAR_METALAVA_TESTS_RUNNING)) {
+        !java.lang.Boolean.getBoolean(ENV_VAR_METALAVA_TESTS_RUNNING)
+    ) {
         DefaultLogger.disableStderrDumping(parentDisposable)
     }
 
@@ -719,6 +720,16 @@ private fun createStubFiles(stubDir: File, codebase: Codebase, docStubs: Boolean
             docStubs = docStubs
         )
     codebase.accept(stubWriter)
+
+    if (docStubs) {
+        // Overview docs? These are generally in the empty package.
+        codebase.findPackage("")?.let { empty ->
+            val overview = codebase.getPackageDocs()?.getOverviewDocumentation(empty)
+            if (overview != null && overview.isNotBlank()) {
+                stubWriter.writeDocOverview(empty, overview)
+            }
+        }
+    }
 
     if (writeStubList) {
         // Optionally also write out a list of source files that were generated; used
@@ -816,6 +827,7 @@ fun gatherSources(sourcePath: List<File>): List<File> {
 
 private fun addHiddenPackages(
     packageToDoc: MutableMap<String, String>,
+    packageToOverview: MutableMap<String, String>,
     hiddenPackages: MutableSet<String>,
     file: File,
     pkg: String
@@ -830,12 +842,19 @@ private fun addHiddenPackages(
                             child.name
                         else pkg + "." + child.name
                     else pkg
-                addHiddenPackages(packageToDoc, hiddenPackages, child, subPkg)
+                addHiddenPackages(packageToDoc, packageToOverview, hiddenPackages, child, subPkg)
             }
         }
-    } else if (file.isFile && (file.name == "package.html" || file.name == "overview.html")) {
+    } else if (file.isFile) {
+        val map = when {
+            file.name == "package.html" -> packageToDoc
+            file.name == "overview.html" -> {
+                packageToOverview
+            }
+            else -> return
+        }
         val contents = Files.asCharSource(file, Charsets.UTF_8).read()
-        packageToDoc[pkg] = contents + (packageToDoc[pkg] ?: "") // Concatenate in case package has both files
+        map[pkg] = contents
         if (contents.contains("@hide")) {
             hiddenPackages.add(pkg)
         }
@@ -843,12 +862,13 @@ private fun addHiddenPackages(
 }
 
 private fun gatherHiddenPackagesFromJavaDocs(sourcePath: List<File>): PackageDocs {
-    val map = HashMap<String, String>(100)
+    val packageHtml = HashMap<String, String>(100)
+    val overviewHtml = HashMap<String, String>(10)
     val set = HashSet<String>(100)
     for (file in sourcePath) {
-        addHiddenPackages(map, set, file, "")
+        addHiddenPackages(packageHtml, overviewHtml, set, file, "")
     }
-    return PackageDocs(map, set)
+    return PackageDocs(packageHtml, overviewHtml, set)
 }
 
 private fun extractRoots(sources: List<File>, sourceRoots: MutableList<File> = mutableListOf()): List<File> {
