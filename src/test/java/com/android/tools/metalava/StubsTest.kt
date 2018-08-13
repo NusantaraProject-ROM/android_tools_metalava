@@ -524,6 +524,49 @@ class StubsTest : DriverTest() {
     }
 
     @Test
+    fun `Skip hidden enum constants in stubs`() {
+        checkStubs(
+            checkDoclava1 = false,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    public enum Alignment {
+                        ALIGN_NORMAL,
+                        ALIGN_OPPOSITE,
+                        ALIGN_CENTER,
+                        /** @hide */
+                        ALIGN_LEFT,
+                        /** @hide */
+                        ALIGN_RIGHT
+                    }
+                    """
+                )
+            ),
+            api = """
+                package test.pkg {
+                  public final class Alignment extends java.lang.Enum {
+                    method public static test.pkg.Alignment valueOf(java.lang.String);
+                    method public static final test.pkg.Alignment[] values();
+                    enum_constant public static final test.pkg.Alignment ALIGN_CENTER;
+                    enum_constant public static final test.pkg.Alignment ALIGN_NORMAL;
+                    enum_constant public static final test.pkg.Alignment ALIGN_OPPOSITE;
+                  }
+                }
+            """,
+            source = """
+                package test.pkg;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public enum Alignment {
+                ALIGN_NORMAL,
+                ALIGN_OPPOSITE,
+                ALIGN_CENTER;
+                }
+            """
+        )
+    }
+
+    @Test
     fun `Check erasure in throws list`() {
         // Makes sure that when we have a generic signature in the throws list we take
         // the erasure instead (in compat mode); "Throwable" instead of "X" in the below
