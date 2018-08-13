@@ -1159,7 +1159,8 @@ class DocAnalyzerTest : DriverTest() {
         check(
             checkDoclava1 = false,
             sourceFiles = *arrayOf(
-                source("src/test/visible/overview.html", "<html>My docs</html>"),
+                source("src/overview.html", "<html>My overview docs</html>"),
+                source("src/test/visible/package.html", "<html>My package docs</html>"),
                 java(
                     """
                     package test.visible;
@@ -1169,9 +1170,13 @@ class DocAnalyzerTest : DriverTest() {
                     """
                 )
             ),
+            docStubs = true,
             stubs = arrayOf(
                 """
-                <html>My docs</html>
+                <html>My overview docs</html>
+                """,
+                """
+                <html>My package docs</html>
                 """,
                 """
                 package test.visible;
