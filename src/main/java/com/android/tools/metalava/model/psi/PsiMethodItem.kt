@@ -118,10 +118,6 @@ open class PsiMethodItem(
         return superMethods!!
     }
 
-    fun setSuperMethods(superMethods: List<MethodItem>) {
-        this.superMethods = superMethods
-    }
-
     override fun typeParameterList(): TypeParameterList {
         if (psiMethod.hasTypeParameters()) {
             return PsiTypeParameterList(

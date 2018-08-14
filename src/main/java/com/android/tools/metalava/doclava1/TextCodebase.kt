@@ -89,7 +89,7 @@ class TextCodebase : DefaultCodebase() {
                     // Interface not provided by this codebase. Inject a stub.
                     ci = TextClassItem.createInterfaceStub(this, iface)
                 }
-                cl.addInterface(ci)
+                cl.addInterface(ci.toType())
             }
         }
     }
@@ -249,10 +249,6 @@ class TextCodebase : DefaultCodebase() {
 
     override fun unsupported(desc: String?): Nothing {
         error(desc ?: "Not supported for a signature-file based codebase")
-    }
-
-    override fun filter(filterEmit: Predicate<Item>, filterReference: Predicate<Item>): Codebase {
-        unsupported()
     }
 
     fun obtainTypeFromString(

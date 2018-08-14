@@ -132,11 +132,6 @@ interface Codebase {
         getPackages().packages.forEach { pkg -> pkg.allClasses().forEach { cls -> cls.tag = false } }
     }
 
-    /**
-     * Creates a filtered version of this codebase
-     */
-    fun filter(filterEmit: Predicate<Item>, filterReference: Predicate<Item>): Codebase
-
     /** Reports that the given operation is unsupported for this codebase type */
     fun unsupported(desc: String? = null): Nothing
 
@@ -170,6 +165,7 @@ abstract class DefaultCodebase : Codebase {
     override var supportsStagedNullability: Boolean = true
     override var units: List<PsiFile> = emptyList()
     override var apiLevel: Int = -1
+    @Suppress("LeakingThis")
     override val printer = CodePrinter(this)
 
     override fun getPermissionLevel(name: String): String? {

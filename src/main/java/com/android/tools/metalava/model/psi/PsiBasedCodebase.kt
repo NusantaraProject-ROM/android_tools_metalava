@@ -20,9 +20,7 @@ import com.android.SdkConstants
 import com.android.tools.metalava.compatibility
 import com.android.tools.metalava.doclava1.Errors
 import com.android.tools.metalava.model.ClassItem
-import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.DefaultCodebase
-import com.android.tools.metalava.model.FieldItem
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.PackageDocs
@@ -32,8 +30,6 @@ import com.android.tools.metalava.model.TypeItem
 import com.android.tools.metalava.options
 import com.android.tools.metalava.reporter
 import com.android.tools.metalava.tick
-import com.google.common.collect.BiMap
-import com.google.common.collect.HashBiMap
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.JavaPsiFacade
@@ -59,10 +55,8 @@ import org.jetbrains.uast.UFile
 import org.jetbrains.uast.UastContext
 import java.io.File
 import java.io.IOException
-import java.util.ArrayDeque
 import java.util.ArrayList
 import java.util.HashMap
-import java.util.function.Predicate
 import java.util.zip.ZipFile
 
 const val PACKAGE_ESTIMATE = 400
@@ -75,7 +69,7 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
     var bindingContext: BindingContext? = null
 
     /** Map from class name to class item */
-    protected val classMap: MutableMap<String, PsiClassItem> = HashMap(CLASS_ESTIMATE)
+    private val classMap: MutableMap<String, PsiClassItem> = HashMap(CLASS_ESTIMATE)
 
     /** Map from psi type to type item */
     private val typeMap: MutableMap<PsiType, TypeItem> = HashMap(400)
@@ -666,339 +660,9 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
 
     override fun toString(): String = description
 
-    override fun filter(filterEmit: Predicate<Item>, filterReference: Predicate<Item>): Codebase =
-        filter(this, filterEmit, filterReference)
-
-    companion object {
-        // This is on the companion object rather than as an instance method to make sure
-        // we don't accidentally call self-methods on the old codebase when we meant the
-        // new: this forces us to be explicit about which codebase we mean
-        fun filter(
-            oldCodebase: PsiBasedCodebase,
-            filterEmit: Predicate<Item>,
-            filterReference: Predicate<Item>
-        ): Codebase {
-            val newCodebase = LockedPsiBasedCodebase("Filtered ${oldCodebase.description}") as PsiBasedCodebase
-            with(newCodebase) {
-                project = oldCodebase.project
-                hiddenPackages = HashMap(oldCodebase.hiddenPackages)
-                packageMap = HashMap(PACKAGE_ESTIMATE)
-                packageClasses = HashMap(PACKAGE_ESTIMATE)
-                packageClasses[""] = ArrayList()
-                methodMap = HashMap(METHOD_ESTIMATE)
-                initializing = true
-                original = oldCodebase
-                units = oldCodebase.units
-            }
-
-            val oldToNew: BiMap<PsiClassItem, PsiClassItem> = HashBiMap.create(30000)
-
-            val newPackages = mutableListOf<PsiPackageItem>()
-
-            val oldPackages = oldCodebase.packageMap.values
-            for (pkg in oldPackages) {
-                if (pkg.hidden) {
-                    continue
-                }
-                var currentPackage: PsiPackageItem? = null
-
-                for (cls in pkg.topLevelClasses()) {
-                    if (cls.isFromClassPath()) {
-                        continue
-                    }
-                    val classFilter = FilteredClassView(cls as PsiClassItem, filterEmit, filterReference)
-                    if (classFilter.emit()) {
-                        val newPackage = currentPackage ?: run {
-                            val newPackage = PsiPackageItem.create(newCodebase, pkg)
-                            currentPackage = newPackage
-                            newPackages.add(newPackage)
-                            newCodebase.packageMap[newPackage.qualifiedName()] = newPackage
-                            newPackage
-                        }
-
-                        // Bottom-up copy
-                        val newClass = classFilter.create(newCodebase)
-
-                        // Register it and all inner classes in the class map
-                        for (c in newClass.allInnerClasses(includeSelf = true)) {
-                            newCodebase.classMap[c.qualifiedName()] = c as PsiClassItem
-                        }
-
-                        newPackage.addClass(newClass) // (inner classes are not registered in the package)
-
-                        oldToNew[cls] = newClass
-                        newClass.containingPackage = newPackage
-                    }
-                }
-            }
-
-            // Initialize super classes and super methods
-            for (cls in newCodebase.classMap.values) {
-                val originalClass = cls.source!! // should be set here during construction
-                val prevSuperClass = originalClass.filteredSuperClassType(filterReference)
-                val curr = prevSuperClass?.asClass()
-                if (curr != null) {
-                    val superClassName = curr.qualifiedName()
-                    val publicSuperClass: PsiClassItem? = newCodebase.classMap[superClassName]
-                    cls.setSuperClass(
-                        if (publicSuperClass == null) {
-                            if (curr.isFromClassPath() && options.allowReferencingUnknownClasses) {
-                                curr
-                            } else {
-                                reporter.report(
-                                    Errors.HIDDEN_SUPERCLASS, originalClass.psiClass,
-                                    "$cls has a super class " +
-                                        "that is excluded via filters: $superClassName"
-                                )
-                                null
-                            }
-                        } else {
-                            newCodebase.classMap[superClassName] = publicSuperClass
-                            publicSuperClass
-                        },
-                        PsiTypeItem.create(newCodebase, prevSuperClass as PsiTypeItem)
-                    )
-                } else {
-                    // typically java.lang.Object
-                    cls.setSuperClass(null, null)
-                }
-
-                val psiClass = cls.psiClass
-
-                val filtered = originalClass.filteredInterfaceTypes(filterReference)
-                if (filtered.isEmpty()) {
-                    cls.setInterfaces(emptyList())
-                } else {
-                    val interfaceTypeList = mutableListOf<PsiTypeItem>()
-                    for (type in filtered) {
-                        interfaceTypeList.add(PsiTypeItem.create(newCodebase, type as PsiTypeItem))
-                    }
-                    cls.setInterfaces(interfaceTypeList)
-                }
-
-                val oldCls = oldCodebase.findOrCreateClass(cls.psiClass)
-                val oldDefaultConstructor = oldCls.defaultConstructor
-                if (oldDefaultConstructor != null) {
-                    val newConstructor = cls.findConstructor(oldDefaultConstructor) as PsiConstructorItem?
-                    if (newConstructor != null) {
-                        cls.defaultConstructor = newConstructor
-                    } else {
-                        // Constructor picked before that isn't available here: recreate it
-                        val recreated = cls.createDefaultConstructor()
-
-                        recreated.mutableModifiers().setPackagePrivate(true)
-                        cls.defaultConstructor = recreated
-                    }
-                }
-
-                val constructors = cls.constructors().asSequence()
-                val methods = cls.methods().asSequence()
-                val allMethods = methods.plus(constructors)
-
-                // Super constructors
-                for (method in constructors) {
-                    val original = method.source as PsiConstructorItem
-
-                    val originalSuperConstructor = original.superConstructor
-                    val superConstructor =
-                        if (originalSuperConstructor != null && filterReference.test(originalSuperConstructor)) {
-                            originalSuperConstructor
-                        } else {
-                            original.findDelegate(filterReference, true)
-                        }
-
-                    if (superConstructor != null) {
-                        val superConstructorClass =
-                            newCodebase.classMap[superConstructor.containingClass().qualifiedName()]
-                        if (superConstructorClass == null) {
-                            // This class is not in the filtered codebase
-                            if (superConstructor.isFromClassPath() && options.allowReferencingUnknownClasses) {
-                                method.superConstructor = superConstructor
-                                method.setSuperMethods(listOf(superConstructor))
-                            } else {
-                                reporter.report(
-                                    Errors.HIDDEN_SUPERCLASS, psiClass, "$method has a super method " +
-                                        "in a class that is excluded via filters: " +
-                                        "${superConstructor.containingClass().qualifiedName()} "
-                                )
-                            }
-                        } else {
-                            // Find corresponding super method
-                            val newSuperConstructor = superConstructorClass.findMethod(superConstructor)
-                            if (newSuperConstructor == null) {
-                                reporter.report(
-                                    Errors.HIDDEN_SUPERCLASS, psiClass, "$method has a super method " +
-                                        "in a class that is not matched via filters: " +
-                                        "${superConstructor.containingClass().qualifiedName()} "
-                                )
-                            } else {
-                                val constructorItem = newSuperConstructor as PsiConstructorItem
-                                method.superConstructor = constructorItem
-                                method.setSuperMethods(listOf(constructorItem))
-                            }
-                        }
-                    } else {
-                        method.setSuperMethods(emptyList())
-                    }
-                }
-
-                // Super methods
-                for (method in methods) {
-                    val original = method.source!! // should be set here
-                    val list = mutableListOf<MethodItem>()
-                    val superMethods = ArrayDeque<MethodItem>()
-                    superMethods.addAll(original.superMethods())
-                    while (!superMethods.isEmpty()) {
-                        val superMethod = superMethods.removeFirst()
-                        if (filterReference.test(superMethod)) {
-                            // Find corresponding method in the new filtered codebase
-                            val superMethodClass = newCodebase.classMap[superMethod.containingClass().qualifiedName()]
-                            if (superMethodClass == null) {
-                                // This class is not in the filtered codebase
-                                if (superMethod.isFromClassPath() && options.allowReferencingUnknownClasses) {
-                                    list.add(superMethod)
-                                } else {
-                                    reporter.report(
-                                        Errors.HIDDEN_SUPERCLASS, psiClass, "$method has a super method " +
-                                            "in a class that is excluded via filters: " +
-                                            "${superMethod.containingClass().qualifiedName()} "
-                                    )
-                                }
-                            } else {
-                                // Find corresponding super method
-                                val newSuperMethod = superMethodClass.findMethod(superMethod)
-                                if (newSuperMethod == null) {
-                                    reporter.report(
-                                        Errors.HIDDEN_SUPERCLASS, psiClass, "$method has a super method " +
-                                            "in a class that is not matched via filters: " +
-                                            "${superMethod.containingClass().qualifiedName()} "
-                                    )
-                                } else {
-                                    list.add(newSuperMethod)
-                                }
-                            }
-                        } else {
-                            // Process its parents instead
-                            superMethods.addAll(superMethod.superMethods())
-                        }
-                    }
-                    method.setSuperMethods(list)
-                }
-
-                // Methods and constructors: initialize throws lists
-                for (method in allMethods) {
-                    val original = method.source!! // should be set here
-
-                    val throwsTypes: List<PsiClassItem> = if (original.throwsTypes().isNotEmpty()) {
-                        val list = ArrayList<PsiClassItem>()
-
-                        original.filteredThrowsTypes(filterReference).forEach {
-                            val newCls = newCodebase.classMap[it.qualifiedName()]
-                            if (newCls == null) {
-                                if (it.isFromClassPath() && options.allowReferencingUnknownClasses) {
-                                    list.add(it as PsiClassItem)
-                                } else {
-                                    reporter.report(
-                                        Errors.HIDDEN_SUPERCLASS, psiClass, "$newCls has a throws class " +
-                                            "that is excluded via filters: ${it.qualifiedName()}"
-                                    )
-                                }
-                            } else {
-                                list.add(newCls)
-                            }
-                        }
-                        list
-                    } else {
-                        emptyList()
-                    }
-                    method.setThrowsTypes(throwsTypes)
-
-                    method.source = null
-                }
-
-                cls.source = null
-            }
-
-            val pkg: PsiPackageItem? = newCodebase.findPackage("") ?: run {
-                val psiPackage = JavaPsiFacade.getInstance(newCodebase.project).findPackage("")
-                if (psiPackage != null) {
-                    PsiPackageItem.create(newCodebase, psiPackage, null)
-                } else {
-                    null
-                }
-            }
-            pkg?.let {
-                newCodebase.emptyPackage = it
-                newCodebase.packageMap[""] = it
-            }
-
-            newCodebase.addParentPackages(newCodebase.packageMap.values)
-
-            newCodebase.initializing = false
-
-            return newCodebase
-        }
-    }
-
     fun registerClass(cls: PsiClassItem) {
         assert(classMap[cls.qualifiedName()] == null || classMap[cls.qualifiedName()] == cls)
 
         classMap[cls.qualifiedName()] = cls
     }
-}
-
-class FilteredClassView(
-    val cls: PsiClassItem,
-    private val filterEmit: Predicate<Item>,
-    private val filterReference: Predicate<Item>
-) {
-    val innerClasses: Sequence<FilteredClassView>
-    val constructors: Sequence<MethodItem>
-    val methods: Sequence<MethodItem>
-    val fields: Sequence<FieldItem>
-
-    init {
-        constructors = cls.constructors().asSequence().filter { filterEmit.test(it) }
-        methods = cls.methods().asSequence().filter { filterEmit.test(it) }
-
-        fields = cls.filteredFields(filterEmit, true).asSequence()
-        innerClasses = cls.innerClasses()
-            .asSequence()
-            .filterIsInstance(PsiClassItem::class.java)
-            .map { FilteredClassView(it, filterEmit, filterReference) }
-    }
-
-    fun create(codebase: PsiBasedCodebase): PsiClassItem {
-        return PsiClassItem.create(codebase, this)
-    }
-
-    /** Will this class emit anything? */
-    fun emit(): Boolean {
-        val emit = emitClass()
-        if (emit) {
-            return true
-        }
-
-        return innerClasses.any { it.emit() }
-    }
-
-    /** Does the body of this class (everything other than the inner classes) emit anything? */
-    private fun emitClass(): Boolean {
-        val classEmpty = (constructors.none() && methods.none() && fields.none())
-        return if (filterEmit.test(cls)) {
-            true
-        } else if (!classEmpty) {
-            filterReference.test(cls)
-        } else {
-            false
-        }
-    }
-}
-
-class LockedPsiBasedCodebase(description: String = "Unknown") : PsiBasedCodebase(description) {
-    // Not yet locked
-    // override fun findClass(psiClass: PsiClass): PsiClassItem {
-    //    val qualifiedName: String = psiClass.qualifiedName ?: psiClass.name!!
-    //    return classMap[qualifiedName] ?: error("Attempted to register ${psiClass.name} in locked codebase")
-    // }
 }

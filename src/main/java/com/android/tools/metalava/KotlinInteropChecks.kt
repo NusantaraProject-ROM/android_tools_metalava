@@ -344,7 +344,7 @@ class KotlinInteropChecks {
     }
 
     /** Returns true if the given string is a reserved Java keyword  */
-    fun isJavaKeyword(keyword: String): Boolean {
+    private fun isJavaKeyword(keyword: String): Boolean {
         // TODO when we built on top of IDEA core replace this with
         //   JavaLexer.isKeyword(candidate, LanguageLevel.JDK_1_5)
         when (keyword) {

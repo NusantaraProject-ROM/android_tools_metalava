@@ -23,8 +23,8 @@ import org.jetbrains.annotations.Nullable;
 // Copied from doclava1, but adapted to metalava's code model
 //
 public final class ApiParseException extends Exception {
-    public String file;
-    public int line;
+    private String file;
+    private int line;
 
     ApiParseException(@NotNull String message) {
         super(message);

@@ -554,10 +554,15 @@ class DocAnalyzer(
         "LemonMeringuePie" to "Lollipop",
         "LMP" to "Lollipop",
         "KeyLimePie" to "KitKat",
-        "KLP" to "KitKat"
+        "KLP" to "KitKat",
+        "teh" to "the"
     )
 
     private fun tweakGrammar() {
+        if (reporter.isSuppressed(Errors.TYPO, null)) {
+            return
+        }
+
         codebase.accept(object : VisibleItemVisitor() {
             override fun visitItem(item: Item) {
                 var doc = item.documentation
@@ -568,13 +573,16 @@ class DocAnalyzer(
                 for (typo in typos.keys) {
                     if (doc.contains(typo)) {
                         val replacement = typos[typo] ?: continue
-                        reporter.report(
-                            Errors.TYPO,
-                            item,
-                            "Replaced $typo with $replacement in documentation for $item"
-                        )
-                        doc = doc.replace(typo, replacement, false)
-                        item.documentation = doc
+                        val new = doc.replace(Regex("\\b$typo\\b"), replacement)
+                        if (new != doc) {
+                            reporter.report(
+                                Errors.TYPO,
+                                item,
+                                "Replaced $typo with $replacement in the documentation for $item"
+                            )
+                            doc = new
+                            item.documentation = doc
+                        }
                     }
                 }
 

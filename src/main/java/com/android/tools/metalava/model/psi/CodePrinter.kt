@@ -175,60 +175,64 @@ open class CodePrinter(
             return sb.length != 2
         } else if (expression is UReferenceExpression) {
             val resolved = expression.resolve()
-            if (resolved is PsiField) {
-                @Suppress("UnnecessaryVariable")
-                val field = resolved
-                if (!inlineFieldValues) {
-                    val value = field.computeConstantValue()
-                    if (appendLiteralValue(sb, value)) {
-                        return true
-                    }
-                }
-
-                val declaringClass = field.containingClass
-                if (declaringClass == null) {
-                    warning("No containing class found for " + field.name)
-                    return false
-                }
-                val qualifiedName = declaringClass.qualifiedName
-                val fieldName = field.name
-
-                if (qualifiedName != null) {
-                    if (filterReference != null) {
-                        val cls = codebase.findClass(qualifiedName)
-                        val fld = cls?.findField(fieldName, true)
-                        if (fld == null || !filterReference.test(fld)) {
-                            // This field is not visible: remove from typedef
-                            if (fld != null) {
-                                reporter.report(
-                                    Errors.HIDDEN_TYPEDEF_CONSTANT, fld,
-                                    "Typedef class references hidden field $fld: removed from typedef metadata"
-                                )
-                            }
-                            return false
+            when (resolved) {
+                is PsiField -> {
+                    @Suppress("UnnecessaryVariable")
+                    val field = resolved
+                    if (!inlineFieldValues) {
+                        val value = field.computeConstantValue()
+                        if (appendLiteralValue(sb, value)) {
+                            return true
                         }
                     }
-                    sb.append(qualifiedName)
-                    sb.append('.')
-                    sb.append(fieldName)
+
+                    val declaringClass = field.containingClass
+                    if (declaringClass == null) {
+                        warning("No containing class found for " + field.name)
+                        return false
+                    }
+                    val qualifiedName = declaringClass.qualifiedName
+                    val fieldName = field.name
+
+                    if (qualifiedName != null) {
+                        if (filterReference != null) {
+                            val cls = codebase.findClass(qualifiedName)
+                            val fld = cls?.findField(fieldName, true)
+                            if (fld == null || !filterReference.test(fld)) {
+                                // This field is not visible: remove from typedef
+                                if (fld != null) {
+                                    reporter.report(
+                                        Errors.HIDDEN_TYPEDEF_CONSTANT, fld,
+                                        "Typedef class references hidden field $fld: removed from typedef metadata"
+                                    )
+                                }
+                                return false
+                            }
+                        }
+                        sb.append(qualifiedName)
+                        sb.append('.')
+                        sb.append(fieldName)
+                        return true
+                    }
+                    return if (skipUnknown) {
+                        false
+                    } else {
+                        sb.append(expression.asSourceString())
+                        true
+                    }
+                }
+                is PsiVariable -> {
+                    sb.append(resolved.name)
                     return true
                 }
-                return if (skipUnknown) {
-                    false
-                } else {
+                else -> {
+                    if (skipUnknown) {
+                        warning("Unexpected reference to $expression")
+                        return false
+                    }
                     sb.append(expression.asSourceString())
-                    true
+                    return true
                 }
-            } else if (resolved is PsiVariable) {
-                sb.append(resolved.name)
-                return true
-            } else {
-                if (skipUnknown) {
-                    warning("Unexpected reference to $expression")
-                    return false
-                }
-                sb.append(expression.asSourceString())
-                return true
             }
         } else if (expression is ULiteralExpression) {
             val literalValue = expression.value
