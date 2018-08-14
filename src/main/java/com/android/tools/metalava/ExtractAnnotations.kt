@@ -340,7 +340,8 @@ class ExtractAnnotations(
         if ("java.lang.annotation.Retention" == qualifiedName || "kotlin.annotation.Retention" == qualifiedName) {
             val attributes = annotation.attributeValues
             if (attributes.size != 1) {
-                error("Expected exactly one parameter passed to @Retention")
+                reporter.report(Severity.ERROR, null as PsiElement?,
+                    "Expected exactly one parameter passed to @Retention", Errors.ANNOTATION_EXTRACTION)
                 return false
             }
             val value = attributes[0].expression
@@ -597,12 +598,4 @@ class ExtractAnnotations(
 
     /** Whether to sort annotation attributes (otherwise their declaration order is used)  */
     private val sortAnnotations: Boolean = true
-
-    private fun warning(string: String) {
-        reporter.report(Severity.WARNING, null as PsiElement?, string, Errors.ANNOTATION_EXTRACTION)
-    }
-
-    private fun error(string: String) {
-        reporter.report(Severity.ERROR, null as PsiElement?, string, Errors.ANNOTATION_EXTRACTION)
-    }
 }

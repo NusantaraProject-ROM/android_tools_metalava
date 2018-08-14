@@ -30,7 +30,6 @@ class TextParameterItem(
     private var publicName: String?,
     private var defaultValue: String? = NO_DEFAULT_VALUE,
     override val parameterIndex: Int,
-    var typeName: String,
     private var type: TextTypeItem,
     modifiers: TextModifiers,
     position: SourcePositionInfo

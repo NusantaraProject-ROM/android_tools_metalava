@@ -36,7 +36,7 @@ import java.util.zip.ZipInputStream;
 /**
  * Reads all the android.jar files found in an SDK and generate a map of {@link ApiClass}.
  */
-public class AndroidJarReader {
+class AndroidJarReader {
     private int mMinApi;
     private int mCurrentApi;
     private File mCurrentJar;
