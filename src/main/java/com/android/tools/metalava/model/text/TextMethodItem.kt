@@ -117,14 +117,6 @@ open class TextMethodItem(
         this.typeParameterList = typeParameterList
     }
 
-    fun setTypeParameterList(typeParameterList: String?) {
-        this.typeParameterList = if (typeParameterList != null) {
-            TextTypeParameterList.create(codebase, this, typeParameterList)
-        } else {
-            TypeParameterList.NONE
-        }
-    }
-
     override fun typeParameterList(): TypeParameterList = typeParameterList
 
     override fun resolveParameter(variable: String): TypeParameterItem? {

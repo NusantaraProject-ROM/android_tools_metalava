@@ -66,7 +66,7 @@ enum class Severity(private val displayName: String) {
 }
 
 open class Reporter(private val rootFolder: File? = null) {
-    var hasErrors = false
+    private var hasErrors = false
 
     fun error(item: Item?, message: String, id: Errors.Error? = null): Boolean {
         return error(item?.psi(), message, id)
@@ -118,7 +118,7 @@ open class Reporter(private val rootFolder: File? = null) {
         }
     }
 
-    private fun isSuppressed(id: Errors.Error, item: Item?): Boolean {
+    fun isSuppressed(id: Errors.Error, item: Item?): Boolean {
         item ?: return false
 
         if (id.level == LINT || id.level == WARNING || id.level == ERROR) {
