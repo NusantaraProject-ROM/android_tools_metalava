@@ -77,11 +77,17 @@ class TextTypeItemTest {
                 method public D build();
               }
             }
-        """, false, false)
+        """, false, false
+        )
         val cls = codebase.findClass("androidx.navigation.NavDestinationBuilder")
         val method = cls?.findMethod("build", "") as TextMethodItem
         assertThat(method).isNotNull()
-        assertThat(TextTypeParameterItem.bounds("D", method).toString()).isEqualTo("[androidx.navigation.NavDestination]")
+        assertThat(
+            TextTypeParameterItem.bounds(
+                "D",
+                method
+            ).toString()
+        ).isEqualTo("[androidx.navigation.NavDestination]")
 
         assertThat(
             TextTypeItem.toTypeString(
@@ -107,7 +113,8 @@ class TextTypeItemTest {
                 method public D build();
               }
             }
-        """, false, false)
+        """, false, false
+        )
         val cls = codebase.findClass("test.pkg.TestClass")
         val method = cls?.findMethod("build", "") as TextMethodItem
         assertThat(method).isNotNull()
@@ -138,7 +145,8 @@ class TextTypeItemTest {
                 method public java.util.Set<java.util.Map.Entry<K, V>> entrySet();
               }
             }
-        """, false, false)
+        """, false, false
+        )
         val cls = codebase.findClass("test.pkg.EnumMap")
         val method = cls?.findMethod("clone", "") as TextMethodItem
         assertThat(method).isNotNull()

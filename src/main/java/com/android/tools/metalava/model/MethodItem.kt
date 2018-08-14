@@ -450,7 +450,8 @@ interface MethodItem : MemberItem {
                 // java.lang.Object, don't treat that as a mismatch. (Similar common case: T[] and Object[])
                 if (typeString1[0].isUpperCase() &&
                     typeString1.length == 1 || !typeString2[1].isLetterOrDigit() &&
-                    parameter1.codebase is TextCodebase) {
+                    parameter1.codebase is TextCodebase
+                ) {
                     continue
                 }
                 return false

@@ -176,15 +176,15 @@ class AnnotationsMergerTest : DriverTest() {
     fun `Merge Java stub files`() {
         check(
             sourceFiles = *arrayOf(
-                    java(
-                            """
+                java(
+                    """
                 package test.pkg;
 
                 public interface Appendable {
                     Appendable append(CharSequence csq) throws IOException;
                 }
                 """
-                    )
+                )
             ),
             compatibilityMode = false,
             outputKotlinStyleNulls = false,
