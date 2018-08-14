@@ -269,22 +269,6 @@ interface MethodItem : MemberItem {
             }
         }
 
-        /** Gets the primary super method from a given method */
-        fun getPrimarySuperMethod(method: MethodItem): MethodItem? {
-            val superMethods = method.superMethods()
-            return when {
-                superMethods.isEmpty() -> null
-                superMethods.size > 1 -> {
-                    // Prefer default methods (or super class method bodies)
-                    superMethods
-                        .filter { it.modifiers.isDefault() || it.containingClass().isClass() }
-                        .forEach { return it }
-                    superMethods[0]
-                }
-                else -> superMethods[0]
-            }
-        }
-
         fun sameSignature(method: MethodItem, superMethod: MethodItem, compareRawTypes: Boolean = false): Boolean {
             // If the return types differ, override it (e.g. parent implements clone(),
             // subclass overrides with more specific return type)

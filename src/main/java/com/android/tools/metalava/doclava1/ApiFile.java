@@ -566,7 +566,7 @@ public class ApiFile {
         return modifiers;
     }
 
-    public static Object parseValue(String type, String val) {
+    private static Object parseValue(String type, String val) {
         if (val != null) {
             if ("boolean".equals(type)) {
                 return "true".equals(val) ? Boolean.TRUE : Boolean.FALSE;
@@ -707,6 +707,9 @@ public class ApiFile {
             String typeString = kotlinTypeSuffix.getFirst();
             annotations = kotlinTypeSuffix.getSecond();
             modifiers.addAnnotations(annotations);
+            if (typeString.endsWith("...")) {
+                modifiers.setVarArg(true);
+            }
             TextTypeItem typeInfo = api.obtainTypeFromString(typeString);
 
             String name;
@@ -768,11 +771,7 @@ public class ApiFile {
                 throw new ApiParseException("expected , or ), found " + token, tokenizer);
             }
 
-            if (typeString.endsWith("...")) {
-                modifiers.setVarArg(true);
-            }
-
-            method.addParameter(new TextParameterItem(api, method, name, publicName, defaultValue, index, typeString,
+            method.addParameter(new TextParameterItem(api, method, name, publicName, defaultValue, index,
                 typeInfo, modifiers, tokenizer.pos()));
             if (modifiers.isVarArg()) {
                 method.setVarargs(true);
@@ -843,7 +842,7 @@ public class ApiFile {
             mBuf = buf;
         }
 
-        public SourcePositionInfo pos() {
+        SourcePositionInfo pos() {
             return new SourcePositionInfo(mFilename, mLine, 0);
         }
 
@@ -881,15 +880,15 @@ public class ApiFile {
             }
         }
 
-        public String requireToken() throws ApiParseException {
+        String requireToken() throws ApiParseException {
             return requireToken(true);
         }
 
-        public String requireToken(boolean parenIsSep) throws ApiParseException {
+        String requireToken(boolean parenIsSep) throws ApiParseException {
             return requireToken(parenIsSep, true);
         }
 
-        public String requireToken(boolean parenIsSep, boolean eatWhitespace) throws ApiParseException {
+        String requireToken(boolean parenIsSep, boolean eatWhitespace) throws ApiParseException {
             final String token = getToken(parenIsSep, eatWhitespace);
             if (token != null) {
                 return token;
@@ -898,29 +897,29 @@ public class ApiFile {
             }
         }
 
-        public String getToken() throws ApiParseException {
+        String getToken() throws ApiParseException {
             return getToken(true);
         }
 
-        public int offset() {
+        int offset() {
             return mPos;
         }
 
-        public String getStringFromOffset(int offset) {
+        String getStringFromOffset(int offset) {
             return new String(mBuf, offset, mPos - offset);
         }
 
-        public String getToken(boolean parenIsSep) throws ApiParseException {
+        String getToken(boolean parenIsSep) throws ApiParseException {
             return getToken(parenIsSep, true);
         }
 
-        public String getCurrent() {
+        String getCurrent() {
             return mCurrent;
         }
 
         private String mCurrent = null;
 
-        public String getToken(boolean parenIsSep, boolean eatWhitespace) throws ApiParseException {
+        String getToken(boolean parenIsSep, boolean eatWhitespace) throws ApiParseException {
             if (eatWhitespace) {
                 eatWhitespaceAndComments();
             }
@@ -1013,15 +1012,15 @@ public class ApiFile {
         }
     }
 
-    static boolean isSpace(char c) {
+    private static boolean isSpace(char c) {
         return c == ' ' || c == '\t' || c == '\n' || c == '\r';
     }
 
-    static boolean isNewline(char c) {
+    private static boolean isNewline(char c) {
         return c == '\n' || c == '\r';
     }
 
-    static boolean isSeparator(char c, boolean parenIsSep) {
+    private static boolean isSeparator(char c, boolean parenIsSep) {
         if (parenIsSep) {
             if (c == '(' || c == ')') {
                 return true;

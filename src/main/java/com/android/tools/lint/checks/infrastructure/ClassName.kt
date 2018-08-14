@@ -31,6 +31,7 @@ class ClassName(source: String) {
         className = getClassName(withoutComments)
     }
 
+    @Suppress("unused")
     fun packageNameWithDefault() = packageName ?: ""
 }
 

@@ -610,18 +610,6 @@ internal fun parseSources(sources: List<File>, description: String): PsiBasedCod
     return codebase
 }
 
-@Suppress("unused") // Planning to restore for performance optimizations
-private fun filterCodebase(codebase: PsiBasedCodebase): Codebase {
-    val ignoreShown = options.showAnnotations.isEmpty()
-
-    // We ignore removals when limiting the API
-    val apiFilter = FilterPredicate(ApiPredicate(codebase, ignoreShown = ignoreShown))
-    val apiReference = ApiPredicate(codebase, ignoreShown = true)
-    val apiEmit = apiFilter.and(ElidingPredicate(apiReference))
-
-    return codebase.filter(apiEmit, apiReference)
-}
-
 private fun loadFromJarFile(apiJar: File, manifest: File? = null): Codebase {
     val projectEnvironment = createProjectEnvironment()
 

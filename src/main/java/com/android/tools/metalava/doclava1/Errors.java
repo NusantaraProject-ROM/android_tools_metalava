@@ -51,7 +51,7 @@ public class Errors {
          */
         private final Error parent;
 
-        public Error(int code, Severity level) {
+        Error(int code, Severity level) {
             this.code = code;
             this.level = level;
             this.defaultLevel = level;
@@ -59,7 +59,7 @@ public class Errors {
             sErrors.add(this);
         }
 
-        public Error(int code, Error parent) {
+        Error(int code, Error parent) {
             this.code = code;
             this.level = Severity.INHERIT;
             this.defaultLevel = Severity.INHERIT;
@@ -98,7 +98,7 @@ public class Errors {
          *
          * @param level the level to set
          */
-        public void setLevel(Severity level) {
+        void setLevel(Severity level) {
             if (level == INHERIT) {
                 throw new IllegalArgumentException("Error level may not be set to INHERIT");
             }

@@ -121,21 +121,25 @@ class DocAnalyzerTest : DriverTest() {
                 java(
                     """
                     package test.pkg;
-                    /** This is an API for Andriod */
+                    /** This is an API for Andriod. Replace all occurrences: Andriod. */
                     public class Foo {
+                        /** Ignore matches within words: xAndriodx */
+                        public Foo() {
+                        }
                     }
                     """
                 )
             ),
             checkCompilation = true,
             checkDoclava1 = false,
-            warnings = "src/test/pkg/Foo.java:2: warning: Replaced Andriod with Android in documentation for class test.pkg.Foo [Typo:131]",
+            warnings = "src/test/pkg/Foo.java:2: warning: Replaced Andriod with Android in the documentation for class test.pkg.Foo [Typo:131]",
             stubs = arrayOf(
                 """
                 package test.pkg;
-                /** This is an API for Android */
+                /** This is an API for Android. Replace all occurrences: Android. */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class Foo {
+                /** Ignore matches within words: xAndriodx */
                 public Foo() { throw new RuntimeException("Stub!"); }
                 }
                 """

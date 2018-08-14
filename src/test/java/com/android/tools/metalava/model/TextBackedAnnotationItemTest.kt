@@ -21,7 +21,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.util.function.Predicate
 
 class TextBackedAnnotationItemTest {
     // Dummy for use in test where we don't need codebase functionality
@@ -33,7 +32,6 @@ class TextBackedAnnotationItemTest {
         override fun findClass(className: String): ClassItem? = unsupported()
         override fun findPackage(pkgName: String): PackageItem? = unsupported()
         override fun trustedApi(): Boolean = false
-        override fun filter(filterEmit: Predicate<Item>, filterReference: Predicate<Item>): Codebase = unsupported()
         override var supportsStagedNullability: Boolean = false
     }
 

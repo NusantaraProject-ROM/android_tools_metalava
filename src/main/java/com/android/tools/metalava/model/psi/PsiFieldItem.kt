@@ -134,21 +134,5 @@ class PsiFieldItem(
             field.modifiers.setOwner(field)
             return field
         }
-
-        fun create(codebase: PsiBasedCodebase, containingClass: PsiClassItem, original: PsiFieldItem): PsiFieldItem {
-            val field = PsiFieldItem(
-                codebase = codebase,
-                psiField = original.psiField,
-                containingClass = containingClass,
-                name = original.name,
-                documentation = original.documentation,
-                modifiers = PsiModifierItem.create(codebase, original.modifiers),
-                fieldType = PsiTypeItem.create(codebase, original.fieldType),
-                isEnumConstant = original.isEnumConstant,
-                initialValue = original.initialValue
-            )
-            field.modifiers.setOwner(field)
-            return field
-        }
     }
 }

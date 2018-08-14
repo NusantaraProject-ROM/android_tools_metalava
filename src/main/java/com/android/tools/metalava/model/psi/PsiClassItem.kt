@@ -84,9 +84,6 @@ open class PsiClassItem(
 
     private var containingClass: PsiClassItem? = null
     override fun containingClass(): PsiClassItem? = containingClass
-    fun setContainingClass(containingClass: ClassItem?) {
-        this.containingClass = containingClass as PsiClassItem?
-    }
 
     // TODO: Come up with a better scheme for how to compute this
     override var included: Boolean = true
@@ -100,7 +97,7 @@ open class PsiClassItem(
         setInterfaces(interfaceTypes as List<PsiTypeItem>)
     }
 
-    fun setInterfaces(interfaceTypes: List<PsiTypeItem>) {
+    private fun setInterfaces(interfaceTypes: List<PsiTypeItem>) {
         this.interfaceTypes = interfaceTypes
     }
 
@@ -496,51 +493,6 @@ open class PsiClassItem(
             }
 
             return item
-        }
-
-        fun create(codebase: PsiBasedCodebase, classFilter: FilteredClassView): PsiClassItem {
-            val original = classFilter.cls
-
-            val newClass = PsiClassItem(
-                codebase = codebase,
-                psiClass = original.psiClass,
-                name = original.name,
-                fullName = original.fullName,
-                qualifiedName = original.qualifiedName,
-                classType = original.classType,
-                hasImplicitDefaultConstructor = original.hasImplicitDefaultConstructor,
-                documentation = original.documentation,
-                modifiers = PsiModifierItem.create(codebase, original.modifiers)
-            )
-
-            newClass.modifiers.setOwner(newClass)
-            codebase.registerClass(newClass)
-            newClass.source = original
-
-            newClass.constructors = classFilter.constructors.map {
-                PsiConstructorItem.create(codebase, newClass, it as PsiConstructorItem)
-            }.toMutableList()
-
-            newClass.methods = classFilter.methods.map {
-                PsiMethodItem.create(codebase, newClass, it as PsiMethodItem)
-            }.toMutableList()
-
-            newClass.fields = classFilter.fields.asSequence()
-                // Preserve sorting order for enums
-                .sortedBy { it.sortingRank }.map {
-                    PsiFieldItem.create(codebase, newClass, it as PsiFieldItem)
-                }.toMutableList()
-
-            newClass.innerClasses = classFilter.innerClasses.map {
-                val newInnerClass = codebase.findClass(it.cls.qualifiedName) ?: it.create(codebase)
-                newInnerClass.containingClass = newClass
-                codebase.registerClass(newInnerClass)
-                newInnerClass
-            }.toMutableList()
-
-            newClass.hasPrivateConstructor = classFilter.cls.hasPrivateConstructor
-
-            return newClass
         }
 
         private fun addEnumMethods(

@@ -191,10 +191,6 @@ open class TextClassItem(
         interfaceTypes.add(itf)
     }
 
-    fun addInterface(itf: TextClassItem) {
-        interfaceTypes.add(itf.toType())
-    }
-
     fun addConstructor(constructor: TextConstructorItem) {
         constructors += constructor
     }
@@ -254,7 +250,7 @@ open class TextClassItem(
         fun createInterfaceStub(codebase: TextCodebase, name: String): TextClassItem =
             createStub(codebase, name, isInterface = true)
 
-        fun createStub(codebase: TextCodebase, name: String, isInterface: Boolean): TextClassItem {
+        private fun createStub(codebase: TextCodebase, name: String, isInterface: Boolean): TextClassItem {
             val index = if (name.endsWith(">")) name.indexOf('<') else -1
             val qualifiedName = if (index == -1) name else name.substring(0, index)
             val cls = TextClassItem(
