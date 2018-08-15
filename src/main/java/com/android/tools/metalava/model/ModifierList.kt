@@ -226,6 +226,17 @@ interface ModifierList {
                     writer = writer,
                     target = target
                 )
+            } else {
+                // We always include @Deprecated annotation in stub files
+                if (item.deprecated && target == AnnotationTarget.STUBS_FILE) {
+                    writer.write("@Deprecated")
+                    writer.write(if (separateLines) "\n" else " ")
+                }
+            }
+
+            if (item is PackageItem) {
+                // Packages use a modifier list, but only annotations apply
+                return
             }
 
             if (compatibility.extraSpaceForEmptyModifiers && item.isPackagePrivate && item is MemberItem) {

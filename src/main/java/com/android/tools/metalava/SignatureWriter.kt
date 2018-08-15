@@ -61,7 +61,9 @@ class SignatureWriter(
     }
 
     override fun visitPackage(pkg: PackageItem) {
-        writer.print("package ${pkg.qualifiedName()} {\n\n")
+        writer.print("package ")
+        writeModifiers(pkg)
+        writer.print("${pkg.qualifiedName()} {\n\n")
     }
 
     override fun afterVisitPackage(pkg: PackageItem) {

@@ -201,6 +201,7 @@ public class Errors {
     public static final Error INTERNAL_ERROR = new Error(150, ERROR);
     public static final Error RETURNING_UNEXPECTED_CONSTANT = new Error(151, WARNING);
     public static final Error DEPRECATED_OPTION = new Error(152, WARNING);
+    public static final Error BOTH_PACKAGE_INFO_AND_HTML = new Error(153, WARNING);
 
     static {
         // Attempt to initialize error names based on the field names
