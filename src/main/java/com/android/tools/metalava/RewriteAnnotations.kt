@@ -120,7 +120,7 @@ class RewriteAnnotations {
     private fun hasSourceRetention(codebase: Codebase?, qualifiedName: String): Boolean {
         when {
             qualifiedName == "androidx.annotation.RecentlyNullable" ||
-            qualifiedName == "androidx.annotation.RecentlyNonNull" -> return false
+                qualifiedName == "androidx.annotation.RecentlyNonNull" -> return false
             qualifiedName.startsWith("androidx.annotation.") -> return true
         }
 

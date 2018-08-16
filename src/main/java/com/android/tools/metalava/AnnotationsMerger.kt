@@ -211,18 +211,19 @@ class AnnotationsMerger(
                     if (addAnnotation) {
                         // Don't map annotation names - this would turn newly non null back into non null
                         new.mutableModifiers().addAnnotation(
-                                new.codebase.createAnnotation(
-                                        annotation.toSource(),
-                                        new,
-                                        mapName = false
-                                )
+                            new.codebase.createAnnotation(
+                                annotation.toSource(),
+                                new,
+                                mapName = false
+                            )
                         )
                     }
                 }
             }
         }
         CodebaseComparator().compare(
-                visitor, externalCodebase, codebase, ApiPredicate(externalCodebase))
+            visitor, externalCodebase, codebase, ApiPredicate(externalCodebase)
+        )
     }
 
     internal fun error(message: String) {
