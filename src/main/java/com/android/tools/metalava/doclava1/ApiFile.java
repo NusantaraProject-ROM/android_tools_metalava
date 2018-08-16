@@ -395,7 +395,7 @@ public class ApiFile {
         method.setDeprecated(modifiers.isDeprecated());
         method.setTypeParameterList(typeParameterList);
         if (typeParameterList instanceof TextTypeParameterList) {
-            ((TextTypeParameterList)typeParameterList).setOwner(method);
+            ((TextTypeParameterList) typeParameterList).setOwner(method);
         }
         token = tokenizer.requireToken();
         if (!"(".equals(token)) {
@@ -746,7 +746,7 @@ public class ApiFile {
                     int balance = defaultValue.equals("(") ? 1 : 0;
                     while (true) {
                         token = tokenizer.requireToken(true, false);
-                        if (token.endsWith(",") || token.endsWith(")") && balance <= 0)  {
+                        if (token.endsWith(",") || token.endsWith(")") && balance <= 0) {
                             if (token.length() > 1) {
                                 sb.append(token, 0, token.length() - 1);
                                 token = Character.toString(token.charAt(token.length() - 1));

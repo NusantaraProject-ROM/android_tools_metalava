@@ -448,7 +448,7 @@ class Options(
 
                 ARGS_COMPAT_OUTPUT -> compatOutput = true
 
-            // For now we don't distinguish between bootclasspath and classpath
+                // For now we don't distinguish between bootclasspath and classpath
                 ARG_CLASS_PATH, "-classpath", "-bootclasspath" ->
                     mutableClassPath.addAll(stringToExistingDirsOrJars(getValue(args, ++index)))
 
@@ -511,13 +511,13 @@ class Options(
 
                 ARG_EXCLUDE_ANNOTATIONS -> generateAnnotations = false
 
-            // Note that this only affects stub generation, not signature files.
-            // For signature files, clear the compatibility mode
-            // (--annotations-in-signatures)
+                // Note that this only affects stub generation, not signature files.
+                // For signature files, clear the compatibility mode
+                // (--annotations-in-signatures)
                 "--include-annotations" -> generateAnnotations = true
 
-            // Flag used by test suite to avoid including locations in
-            // the output when diffing against golden files
+                // Flag used by test suite to avoid including locations in
+                // the output when diffing against golden files
                 "--omit-locations" -> omitLocations = true
 
                 ARG_PROGUARD, "-proguard" -> proguard = stringToNewFile(getValue(args, ++index))
@@ -654,7 +654,7 @@ class Options(
                 ARG_ALLOW_REFERENCING_UNKNOWN_CLASSES -> allowReferencingUnknownClasses = true
                 ARG_NO_UNKNOWN_CLASSES -> noUnknownClasses = true
 
-            // Extracting API levels
+                // Extracting API levels
                 ARG_ANDROID_JAR_PATTERN -> {
                     val list = androidJarPatterns ?: run {
                         val list = arrayListOf<String>()
@@ -733,11 +733,11 @@ class Options(
                     artifactRegistrations.register(artifactId, descriptor)
                 }
 
-            // Doclava1 flag: Already the behavior in metalava
+                // Doclava1 flag: Already the behavior in metalava
                 "-keepstubcomments" -> {
                 }
 
-            // Unimplemented doclava1 flags (no arguments)
+                // Unimplemented doclava1 flags (no arguments)
                 "-quiet",
                 "-yamlV2" -> {
                     unimplemented(arg)
@@ -752,7 +752,7 @@ class Options(
                     /* noop */
                 }
 
-            // Unimplemented doclava1 flags (1 argument)
+                // Unimplemented doclava1 flags (1 argument)
                 "-d" -> {
                     unimplemented(arg)
                     index++
@@ -775,14 +775,14 @@ class Options(
                     }
                 }
 
-            // Unimplemented doclava1 flags (2 arguments)
+                // Unimplemented doclava1 flags (2 arguments)
                 "-since" -> {
                     unimplemented(arg)
                     index += 2
                 }
 
-            // doclava1 doc-related flags: only supported here to make this command a drop-in
-            // replacement
+                // doclava1 doc-related flags: only supported here to make this command a drop-in
+                // replacement
                 "-referenceonly",
                 "-devsite",
                 "-ignoreJdLinks",
@@ -798,7 +798,7 @@ class Options(
                     javadoc(arg)
                 }
 
-            // doclava1 flags with 1 argument
+                // doclava1 flags with 1 argument
                 "-doclet",
                 "-docletpath",
                 "-templatedir",
@@ -821,7 +821,7 @@ class Options(
                     index++
                 }
 
-            // doclava1 flags with two arguments
+                // doclava1 flags with two arguments
                 "-federate",
                 "-federationapi",
                 "-htmldir2" -> {
@@ -829,13 +829,13 @@ class Options(
                     index += 2
                 }
 
-            // doclava1 flags with three arguments
+                // doclava1 flags with three arguments
                 "-samplecode" -> {
                     javadoc(arg)
                     index += 3
                 }
 
-            // doclava1 flag with variable number of arguments; skip everything until next arg
+                // doclava1 flag with variable number of arguments; skip everything until next arg
                 "-hdf" -> {
                     javadoc(arg)
                     index++

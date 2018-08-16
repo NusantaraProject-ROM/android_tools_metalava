@@ -247,14 +247,14 @@ abstract class DriverTest {
         }
         if (compatibilityMode && mergeSignatureAnnotations != null) {
             fail(
-                    "Can't specify both compatibilityMode and mergeSignatureAnnotations: there were no " +
-                            "annotations output in doclava1"
+                "Can't specify both compatibilityMode and mergeSignatureAnnotations: there were no " +
+                    "annotations output in doclava1"
             )
         }
         if (compatibilityMode && mergeJavaStubAnnotations != null) {
             fail(
-                    "Can't specify both compatibilityMode and mergeJavaStubAnnotations: there were no " +
-                            "annotations output in doclava1"
+                "Can't specify both compatibilityMode and mergeJavaStubAnnotations: there were no " +
+                    "annotations output in doclava1"
             )
         }
         Errors.resetLevels()
