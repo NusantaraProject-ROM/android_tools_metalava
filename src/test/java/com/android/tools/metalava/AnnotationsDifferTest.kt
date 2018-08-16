@@ -29,7 +29,8 @@ class AnnotationsDifferTest {
 
     @Test
     fun `Write diff`() {
-        val codebase = ApiFile.parseApi("old.txt", """
+        val codebase = ApiFile.parseApi(
+            "old.txt", """
                 package test.pkg {
                   public interface Appendable {
                     method public test.pkg.Appendable append(java.lang.CharSequence?);
@@ -40,16 +41,19 @@ class AnnotationsDifferTest {
                     method public test.pkg.Appendable append(java.lang.CharSequence);
                   }
                 }
-        """.trimIndent(), true, true)
+        """.trimIndent(), true, true
+        )
 
-        val codebase2 = ApiFile.parseApi("new.txt", """
+        val codebase2 = ApiFile.parseApi(
+            "new.txt", """
         package test.pkg {
           public interface Appendable {
             method @androidx.annotation.NonNull public test.pkg.Appendable append(@androidx.annotation.Nullable java.lang.CharSequence);
             method public test.pkg.Appendable append2(java.lang.CharSequence);
           }
         }
-        """.trimIndent(), false, false)
+        """.trimIndent(), false, false
+        )
 
         val apiFile = temporaryFolder.newFile("diff.txt")
         compatibility = Compatibility(true)
@@ -57,12 +61,14 @@ class AnnotationsDifferTest {
         AnnotationsDiffer(codebase, codebase2).writeDiffSignature(apiFile)
         assertTrue(apiFile.exists())
         val actual = apiFile.readText(Charsets.UTF_8)
-        assertEquals("""
+        assertEquals(
+            """
             package test.pkg {
               public abstract interface Appendable {
                 method public abstract test.pkg.Appendable append2(java.lang.CharSequence);
               }
             }
-        """.trimIndent(), actual.trim())
+        """.trimIndent(), actual.trim()
+        )
     }
 }

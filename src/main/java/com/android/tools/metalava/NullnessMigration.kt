@@ -82,7 +82,8 @@ class NullnessMigration : ComparisonVisitor(visitAddedItemsRecursively = true) {
     private fun checkType(old: TypeItem, new: TypeItem) {
         if (hasNullnessInformation(new)) {
             if (old.toTypeString(false, true, false) !=
-                new.toTypeString(false, true, false)) {
+                new.toTypeString(false, true, false)
+            ) {
                 new.markRecent()
             }
         }
