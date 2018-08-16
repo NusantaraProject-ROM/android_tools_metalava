@@ -108,11 +108,12 @@ open class TextClassItem(
         this.isEnum = isEnum
     }
 
-    override fun containingPackage(): PackageItem = containingPackage ?: error(this)
+    override fun containingPackage(): PackageItem =
+        containingClass?.containingPackage() ?: containingPackage ?: error(this)
 
     override fun toType(): TypeItem = codebase.obtainTypeFromString(
         if (typeParameterList().toString().isNotEmpty())
-// TODO: No, handle List<String>[], though this is highly unlikely in a class
+            // TODO: No, handle List<String>[], though this is highly unlikely in a class
             qualifiedName() + "<" + typeParameterList() + ">"
         else qualifiedName()
     )
@@ -254,14 +255,15 @@ open class TextClassItem(
         private fun createStub(codebase: TextCodebase, name: String, isInterface: Boolean): TextClassItem {
             val index = if (name.endsWith(">")) name.indexOf('<') else -1
             val qualifiedName = if (index == -1) name else name.substring(0, index)
+            val fullName = getFullName(qualifiedName)
             val cls = TextClassItem(
                 codebase = codebase,
+                name = fullName,
                 qualifiedName = qualifiedName,
                 isInterface = isInterface,
                 modifiers = TextModifiers(codebase, DefaultModifierList.PUBLIC)
             )
-
-            addStubPackage(name, codebase, cls)
+            cls.emit = false // it's a stub
 
             if (index != -1) {
                 cls.typeParameterList = TextTypeParameterList.create(codebase, cls, name.substring(index))
@@ -270,20 +272,22 @@ open class TextClassItem(
             return cls
         }
 
-        private fun addStubPackage(
-            name: String,
-            codebase: TextCodebase,
-            textClassItem: TextClassItem
-        ) {
-            val endIndex = name.lastIndexOf('.')
-            val pkgPath = if (endIndex != -1) name.substring(0, endIndex) else ""
-            val pkg = codebase.findPackage(pkgPath) as? TextPackageItem ?: TextPackageItem(
-                codebase,
-                pkgPath,
-                TextModifiers(codebase, DefaultModifierList.PUBLIC),
-                SourcePositionInfo.UNKNOWN
-            )
-            textClassItem.setContainingPackage(pkg)
+        private fun getFullName(qualifiedName: String): String {
+            var end = -1
+            val length = qualifiedName.length
+            var prev = qualifiedName[length - 1]
+            for (i in length - 2 downTo 0) {
+                val c = qualifiedName[i]
+                if (c == '.' && prev.isUpperCase()) {
+                    end = i + 1
+                }
+                prev = c
+            }
+            if (end != -1) {
+                return qualifiedName.substring(end)
+            }
+
+            return qualifiedName.substring(qualifiedName.lastIndexOf('.') + 1)
         }
     }
 }

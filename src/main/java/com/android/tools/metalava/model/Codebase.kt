@@ -156,6 +156,9 @@ interface Codebase {
      * with ability to filter out elements that are not part of a codebase etc
      */
     val printer: CodePrinter
+
+    /** If true, this codebase has already been filtered */
+    val preFiltered: Boolean
 }
 
 abstract class DefaultCodebase : Codebase {
@@ -167,6 +170,8 @@ abstract class DefaultCodebase : Codebase {
     override var apiLevel: Int = -1
     @Suppress("LeakingThis")
     override val printer = CodePrinter(this)
+    @Suppress("LeakingThis")
+    override val preFiltered: Boolean = original != null
 
     override fun getPermissionLevel(name: String): String? {
         if (permissions == null) {

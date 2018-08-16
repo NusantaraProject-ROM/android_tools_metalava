@@ -22,10 +22,11 @@ import com.android.tools.metalava.ComparisonVisitor
 import com.android.tools.metalava.JAVA_LANG_ANNOTATION
 import com.android.tools.metalava.JAVA_LANG_ENUM
 import com.android.tools.metalava.JAVA_LANG_OBJECT
+import com.android.tools.metalava.JAVA_LANG_THROWABLE
 import com.android.tools.metalava.model.AnnotationItem
-import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.DefaultCodebase
+import com.android.tools.metalava.model.DefaultModifierList
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.PackageItem
@@ -34,6 +35,7 @@ import com.android.tools.metalava.model.TypeParameterList
 import com.android.tools.metalava.model.text.TextBackedAnnotationItem
 import com.android.tools.metalava.model.text.TextClassItem
 import com.android.tools.metalava.model.text.TextMethodItem
+import com.android.tools.metalava.model.text.TextModifiers
 import com.android.tools.metalava.model.text.TextPackageItem
 import com.android.tools.metalava.model.text.TextTypeItem
 import com.android.tools.metalava.model.visitors.ItemVisitor
@@ -57,6 +59,7 @@ class TextCodebase : DefaultCodebase() {
     private val mClassToInterface = HashMap<TextClassItem, ArrayList<String>>(10000)
 
     override var description = "Codebase"
+    override val preFiltered: Boolean = true
 
     override fun trustedApi(): Boolean = true
 
@@ -80,15 +83,11 @@ class TextCodebase : DefaultCodebase() {
         return mAllClasses[className]
     }
 
-    private fun resolveInterfaces() {
-        for (cl in mAllClasses.values) {
+    private fun resolveInterfaces(all: List<TextClassItem>) {
+        for (cl in all) {
             val interfaces = mClassToInterface[cl] ?: continue
-            for (iface in interfaces) {
-                var ci: TextClassItem? = mAllClasses[iface]
-                if (ci == null) {
-                    // Interface not provided by this codebase. Inject a stub.
-                    ci = TextClassItem.createInterfaceStub(this, iface)
-                }
+            for (interfaceName in interfaces) {
+                val ci = getOrCreateClass(interfaceName, isInterface = true)
                 cl.addInterface(ci.toType())
             }
         }
@@ -121,8 +120,8 @@ class TextCodebase : DefaultCodebase() {
         }
     }
 
-    private fun resolveSuperclasses() {
-        for (cl in mAllClasses.values) {
+    private fun resolveSuperclasses(allClasses: List<TextClassItem>) {
+        for (cl in allClasses) {
             // java.lang.Object has no superclass
             if (cl.isJavaLangObject()) {
                 continue
@@ -135,17 +134,13 @@ class TextCodebase : DefaultCodebase() {
                     else -> JAVA_LANG_OBJECT
                 }
             }
-            var superclass: TextClassItem? = mAllClasses[scName]
-            if (superclass == null) {
-                // Superclass not provided by this codebase. Inject a stub.
-                superclass = TextClassItem.createClassStub(this, scName)
-            }
+            val superclass = getOrCreateClass(scName)
             cl.setSuperClass(superclass)
         }
     }
 
-    private fun resolveThrowsClasses() {
-        for (cl in mAllClasses.values) {
+    private fun resolveThrowsClasses(all: List<TextClassItem>) {
+        for (cl in all) {
             for (methodItem in cl.constructors()) {
                 resolveThrowsClasses(methodItem)
             }
@@ -162,11 +157,7 @@ class TextCodebase : DefaultCodebase() {
                 }
                 scName = JAVA_LANG_OBJECT
             }
-            var superclass: TextClassItem? = mAllClasses[scName]
-            if (superclass == null) {
-                // Superclass not provided by this codebase. Inject a stub.
-                superclass = TextClassItem.createClassStub(this, scName)
-            }
+            val superclass = getOrCreateClass(scName)
             cl.setSuperClass(superclass)
         }
     }
@@ -180,9 +171,14 @@ class TextCodebase : DefaultCodebase() {
                 var exceptionClass: TextClassItem? = mAllClasses[exception]
                 if (exceptionClass == null) {
                     // Exception not provided by this codebase. Inject a stub.
-                    exceptionClass = TextClassItem.createClassStub(
-                        this, exception
-                    )
+                    exceptionClass = getOrCreateClass(exception)
+                    // Set super class to throwable?
+                    if (exception != JAVA_LANG_THROWABLE) {
+                        exceptionClass.setSuperClass(
+                            getOrCreateClass(JAVA_LANG_THROWABLE),
+                            TextTypeItem(this, JAVA_LANG_THROWABLE)
+                        )
+                    }
                 }
                 result.add(exceptionClass)
             }
@@ -190,37 +186,82 @@ class TextCodebase : DefaultCodebase() {
         }
     }
 
-    private fun resolveInnerClasses() {
-        mPackages.values
-            .asSequence()
-            .map { it.classList().listIterator() as MutableListIterator<ClassItem> }
-            .forEach {
-                while (it.hasNext()) {
-                    val cl = it.next() as TextClassItem
-                    val name = cl.name
-                    var index = name.lastIndexOf('.')
-                    if (index != -1) {
-                        cl.name = name.substring(index + 1)
-                        val qualifiedName = cl.qualifiedName
-                        index = qualifiedName.lastIndexOf('.')
-                        assert(index != -1) { qualifiedName }
-                        val outerClassName = qualifiedName.substring(0, index)
-                        val outerClass = mAllClasses[outerClassName]!!
-                        cl.containingClass = outerClass
-                        outerClass.addInnerClass(cl)
-
-                        // Should no longer be listed as top level
-                        it.remove()
-                    }
+    private fun resolveInnerClasses(packages: List<TextPackageItem>) {
+        for (pkg in packages) {
+            // make copy: we'll be removing non-top level classes during iteration
+            val classes = ArrayList(pkg.classList())
+            for (cls in classes) {
+                val cl = cls as TextClassItem
+                val name = cl.name
+                var index = name.lastIndexOf('.')
+                if (index != -1) {
+                    cl.name = name.substring(index + 1)
+                    val qualifiedName = cl.qualifiedName
+                    index = qualifiedName.lastIndexOf('.')
+                    assert(index != -1) { qualifiedName }
+                    val outerClassName = qualifiedName.substring(0, index)
+                    val outerClass = getOrCreateClass(outerClassName)
+                    cl.containingClass = outerClass
+                    outerClass.addInnerClass(cl)
                 }
             }
+        }
+
+        for (pkg in packages) {
+            pkg.pruneClassList()
+        }
+    }
+
+    fun getOrCreateClass(name: String, isInterface: Boolean = false): TextClassItem {
+        val cls = mAllClasses[name]
+        if (cls != null) {
+            return cls
+        }
+        val newClass = if (isInterface) {
+            TextClassItem.createInterfaceStub(this, name)
+        } else {
+            TextClassItem.createClassStub(this, name)
+        }
+        mAllClasses[name] = newClass
+        newClass.emit = false
+
+        val fullName = newClass.fullName()
+        if (fullName.contains('.')) {
+            // We created a new inner class stub. We need to fully initialize it with outer classes, themselves
+            // possibly stubs
+            val outerName = name.substring(0, name.lastIndexOf('.'))
+            val outerClass = getOrCreateClass(outerName, false)
+            newClass.containingClass = outerClass
+            outerClass.addInnerClass(newClass)
+        } else {
+            // Add to package
+            val endIndex = name.lastIndexOf('.')
+            val pkgPath = if (endIndex != -1) name.substring(0, endIndex) else ""
+            val pkg = findPackage(pkgPath) as? TextPackageItem ?: run {
+                val newPkg = TextPackageItem(
+                    this,
+                    pkgPath,
+                    TextModifiers(this, DefaultModifierList.PUBLIC),
+                    SourcePositionInfo.UNKNOWN
+                )
+                addPackage(newPkg)
+                newPkg.emit = false
+                newPkg
+            }
+            newClass.setContainingPackage(pkg)
+            pkg.addClass(newClass)
+        }
+
+        return newClass
     }
 
     fun postProcess() {
-        resolveSuperclasses()
-        resolveInterfaces()
-        resolveThrowsClasses()
-        resolveInnerClasses()
+        val classes = mAllClasses.values.toList()
+        val packages = mPackages.values.toList()
+        resolveSuperclasses(classes)
+        resolveInterfaces(classes)
+        resolveThrowsClasses(classes)
+        resolveInnerClasses(packages)
     }
 
     override fun findPackage(pkgName: String): PackageItem? {
