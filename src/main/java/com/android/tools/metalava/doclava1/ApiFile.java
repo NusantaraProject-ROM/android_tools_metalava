@@ -90,6 +90,7 @@ public class ApiFile {
 
         final Tokenizer tokenizer = new Tokenizer(filename, apiText.toCharArray());
         final TextCodebase api = new TextCodebase();
+        api.setDescription("Codebase loaded from " + filename);
         if (format != null) {
             api.setFormat(format);
         }
