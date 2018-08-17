@@ -97,30 +97,8 @@ class StubWriter(
         if (docStubs) {
             codebase.getPackageDocs()?.let { packageDocs ->
                 packageDocs.getOverviewDocumentation(pkg)?.let { writeDocOverview(pkg, it) }
-                packageDocs.getPackageDocumentation(pkg)?.let { writePackageDocs(pkg, it) }
             }
         }
-    }
-
-    private fun writePackageDocs(pkg: PackageItem, content: String) {
-        if (content.isBlank()) {
-            return
-        }
-
-        val sourceFile = File(getPackageDir(pkg), "package.html")
-        val writer = try {
-            PrintWriter(BufferedWriter(FileWriter(sourceFile)))
-        } catch (e: IOException) {
-            reporter.report(Errors.IO_ERROR, sourceFile, "Cannot open file for write.")
-            return
-        }
-
-        // Should we include this in our stub list?
-        //     startFile(sourceFile)
-
-        writer.println(content)
-        writer.flush()
-        writer.close()
     }
 
     fun writeDocOverview(pkg: PackageItem, content: String) {
@@ -145,13 +123,8 @@ class StubWriter(
     }
 
     private fun writePackageInfo(pkg: PackageItem) {
-        if (!generateAnnotations) {
-            // package-info,java is only needed to record annotations
-            return
-        }
-
         val annotations = pkg.modifiers.annotations()
-        if (annotations.isNotEmpty()) {
+        if (annotations.isNotEmpty() && generateAnnotations || !pkg.documentation.isBlank()) {
             val sourceFile = File(getPackageDir(pkg), "package-info.java")
             val writer = try {
                 PrintWriter(BufferedWriter(FileWriter(sourceFile)))
@@ -161,15 +134,19 @@ class StubWriter(
             }
             startFile(sourceFile)
 
-            ModifierList.writeAnnotations(
-                list = pkg.modifiers,
-                separateLines = true,
-                // Some bug in UAST triggers duplicate nullability annotations
-                // here; make sure the are filtered out
-                filterDuplicates = true,
-                target = AnnotationTarget.STUBS_FILE,
-                writer = writer
-            )
+            appendDocumentation(pkg, writer)
+
+            if (annotations.isNotEmpty()) {
+                ModifierList.writeAnnotations(
+                    list = pkg.modifiers,
+                    separateLines = true,
+                    // Some bug in UAST triggers duplicate nullability annotations
+                    // here; make sure the are filtered out
+                    filterDuplicates = true,
+                    target = AnnotationTarget.STUBS_FILE,
+                    writer = writer
+                )
+            }
             writer.println("package ${pkg.qualifiedName()};")
 
             writer.flush()

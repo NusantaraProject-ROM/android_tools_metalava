@@ -733,6 +733,9 @@ class Options(
                     artifactRegistrations.register(artifactId, descriptor)
                 }
 
+                "--noop", "--no-op" -> {
+                }
+
                 // Doclava1 flag: Already the behavior in metalava
                 "-keepstubcomments" -> {
                 }

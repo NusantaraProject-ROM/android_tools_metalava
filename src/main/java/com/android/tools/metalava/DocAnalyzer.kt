@@ -559,7 +559,7 @@ class DocAnalyzer(
     )
 
     private fun tweakGrammar() {
-        if (reporter.isSuppressed(Errors.TYPO, null)) {
+        if (reporter.isSuppressed(Errors.TYPO)) {
             return
         }
 

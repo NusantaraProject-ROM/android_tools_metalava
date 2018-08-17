@@ -118,7 +118,11 @@ open class Reporter(private val rootFolder: File? = null) {
         }
     }
 
-    fun isSuppressed(id: Errors.Error, item: Item?): Boolean {
+    fun isSuppressed(id: Errors.Error, item: Item? = null): Boolean {
+        if (id.level == HIDDEN) {
+            return true
+        }
+
         item ?: return false
 
         if (id.level == LINT || id.level == WARNING || id.level == ERROR) {

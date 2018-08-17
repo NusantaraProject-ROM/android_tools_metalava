@@ -130,6 +130,7 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
             }
             var packageName: String? = null
             if (classes.isEmpty() && unit is PsiJavaFile) {
+                // package-info.java ?
                 val packageStatement = unit.packageStatement
                 // Look for javadoc on the package statement; this is NOT handed to us on
                 // the PsiPackage!
@@ -141,7 +142,14 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
                         if (text.contains("@hide")) {
                             hiddenPackages.add(packageName)
                         }
-                        packageDocs[packageName] = text + (packageDocs[packageName] ?: "")
+                        if (packageDocs[packageName] != null) {
+                            reporter.report(
+                                Errors.BOTH_PACKAGE_INFO_AND_HTML,
+                                unit,
+                                "It is illegal to provide both a package-info.java file and a " +
+                                    "package.html file for the same package")
+                        }
+                        packageDocs[packageName] = text
                     }
                 }
             } else {
@@ -166,8 +174,7 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
             }
 
             val sortedClasses = classes.toMutableList().sortedWith(ClassItem.fullNameComparator)
-            val packageHtml = packageDocs[pkgName]
-            registerPackage(psiPackage, sortedClasses, packageHtml, pkgName)
+            registerPackage(psiPackage, sortedClasses, packageDocs[pkgName], pkgName)
         }
 
         initializing = false
@@ -253,10 +260,7 @@ open class PsiBasedCodebase(override var description: String = "Unknown") : Defa
         packageHtml: String?,
         pkgName: String
     ): PsiPackageItem {
-        val packageItem = PsiPackageItem.create(
-            this, psiPackage,
-            packageHtml
-        )
+        val packageItem = PsiPackageItem.create(this, psiPackage, packageHtml)
         packageMap[pkgName] = packageItem
         if (isPackageHidden(pkgName)) {
             packageItem.hidden = true
