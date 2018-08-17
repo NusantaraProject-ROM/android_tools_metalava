@@ -246,7 +246,9 @@ class ExtractAnnotations(
                         classToAnnotationHolder[className] = result
                         addItem(item, result)
 
-                        if (item is PsiMethodItem && result.uAnnotation != null) {
+                        if (item is PsiMethodItem && result.uAnnotation != null &&
+                            !reporter.isSuppressed(Errors.RETURNING_UNEXPECTED_CONSTANT)
+                        ) {
                             verifyReturnedConstants(item, result.uAnnotation, result, className)
                         }
 
