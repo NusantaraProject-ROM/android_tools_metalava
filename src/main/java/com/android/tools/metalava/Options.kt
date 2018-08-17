@@ -104,7 +104,6 @@ private const val ARG_PACKAGE = "--package"
 private const val ARG_PRIVATE = "--private"
 private const val ARG_HIDDEN = "--hidden"
 private const val ARG_NO_DOCS = "--no-docs"
-private const val ARG_GENERATE_DOCUMENTATION = "--generate-documentation"
 private const val ARG_JAVA_SOURCE = "--java-source"
 private const val ARG_REGISTER_ARTIFACT = "--register-artifact"
 private const val ARG_COPY_ANNOTATIONS = "--copy-annotations"
@@ -112,6 +111,7 @@ private const val ARG_INCLUDE_ANNOTATION_CLASSES = "--include-annotation-classes
 private const val ARG_REWRITE_ANNOTATIONS = "--rewrite-annotations"
 private const val ARG_INCLUDE_SOURCE_RETENTION = "--include-source-retention"
 private const val ARG_INCLUDE_SIG_VERSION = "--include-signature-version"
+const val ARG_GENERATE_DOCUMENTATION = "--generate-documentation"
 
 class Options(
     args: Array<String>,
@@ -586,10 +586,13 @@ class Options(
                     migrateNulls = true
                     // See if the next argument specifies the nullness API codebase
                     if (index < args.size - 1) {
-                        val file = fileForPath(args[index + 1])
-                        if (file.isFile) {
-                            index++
-                            previousApi = file
+                        val nextArg = args[index + 1]
+                        if (!nextArg.startsWith("-")) {
+                            val file = fileForPath(nextArg)
+                            if (file.isFile) {
+                                index++
+                                previousApi = file
+                            }
                         }
                     }
                 }
@@ -598,10 +601,13 @@ class Options(
                     checkCompatibility = true
                     // See if the next argument specifies the compatibility check
                     if (index < args.size - 1) {
-                        val file = fileForPath(args[index + 1])
-                        if (file.isFile) {
-                            index++
-                            currentApi = file
+                        val nextArg = args[index + 1]
+                        if (!nextArg.startsWith("-")) {
+                            val file = fileForPath(nextArg)
+                            if (file.isFile) {
+                                index++
+                                currentApi = file
+                            }
                         }
                     }
                 }
@@ -1396,7 +1402,15 @@ class Options(
                 "is \$ANDROID_HOME/platforms/android-%/android.jar.",
             ARG_CURRENT_VERSION, "Sets the current API level of the current source code",
             ARG_CURRENT_CODENAME, "Sets the code name for the current source code",
-            ARG_CURRENT_JAR, "Points to the current API jar, if any"
+            ARG_CURRENT_JAR, "Points to the current API jar, if any",
+
+            "", "\nEnvironment Variables:",
+            ENV_VAR_METALAVA_DUMP_ARGV, "Set to true to have metalava emit all the arguments it was invoked with. " +
+                "Helpful when debugging or reproducing under a debugger what the build system is doing.",
+            ENV_VAR_METALAVA_PREPEND_ARGS, "One or more arguments (concatenated by space) to insert into the " +
+                "command line, before the documentation flags.",
+            ENV_VAR_METALAVA_APPEND_ARGS, "One or more arguments (concatenated by space) to append to the " +
+                "end of the command line, after the generate documentation flags."
         )
 
         var argWidth = 0

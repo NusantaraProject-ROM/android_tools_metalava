@@ -108,9 +108,29 @@ fun run(
             if (args.isEmpty()) {
                 arrayOf("--help")
             } else {
+                val index = args.indexOf(ARG_GENERATE_DOCUMENTATION)
                 val prepend = envVarToArgs(ENV_VAR_METALAVA_PREPEND_ARGS)
                 val append = envVarToArgs(ENV_VAR_METALAVA_APPEND_ARGS)
-                prepend + args + append
+                if (prepend.isEmpty() && append.isEmpty()) {
+                    args
+                } else {
+                    val newArgs =
+                        if (index != -1) {
+                            args.sliceArray(0..index) + prepend + args.sliceArray(index..args.size) + append
+                        } else {
+                            prepend + args + append
+                        }
+                    if (System.getenv(ENV_VAR_METALAVA_DUMP_ARGV) != null) {
+                        stdout.println("---Modified $PROGRAM_NAME arguments from environment variables ----")
+                        stdout.println("$ENV_VAR_METALAVA_PREPEND_ARGS: ${prepend.joinToString { "\"$it\"" }}")
+                        stdout.println("$ENV_VAR_METALAVA_APPEND_ARGS: ${append.joinToString { "\"$it\"" }}")
+                        newArgs.forEach { arg ->
+                            stdout.println("\"$arg\",")
+                        }
+                        stdout.println("----------------------------")
+                    }
+                    newArgs
+                }
             }
 
         compatibility = Compatibility(compat = Options.useCompatMode(args))
@@ -226,23 +246,6 @@ private fun processFlags() {
         )
     }
 
-    val currentApiFile = options.currentApi
-    if (currentApiFile != null && options.checkCompatibility) {
-        val current =
-            if (currentApiFile.path.endsWith(SdkConstants.DOT_JAR)) {
-                loadFromJarFile(currentApiFile)
-            } else {
-                loadFromSignatureFiles(
-                    currentApiFile, options.inputKotlinStyleNulls,
-                    supportsStagedNullability = true
-                )
-            }
-
-        // If configured, compares the new API with the previous API and reports
-        // any incompatibilities.
-        CompatibilityCheck.checkCompatibility(codebase, current)
-    }
-
     val previousApiFile = options.previousApi
     if (previousApiFile != null) {
         val previous =
@@ -273,8 +276,7 @@ private fun processFlags() {
         val apiEmit = apiFilter.and(ElidingPredicate(apiReference))
 
         createReportFile(codebase, apiFile, "API") { printWriter ->
-            val preFiltered = codebase.original != null
-            SignatureWriter(printWriter, apiEmit, apiReference, preFiltered)
+            SignatureWriter(printWriter, apiEmit, apiReference, codebase.preFiltered)
         }
     }
 
@@ -352,6 +354,11 @@ private fun processFlags() {
         SdkFileWriter(codebase, dir).generate()
     }
 
+    val currentApiFile = options.currentApi
+    if (currentApiFile != null && options.checkCompatibility) {
+        checkCompatibility(currentApiFile, codebase)
+    }
+
     // Now that we've migrated nullness information we can proceed to write non-doc stubs, if any.
 
     options.stubsDir?.let {
@@ -411,6 +418,65 @@ private fun processFlags() {
     }
 
     invokeDocumentationTool()
+}
+
+fun checkCompatibility(currentApiFile: File, codebase: Codebase) {
+    val current =
+        if (currentApiFile.path.endsWith(SdkConstants.DOT_JAR)) {
+            loadFromJarFile(currentApiFile)
+        } else {
+            loadFromSignatureFiles(
+                currentApiFile, options.inputKotlinStyleNulls,
+                supportsStagedNullability = true
+            )
+        }
+
+    // If diffing with a system-api or test-api (or other signature-based codebase
+    // generated from --show-annotations), the API is partial: it's only listing
+    // the API that is *different* from the base API. This really confuses the
+    // codebase comparison when diffing with a complete codebase, since it looks like
+    // many classes and members have been added and removed. Therefore, the comparison
+    // is simpler if we just make the comparison with the same generated signature
+    // file. If we've only emitted one for the new API, use it directly, if not, generate
+    // it first
+    val new =
+        if (options.showAnnotations.isNotEmpty()) {
+            val apiFile = options.apiFile ?: run {
+                val tempFile = File.createTempFile("compat-check-signatures", "txt")
+                tempFile.deleteOnExit()
+                val apiFilter = FilterPredicate(ApiPredicate(codebase))
+                val apiReference = ApiPredicate(codebase, ignoreShown = true)
+                val apiEmit = apiFilter.and(ElidingPredicate(apiReference))
+
+                createReportFile(codebase, tempFile, null) { printWriter ->
+                    SignatureWriter(printWriter, apiEmit, apiReference, codebase.preFiltered)
+                }
+
+                tempFile
+            }
+
+            // Fast path: if the signature files are identical, we're already good!
+            if (apiFile.readText(UTF_8) == currentApiFile.readText(UTF_8)) {
+                return
+            }
+
+            loadFromSignatureFiles(
+                apiFile, options.inputKotlinStyleNulls,
+                supportsStagedNullability = true
+            )
+        } else {
+            // Fast path: if we've already generated a signature file and it's identical, we're good!
+            val apiFile = options.apiFile
+            if (apiFile != null && apiFile.readText(UTF_8) == currentApiFile.readText(UTF_8)) {
+                return
+            }
+
+            codebase
+        }
+
+    // If configured, compares the new API with the previous API and reports
+    // any incompatibilities.
+    CompatibilityCheck.checkCompatibility(new, current)
 }
 
 fun invokeDocumentationTool() {
@@ -512,7 +578,7 @@ private fun loadFromSignatureFiles(
     try {
         val codebase = ApiFile.parseApi(File(file.path), kotlinStyleNulls, supportsStagedNullability)
         codebase.manifest = manifest
-        codebase.description = "Codebase loaded from ${file.name}"
+        codebase.description = "Codebase loaded from ${file.path}"
 
         if (performChecks) {
             val analyzer = ApiAnalyzer(codebase)
@@ -705,7 +771,7 @@ private fun createStubFiles(stubDir: File, codebase: Codebase, docStubs: Boolean
             codebase = codebase,
             stubsDir = stubDir,
             generateAnnotations = generateAnnotations,
-            preFiltered = codebase.original != null,
+            preFiltered = codebase.preFiltered,
             docStubs = docStubs
         )
     codebase.accept(stubWriter)
@@ -752,10 +818,12 @@ fun progress(message: String) {
 private fun createReportFile(
     codebase: Codebase,
     apiFile: File,
-    description: String,
+    description: String?,
     createVisitor: (PrintWriter) -> ApiVisitor
 ) {
-    progress("\nWriting $description file: ")
+    if (description != null) {
+        progress("\nWriting $description file: ")
+    }
     val localTimer = Stopwatch.createStarted()
     try {
         val writer = PrintWriter(Files.asCharSink(apiFile, Charsets.UTF_8).openBufferedStream())
@@ -766,7 +834,7 @@ private fun createReportFile(
     } catch (e: IOException) {
         reporter.report(Errors.IO_ERROR, apiFile, "Cannot open file for write.")
     }
-    if (options.verbose) {
+    if (description != null && options.verbose) {
         options.stdout.print("\n$PROGRAM_NAME wrote $description file $apiFile in ${localTimer.elapsed(SECONDS)} seconds")
     }
 }
@@ -837,7 +905,9 @@ private fun addHiddenPackages(
     } else if (file.isFile) {
         var javadoc = false
         val map = when {
-            file.name == "package.html" -> { javadoc = true; packageToDoc }
+            file.name == "package.html" -> {
+                javadoc = true; packageToDoc
+            }
             file.name == "overview.html" -> {
                 packageToOverview
             }

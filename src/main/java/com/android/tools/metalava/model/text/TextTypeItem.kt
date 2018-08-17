@@ -62,7 +62,7 @@ class TextTypeItem(
                 erased
             }
         }
-        return codebase.findClass(cls) ?: TextClassItem.createClassStub(codebase, cls)
+        return codebase.getOrCreateClass(cls)
     }
 
     fun qualifiedTypeName(): String = type

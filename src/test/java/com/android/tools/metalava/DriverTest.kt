@@ -756,7 +756,7 @@ abstract class DriverTest {
                 reportedWarnings.toString().replace(project.path, "TESTROOT").replace(
                     project.canonicalPath,
                     "TESTROOT"
-                ).trim()
+                ).replace(temporaryFolder.root.path, "TESTROOT").trim()
             )
         }
 

@@ -46,7 +46,7 @@ class TextTypeParameterItem(
                 boundsString.mapNotNull {
                     val clz = codebase.findClass(it)
                     if (clz == null && it.contains(".")) {
-                        TextClassItem.createClassStub(codebase, it)
+                        codebase.getOrCreateClass(it)
                     } else {
                         clz
                     }
