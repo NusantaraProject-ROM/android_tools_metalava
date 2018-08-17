@@ -42,6 +42,7 @@ import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.PackageDocs
 import com.android.tools.metalava.model.psi.PsiBasedCodebase
+import com.android.tools.metalava.model.psi.packageHtmlToJavadoc
 import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.android.utils.StdLogger
 import com.android.utils.StdLogger.Level.ERROR
@@ -834,14 +835,18 @@ private fun addHiddenPackages(
             }
         }
     } else if (file.isFile) {
+        var javadoc = false
         val map = when {
-            file.name == "package.html" -> packageToDoc
+            file.name == "package.html" -> { javadoc = true; packageToDoc }
             file.name == "overview.html" -> {
                 packageToOverview
             }
             else -> return
         }
-        val contents = Files.asCharSource(file, Charsets.UTF_8).read()
+        var contents = Files.asCharSource(file, Charsets.UTF_8).read()
+        if (javadoc) {
+            contents = packageHtmlToJavadoc(contents)
+        }
         map[pkg] = contents
         if (contents.contains("@hide")) {
             hiddenPackages.add(pkg)
@@ -850,13 +855,13 @@ private fun addHiddenPackages(
 }
 
 private fun gatherHiddenPackagesFromJavaDocs(sourcePath: List<File>): PackageDocs {
-    val packageHtml = HashMap<String, String>(100)
+    val packageComments = HashMap<String, String>(100)
     val overviewHtml = HashMap<String, String>(10)
     val set = HashSet<String>(100)
     for (file in sourcePath) {
-        addHiddenPackages(packageHtml, overviewHtml, set, file, "")
+        addHiddenPackages(packageComments, overviewHtml, set, file, "")
     }
-    return PackageDocs(packageHtml, overviewHtml, set)
+    return PackageDocs(packageComments, overviewHtml, set)
 }
 
 private fun extractRoots(sources: List<File>, sourceRoots: MutableList<File> = mutableListOf()): List<File> {

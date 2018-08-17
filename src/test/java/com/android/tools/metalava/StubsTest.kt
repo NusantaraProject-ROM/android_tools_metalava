@@ -3333,6 +3333,122 @@ class StubsTest : DriverTest() {
         )
     }
 
+    @Test
+    fun `Test package-info documentation`() {
+        check(
+            checkDoclava1 = true,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                      /** My package docs */
+                      package test.pkg;
+                      """
+                ).indented(),
+                java("""package test.pkg; public abstract class Class1 { }""")
+            ),
+
+            api = """
+                package test.pkg {
+                  public abstract class Class1 {
+                    ctor public Class1();
+                  }
+                }
+                """,
+            stubs = arrayOf(
+                """
+                /** My package docs */
+                package test.pkg;
+                """,
+                """
+                package test.pkg;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public abstract class Class1 {
+                public Class1() { throw new RuntimeException("Stub!"); }
+                }
+                """
+            )
+        )
+    }
+
+    @Test
+    fun `Test package-info annotations`() {
+        check(
+            compatibilityMode = false,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                      @RestrictTo(RestrictTo.Scope.SUBCLASSES)
+                      package test.pkg;1
+
+                      import androidx.annotation.RestrictTo;
+                      """
+                ).indented(),
+                java("""package test.pkg; public abstract class Class1 { }"""),
+                restrictToSource
+            ),
+
+            api = """
+                package @RestrictTo(androidx.annotation.RestrictTo.Scope.SUBCLASSES) @RestrictTo(androidx.annotation.RestrictTo.Scope.SUBCLASSES) test.pkg {
+                  public abstract class Class1 {
+                    ctor public Class1();
+                  }
+                }
+                """,
+            stubs = arrayOf(
+                """
+                @androidx.annotation.RestrictTo(androidx.annotation.RestrictTo.Scope.SUBCLASSES)
+                package test.pkg;
+                """,
+                """
+                package test.pkg;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public abstract class Class1 {
+                public Class1() { throw new RuntimeException("Stub!"); }
+                }
+                """
+            ),
+            extraArguments = arrayOf("--hide-package", "androidx.annotation")
+        )
+    }
+
+    @Test
+    fun `Ensure we emit both deprecated javadoc and annotation with exlude-annotations`() {
+        check(
+            extraArguments = arrayOf("--exclude-annotations"),
+            compatibilityMode = false,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    public class Foo {
+                        /**
+                         * @deprecated Use checkPermission instead.
+                         */
+                        @Deprecated
+                        protected boolean inClass(String name) {
+                            return false;
+                        }
+                    }
+                    """
+                )
+            ),
+            stubs = arrayOf(
+                """
+                package test.pkg;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class Foo {
+                public Foo() { throw new RuntimeException("Stub!"); }
+                /**
+                 * @deprecated Use checkPermission instead.
+                 */
+                @Deprecated
+                protected boolean inClass(java.lang.String name) { throw new RuntimeException("Stub!"); }
+                }
+                """
+            )
+        )
+    }
+
 // TODO: Add in some type variables in method signatures and constructors!
 // TODO: Test what happens when a class extends a hidden extends a public in separate packages,
 // and the hidden has a @hide constructor so the stub in the leaf class doesn't compile -- I should

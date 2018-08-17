@@ -280,6 +280,7 @@ open class TextClassItem(
             val pkg = codebase.findPackage(pkgPath) as? TextPackageItem ?: TextPackageItem(
                 codebase,
                 pkgPath,
+                TextModifiers(codebase, DefaultModifierList.PUBLIC),
                 SourcePositionInfo.UNKNOWN
             )
             textClassItem.setContainingPackage(pkg)

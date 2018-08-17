@@ -468,6 +468,24 @@ class ApiFromTextTest : DriverTest() {
     }
 
     @Test
+    fun `Annotations on packages`() {
+        val source = """
+                package @RestrictTo(androidx.annotation.RestrictTo.Scope.SUBCLASSES) @RestrictTo(androidx.annotation.RestrictTo.Scope.SUBCLASSES) test.pkg {
+                  public abstract class Class1 {
+                    ctor public Class1();
+                  }
+                }
+                """
+
+        check(
+            compatibilityMode = false,
+            outputKotlinStyleNulls = false,
+            signatureSource = source,
+            api = source
+        )
+    }
+
+    @Test
     fun `Enums and annotations exported to compat`() {
         val source = """
                 package android.annotation {
