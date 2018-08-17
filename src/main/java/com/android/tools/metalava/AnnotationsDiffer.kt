@@ -19,7 +19,6 @@ package com.android.tools.metalava
 import com.android.tools.metalava.doclava1.ApiPredicate
 import com.android.tools.metalava.doclava1.Errors
 import com.android.tools.metalava.doclava1.FilterPredicate
-import com.android.tools.metalava.doclava1.TextCodebase
 import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.Item
 import java.io.File
@@ -121,8 +120,7 @@ class AnnotationsDiffer(
             val stringWriter = StringWriter()
             val writer = PrintWriter(stringWriter)
             writer.use { printWriter ->
-                val preFiltered = codebase.original != null || codebase is TextCodebase
-                val apiWriter = SignatureWriter(printWriter, apiEmit, apiReference, preFiltered)
+                val apiWriter = SignatureWriter(printWriter, apiEmit, apiReference, codebase.preFiltered)
                 codebase.accept(apiWriter)
             }
 

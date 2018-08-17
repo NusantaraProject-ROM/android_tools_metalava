@@ -93,8 +93,14 @@ class ArtifactTagger {
         codebase: Codebase
     ) {
         for (specPkg in specApi.getPackages().packages) {
+            if (!specPkg.emit) {
+                continue
+            }
             val pkg = codebase.findPackage(specPkg.qualifiedName()) ?: continue
             for (cls in pkg.allClasses()) {
+                if (!cls.emit) {
+                    continue
+                }
                 if (cls.artifact == null) {
                     cls.artifact = mavenSpec
                 } else {

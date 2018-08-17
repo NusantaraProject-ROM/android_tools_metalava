@@ -91,6 +91,12 @@ class CodebaseComparator {
         // two trees
         val oldTree = createTree(old, filter)
         val newTree = createTree(new, filter)
+
+        /* Debugging:
+        println("Old:\n${ItemTree.prettyPrint(oldTree)}")
+        println("New:\n${ItemTree.prettyPrint(newTree)}")
+        */
+
         compare(visitor, oldTree, newTree, null, null)
     }
 
@@ -378,7 +384,8 @@ class CodebaseComparator {
         val root = ItemTree(null)
         stack.push(root)
 
-        val predicate = filter ?: Predicate { true }
+        val acceptAll = codebase.preFiltered || filter == null
+        val predicate = if (acceptAll) Predicate { true } else filter!!
         codebase.accept(object : ApiVisitor(
             nestInnerClasses = true,
             inlineInheritedFields = true,
@@ -392,6 +399,8 @@ class CodebaseComparator {
 
                 stack.push(node)
             }
+
+            override fun include(cls: ClassItem): Boolean = if (acceptAll) true else super.include(cls)
 
             override fun afterVisitItem(item: Item) {
                 stack.pop()

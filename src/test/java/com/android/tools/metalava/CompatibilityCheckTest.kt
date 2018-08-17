@@ -1657,6 +1657,85 @@ CompatibilityCheckTest : DriverTest() {
         )
     }
 
+    @Test
+    fun `Partial text file which references inner classes not listed elsewhere`() {
+        // This happens in system and test files where we only include APIs that differ
+        // from the base IDE. When parsing these code bases we need to gracefully handle
+        // references to inner classes.
+        check(
+            includeSystemApiAnnotations = true,
+            warnings = """
+                TESTROOT/public-api.txt:4: warning: Added method test.pkg.Bar.Inner1.Inner2.addedMethod() [AddedMethod:4]
+                TESTROOT/current-api.txt:4: error: Removed method test.pkg.Bar.Inner1.Inner2.removedMethod() [RemovedMethod:9]
+                """,
+            api = """
+                package test.pkg {
+                  public class Bar.Inner1.Inner2 {
+                    method public void addedMethod();
+                    method public void method();
+                  }
+                }
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package other.pkg;
+
+                    public class MyClass {
+                        public class MyInterface {
+                            public void test() { }
+                        }
+                    }
+                    """
+                ).indented(),
+                java(
+                    """
+                    package test.pkg;
+                    import android.annotation.SystemApi;
+
+                    public class Bar {
+                        public class Inner1 {
+                            private Inner1() { }
+                            public class Inner2 {
+                                private Inner2() { }
+
+                                /**
+                                 * @hide
+                                 */
+                                @SystemApi
+                                public void method() { }
+
+                                /**
+                                 * @hide
+                                 */
+                                @SystemApi
+                                public void addedMethod() { }
+                            }
+                        }
+                    }
+                    """
+                ),
+                systemApiSource
+            ),
+
+            extraArguments = arrayOf(
+                "--show-annotation", "android.annotation.TestApi",
+                "--hide-package", "android.annotation",
+                "--hide-package", "android.support.annotation"
+            ),
+
+            checkCompatibilityApi =
+            """
+                package test.pkg {
+                  public class Bar.Inner1.Inner2 {
+                    method public void method();
+                    method public void removedMethod();
+                  }
+                }
+                """
+        )
+    }
+
     @Ignore("Not currently working: we're getting the wrong PSI results; I suspect caching across the two codebases")
     @Test
     fun `Test All Android API levels`() {

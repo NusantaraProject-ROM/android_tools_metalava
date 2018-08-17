@@ -207,6 +207,18 @@ Extracting API Levels:
 --current-codename                     Sets the code name for the current source code
 --current-jar                          Points to the current API jar, if any
 
+Environment Variables:
+METALAVA_DUMP_ARGV                     Set to true to have metalava emit all the arguments
+                                       it was invoked with. Helpful when debugging or
+                                       reproducing under a debugger what the build system
+                                       is doing.
+METALAVA_PREPEND_ARGS                  One or more arguments (concatenated by space) to
+                                       insert into the command line, before the
+                                       documentation flags.
+METALAVA_APPEND_ARGS                   One or more arguments (concatenated by space) to
+                                       append to the end of the command line, after the
+                                       generate documentation flags.
+
 """.trimIndent()
 
     @Test
