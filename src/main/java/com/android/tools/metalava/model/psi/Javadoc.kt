@@ -23,6 +23,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.javadoc.PsiDocTag
 import com.intellij.psi.javadoc.PsiDocToken
+import org.intellij.lang.annotations.Language
 
 /*
  * Various utilities for merging comments into existing javadoc sections.
@@ -219,7 +220,8 @@ fun insertInto(existingDoc: String, newText: String, initialOffset: Int): String
 }
 
 /** Converts from package.html content to a package-info.java javadoc string. */
-fun packageHtmlToJavadoc(packageHtml: String?): String {
+@Language("JAVA")
+fun packageHtmlToJavadoc(@Language("HTML") packageHtml: String?): String {
     packageHtml ?: return ""
     if (packageHtml.isBlank()) {
         return ""
@@ -309,6 +311,16 @@ private fun getBodyContents(html: String): String {
                             offset = end + 3
                         }
                         continue@loop
+                    } else {
+                        val end = html.indexOf('>', offset + 2)
+                        if (end == -1) {
+                            offset = length
+                            state = STATE_TEXT
+                        } else {
+                            offset = end + 1
+                            state = STATE_TEXT
+                        }
+                        continue@loop
                     }
                 } else if (c == '/') {
                     state = STATE_CLOSE_TAG
@@ -351,15 +363,19 @@ private fun getBodyContents(html: String): String {
             }
 
             STATE_IN_TAG -> {
+                val whitespace = Character.isWhitespace(c)
+                if (whitespace || c == '>') {
+                    if (html.startsWith("body", tagStart, true)) {
+                        bodyStart = html.indexOf('>', offset) + 1
+                    }
+                    if (html.startsWith("html", tagStart, true)) {
+                        htmlStart = html.indexOf('>', offset) + 1
+                    }
+                }
+
                 when {
-                    Character.isWhitespace(c) -> state = STATE_BEFORE_ATTRIBUTE
+                    whitespace -> state = STATE_BEFORE_ATTRIBUTE
                     c == '>' -> {
-                        if (html.startsWith("body", tagStart, true)) {
-                            bodyStart = offset + 1
-                        }
-                        if (html.startsWith("html", tagStart, true)) {
-                            htmlStart = offset + 1
-                        }
                         state = STATE_TEXT
                     }
                     c == '/' -> state = STATE_ENDING_TAG

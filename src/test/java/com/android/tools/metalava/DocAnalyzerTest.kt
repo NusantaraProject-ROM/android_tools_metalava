@@ -1166,14 +1166,15 @@ class DocAnalyzerTest : DriverTest() {
                 source("src/overview.html", "<html>My overview docs</html>"),
                 source("src/test/visible/package.html",
                     """
+                    <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+                    <!-- not a body tag: <body> -->
                     <html>
-                    <!-- <body> comment -->
-                    <BODY>
+                    <body bgcolor="white">
                     My package docs<br>
                     <!-- comment -->
                     Sample code: /** code here */
                     Another line.<br>
-                    </body>
+                    </BODY>
                     </html>
                     """
                 ).indented(),
