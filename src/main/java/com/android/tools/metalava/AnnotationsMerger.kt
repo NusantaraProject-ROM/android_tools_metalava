@@ -222,7 +222,7 @@ class AnnotationsMerger(
             }
         }
         CodebaseComparator().compare(
-            visitor, externalCodebase, codebase, ApiPredicate(externalCodebase)
+            visitor, externalCodebase, codebase, ApiPredicate()
         )
     }
 

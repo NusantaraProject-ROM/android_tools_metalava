@@ -25,6 +25,7 @@ import com.android.tools.metalava.Severity.WARNING
 import com.android.tools.metalava.doclava1.Errors
 import com.android.tools.metalava.model.AnnotationArrayAttributeValue
 import com.android.tools.metalava.model.Item
+import com.android.tools.metalava.model.configuration
 import com.android.tools.metalava.model.psi.PsiConstructorItem
 import com.android.tools.metalava.model.psi.PsiItem
 import com.android.tools.metalava.model.text.TextItem
@@ -86,11 +87,11 @@ open class Reporter(private val rootFolder: File? = null) {
     }
 
     fun report(id: Errors.Error, element: PsiElement?, message: String): Boolean {
-        return report(id.level, element, message, id)
+        return report(configuration.getSeverity(id), element, message, id)
     }
 
     fun report(id: Errors.Error, file: File?, message: String): Boolean {
-        return report(id.level, file?.path, message, id)
+        return report(configuration.getSeverity(id), file?.path, message, id)
     }
 
     fun report(id: Errors.Error, item: Item?, message: String): Boolean {
@@ -98,6 +99,7 @@ open class Reporter(private val rootFolder: File? = null) {
             return false
         }
 
+        val severity = configuration.getSeverity(id)
         return when (item) {
             is PsiItem -> {
                 var psi = item.psi()
@@ -111,21 +113,22 @@ open class Reporter(private val rootFolder: File? = null) {
                     psi = item.containingClass().psi()
                 }
 
-                report(id.level, psi, message, id)
+                report(severity, psi, message, id)
             }
-            is TextItem -> report(id.level, (item as? TextItem)?.position.toString(), message, id)
-            else -> report(id.level, "<unknown location>", message, id)
+            is TextItem -> report(severity, (item as? TextItem)?.position.toString(), message, id)
+            else -> report(severity, "<unknown location>", message, id)
         }
     }
 
     fun isSuppressed(id: Errors.Error, item: Item? = null): Boolean {
-        if (id.level == HIDDEN) {
+        val severity = configuration.getSeverity(id)
+        if (severity == HIDDEN) {
             return true
         }
 
         item ?: return false
 
-        if (id.level == LINT || id.level == WARNING || id.level == ERROR) {
+        if (severity == LINT || severity == WARNING || severity == ERROR) {
             val id1 = "Doclava${id.code}"
             val id2 = id.name
             val annotation = item.modifiers.findAnnotation("android.annotation.SuppressLint")
