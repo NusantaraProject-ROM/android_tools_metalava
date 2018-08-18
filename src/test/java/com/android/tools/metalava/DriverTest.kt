@@ -421,6 +421,10 @@ abstract class DriverTest {
                 args.add("--show-annotation")
                 args.add("android.annotation.SystemService")
             }
+            if (includeSystemApiAnnotations && !args.contains("android.annotation.TestApi")) {
+                args.add("--show-annotation")
+                args.add("android.annotation.TestApi")
+            }
             args.toTypedArray()
         } else {
             emptyArray()
@@ -1164,6 +1168,20 @@ abstract class DriverTest {
         ) {
             return
         }
+
+        // If there's a discrepancy between doclava1 and metalava, you can debug
+        // doclava; to do this, open the Doclava project, and take all the
+        // metalava arguments, drop the ones that don't apply and use the
+        // doclava-style names instead of metalava (e.g. -stubs instead of --stubs,
+        // -showAnnotation instead of --show-annotation, -sourcepath instead of
+        // --sourcepath, and so on. Finally, and most importantly, add these
+        // 4 arguments at the beginning:
+        //   "-doclet",
+        //   "com.google.doclava.Doclava",
+        //   "-docletpath",
+        //   "out/host/linux-x86/framework/jsilver.jar:out/host/linux-x86/framework/doclava.jar",
+        // ..and finally from your Main entry point take this array of strings
+        // and call Doclava.main(newArgs)
 
         val expectedText = readFile(expected, stripBlankLines, trim)
         assertEquals(stripComments(api, stripLineComments = false).trimIndent(), expectedText)

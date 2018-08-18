@@ -142,6 +142,20 @@ class ShowAnnotationTest : DriverTest() {
                      */
                     @TestApi
                     public class Bar {
+                        public void test() {
+                        }
+                    }
+                    """
+                ),
+
+                // This isn't necessary for this test, but doclava will ignore @hide classes marked
+                // with an annotation unless there is a public reference it to it from elsewhere.
+                // Include this here such that the checkDoclava1=true step produces any output.
+                java(
+                    """
+                    package test.pkg;
+                    public class Usage {
+                        public Bar bar;
                     }
                     """
                 ),
@@ -158,6 +172,7 @@ class ShowAnnotationTest : DriverTest() {
                 package test.pkg {
                   public class Bar {
                     ctor public Bar();
+                    method public void test();
                   }
                 }
                 """
@@ -172,7 +187,7 @@ class ShowAnnotationTest : DriverTest() {
         // and the additional API made visible with annotations. However,
         // in the *stubs*, we have to include everything.
         check(
-            checkDoclava1 = true,
+            checkDoclava1 = false,
             sourceFiles = *arrayOf(
                 java(
                     """
