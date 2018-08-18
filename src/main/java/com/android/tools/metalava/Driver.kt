@@ -609,8 +609,8 @@ private fun loadFromSources(): Codebase {
     progress("\nAnalyzing API: ")
 
     val analyzer = ApiAnalyzer(codebase)
-    analyzer.mergeExternalAnnotations()
     analyzer.computeApi()
+    analyzer.mergeExternalAnnotations()
     analyzer.handleStripping()
 
     if (options.checkKotlinInterop) {
