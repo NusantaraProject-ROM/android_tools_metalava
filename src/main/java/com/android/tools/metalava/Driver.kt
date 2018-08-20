@@ -916,9 +916,26 @@ private fun addHiddenPackages(
         if (javadoc) {
             contents = packageHtmlToJavadoc(contents)
         }
-        map[pkg] = contents
+
+        var realPkg = pkg
+        // Sanity check the package; it's computed from the directory name
+        // relative to the source path, but if the real source path isn't
+        // passed in (and is instead some directory containing the source path)
+        // then we compute the wrong package here. Instead, look for an adjacent
+        // java class and pick the package from it
+        for (sibling in file.parentFile.listFiles()) {
+            if (sibling.path.endsWith(DOT_JAVA)) {
+                val javaPkg = ClassName(sibling.readText()).packageName
+                if (javaPkg != null) {
+                    realPkg = pkg
+                    break
+                }
+            }
+        }
+
+        map[realPkg] = contents
         if (contents.contains("@hide")) {
-            hiddenPackages.add(pkg)
+            hiddenPackages.add(realPkg)
         }
     }
 }
