@@ -25,13 +25,16 @@ import com.android.tools.metalava.doclava1.TextCodebase
 import com.android.tools.metalava.model.AnnotationItem
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.Codebase
+import com.android.tools.metalava.model.ErrorConfiguration
 import com.android.tools.metalava.model.FieldItem
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.PackageItem
 import com.android.tools.metalava.model.ParameterItem
 import com.android.tools.metalava.model.TypeItem
+import com.android.tools.metalava.model.configuration
 import com.intellij.psi.PsiField
+import java.io.File
 import java.util.function.Predicate
 
 /**
@@ -43,8 +46,21 @@ import java.util.function.Predicate
  */
 class CompatibilityCheck(
     val filterReference: Predicate<Item>,
-    oldCodebase: Codebase
+    oldCodebase: Codebase,
+    private val apiType: ApiType,
+    private val base: Codebase? = null
 ) : ComparisonVisitor() {
+
+    /**
+     * Request for compatibility checks.
+     * [file] represents the signature file to be checked. [apiType] represents which
+     * part of the API should be checked.
+     * If [released] is false the signature file represents the current,
+     * unreleased API level; if it is true, it represents a previously released API
+     * level (different compatibility checks apply; e.g. within a release we can change
+     * our minds about some things that we cannot once something has been released.)
+     */
+    data class CheckRequest(val file: File, val released: Boolean, val apiType: ApiType)
 
     /** In old signature files, methods inherited from hidden super classes
      * are not included. An example of this is StringBuilder.setLength.
@@ -188,10 +204,10 @@ class CompatibilityCheck(
         }
 
         if (!oldModifiers.isSealed() && newModifiers.isSealed()) {
-            report(Errors.ADD_SEALED, new, "Cannot add `sealed` modifier to ${describe(new)}: Incompatible change")
+            report(Errors.ADD_SEALED, new, "Cannot add 'sealed' modifier to ${describe(new)}: Incompatible change")
         } else if (old.isClass() && oldModifiers.isAbstract() != newModifiers.isAbstract()) {
             report(
-                Errors.CHANGED_ABSTRACT, new, "${describe(new, capitalize = true)} changed abstract qualifier"
+                Errors.CHANGED_ABSTRACT, new, "${describe(new, capitalize = true)} changed 'abstract' qualifier"
             )
         }
 
@@ -207,22 +223,22 @@ class CompatibilityCheck(
                         "${describe(
                             new,
                             capitalize = true
-                        )} added final qualifier but was previously uninstantiable and therefore could not be subclassed"
+                        )} added 'final' qualifier but was previously uninstantiable and therefore could not be subclassed"
                     )
                 } else {
                     report(
-                        Errors.ADDED_FINAL, new, "${describe(new, capitalize = true)} added final qualifier"
+                        Errors.ADDED_FINAL, new, "${describe(new, capitalize = true)} added 'final' qualifier"
                     )
                 }
             } else if (oldModifiers.isFinal() && !newModifiers.isFinal()) {
                 report(
-                    Errors.REMOVED_FINAL, new, "${describe(new, capitalize = true)} removed final qualifier"
+                    Errors.REMOVED_FINAL, new, "${describe(new, capitalize = true)} removed 'final' qualifier"
                 )
             }
 
             if (oldModifiers.isStatic() != newModifiers.isStatic()) {
                 report(
-                    Errors.CHANGED_STATIC, new, "${describe(new, capitalize = true)} changed static qualifier"
+                    Errors.CHANGED_STATIC, new, "${describe(new, capitalize = true)} changed 'static' qualifier"
                 )
             }
         }
@@ -362,7 +378,7 @@ class CompatibilityCheck(
         // Check for changes in abstract, but only for regular classes; older signature files
         // sometimes describe interface methods as abstract
         if (new.containingClass().isClass()) {
-            if (oldModifiers.isAbstract() != newModifiers.isAbstract() &&
+            if (!oldModifiers.isAbstract() && newModifiers.isAbstract() &&
                 // In old signature files, overridden methods of abstract methods declared
                 // in super classes are sometimes omitted by doclava. This means that the method
                 // looks (from the signature file perspective) like it has not been implemented,
@@ -576,11 +592,68 @@ class CompatibilityCheck(
     }
 
     private fun handleAdded(error: Error, item: Item) {
-        report(error, item, "Added ${describe(item)}")
+        var message = "Added ${describe(item)}"
+
+        // Clarify error message for removed API to make it less ambiguous
+        if (apiType == ApiType.REMOVED) {
+            message += " to the removed API"
+        } else if (options.showAnnotations.isNotEmpty()) {
+            if (options.showAnnotations.any { it.endsWith("SystemApi") }) {
+                message += " to the system API"
+            } else if (options.showAnnotations.any { it.endsWith("TestApi") }) {
+                message += " to the test API"
+            }
+        }
+
+        // In some cases we run the comparison on signature files
+        // generated into the temp directory, but in these cases
+        // try to report the item against the real item in the API instead
+        val equivalent = findBaseItem(item)
+        if (equivalent != null) {
+            report(error, equivalent, message)
+            return
+        }
+
+        report(error, item, message)
     }
 
     private fun handleRemoved(error: Error, item: Item) {
+        if (base != null) {
+            // We're diffing "overlay" APIs, such as system or test API files,
+            // where the signature files only list a delta from the full, "base" API.
+            // In that case, if an API is promoted from @SystemApi or @TestApi to be
+            // a full part of the API, it will look like a removal; it appeared in the
+            // previous file and not in the new file, but it's not removed, it's just
+            // not a delta anymore.
+            //
+            // For that reason, we also pass in the "base" API in these cases, and when
+            // an item is removed, we also check the full API to see if it's present
+            // there, and if so, this item is not actually deleted.
+            val baseItem = findBaseItem(item)
+            if (baseItem != null && ApiPredicate(ignoreShown = true).test(baseItem)) {
+                return
+            }
+        }
+
         report(error, item, "Removed ${if (item.deprecated) "deprecated " else ""}${describe(item)}")
+    }
+
+    private fun findBaseItem(
+        item: Item
+    ): Item? {
+        base ?: return null
+
+        return when (item) {
+            is PackageItem -> base.findPackage(item.qualifiedName())
+            is ClassItem -> base.findClass(item.qualifiedName())
+            is MethodItem -> base.findClass(item.containingClass().qualifiedName())?.findMethod(
+                item,
+                true,
+                true
+            )
+            is FieldItem -> base.findClass(item.containingClass().qualifiedName())?.findField(item.name())
+            else -> null
+        }
     }
 
     override fun added(new: PackageItem) {
@@ -591,6 +664,19 @@ class CompatibilityCheck(
         val error = if (new.isInterface()) {
             Errors.ADDED_INTERFACE
         } else {
+            if (compatibility.compat &&
+                new.qualifiedName() == "android.telephony.ims.feature.ImsFeature.Capabilities"
+            ) {
+                // Special case: Doclava and metalava signature files for the system api
+                // differ in only one way: Metalava believes ImsFeature.Capabilities should
+                // be in the signature file for @SystemApi, and doclava does not. However,
+                // this API is referenced from other system APIs that doclava does include
+                // (MmTelFeature.MmTelCapabilities's constructor) so it is clearly part of the
+                // API even if it's not listed in the signature file and we should not list
+                // this as an incompatible, added API.
+                return
+            }
+
             Errors.ADDED_CLASS
         }
         handleAdded(error, new)
@@ -660,6 +746,7 @@ class CompatibilityCheck(
             old.deprecated -> Errors.REMOVED_DEPRECATED_CLASS
             else -> Errors.REMOVED_CLASS
         }
+
         handleRemoved(error, old)
     }
 
@@ -815,10 +902,30 @@ class CompatibilityCheck(
     }
 
     companion object {
-        fun checkCompatibility(codebase: Codebase, previous: Codebase) {
-            val filter = ApiPredicate(codebase)
-            val checker = CompatibilityCheck(filter, previous)
-            CodebaseComparator().compare(checker, previous, codebase, filter)
+        fun checkCompatibility(
+            codebase: Codebase,
+            previous: Codebase,
+            released: Boolean,
+            apiType: ApiType,
+            base: Codebase? = null
+        ) {
+            val filter = apiType.getEmitFilter()
+            val checker = CompatibilityCheck(filter, previous, apiType, base)
+            val errorConfiguration = if (released) {
+                ErrorConfiguration.releasedCompatibilityCheckConfiguration
+            } else {
+                ErrorConfiguration.currentCompatibilityCheckConfiguration
+            }
+
+            val previousConfiguration = configuration
+            try {
+                configuration = errorConfiguration
+
+                CodebaseComparator().compare(checker, previous, codebase, filter)
+            } finally {
+                configuration = previousConfiguration
+            }
+
             if (checker.foundProblems) {
                 throw DriverException(
                     exitCode = -1,

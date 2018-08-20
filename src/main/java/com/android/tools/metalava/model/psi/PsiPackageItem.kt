@@ -107,7 +107,7 @@ class PsiPackageItem(
 
     override fun hashCode(): Int = qualifiedName.hashCode()
 
-    override fun toString(): String = "Package $qualifiedName"
+    override fun toString(): String = "package $qualifiedName"
 
     override fun finishInitialization() {
         super.finishInitialization()

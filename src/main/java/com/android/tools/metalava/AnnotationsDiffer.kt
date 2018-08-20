@@ -102,7 +102,7 @@ class AnnotationsDiffer(
         }
         val filter =
             if (codebase.supportsDocumentation()) {
-                ApiPredicate(codebase)
+                ApiPredicate()
             } else {
                 Predicate<Item> { true }
             }
@@ -111,8 +111,8 @@ class AnnotationsDiffer(
 
     fun writeDiffSignature(apiFile: File) {
         val codebase = superset
-        val apiFilter = FilterPredicate(ApiPredicate(codebase))
-        val apiReference = ApiPredicate(codebase, ignoreShown = true)
+        val apiFilter = FilterPredicate(ApiPredicate())
+        val apiReference = ApiPredicate(ignoreShown = true)
         val apiEmit = apiFilter.and(predicate)
 
         progress("\nWriting annotation diff file: ")

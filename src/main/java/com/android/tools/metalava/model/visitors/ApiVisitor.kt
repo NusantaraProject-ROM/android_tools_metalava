@@ -102,8 +102,8 @@ open class ApiVisitor(
         visitConstructorsAsMethods, nestInnerClasses,
         true, methodComparator,
         fieldComparator,
-        ApiPredicate(codebase, ignoreShown = ignoreShown, matchRemoved = remove),
-        ApiPredicate(codebase, ignoreShown = true, ignoreRemoved = remove)
+        ApiPredicate(ignoreShown = ignoreShown, matchRemoved = remove),
+        ApiPredicate(ignoreShown = true, ignoreRemoved = remove)
     )
 
     // The API visitor lazily visits packages only when there's a match within at least one class;
