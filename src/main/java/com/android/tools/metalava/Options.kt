@@ -18,6 +18,7 @@ package com.android.tools.metalava
 
 import com.android.SdkConstants
 import com.android.sdklib.SdkVersionInfo
+import com.android.tools.metalava.CompatibilityCheck.CheckRequest
 import com.android.tools.metalava.doclava1.Errors
 import com.android.utils.SdkUtils.wrap
 import com.google.common.base.CharMatcher
@@ -68,6 +69,10 @@ private const val ARG_PREVIOUS_API = "--previous-api"
 private const val ARG_CURRENT_API = "--current-api"
 private const val ARG_MIGRATE_NULLNESS = "--migrate-nullness"
 private const val ARG_CHECK_COMPATIBILITY = "--check-compatibility"
+private const val ARG_CHECK_COMPATIBILITY_API_CURRENT = "--check-compatibility:api:current"
+private const val ARG_CHECK_COMPATIBILITY_API_RELEASED = "--check-compatibility:api:released"
+private const val ARG_CHECK_COMPATIBILITY_REMOVED_CURRENT = "--check-compatibility:removed:current"
+private const val ARG_CHECK_COMPATIBILITY_REMOVED_RELEASED = "--check-compatibility:removed:released"
 private const val ARG_INPUT_KOTLIN_NULLS = "--input-kotlin-nulls"
 private const val ARG_OUTPUT_KOTLIN_NULLS = "--output-kotlin-nulls"
 private const val ARG_OUTPUT_DEFAULT_VALUES = "--output-default-values"
@@ -307,20 +312,17 @@ class Options(
     var generateAnnotations = false
 
     /**
-     * A signature file for the previous stable version of this API (for nullness
-     * migration, etc)
+     * A signature file to migrate nullness data from
      */
-    var previousApi: File? = null
+    var migrateNullsFrom: File? = null
 
-    /**
-     * A signature file for the current version of this API (for compatibility checks).
-     */
-    var currentApi: File? = null
+    /** Private backing list for [compatibilityChecks]] */
+    private var mutableCompatibilityChecks = mutableListOf<CheckRequest>()
 
-    /** Whether we should check API compatibility based on the previous API in [previousApi] */
-    var checkCompatibility: Boolean = false
+    /** The list of compatibility checks to run */
+    val compatibilityChecks: List<CheckRequest> = mutableCompatibilityChecks
 
-    /** Whether we should migrate nulls based on the previous API in [previousApi] */
+    /** Whether we should migrate nulls based on the previous API in [migrateNullsFrom] */
     var migrateNulls: Boolean = false
 
     /** Existing external annotation files to merge in */
@@ -565,20 +567,11 @@ class Options(
                 ARG_INCLUDE_SOURCE_RETENTION -> includeSourceRetentionAnnotations = true
 
                 ARG_PREVIOUS_API -> {
-                    previousApi = stringToExistingFile(getValue(args, ++index))
+                    migrateNullsFrom = stringToExistingFile(getValue(args, ++index))
                     /* Don't flag this yet: allow a short quiet grace period
                     reporter.report(Errors.DEPRECATED_OPTION, null as File?,
                         "$ARG_PREVIOUS_API is deprecated; instead " +
-                        "use $ARG_MIGRATE_NULLNESS $previousApi")
-                    */
-                }
-
-                ARG_CURRENT_API -> {
-                    currentApi = stringToExistingFile(getValue(args, ++index))
-                    /* Don't flag this yet: allow a short quiet grace period
-                    reporter.report(Errors.DEPRECATED_OPTION, null as File?,
-                        "$ARG_CURRENT_API is deprecated; instead " +
-                            "use $ARG_CHECK_COMPATIBILITY $currentApi")
+                        "use $ARG_MIGRATE_NULLNESS $migrateNullsFrom")
                     */
                 }
 
@@ -591,25 +584,61 @@ class Options(
                             val file = fileForPath(nextArg)
                             if (file.isFile) {
                                 index++
-                                previousApi = file
+                                migrateNullsFrom = file
                             }
                         }
                     }
                 }
 
+                ARG_CURRENT_API -> {
+                    val file = stringToExistingFile(getValue(args, ++index))
+                    mutableCompatibilityChecks.add(CheckRequest(file, false, ApiType.PUBLIC_API))
+                    /* Don't flag this yet: allow a short quiet grace period
+                    reporter.report(Errors.DEPRECATED_OPTION, null as File?,
+                        "$ARG_CURRENT_API is deprecated; instead " +
+                            "use $ARG_CHECK_COMPATIBILITY $checkCompatibilityApiCurrent")
+                    */
+                }
+
                 ARG_CHECK_COMPATIBILITY -> {
-                    checkCompatibility = true
-                    // See if the next argument specifies the compatibility check
+                    // See if the next argument specifies the compatibility check.
+                    // Synonymous with ARG_CHECK_COMPATIBILITY_API_CURRENT, though
+                    // for backwards compatibility with earlier versions and usages
+                    // can also works in conjunction with ARG_CURRENT_API where the
+                    // usage was to use ARG_CURRENT_API to point to the API file and
+                    // then specify ARG_CHECK_COMPATIBILITY (without an argument) to
+                    // indicate that the current api should also be checked for
+                    // compatibility.
                     if (index < args.size - 1) {
                         val nextArg = args[index + 1]
                         if (!nextArg.startsWith("-")) {
                             val file = fileForPath(nextArg)
                             if (file.isFile) {
                                 index++
-                                currentApi = file
+                                mutableCompatibilityChecks.add(CheckRequest(file, false, ApiType.PUBLIC_API))
                             }
                         }
                     }
+                }
+
+                ARG_CHECK_COMPATIBILITY_API_CURRENT -> {
+                    val file = stringToExistingFile(getValue(args, ++index))
+                    mutableCompatibilityChecks.add(CheckRequest(file, false, ApiType.PUBLIC_API))
+                }
+
+                ARG_CHECK_COMPATIBILITY_API_RELEASED -> {
+                    val file = stringToExistingFile(getValue(args, ++index))
+                    mutableCompatibilityChecks.add(CheckRequest(file, true, ApiType.PUBLIC_API))
+                }
+
+                ARG_CHECK_COMPATIBILITY_REMOVED_CURRENT -> {
+                    val file = stringToExistingFile(getValue(args, ++index))
+                    mutableCompatibilityChecks.add(CheckRequest(file, false, ApiType.REMOVED))
+                }
+
+                ARG_CHECK_COMPATIBILITY_REMOVED_RELEASED -> {
+                    val file = stringToExistingFile(getValue(args, ++index))
+                    mutableCompatibilityChecks.add(CheckRequest(file, true, ApiType.REMOVED))
                 }
 
                 ARG_ANNOTATION_COVERAGE_STATS -> dumpAnnotationStatistics = true
@@ -625,10 +654,10 @@ class Options(
                     annotationCoverageMemberReport = stringToNewFile(getValue(args, ++index))
                 }
 
-                ARG_ERROR, "-error" -> Errors.setErrorLevel(getValue(args, ++index), Severity.ERROR)
-                ARG_WARNING, "-warning" -> Errors.setErrorLevel(getValue(args, ++index), Severity.WARNING)
-                ARG_LINT, "-lint" -> Errors.setErrorLevel(getValue(args, ++index), Severity.LINT)
-                ARG_HIDE, "-hide" -> Errors.setErrorLevel(getValue(args, ++index), Severity.HIDDEN)
+                ARG_ERROR, "-error" -> Errors.setErrorLevel(getValue(args, ++index), Severity.ERROR, true)
+                ARG_WARNING, "-warning" -> Errors.setErrorLevel(getValue(args, ++index), Severity.WARNING, true)
+                ARG_LINT, "-lint" -> Errors.setErrorLevel(getValue(args, ++index), Severity.LINT, true)
+                ARG_HIDE, "-hide" -> Errors.setErrorLevel(getValue(args, ++index), Severity.HIDDEN, true)
 
                 ARG_WARNINGS_AS_ERRORS -> warningsAreErrors = true
                 ARG_LINTS_AS_ERRORS -> lintsAreErrors = true
@@ -1025,11 +1054,7 @@ class Options(
 
     /** Makes sure that the flag combinations make sense */
     private fun checkFlagConsistency() {
-        if (checkCompatibility && currentApi == null && previousApi == null) {
-            throw DriverException(stderr = "$ARG_CHECK_COMPATIBILITY requires $ARG_CURRENT_API")
-        }
-
-        if (migrateNulls && previousApi == null) {
+        if (migrateNulls && migrateNullsFrom == null) {
             throw DriverException(stderr = "$ARG_MIGRATE_NULLNESS requires $ARG_PREVIOUS_API")
         }
 
@@ -1349,7 +1374,12 @@ class Options(
             "$ARG_INPUT_KOTLIN_NULLS[=yes|no]", "Whether the signature file being read should be " +
                 "interpreted as having encoded its types using Kotlin style types: a suffix of \"?\" for nullable " +
                 "types, no suffix for non nullable types, and \"!\" for unknown. The default is no.",
-            "$ARG_CHECK_COMPATIBILITY <api file>", "Check compatibility with the current checked in API",
+            "$ARG_CHECK_COMPATIBILITY:type:state <file>", "Check compatibility. Type is one of 'api' " +
+                "and 'removed', which checks either the public api or the removed api. State is one of " +
+                "'current' and 'released', to check either the currently in development API or the last publicly " +
+                "released API, respectively. Different compatibility checks apply in the two scenarios. " +
+                "For example, to check the code base against the current public API, use " +
+                "$ARG_CHECK_COMPATIBILITY:api:current.",
             ARG_CHECK_KOTLIN_INTEROP, "Check API intended to be used from both Kotlin and Java for interoperability " +
                 "issues",
             "$ARG_MIGRATE_NULLNESS <api file>", "Compare nullness information with the previous stable API " +

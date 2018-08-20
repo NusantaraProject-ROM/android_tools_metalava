@@ -405,7 +405,7 @@ interface AnnotationItem {
 
             // See if the annotation is pointing to an annotation class that is part of the API; if not, skip it.
             val cls = codebase.findClass(qualifiedName) ?: return NO_ANNOTATION_TARGETS
-            if (!ApiPredicate(codebase).test(cls)) {
+            if (!ApiPredicate().test(cls)) {
                 return NO_ANNOTATION_TARGETS
             }
 

@@ -198,7 +198,7 @@ open class TextMethodItem(
     override var inheritedFrom: ClassItem? = null
 
     override fun toString(): String =
-        "${if (isConstructor()) "Constructor" else "Method"} ${containingClass().qualifiedName()}.${name()}(${parameters().joinToString {
+        "${if (isConstructor()) "constructor" else "method"} ${containingClass().qualifiedName()}.${name()}(${parameters().joinToString {
             it.type().toSimpleType()
         }})"
 

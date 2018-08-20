@@ -66,5 +66,5 @@ class TextPackageItem(
         return name.hashCode()
     }
 
-    override fun toString(): String = name
+    override fun toString(): String = "package $name"
 }

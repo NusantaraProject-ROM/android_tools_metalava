@@ -287,8 +287,8 @@ CompatibilityCheckTest : DriverTest() {
     fun `Add flag new methods but not overrides from platform`() {
         check(
             warnings = """
-                src/test/pkg/MyClass.java:6: warning: Added method test.pkg.MyClass.method2(String) [AddedMethod:4]
-                src/test/pkg/MyClass.java:7: warning: Added field test.pkg.MyClass.newField [AddedField:5]
+                src/test/pkg/MyClass.java:6: error: Added method test.pkg.MyClass.method2(String) [AddedMethod:4]
+                src/test/pkg/MyClass.java:7: error: Added field test.pkg.MyClass.newField [AddedField:5]
                 """,
             compatibilityMode = false,
             checkCompatibilityApi = """
@@ -379,8 +379,8 @@ CompatibilityCheckTest : DriverTest() {
         // Field is iffy.
         check(
             warnings = """
-                src/test/pkg/Java.java:4: warning: Method test.pkg.Java.method has added 'final' qualifier [AddedFinal:13]
-                src/test/pkg/Kotlin.kt:4: warning: Method test.pkg.Kotlin.method has added 'final' qualifier [AddedFinal:13]
+                src/test/pkg/Java.java:4: error: Method test.pkg.Java.method has added 'final' qualifier [AddedFinal:13]
+                src/test/pkg/Kotlin.kt:4: error: Method test.pkg.Kotlin.method has added 'final' qualifier [AddedFinal:13]
                 """,
             compatibilityMode = false,
             checkCompatibilityApi = """
@@ -571,6 +571,7 @@ CompatibilityCheckTest : DriverTest() {
                 java(
                     """
                         package test.pkg;
+                        @SuppressWarnings({"ConstantConditions", "NullableProblems"})
                         public abstract class AbstractMap<K, V> implements java.util.Map {
                             public V put(K k, V v) { return null; }
                             public java.util.Set<K> keySet() { return null; }
@@ -628,7 +629,7 @@ CompatibilityCheckTest : DriverTest() {
     fun `Add seal`() {
         check(
             warnings = """
-                src/test/pkg/Foo.kt: error: Cannot add `sealed` modifier to class test.pkg.Foo: Incompatible change [AddSealed:140]
+                src/test/pkg/Foo.kt: error: Cannot add 'sealed' modifier to class test.pkg.Foo: Incompatible change [AddSealed:140]
                 """,
             compatibilityMode = false,
             checkCompatibilityApi = """
@@ -641,8 +642,7 @@ CompatibilityCheckTest : DriverTest() {
                 kotlin(
                     """
                     package test.pkg
-                    sealed class Foo {
-                    }
+                    sealed class Foo
                     """
                 )
             )
@@ -738,14 +738,14 @@ CompatibilityCheckTest : DriverTest() {
     fun `Change field constant value, change field type`() {
         check(
             warnings = """
-                src/test/pkg/Parent.java:5: warning: Field test.pkg.Parent.field2 has changed value from 2 to 42 [ChangedValue:17]
-                src/test/pkg/Parent.java:6: warning: Field test.pkg.Parent.field3 has changed type from int to char [ChangedType:16]
-                src/test/pkg/Parent.java:7: warning: Field test.pkg.Parent.field4 has added 'final' qualifier [AddedFinal:13]
-                src/test/pkg/Parent.java:8: warning: Field test.pkg.Parent.field5 has changed 'static' qualifier [ChangedStatic:12]
-                src/test/pkg/Parent.java:9: warning: Field test.pkg.Parent.field6 has changed 'transient' qualifier [ChangedTransient:14]
-                src/test/pkg/Parent.java:10: warning: Field test.pkg.Parent.field7 has changed 'volatile' qualifier [ChangedVolatile:15]
-                src/test/pkg/Parent.java:11: warning: Field test.pkg.Parent.field8 has changed deprecation state true --> false [ChangedDeprecated:24]
-                src/test/pkg/Parent.java:12: warning: Field test.pkg.Parent.field9 has changed deprecation state false --> true [ChangedDeprecated:24]
+                src/test/pkg/Parent.java:5: error: Field test.pkg.Parent.field2 has changed value from 2 to 42 [ChangedValue:17]
+                src/test/pkg/Parent.java:6: error: Field test.pkg.Parent.field3 has changed type from int to char [ChangedType:16]
+                src/test/pkg/Parent.java:7: error: Field test.pkg.Parent.field4 has added 'final' qualifier [AddedFinal:13]
+                src/test/pkg/Parent.java:8: error: Field test.pkg.Parent.field5 has changed 'static' qualifier [ChangedStatic:12]
+                src/test/pkg/Parent.java:9: error: Field test.pkg.Parent.field6 has changed 'transient' qualifier [ChangedTransient:14]
+                src/test/pkg/Parent.java:10: error: Field test.pkg.Parent.field7 has changed 'volatile' qualifier [ChangedVolatile:15]
+                src/test/pkg/Parent.java:11: error: Field test.pkg.Parent.field8 has changed deprecation state true --> false [ChangedDeprecated:24]
+                src/test/pkg/Parent.java:12: error: Field test.pkg.Parent.field9 has changed deprecation state false --> true [ChangedDeprecated:24]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -790,10 +790,10 @@ CompatibilityCheckTest : DriverTest() {
         check(
             inputKotlinStyleNulls = true,
             warnings = """
-                src/test/pkg/ExportedProperty.java:15: warning: Method test.pkg.ExportedProperty.category has changed value from "" to nothing [ChangedValue:17]
-                src/test/pkg/ExportedProperty.java:14: warning: Method test.pkg.ExportedProperty.floating has changed value from 1.0f to 1.1f [ChangedValue:17]
-                src/test/pkg/ExportedProperty.java:16: warning: Method test.pkg.ExportedProperty.formatToHexString has changed value from nothing to false [ChangedValue:17]
-                src/test/pkg/ExportedProperty.java:13: warning: Method test.pkg.ExportedProperty.prefix has changed value from "" to "hello" [ChangedValue:17]
+                src/test/pkg/ExportedProperty.java:15: error: Method test.pkg.ExportedProperty.category has changed value from "" to nothing [ChangedValue:17]
+                src/test/pkg/ExportedProperty.java:14: error: Method test.pkg.ExportedProperty.floating has changed value from 1.0f to 1.1f [ChangedValue:17]
+                src/test/pkg/ExportedProperty.java:16: error: Method test.pkg.ExportedProperty.formatToHexString has changed value from nothing to false [ChangedValue:17]
+                src/test/pkg/ExportedProperty.java:13: error: Method test.pkg.ExportedProperty.prefix has changed value from "" to "hello" [ChangedValue:17]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -861,8 +861,8 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible class change -- change implemented interfaces`() {
         check(
             warnings = """
-                src/test/pkg/Parent.java:3: warning: Class test.pkg.Parent no longer implements java.io.Closeable [RemovedInterface:11]
-                src/test/pkg/Parent.java:3: warning: Added interface java.util.List to class class test.pkg.Parent [AddedInterface:6]
+                src/test/pkg/Parent.java:3: error: Class test.pkg.Parent no longer implements java.io.Closeable [RemovedInterface:11]
+                src/test/pkg/Parent.java:3: error: Added interface java.util.List to class class test.pkg.Parent [AddedInterface:6]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -888,8 +888,8 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible class change -- change qualifiers`() {
         check(
             warnings = """
-                src/test/pkg/Parent.java:3: warning: Class test.pkg.Parent changed abstract qualifier [ChangedAbstract:20]
-                src/test/pkg/Parent.java:3: warning: Class test.pkg.Parent changed static qualifier [ChangedStatic:12]
+                src/test/pkg/Parent.java:3: error: Class test.pkg.Parent changed 'abstract' qualifier [ChangedAbstract:20]
+                src/test/pkg/Parent.java:3: error: Class test.pkg.Parent changed 'static' qualifier [ChangedStatic:12]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -915,10 +915,10 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible class change -- final`() {
         check(
             warnings = """
-                src/test/pkg/Class1.java:3: warning: Class test.pkg.Class1 added final qualifier [AddedFinal:13]
+                src/test/pkg/Class1.java:3: error: Class test.pkg.Class1 added 'final' qualifier [AddedFinal:13]
                 TESTROOT/current-api.txt:3: error: Removed constructor test.pkg.Class1() [RemovedMethod:9]
-                src/test/pkg/Class2.java:3: warning: Class test.pkg.Class2 added final qualifier but was previously uninstantiable and therefore could not be subclassed [AddedFinalUninstantiable:26]
-                src/test/pkg/Class3.java:3: warning: Class test.pkg.Class3 removed final qualifier [RemovedFinal:27]
+                src/test/pkg/Class2.java:3: error: Class test.pkg.Class2 added 'final' qualifier but was previously uninstantiable and therefore could not be subclassed [AddedFinalUninstantiable:26]
+                src/test/pkg/Class3.java:3: error: Class test.pkg.Class3 removed 'final' qualifier [RemovedFinal:27]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -967,8 +967,8 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible class change -- visibility`() {
         check(
             warnings = """
-                src/test/pkg/Class1.java:3: warning: Class test.pkg.Class1 changed visibility from protected to public [ChangedScope:19]
-                src/test/pkg/Class2.java:3: warning: Class test.pkg.Class2 changed visibility from public to protected [ChangedScope:19]
+                src/test/pkg/Class1.java:3: error: Class test.pkg.Class1 changed visibility from protected to public [ChangedScope:19]
+                src/test/pkg/Class2.java:3: error: Class test.pkg.Class2 changed visibility from public to protected [ChangedScope:19]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -1005,7 +1005,7 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible class change -- deprecation`() {
         check(
             warnings = """
-                src/test/pkg/Class1.java:3: warning: Class test.pkg.Class1 has changed deprecation state false --> true [ChangedDeprecated:24]
+                src/test/pkg/Class1.java:3: error: Class test.pkg.Class1 has changed deprecation state false --> true [ChangedDeprecated:24]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -1032,7 +1032,7 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible class change -- superclass`() {
         check(
             warnings = """
-                src/test/pkg/Class3.java:3: warning: Class test.pkg.Class3 superclass changed from java.lang.Char to java.lang.Number [ChangedSuperclass:18]
+                src/test/pkg/Class3.java:3: error: Class test.pkg.Class3 superclass changed from java.lang.Char to java.lang.Number [ChangedSuperclass:18]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -1080,7 +1080,7 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible class change -- type variables`() {
         check(
             warnings = """
-                src/test/pkg/Class1.java:3: warning: Class test.pkg.Class1 changed number of type parameters from 1 to 2 [ChangedType:16]
+                src/test/pkg/Class1.java:3: error: Class test.pkg.Class1 changed number of type parameters from 1 to 2 [ChangedType:16]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -1106,14 +1106,14 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible method change -- modifiers`() {
         check(
             warnings = """
-                src/test/pkg/MyClass.java:5: warning: Method test.pkg.MyClass.myMethod2 has changed 'abstract' qualifier [ChangedAbstract:20]
-                src/test/pkg/MyClass.java:6: warning: Method test.pkg.MyClass.myMethod3 has changed 'static' qualifier [ChangedStatic:12]
-                src/test/pkg/MyClass.java:7: warning: Method test.pkg.MyClass.myMethod4 has changed deprecation state true --> false [ChangedDeprecated:24]
+                src/test/pkg/MyClass.java:5: error: Method test.pkg.MyClass.myMethod2 has changed 'abstract' qualifier [ChangedAbstract:20]
+                src/test/pkg/MyClass.java:6: error: Method test.pkg.MyClass.myMethod3 has changed 'static' qualifier [ChangedStatic:12]
+                src/test/pkg/MyClass.java:7: error: Method test.pkg.MyClass.myMethod4 has changed deprecation state true --> false [ChangedDeprecated:24]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
                   public abstract class MyClass {
-                      method public abstract void myMethod2();
+                      method public void myMethod2();
                       method public void myMethod3();
                       method deprecated public void myMethod4();
                   }
@@ -1126,7 +1126,7 @@ CompatibilityCheckTest : DriverTest() {
 
                     public abstract class MyClass {
                         private MyClass() {}
-                        public native void myMethod2(); // Note that Errors.CHANGE_NATIVE is hidden by default
+                        public native abstract void myMethod2(); // Note that Errors.CHANGE_NATIVE is hidden by default
                         public static void myMethod3() {}
                         public void myMethod4() {}
                     }
@@ -1140,8 +1140,8 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible method change -- final`() {
         check(
             warnings = """
-                src/test/pkg/Outer.java:7: warning: Method test.pkg.Outer.Class1.method1 has added 'final' qualifier [AddedFinal:13]
-                src/test/pkg/Outer.java:19: warning: Method test.pkg.Outer.Class4.method4 has removed 'final' qualifier [RemovedFinal:27]
+                src/test/pkg/Outer.java:7: error: Method test.pkg.Outer.Class1.method1 has added 'final' qualifier [AddedFinal:13]
+                src/test/pkg/Outer.java:19: error: Method test.pkg.Outer.Class4.method4 has removed 'final' qualifier [RemovedFinal:27]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -1195,8 +1195,8 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible method change -- visibility`() {
         check(
             warnings = """
-                src/test/pkg/MyClass.java:5: warning: Method test.pkg.MyClass.myMethod1 changed visibility from protected to public [ChangedScope:19]
-                src/test/pkg/MyClass.java:6: warning: Method test.pkg.MyClass.myMethod2 changed visibility from public to protected [ChangedScope:19]
+                src/test/pkg/MyClass.java:5: error: Method test.pkg.MyClass.myMethod1 changed visibility from protected to public [ChangedScope:19]
+                src/test/pkg/MyClass.java:6: error: Method test.pkg.MyClass.myMethod2 changed visibility from public to protected [ChangedScope:19]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -1226,11 +1226,11 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible method change -- throws list`() {
         check(
             warnings = """
-                src/test/pkg/MyClass.java:6: warning: Method test.pkg.MyClass.method1 added thrown exception java.io.IOException [ChangedThrows:21]
-                src/test/pkg/MyClass.java:7: warning: Method test.pkg.MyClass.method2 no longer throws exception java.io.IOException [ChangedThrows:21]
-                src/test/pkg/MyClass.java:8: warning: Method test.pkg.MyClass.method3 no longer throws exception java.io.IOException [ChangedThrows:21]
-                src/test/pkg/MyClass.java:8: warning: Method test.pkg.MyClass.method3 no longer throws exception java.lang.NumberFormatException [ChangedThrows:21]
-                src/test/pkg/MyClass.java:8: warning: Method test.pkg.MyClass.method3 added thrown exception java.lang.UnsupportedOperationException [ChangedThrows:21]
+                src/test/pkg/MyClass.java:7: error: Method test.pkg.MyClass.method1 added thrown exception java.io.IOException [ChangedThrows:21]
+                src/test/pkg/MyClass.java:8: error: Method test.pkg.MyClass.method2 no longer throws exception java.io.IOException [ChangedThrows:21]
+                src/test/pkg/MyClass.java:9: error: Method test.pkg.MyClass.method3 no longer throws exception java.io.IOException [ChangedThrows:21]
+                src/test/pkg/MyClass.java:9: error: Method test.pkg.MyClass.method3 no longer throws exception java.lang.NumberFormatException [ChangedThrows:21]
+                src/test/pkg/MyClass.java:9: error: Method test.pkg.MyClass.method3 added thrown exception java.lang.UnsupportedOperationException [ChangedThrows:21]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -1247,6 +1247,7 @@ CompatibilityCheckTest : DriverTest() {
                     """
                     package test.pkg;
 
+                    @SuppressWarnings("RedundantThrows")
                     public abstract class MyClass {
                         private MyClass() {}
                         public void finalize() {}
@@ -1264,14 +1265,14 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible method change -- return types`() {
         check(
             warnings = """
-                src/test/pkg/MyClass.java:5: warning: Method test.pkg.MyClass.method1 has changed return type from float to int [ChangedType:16]
-                src/test/pkg/MyClass.java:6: warning: Method test.pkg.MyClass.method2 has changed return type from java.util.List<Number> to java.util.List<java.lang.Integer> [ChangedType:16]
-                src/test/pkg/MyClass.java:7: warning: Method test.pkg.MyClass.method3 has changed return type from java.util.List<Integer> to java.util.List<java.lang.Number> [ChangedType:16]
-                src/test/pkg/MyClass.java:8: warning: Method test.pkg.MyClass.method4 has changed return type from String to String[] [ChangedType:16]
-                src/test/pkg/MyClass.java:9: warning: Method test.pkg.MyClass.method5 has changed return type from String[] to String[][] [ChangedType:16]
-                src/test/pkg/MyClass.java:10: warning: Method test.pkg.MyClass.method6 has changed return type from T (extends java.lang.Object) to U (extends java.lang.Number) [ChangedType:16]
-                src/test/pkg/MyClass.java:11: warning: Method test.pkg.MyClass.method7 has changed return type from T to Number [ChangedType:16]
-                src/test/pkg/MyClass.java:13: warning: Method test.pkg.MyClass.method9 has changed return type from X (extends java.lang.Throwable) to U (extends java.lang.Number) [ChangedType:16]
+                src/test/pkg/MyClass.java:5: error: Method test.pkg.MyClass.method1 has changed return type from float to int [ChangedType:16]
+                src/test/pkg/MyClass.java:6: error: Method test.pkg.MyClass.method2 has changed return type from java.util.List<Number> to java.util.List<java.lang.Integer> [ChangedType:16]
+                src/test/pkg/MyClass.java:7: error: Method test.pkg.MyClass.method3 has changed return type from java.util.List<Integer> to java.util.List<java.lang.Number> [ChangedType:16]
+                src/test/pkg/MyClass.java:8: error: Method test.pkg.MyClass.method4 has changed return type from String to String[] [ChangedType:16]
+                src/test/pkg/MyClass.java:9: error: Method test.pkg.MyClass.method5 has changed return type from String[] to String[][] [ChangedType:16]
+                src/test/pkg/MyClass.java:10: error: Method test.pkg.MyClass.method6 has changed return type from T (extends java.lang.Object) to U (extends java.lang.Number) [ChangedType:16]
+                src/test/pkg/MyClass.java:11: error: Method test.pkg.MyClass.method7 has changed return type from T to Number [ChangedType:16]
+                src/test/pkg/MyClass.java:13: error: Method test.pkg.MyClass.method9 has changed return type from X (extends java.lang.Throwable) to U (extends java.lang.Number) [ChangedType:16]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -1315,9 +1316,9 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible field change -- visibility and removing final`() {
         check(
             warnings = """
-                src/test/pkg/MyClass.java:5: warning: Field test.pkg.MyClass.myField1 changed visibility from protected to public [ChangedScope:19]
-                src/test/pkg/MyClass.java:6: warning: Field test.pkg.MyClass.myField2 changed visibility from public to protected [ChangedScope:19]
-                src/test/pkg/MyClass.java:7: warning: Field test.pkg.MyClass.myField3 has removed 'final' qualifier [RemovedFinal:27]
+                src/test/pkg/MyClass.java:5: error: Field test.pkg.MyClass.myField1 changed visibility from protected to public [ChangedScope:19]
+                src/test/pkg/MyClass.java:6: error: Field test.pkg.MyClass.myField2 changed visibility from public to protected [ChangedScope:19]
+                src/test/pkg/MyClass.java:7: error: Field test.pkg.MyClass.myField3 has removed 'final' qualifier [RemovedFinal:27]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -1349,10 +1350,10 @@ CompatibilityCheckTest : DriverTest() {
     fun `Adding classes, interfaces and packages, and removing these`() {
         check(
             warnings = """
-                src/test/pkg/MyClass.java:3: warning: Added class test.pkg.MyClass [AddedClass:3]
-                src/test/pkg/MyInterface.java:3: warning: Added class test.pkg.MyInterface [AddedInterface:6]
+                src/test/pkg/MyClass.java:3: error: Added class test.pkg.MyClass [AddedClass:3]
+                src/test/pkg/MyInterface.java:3: error: Added class test.pkg.MyInterface [AddedInterface:6]
                 TESTROOT/current-api.txt:2: error: Removed class test.pkg.MyOldClass [RemovedClass:8]
-                warning: Added package test.pkg2 [AddedPackage:2]
+                error: Added package test.pkg2 [AddedPackage:2]
                 TESTROOT/current-api.txt:5: error: Removed package test.pkg3 [RemovedPackage:7]
                 """,
             checkCompatibilityApi = """
@@ -1427,7 +1428,7 @@ CompatibilityCheckTest : DriverTest() {
     fun `Test type variables from text signature files`() {
         check(
             warnings = """
-                src/test/pkg/MyClass.java:8: warning: Method test.pkg.MyClass.myMethod4 has changed return type from S (extends java.lang.Object) to S (extends java.lang.Float) [ChangedType:16]
+                src/test/pkg/MyClass.java:8: error: Method test.pkg.MyClass.myMethod4 has changed return type from S (extends java.lang.Object) to S (extends java.lang.Float) [ChangedType:16]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -1665,7 +1666,7 @@ CompatibilityCheckTest : DriverTest() {
         check(
             includeSystemApiAnnotations = true,
             warnings = """
-                TESTROOT/public-api.txt:4: warning: Added method test.pkg.Bar.Inner1.Inner2.addedMethod() [AddedMethod:4]
+                src/test/pkg/Bar.java:17: error: Added method test.pkg.Bar.Inner1.Inner2.addedMethod() to the system API [AddedMethod:4]
                 TESTROOT/current-api.txt:4: error: Removed method test.pkg.Bar.Inner1.Inner2.removedMethod() [RemovedMethod:9]
                 """,
             api = """
@@ -1696,6 +1697,7 @@ CompatibilityCheckTest : DriverTest() {
                     public class Bar {
                         public class Inner1 {
                             private Inner1() { }
+                            @SuppressWarnings("JavaDoc")
                             public class Inner2 {
                                 private Inner2() { }
 
@@ -1733,6 +1735,200 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """
+        )
+    }
+
+    @Test
+    fun `Test verifying simple removed API`() {
+        check(
+            warnings = """
+                src/test/pkg/Bar.java:8: error: Added method test.pkg.Bar.newlyRemoved() to the removed API [AddedMethod:4]
+                """,
+            checkCompatibilityRemovedApiCurrent = """
+                package test.pkg {
+                  public class Bar {
+                    ctor public Bar();
+                    method public void removedMethod();
+                  }
+                  public class Bar.Inner {
+                    ctor public Bar.Inner();
+                  }
+                }
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    @SuppressWarnings("JavaDoc")
+                    public class Bar {
+                        /** @removed */
+                        public Bar() { }
+                        // No longer removed: /** @removed */
+                        public void removedMethod() { }
+                        /** @removed */
+                        public void newlyRemoved() { }
+
+                        public void newlyAdded() { }
+
+                        /** @removed */
+                        public class Inner { }
+                    }
+                    """
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `Test verifying removed API`() {
+        check(
+            warnings = """
+                """,
+            checkCompatibilityRemovedApiCurrent = """
+                package test.pkg {
+                  public class Bar {
+                    ctor public Bar();
+                    method public void removedMethod();
+                    field public int removedField;
+                  }
+                  public class Bar.Inner {
+                    ctor public Bar.Inner();
+                  }
+                  public class Bar.Inner2.Inner3.Inner4 {
+                    ctor public Bar.Inner2.Inner3.Inner4();
+                  }
+                  public class Bar.Inner5.Inner6.Inner7 {
+                    field public int removed;
+                  }
+                }
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    @SuppressWarnings("JavaDoc")
+                    public class Bar {
+                        /** @removed */
+                        public Bar() { }
+                        public int field;
+                        public void test() { }
+                        /** @removed */
+                        public int removedField;
+                        /** @removed */
+                        public void removedMethod() { }
+                        /** @removed and @hide - should not be listed */
+                        public int hiddenField;
+
+                        /** @removed */
+                        public class Inner { }
+
+                        public class Inner2 {
+                            public class Inner3 {
+                                /** @removed */
+                                public class Inner4 { }
+                            }
+                        }
+
+                        public class Inner5 {
+                            public class Inner6 {
+                                public class Inner7 {
+                                    /** @removed */
+                                    public int removed;
+                                }
+                            }
+                        }
+                    }
+                    """
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `Test release compatibility checking`() {
+        // Different checks are enforced for current vs release API comparisons:
+        // we don't flag AddedClasses etc. Removed classes *are* enforced.
+        check(
+            warnings = """
+                src/test/pkg/Class1.java:3: error: Class test.pkg.Class1 added 'final' qualifier [AddedFinal:13]
+                TESTROOT/released-api.txt:3: error: Removed constructor test.pkg.Class1() [RemovedMethod:9]
+                src/test/pkg/MyClass.java:5: warning: Method test.pkg.MyClass.myMethod2 has changed 'abstract' qualifier [ChangedAbstract:20]
+                src/test/pkg/MyClass.java:6: error: Method test.pkg.MyClass.myMethod3 has changed 'static' qualifier [ChangedStatic:12]
+                TESTROOT/released-api.txt:14: error: Removed class test.pkg.MyOldClass [RemovedClass:8]
+                TESTROOT/released-api.txt:17: error: Removed package test.pkg3 [RemovedPackage:7]
+                """,
+            checkCompatibilityApiReleased = """
+                package test.pkg {
+                  public class Class1 {
+                      ctor public Class1();
+                  }
+                  public class Class2 {
+                  }
+                  public final class Class3 {
+                  }
+                  public abstract class MyClass {
+                      method public void myMethod2();
+                      method public void myMethod3();
+                      method deprecated public void myMethod4();
+                  }
+                  public abstract class MyOldClass {
+                  }
+                }
+                package test.pkg3 {
+                  public abstract class MyOldClass {
+                  }
+                }
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+
+                    public final class Class1 {
+                        private Class1() {}
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+
+                    public final class Class2 {
+                        private Class2() {}
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+
+                    public class Class3 {
+                        private Class3() {}
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+
+                    public abstract class MyNewClass {
+                        private MyNewClass() {}
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+
+                    public abstract class MyClass {
+                        private MyClass() {}
+                        public native abstract void myMethod2(); // Note that Errors.CHANGE_NATIVE is hidden by default
+                        public static void myMethod3() {}
+                        public void myMethod4() {}
+                    }
+                    """
+                )
+            )
         )
     }
 
