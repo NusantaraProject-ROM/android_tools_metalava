@@ -31,9 +31,8 @@ import com.android.tools.lint.LintCoreProjectEnvironment
 import com.android.tools.lint.annotations.Extractor
 import com.android.tools.lint.checks.infrastructure.ClassName
 import com.android.tools.lint.detector.api.assertionsEnabled
+import com.android.tools.metalava.CompatibilityCheck.CheckRequest
 import com.android.tools.metalava.apilevels.ApiGenerator
-import com.android.tools.metalava.doclava1.ApiFile
-import com.android.tools.metalava.doclava1.ApiParseException
 import com.android.tools.metalava.doclava1.ApiPredicate
 import com.android.tools.metalava.doclava1.ElidingPredicate
 import com.android.tools.metalava.doclava1.Errors
@@ -200,9 +199,10 @@ private fun processFlags() {
 
     val codebase =
         if (options.sources.size == 1 && options.sources[0].path.endsWith(SdkConstants.DOT_TXT)) {
-            loadFromSignatureFiles(
-                file = options.sources[0], kotlinStyleNulls = options.inputKotlinStyleNulls,
-                manifest = options.manifest, performChecks = true, supportsStagedNullability = true
+            SignatureFileLoader.load(
+                file = options.sources[0],
+                kotlinStyleNulls = options.inputKotlinStyleNulls,
+                supportsStagedNullability = true
             )
         } else if (options.apiJar != null) {
             loadFromJarFile(options.apiJar!!)
@@ -246,14 +246,15 @@ private fun processFlags() {
         )
     }
 
-    val previousApiFile = options.previousApi
+    val previousApiFile = options.migrateNullsFrom
     if (previousApiFile != null) {
         val previous =
             if (previousApiFile.path.endsWith(SdkConstants.DOT_JAR)) {
                 loadFromJarFile(previousApiFile)
             } else {
-                loadFromSignatureFiles(
-                    previousApiFile, options.inputKotlinStyleNulls,
+                SignatureFileLoader.load(
+                    file = previousApiFile,
+                    kotlinStyleNulls = options.inputKotlinStyleNulls,
                     supportsStagedNullability = true
                 )
             }
@@ -271,8 +272,8 @@ private fun processFlags() {
     // Based on the input flags, generates various output files such
     // as signature files and/or stubs files
     options.apiFile?.let { apiFile ->
-        val apiFilter = FilterPredicate(ApiPredicate(codebase))
-        val apiReference = ApiPredicate(codebase, ignoreShown = true)
+        val apiFilter = FilterPredicate(ApiPredicate())
+        val apiReference = ApiPredicate(ignoreShown = true)
         val apiEmit = apiFilter.and(ElidingPredicate(apiReference))
 
         createReportFile(codebase, apiFile, "API") { printWriter ->
@@ -281,9 +282,9 @@ private fun processFlags() {
     }
 
     options.dexApiFile?.let { apiFile ->
-        val apiFilter = FilterPredicate(ApiPredicate(codebase))
+        val apiFilter = FilterPredicate(ApiPredicate())
         val memberIsNotCloned: Predicate<Item> = Predicate { !it.isCloned() }
-        val apiReference = ApiPredicate(codebase, ignoreShown = true)
+        val apiReference = ApiPredicate(ignoreShown = true)
         val dexApiEmit = memberIsNotCloned.and(apiFilter)
 
         createReportFile(
@@ -294,8 +295,8 @@ private fun processFlags() {
     options.removedApiFile?.let { apiFile ->
         val unfiltered = codebase.original ?: codebase
 
-        val removedFilter = FilterPredicate(ApiPredicate(codebase, matchRemoved = true))
-        val removedReference = ApiPredicate(codebase, ignoreShown = true, ignoreRemoved = true)
+        val removedFilter = FilterPredicate(ApiPredicate(matchRemoved = true))
+        val removedReference = ApiPredicate(ignoreShown = true, ignoreRemoved = true)
         val removedEmit = removedFilter.and(ElidingPredicate(removedReference))
 
         createReportFile(unfiltered, apiFile, "removed API") { printWriter ->
@@ -306,8 +307,8 @@ private fun processFlags() {
     options.removedDexApiFile?.let { apiFile ->
         val unfiltered = codebase.original ?: codebase
 
-        val removedFilter = FilterPredicate(ApiPredicate(codebase, matchRemoved = true))
-        val removedReference = ApiPredicate(codebase, ignoreShown = true, ignoreRemoved = true)
+        val removedFilter = FilterPredicate(ApiPredicate(matchRemoved = true))
+        val removedReference = ApiPredicate(ignoreShown = true, ignoreRemoved = true)
         val memberIsNotCloned: Predicate<Item> = Predicate { !it.isCloned() }
         val removedDexEmit = memberIsNotCloned.and(removedFilter)
 
@@ -317,7 +318,7 @@ private fun processFlags() {
     }
 
     options.privateApiFile?.let { apiFile ->
-        val apiFilter = FilterPredicate(ApiPredicate(codebase))
+        val apiFilter = FilterPredicate(ApiPredicate())
         val memberIsNotCloned: Predicate<Item> = Predicate { !it.isCloned() }
         val privateEmit = memberIsNotCloned.and(apiFilter.negate())
         val privateReference = Predicate<Item> { true }
@@ -328,7 +329,7 @@ private fun processFlags() {
     }
 
     options.privateDexApiFile?.let { apiFile ->
-        val apiFilter = FilterPredicate(ApiPredicate(codebase))
+        val apiFilter = FilterPredicate(ApiPredicate())
         val privateEmit = apiFilter.negate()
         val privateReference = Predicate<Item> { true }
 
@@ -342,8 +343,8 @@ private fun processFlags() {
     }
 
     options.proguard?.let { proguard ->
-        val apiEmit = FilterPredicate(ApiPredicate(codebase))
-        val apiReference = ApiPredicate(codebase, ignoreShown = true)
+        val apiEmit = FilterPredicate(ApiPredicate())
+        val apiReference = ApiPredicate(ignoreShown = true)
         createReportFile(
             codebase, proguard, "Proguard file"
         ) { printWriter -> ProguardWriter(printWriter, apiEmit, apiReference) }
@@ -354,9 +355,8 @@ private fun processFlags() {
         SdkFileWriter(codebase, dir).generate()
     }
 
-    val currentApiFile = options.currentApi
-    if (currentApiFile != null && options.checkCompatibility) {
-        checkCompatibility(currentApiFile, codebase)
+    for (check in options.compatibilityChecks) {
+        checkCompatibility(codebase, check)
     }
 
     // Now that we've migrated nullness information we can proceed to write non-doc stubs, if any.
@@ -420,16 +420,29 @@ private fun processFlags() {
     invokeDocumentationTool()
 }
 
-fun checkCompatibility(currentApiFile: File, codebase: Codebase) {
+/**
+ * Checks compatibility of the given codebase with the codebase described in the
+ * signature file.
+ */
+fun checkCompatibility(
+    codebase: Codebase,
+    check: CheckRequest
+) {
+    val signatureFile = check.file
+    val released = check.released
+
     val current =
-        if (currentApiFile.path.endsWith(SdkConstants.DOT_JAR)) {
-            loadFromJarFile(currentApiFile)
+        if (signatureFile.path.endsWith(SdkConstants.DOT_JAR)) {
+            loadFromJarFile(signatureFile)
         } else {
-            loadFromSignatureFiles(
-                currentApiFile, options.inputKotlinStyleNulls,
+            SignatureFileLoader.load(
+                file = signatureFile,
+                kotlinStyleNulls = options.inputKotlinStyleNulls,
                 supportsStagedNullability = true
             )
         }
+
+    var base: Codebase? = null
 
     // If diffing with a system-api or test-api (or other signature-based codebase
     // generated from --show-annotations), the API is partial: it's only listing
@@ -440,13 +453,12 @@ fun checkCompatibility(currentApiFile: File, codebase: Codebase) {
     // file. If we've only emitted one for the new API, use it directly, if not, generate
     // it first
     val new =
-        if (options.showAnnotations.isNotEmpty()) {
+        if (options.showAnnotations.isNotEmpty() || check.apiType != ApiType.PUBLIC_API) {
             val apiFile = options.apiFile ?: run {
                 val tempFile = File.createTempFile("compat-check-signatures", "txt")
                 tempFile.deleteOnExit()
-                val apiFilter = FilterPredicate(ApiPredicate(codebase))
-                val apiReference = ApiPredicate(codebase, ignoreShown = true)
-                val apiEmit = apiFilter.and(ElidingPredicate(apiReference))
+                val apiEmit = check.apiType.getEmitFilter()
+                val apiReference = check.apiType.getReferenceFilter()
 
                 createReportFile(codebase, tempFile, null) { printWriter ->
                     SignatureWriter(printWriter, apiEmit, apiReference, codebase.preFiltered)
@@ -456,18 +468,21 @@ fun checkCompatibility(currentApiFile: File, codebase: Codebase) {
             }
 
             // Fast path: if the signature files are identical, we're already good!
-            if (apiFile.readText(UTF_8) == currentApiFile.readText(UTF_8)) {
+            if (apiFile.readText(UTF_8) == signatureFile.readText(UTF_8)) {
                 return
             }
 
-            loadFromSignatureFiles(
-                apiFile, options.inputKotlinStyleNulls,
+            base = codebase
+
+            SignatureFileLoader.load(
+                file = apiFile,
+                kotlinStyleNulls = options.inputKotlinStyleNulls,
                 supportsStagedNullability = true
             )
         } else {
             // Fast path: if we've already generated a signature file and it's identical, we're good!
             val apiFile = options.apiFile
-            if (apiFile != null && apiFile.readText(UTF_8) == currentApiFile.readText(UTF_8)) {
+            if (apiFile != null && apiFile.readText(UTF_8) == signatureFile.readText(UTF_8)) {
                 return
             }
 
@@ -476,7 +491,7 @@ fun checkCompatibility(currentApiFile: File, codebase: Codebase) {
 
     // If configured, compares the new API with the previous API and reports
     // any incompatibilities.
-    CompatibilityCheck.checkCompatibility(new, current)
+    CompatibilityCheck.checkCompatibility(new, current, released, check.apiType, base)
 }
 
 fun invokeDocumentationTool() {
@@ -559,35 +574,12 @@ private fun migrateNulls(codebase: Codebase, previous: Codebase) {
             codebase.supportsStagedNullability = true
             previous.compareWith(
                 NullnessMigration(), codebase,
-                ApiPredicate(codebase)
+                ApiPredicate()
             )
         } finally {
             previous.supportsStagedNullability = prevSupportsNullability
             codebase.supportsStagedNullability = codebaseSupportsNullability
         }
-    }
-}
-
-private fun loadFromSignatureFiles(
-    file: File,
-    kotlinStyleNulls: Boolean,
-    manifest: File? = null,
-    performChecks: Boolean = false,
-    supportsStagedNullability: Boolean = false
-): Codebase {
-    try {
-        val codebase = ApiFile.parseApi(File(file.path), kotlinStyleNulls, supportsStagedNullability)
-        codebase.manifest = manifest
-        codebase.description = "Codebase loaded from ${file.path}"
-
-        if (performChecks) {
-            val analyzer = ApiAnalyzer(codebase)
-            analyzer.performChecks()
-        }
-        return codebase
-    } catch (ex: ApiParseException) {
-        val message = "Unable to parse signature file $file: ${ex.message}"
-        throw DriverException(message)
     }
 }
 
@@ -620,9 +612,9 @@ private fun loadFromSources(): Codebase {
     // General API checks for Android APIs
     AndroidApiChecks().check(codebase)
 
-    val filterEmit = ApiPredicate(codebase, ignoreShown = true, ignoreRemoved = false)
-    val apiEmit = ApiPredicate(codebase, ignoreShown = true)
-    val apiReference = ApiPredicate(codebase, ignoreShown = true)
+    val filterEmit = ApiPredicate(ignoreShown = true, ignoreRemoved = false)
+    val apiEmit = ApiPredicate(ignoreShown = true)
+    val apiReference = ApiPredicate(ignoreShown = true)
 
     // Copy methods from soon-to-be-hidden parents into descendant classes, when necessary
     progress("\nInsert missing stubs methods: ")
@@ -893,12 +885,19 @@ private fun addHiddenPackages(
         val files = file.listFiles()
         if (files != null) {
             for (child in files) {
-                val subPkg =
+                var subPkg =
                     if (child.isDirectory)
                         if (pkg.isEmpty())
                             child.name
                         else pkg + "." + child.name
                     else pkg
+
+                if (subPkg.endsWith("src.main.java")) {
+                    // It looks like the source path was incorrectly configured; make corrections here
+                    // to ensure that we map the package.html files to the real packages.
+                    subPkg = ""
+                }
+
                 addHiddenPackages(packageToDoc, packageToOverview, hiddenPackages, child, subPkg)
             }
         }

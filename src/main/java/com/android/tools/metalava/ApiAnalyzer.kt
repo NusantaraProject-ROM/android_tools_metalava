@@ -845,7 +845,7 @@ class ApiAnalyzer(
     private fun handleStripping(stubImportPackages: Set<String>) {
         val notStrippable = HashSet<ClassItem>(5000)
 
-        val filter = ApiPredicate(codebase, ignoreShown = true)
+        val filter = ApiPredicate(ignoreShown = true)
 
         // If a class is public or protected, not hidden, not imported and marked as included,
         // then we can't strip it

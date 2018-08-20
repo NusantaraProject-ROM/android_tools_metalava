@@ -21,8 +21,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import static com.android.sdklib.SdkVersionInfo.underlinesToCamelCase;
 import static com.android.tools.metalava.Severity.ERROR;
@@ -33,11 +35,16 @@ import static com.android.tools.metalava.Severity.WARNING;
 
 // Copied from doclava1 (and a bunch of stuff left alone; preserving to have same error id's)
 public class Errors {
+    // Consider renaming to Issue; "Error" is special in Kotlin, and what does it mean for
+    // an "error" to have severity "warning" ? The severity shouldn't be implied by the name.
     public static class Error {
         public final int code;
+        @Nullable
+        public String fieldName;
 
         private Severity level;
         private final Severity defaultLevel;
+        public boolean setByUser;
 
         /**
          * The name of this error if known
@@ -56,7 +63,7 @@ public class Errors {
             this.level = level;
             this.defaultLevel = level;
             this.parent = null;
-            sErrors.add(this);
+            errors.add(this);
         }
 
         Error(int code, Error parent) {
@@ -64,7 +71,7 @@ public class Errors {
             this.level = Severity.INHERIT;
             this.defaultLevel = Severity.INHERIT;
             this.parent = parent;
-            sErrors.add(this);
+            errors.add(this);
         }
 
         /**
@@ -103,6 +110,7 @@ public class Errors {
                 throw new IllegalArgumentException("Error level may not be set to INHERIT");
             }
             this.level = level;
+            this.setByUser = true;
         }
 
         public String toString() {
@@ -110,7 +118,9 @@ public class Errors {
         }
     }
 
-    private static final List<Error> sErrors = new ArrayList<>();
+    private static final List<Error> errors = new ArrayList<>(100);
+    private static final Map<String, Error> nameToError = new HashMap<>(100);
+    private static final Map<Integer, Error> idToError = new HashMap<>(100);
 
     // Errors for API verification
     public static final Error PARSE_ERROR = new Error(1, ERROR);
@@ -119,10 +129,10 @@ public class Errors {
     public static final Error ADDED_METHOD = new Error(4, WARNING);
     public static final Error ADDED_FIELD = new Error(5, WARNING);
     public static final Error ADDED_INTERFACE = new Error(6, WARNING);
-    public static final Error REMOVED_PACKAGE = new Error(7, ERROR);
-    public static final Error REMOVED_CLASS = new Error(8, ERROR);
-    public static final Error REMOVED_METHOD = new Error(9, ERROR);
-    public static final Error REMOVED_FIELD = new Error(10, ERROR);
+    public static final Error REMOVED_PACKAGE = new Error(7, WARNING);
+    public static final Error REMOVED_CLASS = new Error(8, WARNING);
+    public static final Error REMOVED_METHOD = new Error(9, WARNING);
+    public static final Error REMOVED_FIELD = new Error(10, WARNING);
     public static final Error REMOVED_INTERFACE = new Error(11, WARNING);
     public static final Error CHANGED_STATIC = new Error(12, WARNING);
     public static final Error ADDED_FINAL = new Error(13, WARNING);
@@ -135,7 +145,7 @@ public class Errors {
     public static final Error CHANGED_ABSTRACT = new Error(20, WARNING);
     public static final Error CHANGED_THROWS = new Error(21, WARNING);
     public static final Error CHANGED_NATIVE = new Error(22, HIDDEN);
-    public static final Error CHANGED_CLASS = new Error(23, ERROR);
+    public static final Error CHANGED_CLASS = new Error(23, WARNING);
     public static final Error CHANGED_DEPRECATED = new Error(24, WARNING);
     public static final Error CHANGED_SYNCHRONIZED = new Error(25, WARNING);
     public static final Error ADDED_FINAL_UNINSTANTIABLE = new Error(26, WARNING);
@@ -211,7 +221,10 @@ public class Errors {
                 if (o instanceof Error) {
                     Error error = (Error) o;
                     String fieldName = field.getName();
+                    error.fieldName = fieldName;
                     error.name = underlinesToCamelCase(fieldName.toLowerCase(Locale.US));
+                    nameToError.put(error.name, error);
+                    idToError.put(error.code, error);
                 }
             }
         } catch (Throwable unexpected) {
@@ -219,11 +232,16 @@ public class Errors {
         }
     }
 
-    public static boolean setErrorLevel(String id, Severity level) {
+    @Nullable
+    public static Error findErrorById(int id) {
+        return idToError.get(id);
+    }
+
+    public static boolean setErrorLevel(String id, Severity level, boolean setByUser) {
         if (id.contains(",")) { // Handle being passed in multiple comma separated id's
             boolean ok = true;
             for (String individualId : Splitter.on(',').trimResults().split(id)) {
-                ok = setErrorLevel(individualId, level) && ok;
+                ok = setErrorLevel(individualId, level, setByUser) && ok;
             }
             return ok;
         }
@@ -231,11 +249,29 @@ public class Errors {
         if (Character.isDigit(id.charAt(0))) {
             code = Integer.parseInt(id);
         }
-        for (Error e : sErrors) {
-            if (e.code == code || id.equalsIgnoreCase(e.name)) {
-                e.setLevel(level);
-                return true;
+
+        Error error = nameToError.get(id);
+        if (error == null) {
+            try {
+                int n = Integer.parseInt(id);
+                error = idToError.get(n);
+            } catch (NumberFormatException ignore) {
             }
+        }
+
+        if (error == null) {
+            for (Error e : errors) {
+                if (e.code == code || id.equalsIgnoreCase(e.name)) {
+                    error = e;
+                    break;
+                }
+            }
+        }
+
+        if (error != null) {
+            error.setLevel(level);
+            error.setByUser = setByUser;
+            return true;
         }
         return false;
     }
@@ -243,7 +279,7 @@ public class Errors {
     // Primary needed by unit tests; ensure that a previous test doesn't influence
     // a later one
     public static void resetLevels() {
-        for (Error error : sErrors) {
+        for (Error error : errors) {
             error.level = error.defaultLevel;
         }
     }

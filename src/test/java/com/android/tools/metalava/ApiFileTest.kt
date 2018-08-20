@@ -1919,14 +1919,6 @@ class ApiFileTest : DriverTest() {
         // implementing the TemporalAccessor#getLong method
         check(
             sourceFiles = *arrayOf(
-//                java(
-//                    """
-//                    package test.pkg;
-//                    public interface SomeInterface {
-//                        long getLong();
-//                    }
-//                    """
-//                ),
                 java(
                     """
                     package test.pkg;
@@ -1940,26 +1932,13 @@ class ApiFileTest : DriverTest() {
                 java(
                     """
                     package test.pkg;
-                    public class Foo implements /*SomeInterface,*/ SomeInterface2 {
+                    public class Foo implements SomeInterface2 {
                         @Override
                         public long getLong() { return 0L; }
                     }
                     """
                 )
             ),
-//            api = """
-//                package test.pkg {
-//                  public class Foo implements test.pkg.SomeInterface test.pkg.SomeInterface2 {
-//                    ctor public Foo();
-//                  }
-//                  public abstract interface SomeInterface {
-//                    method public abstract long getLong();
-//                  }
-//                  public abstract interface SomeInterface2 {
-//                    method public default long getLong();
-//                  }
-//                }
-//                """
             api = """
             package test.pkg {
               public class Foo implements test.pkg.SomeInterface2 {
@@ -1970,6 +1949,54 @@ class ApiFileTest : DriverTest() {
               }
             }
         """
+        )
+    }
+
+    @Test
+    fun `Implementing interface method 2`() {
+        check(
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    public interface SomeInterface {
+                        long getLong();
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    public interface SomeInterface2 {
+                        @Override default long getLong() {
+                            return 42;
+                        }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    public class Foo implements SomeInterface, SomeInterface2 {
+                        @Override
+                        public long getLong() { return 0L; }
+                    }
+                    """
+                )
+            ),
+            api = """
+                package test.pkg {
+                  public class Foo implements test.pkg.SomeInterface test.pkg.SomeInterface2 {
+                    ctor public Foo();
+                  }
+                  public abstract interface SomeInterface {
+                    method public abstract long getLong();
+                  }
+                  public abstract interface SomeInterface2 {
+                    method public default long getLong();
+                  }
+                }
+                """
         )
     }
 

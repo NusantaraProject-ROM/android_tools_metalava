@@ -50,7 +50,7 @@ const val USAGE_REPORT_MAX_ROWS = 3000
 const val INCLUDE_HORIZONTAL_EDGES = false
 
 class AnnotationStatistics(val api: Codebase) {
-    private val apiFilter = ApiPredicate(api)
+    private val apiFilter = ApiPredicate()
 
     /** Measure the coverage statistics for the API */
     fun count() {
