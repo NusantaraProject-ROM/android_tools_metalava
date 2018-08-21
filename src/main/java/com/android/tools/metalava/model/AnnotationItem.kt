@@ -112,6 +112,20 @@ interface AnnotationItem {
         return codebase.findClass(qualifiedName() ?: return null)
     }
 
+    /** Returns the retention of this annotation */
+    val retention: AnnotationRetention
+        get() {
+            val qualifiedName = qualifiedName()
+            if (qualifiedName != null) {
+                val cls = codebase.findClass(qualifiedName)
+                if (cls != null && cls.isAnnotationType()) {
+                    return cls.getRetention()
+                }
+            }
+
+            return AnnotationRetention.CLASS
+        }
+
     companion object {
         /** The simple name of an annotation, which is the annotation name (not qualified name) prefixed by @ */
         fun simpleName(item: AnnotationItem): String {
@@ -355,10 +369,11 @@ interface AnnotationItem {
                 // specially overwriting anyway in the stubs (and which are (c) not API significant)
                 "java.lang.annotation.Native",
                 "java.lang.SuppressWarnings",
-                "java.lang.Deprecated", // tracked separately as a pseudo-modifier
                 "java.lang.Override" -> return NO_ANNOTATION_TARGETS
 
-                // Below this when-statement we perform the correct lookup: check API predicate, and check
+                "java.lang.Deprecated", // tracked separately as a pseudo-modifier
+
+                    // Below this when-statement we perform the correct lookup: check API predicate, and check
                 // that retention is class or runtime, but we've hardcoded the answers here
                 // for some common annotations.
 
@@ -429,6 +444,7 @@ interface AnnotationItem {
          */
         fun shortenAnnotation(source: String): String {
             return when {
+                source == "@java.lang.Deprecated" -> "@Deprecated"
                 source.startsWith("android.annotation.", 1) -> {
                     "@" + source.substring("@android.annotation.".length)
                 }
@@ -448,6 +464,7 @@ interface AnnotationItem {
          */
         fun unshortenAnnotation(source: String): String {
             return when {
+                source == "@Deprecated" -> "@java.lang.Deprecated"
                 // These 3 annotations are in the android.annotation. package, not android.support.annotation
                 source.startsWith("@SystemService") ||
                     source.startsWith("@TargetApi") ||
