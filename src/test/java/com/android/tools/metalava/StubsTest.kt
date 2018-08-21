@@ -3412,7 +3412,7 @@ class StubsTest : DriverTest() {
     }
 
     @Test
-    fun `Ensure we emit both deprecated javadoc and annotation with exlude-annotations`() {
+    fun `Ensure we emit both deprecated javadoc and annotation with exclude-annotations`() {
         check(
             extraArguments = arrayOf("--exclude-annotations"),
             compatibilityMode = false,
@@ -3449,6 +3449,136 @@ class StubsTest : DriverTest() {
         )
     }
 
+    @Test
+    fun `Ensure we emit runtime and deprecated annotations in stubs with exclude-annotations`() {
+        check(
+            extraArguments = arrayOf("--exclude-annotations"),
+            compatibilityMode = false,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    /** @deprecated */
+                    @MySourceRetentionAnnotation
+                    @MyClassRetentionAnnotation
+                    @MyRuntimeRetentionAnnotation
+                    @Deprecated
+                    public class Foo {
+                        private Foo() {}
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    import java.lang.annotation.Retention;
+                    import static java.lang.annotation.RetentionPolicy.SOURCE;
+                    @Retention(SOURCE)
+                    public @interface MySourceRetentionAnnotation {
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    import java.lang.annotation.Retention;
+                    import static java.lang.annotation.RetentionPolicy.CLASS;
+                    @Retention(CLASS)
+                    public @interface MyClassRetentionAnnotation {
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    import java.lang.annotation.Retention;
+                    import static java.lang.annotation.RetentionPolicy.RUNTIME;
+                    @Retention(RUNTIME)
+                    public @interface MyRuntimeRetentionAnnotation {
+                    }
+                    """
+                )
+            ),
+            stubs = arrayOf(
+                """
+                package test.pkg;
+                /** @deprecated */
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                @Deprecated
+                @test.pkg.MyRuntimeRetentionAnnotation
+                public class Foo {
+                Foo() { throw new RuntimeException("Stub!"); }
+                }
+                """
+            )
+        )
+    }
+
+    @Test
+    fun `Ensure we include class and runtime and not source annotations in stubs with include-annotations`() {
+        check(
+            extraArguments = arrayOf("--include-annotations"),
+            compatibilityMode = false,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    /** @deprecated */
+                    @MySourceRetentionAnnotation
+                    @MyClassRetentionAnnotation
+                    @MyRuntimeRetentionAnnotation
+                    @Deprecated
+                    public class Foo {
+                        private Foo() {}
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    import java.lang.annotation.Retention;
+                    import static java.lang.annotation.RetentionPolicy.SOURCE;
+                    @Retention(SOURCE)
+                    public @interface MySourceRetentionAnnotation {
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    import java.lang.annotation.Retention;
+                    import static java.lang.annotation.RetentionPolicy.CLASS;
+                    @Retention(CLASS)
+                    public @interface MyClassRetentionAnnotation {
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    import java.lang.annotation.Retention;
+                    import static java.lang.annotation.RetentionPolicy.RUNTIME;
+                    @Retention(RUNTIME)
+                    public @interface MyRuntimeRetentionAnnotation {
+                    }
+                    """
+                )
+            ),
+            stubs = arrayOf(
+                """
+                package test.pkg;
+                /** @deprecated */
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                @Deprecated
+                @test.pkg.MyClassRetentionAnnotation
+                @test.pkg.MyRuntimeRetentionAnnotation
+                public class Foo {
+                Foo() { throw new RuntimeException("Stub!"); }
+                }
+                """
+            )
+        )
+    }
 // TODO: Add in some type variables in method signatures and constructors!
 // TODO: Test what happens when a class extends a hidden extends a public in separate packages,
 // and the hidden has a @hide constructor so the stub in the leaf class doesn't compile -- I should
