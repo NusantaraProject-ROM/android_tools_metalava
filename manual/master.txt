@@ -67,7 +67,7 @@ package android.view {
   }
 }
 package java.lang {
-  // These are all in //libcore/annotations/ojluni.jaif. They are
+  // These are all in //libcore/ojluni/annotations. They are
   // reproduced here to work around an issue in metalava (b/111116803).
   public final class Class<T> implements java.lang.reflect.AnnotatedElement java.lang.reflect.GenericDeclaration java.io.Serializable java.lang.reflect.Type {
     method @Nullable public <A extends java.lang.annotation.Annotation> A getAnnotation(@NonNull Class<A>);
