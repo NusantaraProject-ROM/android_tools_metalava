@@ -400,6 +400,9 @@ class Options(
     /** Map from XML API descriptor file to corresponding artifact id name */
     val artifactRegistrations = ArtifactTagger()
 
+    /** Temporary folder to use insead of the JDK default, if any */
+    var tempFolder: File? = null
+
     init {
         // Pre-check whether --color/--no-color is present and use that to decide how
         // to emit the banner even before we emit errors
@@ -592,7 +595,7 @@ class Options(
 
                 ARG_CURRENT_API -> {
                     val file = stringToExistingFile(getValue(args, ++index))
-                    mutableCompatibilityChecks.add(CheckRequest(file, false, ApiType.PUBLIC_API))
+                    mutableCompatibilityChecks.add(CheckRequest(file, ApiType.PUBLIC_API, ReleaseType.DEV))
                     /* Don't flag this yet: allow a short quiet grace period
                     reporter.report(Errors.DEPRECATED_OPTION, null as File?,
                         "$ARG_CURRENT_API is deprecated; instead " +
@@ -615,7 +618,7 @@ class Options(
                             val file = fileForPath(nextArg)
                             if (file.isFile) {
                                 index++
-                                mutableCompatibilityChecks.add(CheckRequest(file, false, ApiType.PUBLIC_API))
+                                mutableCompatibilityChecks.add(CheckRequest(file, ApiType.PUBLIC_API, ReleaseType.DEV))
                             }
                         }
                     }
@@ -623,22 +626,22 @@ class Options(
 
                 ARG_CHECK_COMPATIBILITY_API_CURRENT -> {
                     val file = stringToExistingFile(getValue(args, ++index))
-                    mutableCompatibilityChecks.add(CheckRequest(file, false, ApiType.PUBLIC_API))
+                    mutableCompatibilityChecks.add(CheckRequest(file, ApiType.PUBLIC_API, ReleaseType.DEV))
                 }
 
                 ARG_CHECK_COMPATIBILITY_API_RELEASED -> {
                     val file = stringToExistingFile(getValue(args, ++index))
-                    mutableCompatibilityChecks.add(CheckRequest(file, true, ApiType.PUBLIC_API))
+                    mutableCompatibilityChecks.add(CheckRequest(file, ApiType.PUBLIC_API, ReleaseType.RELEASED))
                 }
 
                 ARG_CHECK_COMPATIBILITY_REMOVED_CURRENT -> {
                     val file = stringToExistingFile(getValue(args, ++index))
-                    mutableCompatibilityChecks.add(CheckRequest(file, false, ApiType.REMOVED))
+                    mutableCompatibilityChecks.add(CheckRequest(file, ApiType.REMOVED, ReleaseType.DEV))
                 }
 
                 ARG_CHECK_COMPATIBILITY_REMOVED_RELEASED -> {
                     val file = stringToExistingFile(getValue(args, ++index))
-                    mutableCompatibilityChecks.add(CheckRequest(file, true, ApiType.REMOVED))
+                    mutableCompatibilityChecks.add(CheckRequest(file, ApiType.REMOVED, ReleaseType.RELEASED))
                 }
 
                 ARG_ANNOTATION_COVERAGE_STATS -> dumpAnnotationStatistics = true
@@ -811,6 +814,10 @@ class Options(
                         level.isLessThan(LanguageLevel.JDK_1_7) -> throw DriverException("$arg must be at least 1.7")
                         else -> javaLanguageLevel = level
                     }
+                }
+
+                "--temp-folder" -> {
+                    tempFolder = stringToNewOrExistingDir(getValue(args, ++index))
                 }
 
                 // Unimplemented doclava1 flags (2 arguments)
@@ -1236,18 +1243,34 @@ class Options(
         return output
     }
 
+    private fun stringToNewOrExistingDir(value: String): File {
+        val dir = fileForPath(value)
+        if (!dir.isDirectory) {
+            val ok = dir.mkdirs()
+            if (!ok) {
+                throw DriverException("Could not create $dir")
+            }
+        }
+        return dir
+    }
+
     private fun stringToNewDir(value: String): File {
         val output = fileForPath(value)
-
-        if (output.exists()) {
-            if (output.isDirectory) {
-                output.deleteRecursively()
+        val ok =
+            if (output.exists()) {
+                if (output.isDirectory) {
+                    output.deleteRecursively()
+                }
+                if (output.exists()) {
+                    true
+                } else {
+                    output.mkdir()
+                }
+            } else {
+                output.mkdirs()
             }
-        } else if (output.parentFile != null && !output.parentFile.exists()) {
-            val ok = output.parentFile.mkdirs()
-            if (!ok) {
-                throw DriverException("Could not create ${output.parentFile}")
-            }
+        if (!ok) {
+            throw DriverException("Could not create $output")
         }
 
         return output

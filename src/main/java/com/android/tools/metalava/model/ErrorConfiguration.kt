@@ -32,89 +32,19 @@ class ErrorConfiguration {
         overrides[error] = severity
     }
 
+    /** Set the severity of the given issue to [Severity.ERROR] */
     fun error(error: Errors.Error) {
         setSeverity(error, Severity.ERROR)
     }
 
+    /** Set the severity of the given issue to [Severity.HIDDEN] */
     fun hide(error: Errors.Error) {
         setSeverity(error, Severity.HIDDEN)
     }
-
-    companion object {
-        /** Default error configuration: uses all the severities initialized in the [Errors] class */
-        val defaultConfiguration = ErrorConfiguration()
-
-        /**
-         * Customization of the severities to apply when doing compatibility checking against the
-         * current version of the API. Corresponds to the same flags passed into doclava's error
-         * check this way:
-         * args: "-error 2 -error 3 -error 4 -error 5 -error 6 " +
-         * "-error 7 -error 8 -error 9 -error 10 -error 11 -error 12 -error 13 -error 14 -error 15 " +
-         * "-error 16 -error 17 -error 18 -error 19 -error 20 -error 21 -error 23 -error 24 " +
-         * "-error 25 -error 26 -error 27",
-         */
-        val currentCompatibilityCheckConfiguration = ErrorConfiguration().apply {
-            error(Errors.ADDED_PACKAGE)
-            error(Errors.ADDED_CLASS)
-            error(Errors.ADDED_METHOD)
-            error(Errors.ADDED_FIELD)
-            error(Errors.ADDED_INTERFACE)
-            error(Errors.REMOVED_PACKAGE)
-            error(Errors.REMOVED_CLASS)
-            error(Errors.REMOVED_METHOD)
-            error(Errors.REMOVED_FIELD)
-            error(Errors.REMOVED_INTERFACE)
-            error(Errors.CHANGED_STATIC)
-            error(Errors.ADDED_FINAL)
-            error(Errors.CHANGED_TRANSIENT)
-            error(Errors.CHANGED_VOLATILE)
-            error(Errors.CHANGED_TYPE)
-            error(Errors.CHANGED_VALUE)
-            error(Errors.CHANGED_SUPERCLASS)
-            error(Errors.CHANGED_SCOPE)
-            error(Errors.CHANGED_ABSTRACT)
-            error(Errors.CHANGED_THROWS)
-            error(Errors.CHANGED_CLASS)
-            error(Errors.CHANGED_DEPRECATED)
-            error(Errors.CHANGED_SYNCHRONIZED)
-            error(Errors.ADDED_FINAL_UNINSTANTIABLE)
-            error(Errors.REMOVED_FINAL)
-        }
-
-        /**
-         * Customization of the severities to apply when doing compatibility checking against the
-         * previously released stable version of the API. Corresponds to the same flags passed into
-         * doclava's error check this way:
-         * args: "-hide 2 -hide 3 -hide 4 -hide 5 -hide 6 -hide 24 -hide 25 -hide 26 -hide 27 " +
-         * "-error 7 -error 8 -error 9 -error 10 -error 11 -error 12 -error 13 -error 14 -error 15 " +
-         * "-error 16 -error 17 -error 18 -error 31",
-         */
-        val releasedCompatibilityCheckConfiguration = ErrorConfiguration().apply {
-            hide(Errors.ADDED_PACKAGE)
-            hide(Errors.ADDED_CLASS)
-            hide(Errors.ADDED_METHOD)
-            hide(Errors.ADDED_FIELD)
-            hide(Errors.ADDED_INTERFACE)
-            hide(Errors.CHANGED_DEPRECATED)
-            hide(Errors.CHANGED_SYNCHRONIZED)
-            hide(Errors.ADDED_FINAL_UNINSTANTIABLE)
-            hide(Errors.REMOVED_FINAL)
-            error(Errors.REMOVED_PACKAGE)
-            error(Errors.REMOVED_CLASS)
-            error(Errors.REMOVED_METHOD)
-            error(Errors.REMOVED_FIELD)
-            error(Errors.REMOVED_INTERFACE)
-            error(Errors.CHANGED_STATIC)
-            error(Errors.ADDED_FINAL)
-            error(Errors.CHANGED_TRANSIENT)
-            error(Errors.CHANGED_VOLATILE)
-            error(Errors.CHANGED_TYPE)
-            error(Errors.CHANGED_VALUE)
-            error(Errors.CHANGED_SUPERCLASS)
-            error(Errors.ADDED_ABSTRACT_METHOD)
-        }
-    }
 }
 
+/** Default error configuration: uses all the severities initialized in the [Errors] class */
+val defaultConfiguration = ErrorConfiguration()
+
 /** Current configuration to apply when reporting errors */
-var configuration = ErrorConfiguration.defaultConfiguration
+var configuration = defaultConfiguration
