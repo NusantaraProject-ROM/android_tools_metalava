@@ -185,6 +185,7 @@ interface ModifierList {
             // TODO: "deprecated" isn't a modifier; clarify method name
             includeDeprecated: Boolean = false,
             includeAnnotations: Boolean = true,
+            runtimeAnnotationsOnly: Boolean = false,
             skipNullnessAnnotations: Boolean = false,
             omitCommonPackages: Boolean = false,
             removeAbstract: Boolean = false,
@@ -213,13 +214,20 @@ interface ModifierList {
             }
 
             if (includeAnnotations) {
-                if (includeDeprecated && item.deprecated && !options.compatOutput) {
+                //  if includeDepecated we want to do it
+                //  unless runtimeOnly is false, in which case we'd include it too
+                // e.g. emit @Deprecated if includeDeprecated && !runtimeOnly
+                if (item.deprecated &&
+                    (!options.compatOutput || target == AnnotationTarget.STUBS_FILE) &&
+                    (runtimeAnnotationsOnly || includeDeprecated)
+                ) {
                     writer.write("@Deprecated")
                     writer.write(if (separateLines) "\n" else " ")
                 }
 
                 writeAnnotations(
                     list = list,
+                    runtimeAnnotationsOnly = runtimeAnnotationsOnly,
                     skipNullnessAnnotations = skipNullnessAnnotations,
                     omitCommonPackages = omitCommonPackages,
                     separateLines = separateLines,
@@ -307,7 +315,7 @@ interface ModifierList {
                     writer.write("native ")
                 }
 
-                if (item.deprecated && includeDeprecated && options.compatOutput) {
+                if (item.deprecated && includeDeprecated && target != AnnotationTarget.STUBS_FILE && options.compatOutput) {
                     writer.write("deprecated ")
                 }
 
@@ -327,7 +335,7 @@ interface ModifierList {
                     writer.write("volatile ")
                 }
             } else {
-                if (item.deprecated && includeDeprecated && options.compatOutput) {
+                if (item.deprecated && includeDeprecated && target != AnnotationTarget.STUBS_FILE && options.compatOutput) {
                     writer.write("deprecated ")
                 }
 
@@ -404,6 +412,7 @@ interface ModifierList {
         fun writeAnnotations(
             list: ModifierList,
             skipNullnessAnnotations: Boolean = false,
+            runtimeAnnotationsOnly: Boolean = false,
             omitCommonPackages: Boolean = false,
             separateLines: Boolean = false,
             filterDuplicates: Boolean = false,
@@ -421,12 +430,20 @@ interface ModifierList {
                 var index = -1
                 for (annotation in annotations) {
                     index++
+
+                    if (runtimeAnnotationsOnly && annotation.retention != AnnotationRetention.RUNTIME) {
+                        continue
+                    }
+
                     if (!annotation.targets().contains(target)) {
                         continue
                     } else if ((annotation.isNullnessAnnotation())) {
                         if (skipNullnessAnnotations) {
                             continue
                         }
+                    } else if (annotation.qualifiedName() == "java.lang.Deprecated") {
+                        // Special cased in stubs and signature files: emitted first
+                        continue
                     }
 
                     // Optionally filter out duplicates

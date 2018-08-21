@@ -303,15 +303,13 @@ class StubWriter(
         addPublic: Boolean = false
     ) {
         val separateLines = item is ClassItem || item is MethodItem
-        if (item.deprecated && generateAnnotations) {
-            writer.write("@Deprecated")
-            writer.write(if (separateLines) "\n" else " ")
-        }
 
         ModifierList.write(
             writer, modifiers, item,
             target = AnnotationTarget.STUBS_FILE,
-            includeAnnotations = generateAnnotations,
+            includeAnnotations = true,
+            includeDeprecated = true,
+            runtimeAnnotationsOnly = !generateAnnotations,
             removeAbstract = removeAbstract,
             removeFinal = removeFinal,
             addPublic = addPublic,
