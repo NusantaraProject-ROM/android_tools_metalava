@@ -79,7 +79,7 @@ enum class ApiType(val flagName: String, val displayName: String = flagName) {
     /** Everything */
     ALL("all", "all") {
         override fun getOptionFile(): File? {
-            return options.privateApiFile
+            return null
         }
 
         override fun getEmitFilter(): Predicate<Item> {
