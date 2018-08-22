@@ -20,6 +20,7 @@ package com.android.tools.metalava
 import com.android.SdkConstants
 import com.android.SdkConstants.DOT_JAVA
 import com.android.SdkConstants.DOT_KT
+import com.android.SdkConstants.DOT_TXT
 import com.android.ide.common.process.CachedProcessOutputHandler
 import com.android.ide.common.process.DefaultProcessExecutor
 import com.android.ide.common.process.ProcessInfoBuilder
@@ -34,7 +35,6 @@ import com.android.tools.lint.detector.api.assertionsEnabled
 import com.android.tools.metalava.CompatibilityCheck.CheckRequest
 import com.android.tools.metalava.apilevels.ApiGenerator
 import com.android.tools.metalava.doclava1.ApiPredicate
-import com.android.tools.metalava.doclava1.ElidingPredicate
 import com.android.tools.metalava.doclava1.Errors
 import com.android.tools.metalava.doclava1.FilterPredicate
 import com.android.tools.metalava.model.Codebase
@@ -272,9 +272,9 @@ private fun processFlags() {
     // Based on the input flags, generates various output files such
     // as signature files and/or stubs files
     options.apiFile?.let { apiFile ->
-        val apiFilter = FilterPredicate(ApiPredicate())
-        val apiReference = ApiPredicate(ignoreShown = true)
-        val apiEmit = apiFilter.and(ElidingPredicate(apiReference))
+        val apiType = ApiType.PUBLIC_API
+        val apiEmit = apiType.getEmitFilter()
+        val apiReference = apiType.getReferenceFilter()
 
         createReportFile(codebase, apiFile, "API") { printWriter ->
             SignatureWriter(printWriter, apiEmit, apiReference, codebase.preFiltered)
@@ -295,9 +295,9 @@ private fun processFlags() {
     options.removedApiFile?.let { apiFile ->
         val unfiltered = codebase.original ?: codebase
 
-        val removedFilter = FilterPredicate(ApiPredicate(matchRemoved = true))
-        val removedReference = ApiPredicate(ignoreShown = true, ignoreRemoved = true)
-        val removedEmit = removedFilter.and(ElidingPredicate(removedReference))
+        val apiType = ApiType.REMOVED
+        val removedEmit = apiType.getEmitFilter()
+        val removedReference = apiType.getReferenceFilter()
 
         createReportFile(unfiltered, apiFile, "removed API") { printWriter ->
             SignatureWriter(printWriter, removedEmit, removedReference, codebase.original != null)
@@ -318,10 +318,9 @@ private fun processFlags() {
     }
 
     options.privateApiFile?.let { apiFile ->
-        val apiFilter = FilterPredicate(ApiPredicate())
-        val memberIsNotCloned: Predicate<Item> = Predicate { !it.isCloned() }
-        val privateEmit = memberIsNotCloned.and(apiFilter.negate())
-        val privateReference = Predicate<Item> { true }
+        val apiType = ApiType.PRIVATE
+        val privateEmit = apiType.getEmitFilter()
+        val privateReference = apiType.getReferenceFilter()
 
         createReportFile(codebase, apiFile, "private API") { printWriter ->
             SignatureWriter(printWriter, privateEmit, privateReference, codebase.original != null)
@@ -429,7 +428,6 @@ fun checkCompatibility(
     check: CheckRequest
 ) {
     val signatureFile = check.file
-    val released = check.released
 
     val current =
         if (signatureFile.path.endsWith(SdkConstants.DOT_JAR)) {
@@ -443,6 +441,8 @@ fun checkCompatibility(
         }
 
     var base: Codebase? = null
+    val releaseType = check.releaseType
+    val apiType = check.apiType
 
     // If diffing with a system-api or test-api (or other signature-based codebase
     // generated from --show-annotations), the API is partial: it's only listing
@@ -453,12 +453,12 @@ fun checkCompatibility(
     // file. If we've only emitted one for the new API, use it directly, if not, generate
     // it first
     val new =
-        if (options.showAnnotations.isNotEmpty() || check.apiType != ApiType.PUBLIC_API) {
-            val apiFile = options.apiFile ?: run {
-                val tempFile = File.createTempFile("compat-check-signatures", "txt")
+        if (options.showAnnotations.isNotEmpty() || apiType != ApiType.PUBLIC_API) {
+            val apiFile = apiType.getOptionFile() ?: run {
+                val tempFile = createTempFile("compat-check-signatures-$apiType", DOT_TXT)
                 tempFile.deleteOnExit()
-                val apiEmit = check.apiType.getEmitFilter()
-                val apiReference = check.apiType.getReferenceFilter()
+                val apiEmit = apiType.getEmitFilter()
+                val apiReference = apiType.getReferenceFilter()
 
                 createReportFile(codebase, tempFile, null) { printWriter ->
                     SignatureWriter(printWriter, apiEmit, apiReference, codebase.preFiltered)
@@ -491,7 +491,20 @@ fun checkCompatibility(
 
     // If configured, compares the new API with the previous API and reports
     // any incompatibilities.
-    CompatibilityCheck.checkCompatibility(new, current, released, check.apiType, base)
+    CompatibilityCheck.checkCompatibility(new, current, releaseType, apiType, base)
+}
+
+fun createTempFile(namePrefix: String, nameSuffix: String): File {
+    val tempFolder = options.tempFolder
+    return if (tempFolder != null) {
+        val preferred = File(tempFolder, namePrefix + nameSuffix)
+        if (!preferred.exists()) {
+            return preferred
+        }
+        File.createTempFile(namePrefix, nameSuffix, tempFolder)
+    } else {
+        File.createTempFile(namePrefix, nameSuffix)
+    }
 }
 
 fun invokeDocumentationTool() {
@@ -658,10 +671,12 @@ internal fun parseSources(sources: List<File>, description: String): PsiBasedCod
     val kotlinFiles = sources.filter { it.path.endsWith(SdkConstants.DOT_KT) }
     val trace = KotlinLintAnalyzerFacade().analyze(kotlinFiles, joined, project)
 
+    val rootDir = options.sourcePath.firstOrNull() ?: File("").canonicalFile
+
     val units = Extractor.createUnitsForFiles(project, sources)
     val packageDocs = gatherHiddenPackagesFromJavaDocs(options.sourcePath)
 
-    val codebase = PsiBasedCodebase(description)
+    val codebase = PsiBasedCodebase(rootDir, description)
     codebase.initialize(project, units, packageDocs)
     codebase.manifest = options.manifest
     codebase.apiLevel = options.currentApiLevel
@@ -681,8 +696,7 @@ private fun loadFromJarFile(apiJar: File, manifest: File? = null): Codebase {
     val kotlinFiles = emptyList<File>()
     val trace = KotlinLintAnalyzerFacade().analyze(kotlinFiles, listOf(apiJar), project)
 
-    val codebase = PsiBasedCodebase()
-    codebase.description = "Codebase loaded from $apiJar"
+    val codebase = PsiBasedCodebase(apiJar, "Codebase loaded from $apiJar")
     codebase.initialize(project, apiJar)
     if (manifest != null) {
         codebase.manifest = options.manifest
