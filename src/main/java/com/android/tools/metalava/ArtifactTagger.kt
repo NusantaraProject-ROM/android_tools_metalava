@@ -74,7 +74,7 @@ class ArtifactTagger {
         }
 
         if (warnAboutMissing) {
-            codebase.accept(object : ApiVisitor(codebase) {
+            codebase.accept(object : ApiVisitor() {
                 override fun visitClass(cls: ClassItem) {
                     if (cls.artifact == null && cls.isTopLevelClass()) {
                         reporter.report(

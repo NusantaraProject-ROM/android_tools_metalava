@@ -70,7 +70,7 @@ import java.util.jar.JarOutputStream
 class ExtractAnnotations(
     private val codebase: Codebase,
     private val outputFile: File
-) : ApiVisitor(codebase) {
+) : ApiVisitor() {
     // Used linked hash map for order such that we always emit parameters after their surrounding method etc
     private val packageToAnnotationPairs = LinkedHashMap<PackageItem, MutableList<Pair<Item, AnnotationHolder>>>()
 

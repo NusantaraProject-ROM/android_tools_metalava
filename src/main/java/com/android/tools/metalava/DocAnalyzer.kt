@@ -93,7 +93,7 @@ class DocAnalyzer(
         // set also requires updating framework source code, so this doesn't seem
         // like an unreasonable burden.
 
-        codebase.accept(object : ApiVisitor(codebase) {
+        codebase.accept(object : ApiVisitor() {
             override fun visitItem(item: Item) {
                 val annotations = item.modifiers.annotations()
                 if (annotations.isEmpty()) {
@@ -624,7 +624,7 @@ class DocAnalyzer(
 
         val apiLookup = ApiLookup.get(client)
 
-        codebase.accept(object : ApiVisitor(codebase, visitConstructorsAsMethods = false) {
+        codebase.accept(object : ApiVisitor(visitConstructorsAsMethods = false) {
             override fun visitMethod(method: MethodItem) {
                 val psiMethod = method.psi() as PsiMethod
                 addApiLevelDocumentation(apiLookup.getMethodVersion(psiMethod), method)
