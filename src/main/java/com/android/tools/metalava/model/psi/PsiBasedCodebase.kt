@@ -63,7 +63,7 @@ const val PACKAGE_ESTIMATE = 400
 const val CLASS_ESTIMATE = 12000
 const val METHOD_ESTIMATE = 1000
 
-open class PsiBasedCodebase(override var description: String = "Unknown") : DefaultCodebase() {
+open class PsiBasedCodebase(location: File, override var description: String = "Unknown") : DefaultCodebase(location) {
     lateinit var project: Project
 
     var bindingContext: BindingContext? = null

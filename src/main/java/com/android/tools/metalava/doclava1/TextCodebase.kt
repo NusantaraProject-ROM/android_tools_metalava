@@ -40,13 +40,14 @@ import com.android.tools.metalava.model.text.TextPackageItem
 import com.android.tools.metalava.model.text.TextTypeItem
 import com.android.tools.metalava.model.visitors.ItemVisitor
 import com.android.tools.metalava.model.visitors.TypeVisitor
+import java.io.File
 import java.util.ArrayList
 import java.util.HashMap
 import java.util.function.Predicate
 
 // Copy of ApiInfo in doclava1 (converted to Kotlin + some cleanup to make it work with metalava's data structures.
 // (Converted to Kotlin such that I can inherit behavior via interfaces, in particular Codebase.)
-class TextCodebase : DefaultCodebase() {
+class TextCodebase(location: File) : DefaultCodebase(location) {
     /**
      * Whether types should be interpreted to be in Kotlin format (e.g. ? suffix means nullable,
      * ! suffix means unknown, and absence of a suffix means not nullable.
