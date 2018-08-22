@@ -628,7 +628,7 @@ class ApiAnalyzer(
     }
 
     private fun checkHiddenTypes() {
-        packages.accept(object : ApiVisitor(codebase, visitConstructorsAsMethods = false) {
+        packages.accept(object : ApiVisitor(visitConstructorsAsMethods = false) {
             override fun visitMethod(method: MethodItem) {
                 checkType(method, method.returnType() ?: return) // constructors don't have
             }
@@ -690,7 +690,7 @@ class ApiAnalyzer(
             // Look for Android @SystemApi exposed outside the normal SDK; we require
             // that they're protected with a system permission.
 
-            packages.accept(object : ApiVisitor(codebase) {
+            packages.accept(object : ApiVisitor() {
                 override fun visitClass(cls: ClassItem) {
                     // This class is a system service if it's annotated with @SystemService,
                     // or if it's android.content.pm.PackageManager
@@ -796,7 +796,7 @@ class ApiAnalyzer(
         ensureSystemServicesProtectedWithPermission()
         checkHiddenTypes()
 
-        packages.accept(object : ApiVisitor(codebase) {
+        packages.accept(object : ApiVisitor() {
             override fun visitItem(item: Item) {
                 // TODO: Check annotations and also mark removed/hidden based on annotations
                 if (item.deprecated && !item.documentation.contains("@deprecated") &&

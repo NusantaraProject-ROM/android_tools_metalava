@@ -72,7 +72,7 @@ class AnnotationStatistics(val api: Codebase) {
         var annotatedFields = 0
         var annotatedParameters = 0
 
-        api.accept(object : ApiVisitor(api) {
+        api.accept(object : ApiVisitor() {
             override fun skip(item: Item): Boolean {
                 if (options.omitRuntimePackageStats && item is PackageItem) {
                     val name = item.qualifiedName()
