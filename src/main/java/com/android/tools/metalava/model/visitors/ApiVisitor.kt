@@ -18,7 +18,6 @@ package com.android.tools.metalava.model.visitors
 
 import com.android.tools.metalava.doclava1.ApiPredicate
 import com.android.tools.metalava.model.ClassItem
-import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.FieldItem
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
@@ -73,7 +72,6 @@ open class ApiVisitor(
     val showUnannotated: Boolean = true
 ) : ItemVisitor(visitConstructorsAsMethods, nestInnerClasses) {
     constructor(
-        codebase: Codebase,
         /**
          * Whether constructors should be visited as part of a [#visitMethod] call
          * instead of just a [#visitConstructor] call. Helps simplify visitors that

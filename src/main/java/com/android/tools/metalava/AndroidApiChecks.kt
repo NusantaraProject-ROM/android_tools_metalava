@@ -33,10 +33,9 @@ import java.util.regex.Pattern
 class AndroidApiChecks {
     fun check(codebase: Codebase) {
         codebase.accept(object : ApiVisitor(
-            codebase,
             // Sort by source order such that warnings follow source line number order
-            fieldComparator = FieldItem.comparator,
-            methodComparator = MethodItem.sourceOrderComparator
+            methodComparator = MethodItem.sourceOrderComparator,
+            fieldComparator = FieldItem.comparator
         ) {
             override fun skip(item: Item): Boolean {
                 // Limit the checks to the android.* namespace (except for ICU)

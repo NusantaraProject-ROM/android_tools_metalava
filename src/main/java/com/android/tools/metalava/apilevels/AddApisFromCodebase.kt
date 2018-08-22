@@ -25,7 +25,6 @@ import com.android.tools.metalava.model.visitors.ApiVisitor
 /** Visits the API codebase and inserts into the [Api] the classes, methods and fields */
 fun addApisFromCodebase(api: Api, apiLevel: Int, codebase: Codebase) {
     codebase.accept(object : ApiVisitor(
-        codebase,
         visitConstructorsAsMethods = true,
         nestInnerClasses = false
     ) {
