@@ -45,6 +45,12 @@ interface Codebase {
     /** Description of what this codebase is (useful during debugging) */
     var description: String
 
+    /**
+     * The location of the API. Could point to a signature file, or a directory
+     * root for source files, or a jar file, etc.
+     */
+    var location: File
+
     /** The API level of this codebase, or -1 if not known */
     var apiLevel: Int
 
@@ -161,7 +167,7 @@ interface Codebase {
     val preFiltered: Boolean
 }
 
-abstract class DefaultCodebase : Codebase {
+abstract class DefaultCodebase(override var location: File) : Codebase {
     override var manifest: File? = null
     private var permissions: Map<String, String>? = null
     override var original: Codebase? = null

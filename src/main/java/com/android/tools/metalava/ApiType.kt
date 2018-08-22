@@ -20,42 +20,68 @@ import com.android.tools.metalava.doclava1.ApiPredicate
 import com.android.tools.metalava.doclava1.ElidingPredicate
 import com.android.tools.metalava.doclava1.FilterPredicate
 import com.android.tools.metalava.model.Item
+import java.io.File
 import java.util.function.Predicate
 
 /** Types of APIs emitted (or parsed etc) */
-enum class ApiType(val displayName: String) {
+enum class ApiType(val flagName: String, val displayName: String = flagName) {
     /** The public API */
-    PUBLIC_API("api"),
+    PUBLIC_API("api", "public") {
+        override fun getOptionFile(): File? {
+            return options.apiFile
+        }
+
+        override fun getEmitFilter(): Predicate<Item> {
+            val apiFilter = FilterPredicate(ApiPredicate())
+            val apiReference = ApiPredicate(ignoreShown = true)
+            return apiFilter.and(ElidingPredicate(apiReference))
+        }
+
+        override fun getReferenceFilter(): Predicate<Item> {
+            return ApiPredicate(ignoreShown = true)
+        }
+    },
+
     /** The API that has been removed */
-    REMOVED("removed"),
+    REMOVED("removed", "removed") {
+        override fun getOptionFile(): File? {
+            return options.removedApiFile
+        }
+
+        override fun getEmitFilter(): Predicate<Item> {
+            val removedFilter = FilterPredicate(ApiPredicate(matchRemoved = true))
+            val removedReference = ApiPredicate(ignoreShown = true, ignoreRemoved = true)
+            return removedFilter.and(ElidingPredicate(removedReference))
+        }
+
+        override fun getReferenceFilter(): Predicate<Item> {
+            return ApiPredicate(ignoreShown = true, ignoreRemoved = true)
+        }
+    },
+
     /** The private API */
-    PRIVATE("private");
-
-    fun getEmitFilter(): Predicate<Item> {
-        return when {
-            this == PUBLIC_API -> {
-                val apiFilter = FilterPredicate(ApiPredicate())
-                val apiReference = ApiPredicate(ignoreShown = true)
-                apiFilter.and(ElidingPredicate(apiReference))
-            }
-            this == REMOVED -> {
-                val removedFilter = FilterPredicate(ApiPredicate(matchRemoved = true))
-                val removedReference = ApiPredicate(ignoreShown = true, ignoreRemoved = true)
-                removedFilter.and(ElidingPredicate(removedReference))
-            }
-            else -> {
-                val apiFilter = FilterPredicate(ApiPredicate())
-                val memberIsNotCloned: Predicate<Item> = Predicate { !it.isCloned() }
-                memberIsNotCloned.and(apiFilter.negate())
-            }
+    PRIVATE("private", "private") {
+        override fun getOptionFile(): File? {
+            return options.privateApiFile
         }
-    }
 
-    fun getReferenceFilter(): Predicate<Item> {
-        return when {
-            this == PUBLIC_API -> ApiPredicate(ignoreShown = true)
-            this == REMOVED -> ApiPredicate(ignoreShown = true, ignoreRemoved = true)
-            else -> Predicate { true }
+        override fun getEmitFilter(): Predicate<Item> {
+            val apiFilter = FilterPredicate(ApiPredicate())
+            val memberIsNotCloned: Predicate<Item> = Predicate { !it.isCloned() }
+            return memberIsNotCloned.and(apiFilter.negate())
         }
-    }
+
+        override fun getReferenceFilter(): Predicate<Item> {
+            return Predicate { true }
+        }
+    };
+
+    /** Returns the user-configured file where the API has been written to, if any */
+    abstract fun getOptionFile(): File?
+
+    abstract fun getEmitFilter(): Predicate<Item>
+
+    abstract fun getReferenceFilter(): Predicate<Item>
+
+    override fun toString(): String = displayName
 }

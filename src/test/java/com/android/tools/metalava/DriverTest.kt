@@ -59,7 +59,7 @@ abstract class DriverTest {
     var temporaryFolder = TemporaryFolder()
 
     private fun createProject(vararg files: TestFile): File {
-        val dir = temporaryFolder.newFolder()
+        val dir = temporaryFolder.newFolder("project")
 
         files
             .map { it.createFile(dir) }
@@ -74,9 +74,18 @@ abstract class DriverTest {
         val sw = StringWriter()
         val writer = PrintWriter(sw)
         if (!com.android.tools.metalava.run(arrayOf(*args), writer, writer)) {
-            val actualFail = sw.toString().trim()
+            val actualFail = sw.toString().trim().replace(temporaryFolder.root.path, "TESTROOT")
             if (expectedFail != actualFail.replace(".", "").trim()) {
-                fail(actualFail)
+                if (expectedFail == "Aborting: Found compatibility problems with --check-compatibility" &&
+                    actualFail.startsWith("Aborting: Found compatibility problems checking the ")
+                ) {
+                    // Special case for compat checks; we don't want to force each one of them
+                    // to pass in the right string (which may vary based on whether writing out
+                    // the signature was passed at the same time
+                    // ignore
+                } else {
+                    fail(actualFail)
+                }
             }
         }
 
@@ -664,6 +673,12 @@ abstract class DriverTest {
         val actualOutput = runDriver(
             "--no-color",
             "--no-banner",
+
+            // Tell metalava where to store temp folder: place them under the
+            // test root folder such that we clean up the output strings referencing
+            // paths to the temp folder
+            "--temp-folder",
+            temporaryFolder.newFolder("temp").path,
 
             // For the tests we want to treat references to APIs like java.io.Closeable
             // as a class that is part of the API surface, not as a hidden class as would

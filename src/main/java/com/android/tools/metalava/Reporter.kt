@@ -95,7 +95,7 @@ open class Reporter(private val rootFolder: File? = null) {
     }
 
     fun report(id: Errors.Error, item: Item?, message: String): Boolean {
-        if (isSuppressed(id, item)) {
+        if (isSuppressed(id, item, message)) {
             return false
         }
 
@@ -120,7 +120,7 @@ open class Reporter(private val rootFolder: File? = null) {
         }
     }
 
-    fun isSuppressed(id: Errors.Error, item: Item? = null): Boolean {
+    fun isSuppressed(id: Errors.Error, item: Item? = null, message: String? = null): Boolean {
         val severity = configuration.getSeverity(id)
         if (severity == HIDDEN) {
             return true
@@ -139,20 +139,38 @@ open class Reporter(private val rootFolder: File? = null) {
                     if (value is AnnotationArrayAttributeValue) {
                         // Example: @SuppressLint({"DocLava1", "DocLava2"})
                         for (innerValue in value.values) {
-                            val string = innerValue.value()
-                            if (id1 == string || id2 != null && id2 == string) {
+                            val string = innerValue.value()?.toString() ?: continue
+                            if (suppressMatches(string, id1, message) || suppressMatches(string, id2, message)) {
                                 return true
                             }
                         }
                     } else {
                         // Example: @SuppressLint("DocLava1")
-                        val string = value.value()
-                        if (id1 == string || id2 != null && id2 == string) {
+                        val string = value.value()?.toString()
+                        if (string != null && (
+                                suppressMatches(string, id1, message) || suppressMatches(string, id2, message))
+                        ) {
                             return true
                         }
                     }
                 }
             }
+        }
+
+        return false
+    }
+
+    private fun suppressMatches(value: String, id: String?, message: String?): Boolean {
+        id ?: return false
+
+        if (value == id) {
+            return true
+        }
+
+        if (message != null && value.startsWith(id) && value.endsWith(message) &&
+            (value == "$id:$message" || value == "$id: $message")
+        ) {
+            return true
         }
 
         return false

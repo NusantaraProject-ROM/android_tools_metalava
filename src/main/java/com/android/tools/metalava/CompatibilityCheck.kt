@@ -25,7 +25,6 @@ import com.android.tools.metalava.doclava1.TextCodebase
 import com.android.tools.metalava.model.AnnotationItem
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.Codebase
-import com.android.tools.metalava.model.ErrorConfiguration
 import com.android.tools.metalava.model.FieldItem
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
@@ -54,13 +53,14 @@ class CompatibilityCheck(
     /**
      * Request for compatibility checks.
      * [file] represents the signature file to be checked. [apiType] represents which
-     * part of the API should be checked.
-     * If [released] is false the signature file represents the current,
-     * unreleased API level; if it is true, it represents a previously released API
-     * level (different compatibility checks apply; e.g. within a release we can change
-     * our minds about some things that we cannot once something has been released.)
+     * part of the API should be checked, [releaseType] represents what kind of codebase
+     * we are comparing it against.
      */
-    data class CheckRequest(val file: File, val released: Boolean, val apiType: ApiType)
+    data class CheckRequest(val file: File, val apiType: ApiType, val releaseType: ReleaseType) {
+        override fun toString(): String {
+            return "--check-compatibility:${apiType.flagName}:${releaseType.flagName} $file"
+        }
+    }
 
     /** In old signature files, methods inherited from hidden super classes
      * are not included. An example of this is StringBuilder.setLength.
@@ -896,7 +896,7 @@ class CompatibilityCheck(
         item: Item,
         message: String
     ) {
-        if (reporter.report(error, item, message)) {
+        if (reporter.report(error, item, message) && configuration.getSeverity(error) == Severity.ERROR) {
             foundProblems = true
         }
     }
@@ -905,32 +905,26 @@ class CompatibilityCheck(
         fun checkCompatibility(
             codebase: Codebase,
             previous: Codebase,
-            released: Boolean,
+            releaseType: ReleaseType,
             apiType: ApiType,
             base: Codebase? = null
         ) {
             val filter = apiType.getEmitFilter()
             val checker = CompatibilityCheck(filter, previous, apiType, base)
-            val errorConfiguration = if (released) {
-                ErrorConfiguration.releasedCompatibilityCheckConfiguration
-            } else {
-                ErrorConfiguration.currentCompatibilityCheckConfiguration
-            }
-
+            val errorConfiguration = releaseType.getErrorConfiguration()
             val previousConfiguration = configuration
             try {
                 configuration = errorConfiguration
-
                 CodebaseComparator().compare(checker, previous, codebase, filter)
             } finally {
                 configuration = previousConfiguration
             }
 
+            val message = "Aborting: Found compatibility problems checking " +
+                "the ${apiType.displayName} API against the API in ${previous.location}"
+
             if (checker.foundProblems) {
-                throw DriverException(
-                    exitCode = -1,
-                    stderr = "Aborting: Found compatibility problems with --check-compatibility"
-                )
+                throw DriverException(exitCode = -1, stderr = message)
             }
         }
     }

@@ -746,6 +746,7 @@ CompatibilityCheckTest : DriverTest() {
                 src/test/pkg/Parent.java:10: error: Field test.pkg.Parent.field7 has changed 'volatile' qualifier [ChangedVolatile:15]
                 src/test/pkg/Parent.java:11: error: Field test.pkg.Parent.field8 has changed deprecation state true --> false [ChangedDeprecated:24]
                 src/test/pkg/Parent.java:12: error: Field test.pkg.Parent.field9 has changed deprecation state false --> true [ChangedDeprecated:24]
+                src/test/pkg/Parent.java:19: error: Field test.pkg.Parent.field94 has changed value from 1 to 42 [ChangedValue:17]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -760,6 +761,10 @@ CompatibilityCheckTest : DriverTest() {
                     field public int field7;
                     field public deprecated int field8;
                     field public int field9;
+                    field public static final int field91 = 1; // 0x1
+                    field public static final int field92 = 1; // 0x1
+                    field public static final int field93 = 1; // 0x1
+                    field public static final int field94 = 1; // 0x1
                   }
                 }
                 """,
@@ -767,7 +772,7 @@ CompatibilityCheckTest : DriverTest() {
                 java(
                     """
                     package test.pkg;
-
+                    import android.annotation.SuppressLint;
                     public class Parent {
                         public static final int field1 = 1;  // UNCHANGED
                         public static final int field2 = 42; // CHANGED VALUE
@@ -778,10 +783,20 @@ CompatibilityCheckTest : DriverTest() {
                         public volatile int field7 = 7;      // ADDED VOLATILE
                         public int field8 = 8;               // REMOVED DEPRECATED
                         /** @deprecated */ @Deprecated public int field9 = 8;  // ADDED DEPRECATED
+                        @SuppressLint("ChangedValue")
+                        public static final int field91 = 42;// CHANGED VALUE: Suppressed
+                        @SuppressLint("ChangedValue:Field test.pkg.Parent.field92 has changed value from 1 to 42")
+                        public static final int field92 = 42;// CHANGED VALUE: Suppressed with same message
+                        @SuppressLint("ChangedValue: Field test.pkg.Parent.field93 has changed value from 1 to 42")
+                        public static final int field93 = 42;// CHANGED VALUE: Suppressed with same message
+                        @SuppressLint("ChangedValue:Field test.pkg.Parent.field94 has changed value from 10 to 1")
+                        public static final int field94 = 42;// CHANGED VALUE: Suppressed but with different message
                     }
                     """
-                )
-            )
+                ),
+                suppressLintSource
+            ),
+            extraArguments = arrayOf("--hide-package", "android.annotation")
         )
     }
 

@@ -21,10 +21,11 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 
 class TextBackedAnnotationItemTest {
     // Dummy for use in test where we don't need codebase functionality
-    private val dummyCodebase = object : DefaultCodebase() {
+    private val dummyCodebase = object : DefaultCodebase(File("").canonicalFile) {
         override fun supportsDocumentation(): Boolean = false
         override var description: String = ""
         override fun getPackages(): PackageList = unsupported()
