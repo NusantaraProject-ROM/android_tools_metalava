@@ -35,10 +35,9 @@ import org.jetbrains.uast.kotlin.KotlinUField
 class KotlinInteropChecks {
     fun check(codebase: Codebase) {
         codebase.accept(object : ApiVisitor(
-            codebase,
             // Sort by source order such that warnings follow source line number order
-            fieldComparator = FieldItem.comparator,
-            methodComparator = MethodItem.sourceOrderComparator
+            methodComparator = MethodItem.sourceOrderComparator,
+            fieldComparator = FieldItem.comparator
         ) {
             override fun visitMethod(method: MethodItem) {
                 checkMethod(method)
