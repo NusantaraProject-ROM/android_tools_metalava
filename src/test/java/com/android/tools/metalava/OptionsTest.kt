@@ -86,6 +86,8 @@ Extracting Signature Files:
                                          the APIs
 --private-dex-api <file>                 Generate a DEX signature descriptor file listing
                                          the exact private APIs
+--dex-api-mapping <file>                 Generate a DEX signature descriptor along with
+                                         file and line numbers
 --removed-api <file>                     Generate a signature descriptor file for APIs
                                          that have been removed
 --output-kotlin-nulls[=yes|no]           Controls whether nullness annotations should be

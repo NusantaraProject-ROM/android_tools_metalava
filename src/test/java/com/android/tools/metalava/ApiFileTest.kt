@@ -1157,7 +1157,7 @@ class ApiFileTest : DriverTest() {
         // Note also how the "protected" modifier on the interface method gets
         // promoted to public.
         check(
-            checkDoclava1 = true,
+            checkDoclava1 = false,
             compatibilityMode = false,
             outputKotlinStyleNulls = false,
             sourceFiles = *arrayOf(
@@ -1178,7 +1178,7 @@ class ApiFileTest : DriverTest() {
             warnings = """
                 src/test/pkg/Foo.java:6: warning: method test.pkg.Foo.findViewById(int) should not be annotated @Nullable; it should be left unspecified to make it a platform type [ExpectedPlatformType:149]
                 """,
-
+            extraArguments = arrayOf("--warning", "ExpectedPlatformType"),
             api = """
                 package test.pkg {
                   public abstract class Foo {
@@ -2176,6 +2176,12 @@ class ApiFileTest : DriverTest() {
                         public String toString() {
                             return "Child";
                         }
+
+                        /**
+                         * @hide
+                         */
+                        public void hiddenApi() {
+                        }
                     }
                     """
                 ),
@@ -2208,6 +2214,18 @@ class ApiFileTest : DriverTest() {
                 Ltest/pkg/Parent;
                 Ltest/pkg/Parent;-><init>()V
                 Ltest/pkg/Parent;->toString()Ljava/lang/String;
+            """,
+            dexApiMapping = """
+                Ltest/pkg/Child;-><init>()V
+                src/test/pkg/Child.java:2
+                Ltest/pkg/Child;->hiddenApi()V
+                src/test/pkg/Child.java:13
+                Ltest/pkg/Child;->toString()Ljava/lang/String;
+                src/test/pkg/Child.java:4
+                Ltest/pkg/Parent;-><init>()V
+                src/test/pkg/Parent.java:2
+                Ltest/pkg/Parent;->toString()Ljava/lang/String;
+                src/test/pkg/Parent.java:3
             """
         )
     }

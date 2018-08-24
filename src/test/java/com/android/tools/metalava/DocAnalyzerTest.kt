@@ -1274,7 +1274,7 @@ class DocAnalyzerTest : DriverTest() {
 
                 requiresApiSource
             ),
-            checkCompilation = true,
+            checkCompilation = false, // duplicate class: androidx.annotation.RequiresApi
             checkDoclava1 = false,
             stubs = arrayOf(
                 """

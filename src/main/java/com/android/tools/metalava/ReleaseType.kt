@@ -31,31 +31,19 @@ enum class ReleaseType(val flagName: String, val displayName: String = flagName)
          * "-error 25 -error 26 -error 27",
          */
         override fun getErrorConfiguration(): ErrorConfiguration {
-            return ErrorConfiguration().apply {
-                error(Errors.ADDED_PACKAGE)
+            return super.getErrorConfiguration().apply {
                 error(Errors.ADDED_CLASS)
-                error(Errors.ADDED_METHOD)
                 error(Errors.ADDED_FIELD)
+                error(Errors.ADDED_FINAL_UNINSTANTIABLE)
                 error(Errors.ADDED_INTERFACE)
-                error(Errors.REMOVED_PACKAGE)
-                error(Errors.REMOVED_CLASS)
-                error(Errors.REMOVED_METHOD)
-                error(Errors.REMOVED_FIELD)
-                error(Errors.REMOVED_INTERFACE)
-                error(Errors.CHANGED_STATIC)
-                error(Errors.ADDED_FINAL)
-                error(Errors.CHANGED_TRANSIENT)
-                error(Errors.CHANGED_VOLATILE)
-                error(Errors.CHANGED_TYPE)
-                error(Errors.CHANGED_VALUE)
-                error(Errors.CHANGED_SUPERCLASS)
-                error(Errors.CHANGED_SCOPE)
+                error(Errors.ADDED_METHOD)
+                error(Errors.ADDED_PACKAGE)
                 error(Errors.CHANGED_ABSTRACT)
-                error(Errors.CHANGED_THROWS)
                 error(Errors.CHANGED_CLASS)
                 error(Errors.CHANGED_DEPRECATED)
+                error(Errors.CHANGED_SCOPE)
                 error(Errors.CHANGED_SYNCHRONIZED)
-                error(Errors.ADDED_FINAL_UNINSTANTIABLE)
+                error(Errors.CHANGED_THROWS)
                 error(Errors.REMOVED_FINAL)
             }
         }
@@ -71,35 +59,38 @@ enum class ReleaseType(val flagName: String, val displayName: String = flagName)
          * "-error 16 -error 17 -error 18 -error 31",
          */
         override fun getErrorConfiguration(): ErrorConfiguration {
-            return ErrorConfiguration().apply {
-                hide(Errors.ADDED_PACKAGE)
+            return super.getErrorConfiguration().apply {
+                error(Errors.ADDED_ABSTRACT_METHOD)
                 hide(Errors.ADDED_CLASS)
-                hide(Errors.ADDED_METHOD)
                 hide(Errors.ADDED_FIELD)
+                hide(Errors.ADDED_FINAL_UNINSTANTIABLE)
                 hide(Errors.ADDED_INTERFACE)
+                hide(Errors.ADDED_METHOD)
+                hide(Errors.ADDED_PACKAGE)
                 hide(Errors.CHANGED_DEPRECATED)
                 hide(Errors.CHANGED_SYNCHRONIZED)
-                hide(Errors.ADDED_FINAL_UNINSTANTIABLE)
                 hide(Errors.REMOVED_FINAL)
-                error(Errors.REMOVED_PACKAGE)
-                error(Errors.REMOVED_CLASS)
-                error(Errors.REMOVED_METHOD)
-                error(Errors.REMOVED_FIELD)
-                error(Errors.REMOVED_INTERFACE)
-                error(Errors.CHANGED_STATIC)
-                error(Errors.ADDED_FINAL)
-                error(Errors.CHANGED_TRANSIENT)
-                error(Errors.CHANGED_VOLATILE)
-                error(Errors.CHANGED_TYPE)
-                error(Errors.CHANGED_VALUE)
-                error(Errors.CHANGED_SUPERCLASS)
-                error(Errors.ADDED_ABSTRACT_METHOD)
             }
         }
     };
 
     /** Returns the error configuration to use for the given release type */
-    abstract fun getErrorConfiguration(): ErrorConfiguration
+    open fun getErrorConfiguration(): ErrorConfiguration {
+        return ErrorConfiguration().apply {
+            error(Errors.ADDED_FINAL)
+            error(Errors.CHANGED_STATIC)
+            error(Errors.CHANGED_SUPERCLASS)
+            error(Errors.CHANGED_TRANSIENT)
+            error(Errors.CHANGED_TYPE)
+            error(Errors.CHANGED_VALUE)
+            error(Errors.CHANGED_VOLATILE)
+            error(Errors.REMOVED_CLASS)
+            error(Errors.REMOVED_FIELD)
+            error(Errors.REMOVED_INTERFACE)
+            error(Errors.REMOVED_METHOD)
+            error(Errors.REMOVED_PACKAGE)
+        }
+    }
 
     override fun toString(): String = displayName
 }

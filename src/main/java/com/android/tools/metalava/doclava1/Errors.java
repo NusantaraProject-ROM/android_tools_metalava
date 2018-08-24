@@ -207,7 +207,7 @@ public class Errors {
     public static final Error ANNOTATION_EXTRACTION = new Error(146, ERROR);
     public static final Error SUPERFLUOUS_PREFIX = new Error(147, WARNING);
     public static final Error HIDDEN_TYPEDEF_CONSTANT = new Error(148, ERROR);
-    public static final Error EXPECTED_PLATFORM_TYPE = new Error(149, WARNING);
+    public static final Error EXPECTED_PLATFORM_TYPE = new Error(149, HIDDEN);
     public static final Error INTERNAL_ERROR = new Error(150, ERROR);
     public static final Error RETURNING_UNEXPECTED_CONSTANT = new Error(151, WARNING);
     public static final Error DEPRECATED_OPTION = new Error(152, WARNING);

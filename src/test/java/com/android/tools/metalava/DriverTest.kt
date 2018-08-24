@@ -30,6 +30,7 @@ import com.android.tools.lint.checks.infrastructure.TestFile
 import com.android.tools.lint.checks.infrastructure.TestFiles
 import com.android.tools.lint.checks.infrastructure.TestFiles.java
 import com.android.tools.lint.checks.infrastructure.stripComments
+import com.android.tools.metalava.doclava1.ApiFile
 import com.android.tools.metalava.doclava1.Errors
 import com.android.utils.FileUtils
 import com.android.utils.SdkUtils
@@ -74,7 +75,7 @@ abstract class DriverTest {
         val sw = StringWriter()
         val writer = PrintWriter(sw)
         if (!com.android.tools.metalava.run(arrayOf(*args), writer, writer)) {
-            val actualFail = sw.toString().trim().replace(temporaryFolder.root.path, "TESTROOT")
+            val actualFail = cleanupString(sw.toString(), null)
             if (expectedFail != actualFail.replace(".", "").trim()) {
                 if (expectedFail == "Aborting: Found compatibility problems with --check-compatibility" &&
                     actualFail.startsWith("Aborting: Found compatibility problems checking the ")
@@ -144,6 +145,8 @@ abstract class DriverTest {
         privateDexApi: String? = null,
         /** The DEX API (corresponds to --dex-api) */
         dexApi: String? = null,
+        /** The DEX mapping API (corresponds to --dex-api-mapping) */
+        dexApiMapping: String? = null,
         /** Expected stubs (corresponds to --stubs) */
         @Language("JAVA") stubs: Array<String> = emptyArray(),
         /** Stub source file list generated */
@@ -567,6 +570,14 @@ abstract class DriverTest {
             emptyArray()
         }
 
+        var dexApiMappingFile: File? = null
+        val dexApiMappingArgs = if (dexApiMapping != null) {
+            dexApiMappingFile = temporaryFolder.newFile("api-mapping.txt")
+            arrayOf("--dex-api-mapping", dexApiMappingFile.path)
+        } else {
+            emptyArray()
+        }
+
         var privateDexApiFile: File? = null
         val privateDexApiArgs = if (privateDexApi != null) {
             privateDexApiFile = temporaryFolder.newFile("private-dex.txt")
@@ -702,6 +713,7 @@ abstract class DriverTest {
             *privateApiArgs,
             *dexApiArgs,
             *privateDexApiArgs,
+            *dexApiMappingArgs,
             *stubsArgs,
             *stubsSourceListArgs,
             "--compatible-output=${if (compatibilityMode) "yes" else "no"}",
@@ -743,6 +755,8 @@ abstract class DriverTest {
             assertTrue("${apiFile.path} does not exist even though --api was used", apiFile.exists())
             val expectedText = readFile(apiFile, stripBlankLines, trim)
             assertEquals(stripComments(api, stripLineComments = false).trimIndent(), expectedText)
+            // Make sure we can read back the files we write
+            ApiFile.parseApi(apiFile, options.outputKotlinStyleNulls, true)
         }
 
         if (removedApi != null && removedApiFile != null) {
@@ -752,6 +766,8 @@ abstract class DriverTest {
             )
             val expectedText = readFile(removedApiFile, stripBlankLines, trim)
             assertEquals(stripComments(removedApi, stripLineComments = false).trimIndent(), expectedText)
+            // Make sure we can read back the files we write
+            ApiFile.parseApi(removedApiFile, options.outputKotlinStyleNulls, true)
         }
 
         if (removedDexApi != null && removedDexApiFile != null) {
@@ -770,6 +786,8 @@ abstract class DriverTest {
             )
             val expectedText = readFile(exactApiFile, stripBlankLines, trim)
             assertEquals(stripComments(exactApi, stripLineComments = false).trimIndent(), expectedText)
+            // Make sure we can read back the files we write
+            ApiFile.parseApi(exactApiFile, options.outputKotlinStyleNulls, true)
         }
 
         if (privateApi != null && privateApiFile != null) {
@@ -779,6 +797,8 @@ abstract class DriverTest {
             )
             val expectedText = readFile(privateApiFile, stripBlankLines, trim)
             assertEquals(stripComments(privateApi, stripLineComments = false).trimIndent(), expectedText)
+            // Make sure we can read back the files we write
+            ApiFile.parseApi(privateApiFile, options.outputKotlinStyleNulls, true)
         }
 
         if (dexApi != null && dexApiFile != null) {
@@ -797,6 +817,15 @@ abstract class DriverTest {
             )
             val expectedText = readFile(privateDexApiFile, stripBlankLines, trim)
             assertEquals(stripComments(privateDexApi, stripLineComments = false).trimIndent(), expectedText)
+        }
+
+        if (dexApiMapping != null && dexApiMappingFile != null) {
+            assertTrue(
+                "${dexApiMappingFile.path} does not exist even though --dex-api-maping was used",
+                dexApiMappingFile.exists()
+            )
+            val expectedText = readFile(dexApiMappingFile, stripBlankLines, trim)
+            assertEquals(stripComments(dexApiMapping, stripLineComments = false).trimIndent(), expectedText)
         }
 
         if (proguard != null && proguardFile != null) {
@@ -952,7 +981,8 @@ abstract class DriverTest {
                 stripBlankLines = stripBlankLines,
                 showAnnotationArgs = showAnnotationArguments,
                 stubImportPackages = importedPackages,
-                showUnannotated = showUnannotated
+                showUnannotated = showUnannotated,
+                project = project
             )
         }
 
@@ -973,7 +1003,8 @@ abstract class DriverTest {
                 stripBlankLines = stripBlankLines,
                 showAnnotationArgs = showAnnotationArguments,
                 stubImportPackages = importedPackages,
-                showUnannotated = showUnannotated
+                showUnannotated = showUnannotated,
+                project = project
             )
         }
 
@@ -994,7 +1025,8 @@ abstract class DriverTest {
                 stripBlankLines = stripBlankLines,
                 showAnnotationArgs = showAnnotationArguments,
                 stubImportPackages = importedPackages,
-                showUnannotated = showUnannotated
+                showUnannotated = showUnannotated,
+                project = project
             )
         }
 
@@ -1014,7 +1046,8 @@ abstract class DriverTest {
                 stripBlankLines = stripBlankLines,
                 showAnnotationArgs = showAnnotationArguments,
                 stubImportPackages = importedPackages,
-                showUnannotated = showUnannotated
+                showUnannotated = showUnannotated,
+                project = project
             )
         }
 
@@ -1033,7 +1066,8 @@ abstract class DriverTest {
                 stripBlankLines = stripBlankLines,
                 showAnnotationArgs = showAnnotationArguments,
                 stubImportPackages = importedPackages,
-                showUnannotated = showUnannotated
+                showUnannotated = showUnannotated,
+                project = project
             )
         }
 
@@ -1056,7 +1090,8 @@ abstract class DriverTest {
                 stubImportPackages = importedPackages,
                 // Workaround: -privateApi is a no-op if you don't also provide -api
                 extraArguments = arrayOf("-api", File(privateApiFile.parentFile, "dummy-api.txt").path),
-                showUnannotated = showUnannotated
+                showUnannotated = showUnannotated,
+                project = project
             )
         }
 
@@ -1079,7 +1114,8 @@ abstract class DriverTest {
                 stubImportPackages = importedPackages,
                 // Workaround: -privateDexApi is a no-op if you don't also provide -api
                 extraArguments = arrayOf("-api", File(privateDexApiFile.parentFile, "dummy-api.txt").path),
-                showUnannotated = showUnannotated
+                showUnannotated = showUnannotated,
+                project = project
             )
         }
 
@@ -1102,7 +1138,33 @@ abstract class DriverTest {
                 stubImportPackages = importedPackages,
                 // Workaround: -dexApi is a no-op if you don't also provide -api
                 extraArguments = arrayOf("-api", File(dexApiFile.parentFile, "dummy-api.txt").path),
-                showUnannotated = showUnannotated
+                showUnannotated = showUnannotated,
+                project = project
+            )
+        }
+
+        if (CHECK_OLD_DOCLAVA_TOO && checkDoclava1 && signatureSource == null &&
+            dexApiMapping != null && dexApiMappingFile != null
+        ) {
+            dexApiMappingFile.delete()
+            checkSignaturesWithDoclava1(
+                api = dexApiMapping,
+                argument = "-apiMapping",
+                output = dexApiMappingFile,
+                expected = dexApiMappingFile,
+                sourceList = sourceList,
+                sourcePath = sourcePath,
+                packages = packages,
+                androidJar = androidJar,
+                trim = trim,
+                stripBlankLines = stripBlankLines,
+                showAnnotationArgs = showAnnotationArguments,
+                stubImportPackages = importedPackages,
+                // Workaround: -apiMapping is a no-op if you don't also provide -api
+                extraArguments = arrayOf("-api", File(dexApiMappingFile.parentFile, "dummy-api.txt").path),
+                showUnannotated = showUnannotated,
+                project = project,
+                skipTestRoot = true
             )
         }
     }
@@ -1127,7 +1189,7 @@ abstract class DriverTest {
     }
 
     /** Hides path prefixes from /tmp folders used by the testing infrastructure */
-    private fun cleanupString(string: String, project: File?): String {
+    private fun cleanupString(string: String, project: File?, dropTestRoot: Boolean = false): String {
         var s = string
 
         if (project != null) {
@@ -1143,6 +1205,10 @@ abstract class DriverTest {
         }
 
         s = s.trim()
+
+        if (dropTestRoot) {
+            s = s.replace("TESTROOT/", "")
+        }
 
         return s
     }
@@ -1161,7 +1227,9 @@ abstract class DriverTest {
         showAnnotationArgs: Array<String> = emptyArray(),
         stubImportPackages: List<String>,
         extraArguments: Array<String> = emptyArray(),
-        showUnannotated: Boolean
+        showUnannotated: Boolean,
+        project: File,
+        skipTestRoot: Boolean = false
     ) {
         // We have to run Doclava out of process because running it in process
         // (with Doclava1 jars on the test classpath) only works once; it leaves
@@ -1206,6 +1274,11 @@ abstract class DriverTest {
                    classifier = null
                    version = null
                 }
+
+                and finally
+                $ cp ../../out/host/gradle/external/jdiff/build/libs/doclava-*-SNAPSHOT-full-SNAPSHOT.jar \
+                     testlibs/doclava-1.0.6-full-SNAPSHOT.jar
+
              */
             fail("Couldn't find $docLava1: Is the pwd set to the root of the metalava source code?")
         }
@@ -1287,8 +1360,8 @@ abstract class DriverTest {
         // ..and finally from your Main entry point take this array of strings
         // and call Doclava.main(newArgs)
 
-        val expectedText = readFile(expected, stripBlankLines, trim)
-        assertEquals(stripComments(api, stripLineComments = false).trimIndent(), expectedText)
+        val actualText = cleanupString(readFile(expected, stripBlankLines, trim), project, skipTestRoot)
+        assertEquals(stripComments(api, stripLineComments = false).trimIndent(), actualText)
     }
 
     private fun runCommand(executable: String, args: Array<String>): Boolean {
