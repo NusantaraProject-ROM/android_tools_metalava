@@ -60,7 +60,7 @@ interface Item {
     var removed: Boolean
 
     /** True if this element has been marked deprecated */
-    val deprecated: Boolean
+    var deprecated: Boolean
 
     /** True if this element is only intended for documentation */
     var docOnly: Boolean
