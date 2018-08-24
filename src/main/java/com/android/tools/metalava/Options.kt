@@ -116,6 +116,7 @@ private const val ARG_INCLUDE_ANNOTATION_CLASSES = "--include-annotation-classes
 private const val ARG_REWRITE_ANNOTATIONS = "--rewrite-annotations"
 private const val ARG_INCLUDE_SOURCE_RETENTION = "--include-source-retention"
 private const val ARG_INCLUDE_SIG_VERSION = "--include-signature-version"
+const val ARG_DEX_API_MAPPING = "--dex-api-mapping"
 const val ARG_GENERATE_DOCUMENTATION = "--generate-documentation"
 
 class Options(
@@ -259,8 +260,11 @@ class Options(
     /** If set, a file to write the private API file to. Corresponds to the --private-api/-privateApi flag. */
     var privateApiFile: File? = null
 
-    /** If set, a file to write the DEX signatures to. Corresponds to --dex-api. */
+    /** If set, a file to write the DEX signatures to. Corresponds to [ARG_DEX_API]. */
     var dexApiFile: File? = null
+
+    /** If set, a file to write all DEX signatures and file locations to. Corresponds to [ARG_DEX_API_MAPPING]. */
+    var dexApiMappingFile: File? = null
 
     /** If set, a file to write the private DEX signatures to. Corresponds to --private-dex-api. */
     var privateDexApiFile: File? = null
@@ -484,6 +488,7 @@ class Options(
 
                 ARG_API, "-api" -> apiFile = stringToNewFile(getValue(args, ++index))
                 ARG_DEX_API, "-dexApi" -> dexApiFile = stringToNewFile(getValue(args, ++index))
+                ARG_DEX_API_MAPPING, "-apiMapping" -> dexApiMappingFile = stringToNewFile(getValue(args, ++index))
 
                 ARG_PRIVATE_API, "-privateApi" -> privateApiFile = stringToNewFile(getValue(args, ++index))
                 ARG_PRIVATE_DEX_API, "-privateDexApi" -> privateDexApiFile = stringToNewFile(getValue(args, ++index))
@@ -818,6 +823,13 @@ class Options(
 
                 "--temp-folder" -> {
                     tempFolder = stringToNewOrExistingDir(getValue(args, ++index))
+                }
+
+                // Option only meant for tests (not documented); doesn't work in all cases (to do that we'd
+                // need JNA to call libc)
+                "--pwd" -> {
+                    val pwd = stringToExistingDir(getValue(args, ++index)).absoluteFile
+                    System.setProperty("user.dir", pwd.path)
                 }
 
                 // Unimplemented doclava1 flags (2 arguments)
@@ -1356,6 +1368,7 @@ class Options(
             "$ARG_PRIVATE_API <file>", "Generate a signature descriptor file listing the exact private APIs",
             "$ARG_DEX_API <file>", "Generate a DEX signature descriptor file listing the APIs",
             "$ARG_PRIVATE_DEX_API <file>", "Generate a DEX signature descriptor file listing the exact private APIs",
+            "$ARG_DEX_API_MAPPING <file>", "Generate a DEX signature descriptor along with file and line numbers",
             "$ARG_REMOVED_API <file>", "Generate a signature descriptor file for APIs that have been removed",
             "$ARG_OUTPUT_KOTLIN_NULLS[=yes|no]", "Controls whether nullness annotations should be formatted as " +
                 "in Kotlin (with \"?\" for nullable types, \"\" for non nullable types, and \"!\" for unknown. " +

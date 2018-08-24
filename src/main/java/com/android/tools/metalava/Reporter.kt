@@ -26,7 +26,6 @@ import com.android.tools.metalava.doclava1.Errors
 import com.android.tools.metalava.model.AnnotationArrayAttributeValue
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.configuration
-import com.android.tools.metalava.model.psi.PsiConstructorItem
 import com.android.tools.metalava.model.psi.PsiItem
 import com.android.tools.metalava.model.text.TextItem
 import com.intellij.openapi.util.TextRange
@@ -35,6 +34,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.impl.light.LightElement
 import java.io.File
 
@@ -102,18 +102,7 @@ open class Reporter(private val rootFolder: File? = null) {
         val severity = configuration.getSeverity(id)
         return when (item) {
             is PsiItem -> {
-                var psi = item.psi()
-
-                // If no PSI element, is this a synthetic/implicit constructor? If so
-                // grab the parent class' PSI element instead for file/location purposes
-
-                if (item is PsiConstructorItem && item.implicitConstructor &&
-                    psi?.containingFile?.virtualFile == null
-                ) {
-                    psi = item.containingClass().psi()
-                }
-
-                report(severity, psi, message, id)
+                report(severity, item.psi(), message, id)
             }
             is TextItem -> report(severity, (item as? TextItem)?.position.toString(), message, id)
             else -> report(severity, "<unknown location>", message, id)
@@ -129,12 +118,12 @@ open class Reporter(private val rootFolder: File? = null) {
         item ?: return false
 
         if (severity == LINT || severity == WARNING || severity == ERROR) {
-            val id1 = "Doclava${id.code}"
-            val id2 = id.name
             val annotation = item.modifiers.findAnnotation("android.annotation.SuppressLint")
             if (annotation != null) {
                 val attribute = annotation.findAttribute(ATTR_VALUE)
                 if (attribute != null) {
+                    val id1 = "Doclava${id.code}"
+                    val id2 = id.name
                     val value = attribute.value
                     if (value is AnnotationArrayAttributeValue) {
                         // Example: @SuppressLint({"DocLava1", "DocLava2"})
@@ -193,7 +182,7 @@ open class Reporter(private val rootFolder: File? = null) {
         return range
     }
 
-    private fun elementToLocation(element: PsiElement?): String? {
+    fun elementToLocation(element: PsiElement?, includeDocs: Boolean = true): String? {
         element ?: return null
         val psiFile = element.containingFile ?: return null
         val virtualFile = psiFile.virtualFile ?: return null
@@ -207,7 +196,14 @@ open class Reporter(private val rootFolder: File? = null) {
                 file.path
             }
 
-        val range = getTextRange(element)
+        // Skip doc comments for classes and methods; we usually want to point right to
+        // the class/method definition
+        val rangeElement = if (!includeDocs && element is PsiModifierListOwner) {
+            element.modifierList ?: element
+        } else
+            element
+
+        val range = getTextRange(rangeElement)
         return if (range == null) {
             // No source offsets, just use filename
             path
