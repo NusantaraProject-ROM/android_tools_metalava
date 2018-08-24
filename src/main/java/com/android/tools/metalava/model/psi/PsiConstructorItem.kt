@@ -91,6 +91,16 @@ class PsiConstructorItem(
         return _superMethods!!
     }
 
+    override fun psi(): PsiElement? {
+        // If no PSI element, is this a synthetic/implicit constructor? If so
+        // grab the parent class' PSI element instead for file/location purposes
+        if (implicitConstructor && element.containingFile?.virtualFile == null) {
+            return containingClass().psi()
+        }
+
+        return element
+    }
+
     companion object {
         fun create(
             codebase: PsiBasedCodebase,

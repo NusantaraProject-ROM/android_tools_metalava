@@ -74,6 +74,21 @@ enum class ApiType(val flagName: String, val displayName: String = flagName) {
         override fun getReferenceFilter(): Predicate<Item> {
             return Predicate { true }
         }
+    },
+
+    /** Everything */
+    ALL("all", "all") {
+        override fun getOptionFile(): File? {
+            return options.privateApiFile
+        }
+
+        override fun getEmitFilter(): Predicate<Item> {
+            return Predicate { it.emit }
+        }
+
+        override fun getReferenceFilter(): Predicate<Item> {
+            return Predicate { true }
+        }
     };
 
     /** Returns the user-configured file where the API has been written to, if any */

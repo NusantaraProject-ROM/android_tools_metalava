@@ -292,6 +292,18 @@ private fun processFlags() {
         ) { printWriter -> DexApiWriter(printWriter, dexApiEmit, apiReference) }
     }
 
+    options.dexApiMappingFile?.let { apiFile ->
+        val apiType = ApiType.ALL
+        val apiEmit = apiType.getEmitFilter()
+        val apiReference = apiType.getReferenceFilter()
+
+        createReportFile(
+            codebase, apiFile, "DEX API Mapping"
+        ) { printWriter -> DexApiWriter(printWriter, apiEmit, apiReference,
+            membersOnly = true,
+            includePositions = true) }
+    }
+
     options.removedApiFile?.let { apiFile ->
         val unfiltered = codebase.original ?: codebase
 
