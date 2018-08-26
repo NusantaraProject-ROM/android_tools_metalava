@@ -131,6 +131,8 @@ abstract class DriverTest {
     protected fun check(
         /** The source files to pass to the analyzer */
         vararg sourceFiles: TestFile,
+        /** Any jars to add to the class path */
+        classpath: Array<TestFile>? = null,
         /** The API signature content (corresponds to --api) */
         api: String? = null,
         /** The exact API signature content (corresponds to --exact-api) */
@@ -319,6 +321,17 @@ abstract class DriverTest {
             } else {
                 sourceFiles.asSequence().map { File(project, it.targetPath).path }.toList().toTypedArray()
             }
+
+        val classpathArgs: Array<String> = if (classpath != null) {
+            val classpathString = classpath
+                .map { it.createFile(project) }
+                .map { it.path }
+                .joinToString(separator = File.pathSeparator) { it }
+
+            arrayOf("--classpath", classpathString)
+        } else {
+            emptyArray()
+        }
 
         val reportedWarnings = StringBuilder()
         reporter = object : Reporter(project) {
@@ -705,6 +718,7 @@ abstract class DriverTest {
             sourcePath,
             "--classpath",
             androidJar.path,
+            *classpathArgs,
             *kotlinPathArgs,
             *removedArgs,
             *removedDexArgs,

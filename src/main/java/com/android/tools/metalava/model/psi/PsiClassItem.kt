@@ -217,6 +217,16 @@ open class PsiClassItem(
             inner.finishInitialization()
         }
 
+        // Delay initializing super classes and implemented interfaces for all inner classes: they may refer
+        // to *other* inner classes in this class, which would lead to an attempt to construct
+        // recursively. Instead, we wait until all the inner classes have been constructed, and at
+        // the very end, initialize super classes and interfaces recursively.
+        if (psiClass.containingClass == null) {
+            initializeSuperClasses()
+        }
+    }
+
+    private fun initializeSuperClasses() {
         val extendsListTypes = psiClass.extendsListTypes
         if (!extendsListTypes.isEmpty()) {
             val type = PsiTypeItem.create(codebase, extendsListTypes[0])
@@ -246,6 +256,10 @@ open class PsiClassItem(
             interfaces.mapTo(result) { create(it) }
             result
         })
+
+        for (inner in innerClasses) {
+            inner.initializeSuperClasses()
+        }
     }
 
     protected fun initialize(
