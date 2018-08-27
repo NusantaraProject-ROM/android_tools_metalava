@@ -553,6 +553,93 @@ class ApiFileTest : DriverTest() {
     }
 
     @Test
+    fun `Known nullness`() {
+        // Don't emit platform types for some unannotated elements that we know the
+        // nullness for: annotation type members, equals-parameters, initialized constants, etc.
+        check(
+            compatibilityMode = false,
+            outputKotlinStyleNulls = true,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    // Platform nullability Pair in Java
+                    package test;
+
+                    import androidx.annotation.NonNull;
+
+                    public class MyClass {
+                        public static final String MY_CONSTANT1 = "constant"; // Not nullable
+                        public final String MY_CONSTANT2 = "constant"; // Not nullable
+                        public String MY_CONSTANT3 = "constant"; // Unknown
+
+                        /** @deprecated */
+                        @Deprecated
+                        @Override
+                        public boolean equals(
+                            Object parameter  // nullable
+                        ) {
+                            return super.equals(parameter);
+                        }
+
+                        /** @deprecated */
+                        @Deprecated
+                        @Override // Not nullable
+                        public String toString() {
+                            return super.toString();
+                        }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+
+                    import static java.lang.annotation.ElementType.*;
+                    import java.lang.annotation.*;
+                    public @interface MyAnnotation {
+                        String[] value(); // Not nullable
+                    }
+                    """
+                ).indented(),
+                java(
+                    """
+                    package test.pkg;
+                    @SuppressWarnings("ALL")
+                    public enum Foo {
+                        A, B;
+                    }
+                    """
+                ),
+                androidxNonNullSource,
+                androidxNullableSource
+            ),
+            api = """
+                package test {
+                  public class MyClass {
+                    ctor public MyClass();
+                    method @Deprecated public boolean equals(Object?);
+                    method @Deprecated public String toString();
+                    field public static final String MY_CONSTANT1 = "constant";
+                    field public final String MY_CONSTANT2 = "constant";
+                    field public String! MY_CONSTANT3;
+                  }
+                }
+                package test.pkg {
+                  public enum Foo {
+                    enum_constant public static final test.pkg.Foo A;
+                    enum_constant public static final test.pkg.Foo B;
+                  }
+                  @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS) public @interface MyAnnotation {
+                    method public abstract String[] value();
+                  }
+                }
+                """,
+            extraArguments = arrayOf("--hide-package", "androidx.annotation"),
+            checkDoclava1 = false /* doesn't support Kotlin... */
+        )
+    }
+
+    @Test
     fun `JvmOverloads`() {
         // Regression test for https://github.com/android/android-ktx/issues/366
         check(
@@ -824,8 +911,8 @@ class ApiFileTest : DriverTest() {
             api = """
                 package test.pkg {
                   public enum Foo {
-                    enum_constant public static final test.pkg.Foo! A;
-                    enum_constant public static final test.pkg.Foo! B;
+                    enum_constant public static final test.pkg.Foo A;
+                    enum_constant public static final test.pkg.Foo B;
                   }
                 }
                 """
@@ -978,12 +1065,12 @@ class ApiFileTest : DriverTest() {
             api = """
                 package android.annotation {
                   @java.lang.annotation.Target({java.lang.annotation.ElementType.TYPE, java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD, java.lang.annotation.ElementType.PARAMETER, java.lang.annotation.ElementType.CONSTRUCTOR, java.lang.annotation.ElementType.LOCAL_VARIABLE}) @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS) public @interface SuppressLint {
-                    method public abstract String[]! value();
+                    method public abstract String[] value();
                   }
                 }
                 package test.pkg {
                   @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS) public @interface Foo {
-                    method public abstract String! value();
+                    method public abstract String value();
                   }
                 }
                 """
@@ -1813,7 +1900,7 @@ class ApiFileTest : DriverTest() {
                     ctor public MyClass();
                     method public void method();
                     method public void other();
-                    field public static final String! CONSTANT = "MyConstant";
+                    field public static final String CONSTANT = "MyConstant";
                   }
                   public interface OtherInterface {
                     method public void other();

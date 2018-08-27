@@ -3155,7 +3155,7 @@ class StubsTest : DriverTest() {
             api = """
                 package test.pkg {
                   @java.lang.annotation.Target({java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD}) @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME) public @interface ExportedProperty {
-                    method public abstract String! category() default "";
+                    method public abstract String category() default "";
                     method public abstract float floating() default 1.0f;
                     method public abstract boolean formatToHexString() default false;
                     method public abstract double from() default java.lang.Double.NEGATIVE_INFINITY;
@@ -3165,16 +3165,16 @@ class StubsTest : DriverTest() {
                     method public abstract double large_floating() default 1.0;
                     method public abstract long large_integer() default 1L;
                     method public abstract char letter() default 'a';
-                    method public abstract char[]! letters1() default {};
-                    method public abstract char[]! letters2() default {'a', 'b', 'c'};
+                    method public abstract char[] letters1() default {};
+                    method public abstract char[] letters2() default {'a', 'b', 'c'};
                     method public abstract int math() default 7;
                     method public abstract short medium() default 1;
-                    method public abstract Class<? extends java.lang.Number>! myCls() default java.lang.Integer.class;
-                    method public abstract String! prefix() default "";
+                    method public abstract Class<? extends java.lang.Number> myCls() default java.lang.Integer.class;
+                    method public abstract String prefix() default "";
                     method public abstract boolean resolveId() default false;
                     method public abstract byte small() default 1;
                     method @test.pkg.ExportedProperty.InnerAnnotation public abstract int unit() default test.pkg.ExportedProperty.PX;
-                    method public abstract test.pkg.ExportedProperty.InnerAnnotation! value() default @test.pkg.ExportedProperty.InnerAnnotation;
+                    method public abstract test.pkg.ExportedProperty.InnerAnnotation value() default @test.pkg.ExportedProperty.InnerAnnotation;
                     field public static final int DP = 0; // 0x0
                     field public static final int PX = 1; // 0x1
                     field public static final int SP = 2; // 0x2

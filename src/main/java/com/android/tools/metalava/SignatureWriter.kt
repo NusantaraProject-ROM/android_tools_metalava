@@ -21,6 +21,7 @@ import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.ConstructorItem
 import com.android.tools.metalava.model.FieldItem
 import com.android.tools.metalava.model.Item
+import com.android.tools.metalava.model.MemberItem
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.ModifierList
 import com.android.tools.metalava.model.PackageItem
@@ -344,11 +345,34 @@ class SignatureWriter(
 
         if (options.outputKotlinStyleNulls && !type.primitive) {
             var nullable: Boolean? = null
-            for (annotation in modifiers.annotations()) {
-                if (annotation.isNullable()) {
-                    nullable = true
-                } else if (annotation.isNonNull()) {
-                    nullable = false
+
+            // Constant field not initialized to null?
+            if (item is FieldItem &&
+                (item.isEnumConstant() || item.modifiers.isFinal() && item.initialValue(false) != null)) {
+                // Assigned to constant: not nullable
+                nullable = false
+            }
+
+            // Annotation type members cannot be null
+            if (item is MemberItem && item.containingClass().isAnnotationType()) {
+                nullable = false
+            }
+
+            // Equals and toString have known nullness
+            if (item is MethodItem && item.name() == "toString" && item.parameters().isEmpty()) {
+                nullable = false
+            } else if (item is ParameterItem && item.containingMethod().name() == "equals" &&
+                item.containingMethod().parameters().size == 1) {
+                nullable = true
+            }
+
+            if (nullable == null) {
+                for (annotation in modifiers.annotations()) {
+                    if (annotation.isNullable()) {
+                        nullable = true
+                    } else if (annotation.isNonNull()) {
+                        nullable = false
+                    }
                 }
             }
             when (nullable) {
