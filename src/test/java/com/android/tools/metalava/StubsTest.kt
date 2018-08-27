@@ -269,7 +269,7 @@ class StubsTest : DriverTest() {
                     package test.pkg;
                     @SuppressWarnings("ALL")
                     public enum Foo {
-                        A, B;
+                        A, /** @deprecated */ @Deprecated B;
                     }
                     """
                 )
@@ -279,6 +279,8 @@ class StubsTest : DriverTest() {
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public enum Foo {
                 A,
+                /** @deprecated */
+                @Deprecated
                 B;
                 }
                 """

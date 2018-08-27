@@ -396,6 +396,9 @@ class Options(
      */
     var omitLocations = false
 
+    /** Directory to write signature files to, if any. */
+    var androidJarSignatureFiles: File? = null
+
     /**
      * The language level to use for Java files, set with [ARG_JAVA_SOURCE]
      */
@@ -776,32 +779,12 @@ class Options(
                     artifactRegistrations.register(artifactId, descriptor)
                 }
 
-                "--noop", "--no-op" -> {
-                }
-
-                // Doclava1 flag: Already the behavior in metalava
-                "-keepstubcomments" -> {
-                }
-
-                // Unimplemented doclava1 flags (no arguments)
-                "-quiet",
-                "-yamlV2" -> {
-                    unimplemented(arg)
-                }
-
-                "-android" -> { // partially implemented: Pick up the color hint, but there may be other implications
-                    color = true
-                    unimplemented(arg)
-                }
-
-                "-stubsourceonly" -> {
-                    /* noop */
-                }
-
-                // Unimplemented doclava1 flags (1 argument)
-                "-d" -> {
-                    unimplemented(arg)
-                    index++
+                "--write-android-jar-signatures" -> {
+                    val root = stringToExistingDir(getValue(args, ++index))
+                    if (!File(root, "prebuilts/sdk").isDirectory) {
+                        throw DriverException("$androidJarSignatureFiles does not point to an Android source tree")
+                    }
+                    androidJarSignatureFiles = root
                 }
 
                 "-encoding" -> {
@@ -830,6 +813,34 @@ class Options(
                 "--pwd" -> {
                     val pwd = stringToExistingDir(getValue(args, ++index)).absoluteFile
                     System.setProperty("user.dir", pwd.path)
+                }
+
+                "--noop", "--no-op" -> {
+                }
+
+                // Doclava1 flag: Already the behavior in metalava
+                "-keepstubcomments" -> {
+                }
+
+                // Unimplemented doclava1 flags (no arguments)
+                "-quiet",
+                "-yamlV2" -> {
+                    unimplemented(arg)
+                }
+
+                "-android" -> { // partially implemented: Pick up the color hint, but there may be other implications
+                    color = true
+                    unimplemented(arg)
+                }
+
+                "-stubsourceonly" -> {
+                    /* noop */
+                }
+
+                // Unimplemented doclava1 flags (1 argument)
+                "-d" -> {
+                    unimplemented(arg)
+                    index++
                 }
 
                 // Unimplemented doclava1 flags (2 arguments)
@@ -1024,7 +1035,7 @@ class Options(
         }
 
         val apiLevelFiles = mutableListOf<File>()
-        apiLevelFiles.add(File("")) // api level 0: dummy
+        apiLevelFiles.add(File("there is no api 0")) // api level 0: dummy, should not be processed
         val minApi = 1
 
         // Get all the android.jar. They are in platforms-#
@@ -1296,9 +1307,11 @@ class Options(
         if (path.startsWith("~/")) {
             val home = System.getProperty("user.home") ?: return File(path)
             return File(home + path.substring(1))
+        } else if (path.startsWith("@")) {
+            return File("@" + File(path.substring(1)).absolutePath)
         }
 
-        return File(path)
+        return File(path).absoluteFile
     }
 
     private fun getUsage(includeHeader: Boolean = true, colorize: Boolean = color): String {

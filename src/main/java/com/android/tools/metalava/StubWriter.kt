@@ -74,7 +74,7 @@ class StubWriter(
     fun writeSourceList(target: File, root: File?) {
         target.parentFile?.mkdirs()
         val contents = if (root != null) {
-            val path = root.path.replace('\\', '/')
+            val path = root.path.replace('\\', '/') + "/"
             sourceList.toString().replace(path, "")
         } else {
             sourceList.toString()
@@ -258,6 +258,21 @@ class StubWriter(
                         writer.write(",\n")
                     }
                     appendDocumentation(field, writer)
+
+                    // Can't just appendModifiers(field, true, true): enum constants
+                    // don't take modifier lists, only annotations
+                    ModifierList.writeAnnotations(
+                        item = field,
+                        target = AnnotationTarget.STUBS_FILE,
+                        runtimeAnnotationsOnly = !generateAnnotations,
+                        includeDeprecated = true,
+                        writer = writer,
+                        separateLines = true,
+                        list = field.modifiers,
+                        skipNullnessAnnotations = false,
+                        omitCommonPackages = false
+                    )
+
                     writer.write(field.name())
                 }
             }
