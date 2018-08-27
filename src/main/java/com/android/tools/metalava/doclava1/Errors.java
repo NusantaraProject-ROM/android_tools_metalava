@@ -212,6 +212,9 @@ public class Errors {
     public static final Error RETURNING_UNEXPECTED_CONSTANT = new Error(151, WARNING);
     public static final Error DEPRECATED_OPTION = new Error(152, WARNING);
     public static final Error BOTH_PACKAGE_INFO_AND_HTML = new Error(153, WARNING);
+    // The plan is for this to be set as an error once (1) existing code is marked as @deprecated
+    // and (2) the principle is adopted by the API council
+    public static final Error REFERENCES_DEPRECATED = new Error(154, HIDDEN);
 
     static {
         // Attempt to initialize error names based on the field names

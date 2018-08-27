@@ -176,5 +176,17 @@ class Compatibility(
      */
     var includeExtendsObjectInWildcard = compat
 
+    /**
+     * If true, a @Deprecated class will automatically deprecate all its inner classes
+     * as well.
+     */
+    var propagateDeprecatedInnerClasses = !compat
+
+    /**
+     * If true, a @Deprecated class will automatically deprecate all members (not
+     * including inner classes; for that see [propagateDeprecatedInnerClasses]) as well.
+     */
+    var propagateDeprecatedMembers = !compat
+
     // Other examples: sometimes we sort by qualified name, sometimes by full name
 }

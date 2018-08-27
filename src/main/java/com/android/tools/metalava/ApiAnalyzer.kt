@@ -815,7 +815,29 @@ class ApiAnalyzer(
                 // TODO: Other checks
             }
 
+            override fun visitClass(cls: ClassItem) {
+                // Propagate @Deprecated flags down from classes into inner classes, if configured.
+                // Done here rather than in the analyzer which propagates visibility, since we want to do it
+                // after warning
+                val containingClass = cls.containingClass()
+                if (containingClass != null && containingClass.deprecated && compatibility.propagateDeprecatedInnerClasses) {
+                    cls.deprecated = true
+                }
+            }
+
+            override fun visitField(field: FieldItem) {
+                val containingClass = field.containingClass()
+                if (containingClass.deprecated && compatibility.propagateDeprecatedMembers) {
+                    field.deprecated = true
+                }
+            }
+
             override fun visitMethod(method: MethodItem) {
+                val containingClass = method.containingClass()
+                if (containingClass.deprecated && compatibility.propagateDeprecatedMembers) {
+                    method.deprecated = true
+                }
+
                 // Make sure we don't annotate findViewById & getSystemService as @Nullable.
                 // See for example 68914170.
                 val name = method.name()
@@ -879,6 +901,13 @@ class ApiAnalyzer(
                     }
 
                     val returnType = m.returnType()
+                    if (!m.deprecated && !cl.deprecated && returnType != null && returnType.asClass()?.deprecated == true) {
+                        reporter.report(
+                            Errors.REFERENCES_DEPRECATED, m,
+                            "Return type of deprecated type $returnType in ${cl.qualifiedName()}.${m.name()}(): this method should also be deprecated"
+                        )
+                    }
+
                     var hiddenClass = findHiddenClasses(returnType, stubImportPackages)
                     if (hiddenClass != null && !hiddenClass.isFromClassPath()) {
                         if (hiddenClass.qualifiedName() == returnType?.asClass()?.qualifiedName()) {
@@ -901,6 +930,13 @@ class ApiAnalyzer(
                     for (p in m.parameters()) {
                         val t = p.type()
                         if (!t.primitive) {
+                            if (!m.deprecated && !cl.deprecated && t.asClass()?.deprecated == true) {
+                                reporter.report(
+                                    Errors.REFERENCES_DEPRECATED, m,
+                                    "Parameter of deprecated type $t in ${cl.qualifiedName()}.${m.name()}(): this method should also be deprecated"
+                                )
+                            }
+
                             hiddenClass = findHiddenClasses(t, stubImportPackages)
                             if (hiddenClass != null && !hiddenClass.isFromClassPath()) {
                                 if (hiddenClass.qualifiedName() == t.asClass()?.qualifiedName()) {
