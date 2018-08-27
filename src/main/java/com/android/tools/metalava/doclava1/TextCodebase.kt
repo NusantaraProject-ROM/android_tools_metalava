@@ -60,7 +60,7 @@ class TextCodebase(location: File) : DefaultCodebase(location) {
     private val mClassToInterface = HashMap<TextClassItem, ArrayList<String>>(10000)
 
     override var description = "Codebase"
-    override val preFiltered: Boolean = true
+    override var preFiltered: Boolean = true
 
     override fun trustedApi(): Boolean = true
 
