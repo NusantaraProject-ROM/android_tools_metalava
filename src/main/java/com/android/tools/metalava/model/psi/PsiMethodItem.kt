@@ -256,7 +256,9 @@ open class PsiMethodItem(
         if (targetContainingClass.docOnly) {
             duplicated.docOnly = true
         }
-
+        if (targetContainingClass.deprecated && compatibility.propagateDeprecatedMembers) {
+            duplicated.deprecated = true
+        }
         duplicated.throwsTypes = throwsTypes
         return duplicated
     }

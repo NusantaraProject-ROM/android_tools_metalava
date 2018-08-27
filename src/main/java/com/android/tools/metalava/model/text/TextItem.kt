@@ -38,13 +38,7 @@ abstract class TextItem(
     override fun isJava(): Boolean = codebase.unsupported() // source language not recorded in signature files
     override fun isKotlin(): Boolean = codebase.unsupported() // source language not recorded in signature files
 
-    private var mutableDeprecated = false
-    override val deprecated
-        get() = mutableDeprecated
+    override var deprecated = false
 
     override fun isCloned(): Boolean = false
-
-    fun setDeprecated(deprecated: Boolean) {
-        mutableDeprecated = deprecated
-    }
 }
