@@ -270,7 +270,8 @@ open class PsiBasedCodebase(location: File, override var description: String = "
         return packageItem
     }
 
-    fun initialize(project: Project, jarFile: File) {
+    fun initialize(project: Project, jarFile: File, preFiltered: Boolean = false) {
+        this.preFiltered = preFiltered
         initializing = true
         hideClassesFromJars = false
 

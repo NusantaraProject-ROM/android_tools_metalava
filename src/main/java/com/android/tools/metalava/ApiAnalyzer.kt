@@ -414,7 +414,7 @@ class ApiAnalyzer(
         // Also add in any concrete public methods from hidden super classes
         for (superClass in hiddenSuperClasses) {
             for (method in superClass.methods()) {
-                if (method.modifiers.isAbstract()) {
+                if (method.modifiers.isAbstract() || !method.modifiers.isPublic()) {
                     continue
                 }
                 val name = method.name()

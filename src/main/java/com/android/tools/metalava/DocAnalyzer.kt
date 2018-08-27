@@ -647,13 +647,13 @@ class DocAnalyzer(
 
     private fun addApiLevelDocumentation(level: Int, item: Item) {
         if (level > 1) {
-            appendDocumentation("Requires API level $level", item, false)
+            appendDocumentation("Requires API level ${describeApiLevel(level)}", item, false)
             // Also add @since tag, unless already manually entered.
             // TODO: Override it everywhere in case the existing doc is wrong (we know
             // better), and at least for OpenJDK sources we *should* since the since tags
             // are talking about language levels rather than API levels!
             if (!item.documentation.contains("@since")) {
-                item.appendDocumentation(describeApiLevel(level), "@since")
+                item.appendDocumentation(level.toString(), "@since")
             }
         }
     }
@@ -668,7 +668,7 @@ class DocAnalyzer(
     }
 
     private fun describeApiLevel(level: Int): String {
-        return "${SdkVersionInfo.getVersionString(level)} ${SdkVersionInfo.getCodeName(level)} ($level)"
+        return "$level (Android ${SdkVersionInfo.getVersionString(level)}, ${SdkVersionInfo.getCodeName(level)})"
     }
 }
 

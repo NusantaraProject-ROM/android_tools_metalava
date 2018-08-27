@@ -32,6 +32,12 @@ import com.android.utils.XmlUtils.getFirstSubTagByName
 import com.android.utils.XmlUtils.getNextTagByName
 import com.intellij.psi.PsiFile
 import org.intellij.lang.annotations.Language
+import org.objectweb.asm.Type
+import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.FieldInsnNode
+import org.objectweb.asm.tree.FieldNode
+import org.objectweb.asm.tree.MethodInsnNode
+import org.objectweb.asm.tree.MethodNode
 import java.io.File
 import java.util.function.Predicate
 import kotlin.text.Charsets.UTF_8
@@ -165,6 +171,89 @@ interface Codebase {
 
     /** If true, this codebase has already been filtered */
     val preFiltered: Boolean
+
+    /** Finds the given class by JVM owner */
+    fun findClassByOwner(owner: String, apiFilter: Predicate<Item>): ClassItem? {
+        val className = owner.replace('/', '.').replace('$', '.')
+        val cls = findClass(className)
+        return if (cls != null && apiFilter.test(cls)) {
+            cls
+        } else {
+            null
+        }
+    }
+
+    fun findClass(node: ClassNode, apiFilter: Predicate<Item>): ClassItem? {
+        return findClassByOwner(node.name, apiFilter)
+    }
+
+    fun findMethod(node: MethodInsnNode, apiFilter: Predicate<Item>): MethodItem? {
+        val cls = findClassByOwner(node.owner, apiFilter) ?: return null
+        val types = Type.getArgumentTypes(node.desc)
+        val parameters = if (types.isNotEmpty()) {
+            val sb = StringBuilder()
+            for (type in types) {
+                if (!sb.isEmpty()) {
+                    sb.append(", ")
+                }
+                sb.append(type.className.replace('/', '.').replace('$', '.'))
+            }
+            sb.toString()
+        } else {
+            ""
+        }
+        val methodName = if (node.name == "<init>") cls.simpleName() else node.name
+        val method = cls.findMethod(methodName, parameters)
+        return if (method != null && apiFilter.test(method)) {
+            method
+        } else {
+            null
+        }
+    }
+
+    fun findMethod(classNode: ClassNode, node: MethodNode, apiFilter: Predicate<Item>): MethodItem? {
+        val cls = findClass(classNode, apiFilter) ?: return null
+        val types = Type.getArgumentTypes(node.desc)
+        val parameters = if (types.isNotEmpty()) {
+            val sb = StringBuilder()
+            for (type in types) {
+                if (!sb.isEmpty()) {
+                    sb.append(", ")
+                }
+                sb.append(type.className.replace('/', '.').replace('$', '.'))
+            }
+            sb.toString()
+        } else {
+            ""
+        }
+        val methodName = if (node.name == "<init>") cls.simpleName() else node.name
+        val method = cls.findMethod(methodName, parameters)
+        return if (method != null && apiFilter.test(method)) {
+            method
+        } else {
+            null
+        }
+    }
+
+    fun findField(classNode: ClassNode, node: FieldNode, apiFilter: Predicate<Item>): FieldItem? {
+        val cls = findClass(classNode, apiFilter) ?: return null
+        val field = cls.findField(node.name)
+        return if (field != null && apiFilter.test(field)) {
+            field
+        } else {
+            null
+        }
+    }
+
+    fun findField(node: FieldInsnNode, apiFilter: Predicate<Item>): FieldItem? {
+        val cls = findClassByOwner(node.owner, apiFilter) ?: return null
+        val field = cls.findField(node.name)
+        return if (field != null && apiFilter.test(field)) {
+            field
+        } else {
+            null
+        }
+    }
 }
 
 abstract class DefaultCodebase(override var location: File) : Codebase {
@@ -177,7 +266,7 @@ abstract class DefaultCodebase(override var location: File) : Codebase {
     @Suppress("LeakingThis")
     override val printer = CodePrinter(this)
     @Suppress("LeakingThis")
-    override val preFiltered: Boolean = original != null
+    override var preFiltered: Boolean = original != null
 
     override fun getPermissionLevel(name: String): String? {
         if (permissions == null) {
