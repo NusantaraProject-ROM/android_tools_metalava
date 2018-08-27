@@ -197,6 +197,12 @@ private fun processFlags() {
     // --rewrite-annotations?
     options.rewriteAnnotations?.let { RewriteAnnotations().rewriteAnnotations(it) }
 
+    // Convert android.jar files?
+    options.androidJarSignatureFiles?.let { root ->
+        // Generate API signature files for all the historical JAR files
+        ConvertJarsToSignatureFiles().convertJars(root)
+    }
+
     val codebase =
         if (options.sources.size == 1 && options.sources[0].path.endsWith(SdkConstants.DOT_TXT)) {
             SignatureFileLoader.load(
@@ -299,9 +305,13 @@ private fun processFlags() {
 
         createReportFile(
             codebase, apiFile, "DEX API Mapping"
-        ) { printWriter -> DexApiWriter(printWriter, apiEmit, apiReference,
-            membersOnly = true,
-            includePositions = true) }
+        ) { printWriter ->
+            DexApiWriter(
+                printWriter, apiEmit, apiReference,
+                membersOnly = true,
+                includePositions = true
+            )
+        }
     }
 
     options.removedApiFile?.let { apiFile ->
@@ -696,10 +706,10 @@ internal fun parseSources(sources: List<File>, description: String): PsiBasedCod
     return codebase
 }
 
-private fun loadFromJarFile(apiJar: File, manifest: File? = null): Codebase {
+fun loadFromJarFile(apiJar: File, manifest: File? = null, preFiltered: Boolean = false): Codebase {
     val projectEnvironment = createProjectEnvironment()
 
-    progress("Processing jar file: ")
+    progress("\nProcessing jar file: ")
 
     // Create project environment with those paths
     val project = projectEnvironment.project
@@ -709,12 +719,16 @@ private fun loadFromJarFile(apiJar: File, manifest: File? = null): Codebase {
     val trace = KotlinLintAnalyzerFacade().analyze(kotlinFiles, listOf(apiJar), project)
 
     val codebase = PsiBasedCodebase(apiJar, "Codebase loaded from $apiJar")
-    codebase.initialize(project, apiJar)
+    codebase.initialize(project, apiJar, preFiltered)
     if (manifest != null) {
         codebase.manifest = options.manifest
     }
+    val apiEmit = ApiPredicate(ignoreShown = true)
+    val apiReference = ApiPredicate(ignoreShown = true)
     val analyzer = ApiAnalyzer(codebase)
+    analyzer.computeApi()
     analyzer.mergeExternalAnnotations()
+    analyzer.generateInheritedStubs(apiEmit, apiReference)
     codebase.bindingContext = trace.bindingContext
     return codebase
 }
@@ -833,7 +847,7 @@ fun progress(message: String) {
     }
 }
 
-private fun createReportFile(
+fun createReportFile(
     codebase: Codebase,
     apiFile: File,
     description: String?,

@@ -420,8 +420,8 @@ class DocAnalyzerTest : DriverTest() {
                 """
                 package android.widget;
                 /**
-                 * Requires API level 21
-                 * @since 5.0 Lollipop (21)
+                 * Requires API level 21 (Android 5.0, Lollipop)
+                 * @since 21
                  */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class Toolbar2 {
@@ -432,8 +432,8 @@ class DocAnalyzerTest : DriverTest() {
                  * This method must be called on the thread that originally created
                  * this UI element. This is typically the main thread of your app.
                  * <br>
-                 * Requires API level 24
-                 * @since 7.0 Nougat (24)
+                 * Requires API level 24 (Android 7.0, Nougat)
+                 * @since 24
                  * @return blah blah blah
                  */
                 @androidx.annotation.UiThread
@@ -1072,8 +1072,8 @@ class DocAnalyzerTest : DriverTest() {
                 """
                 package android.widget;
                 /**
-                 * Requires API level 21
-                 * @since 5.0 Lollipop (21)
+                 * Requires API level 21 (Android 5.0, Lollipop)
+                 * @since 21
                  */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class Toolbar {
@@ -1081,8 +1081,8 @@ class DocAnalyzerTest : DriverTest() {
                 /**
                  * Existing documentation for {@linkplain #getCurrentContentInsetEnd()} here.
                  * <br>
-                 * Requires API level 24
-                 * @since 7.0 Nougat (24)
+                 * Requires API level 24 (Android 7.0, Nougat)
+                 * @since 24
                  * @return blah blah blah
                  */
                 public int getCurrentContentInsetEnd() { throw new RuntimeException("Stub!"); }
@@ -1143,11 +1143,11 @@ class DocAnalyzerTest : DriverTest() {
                 public Camera() { throw new RuntimeException("Stub!"); }
                 /**
                  *
-                 * Requires API level 14
+                 * Requires API level 14 (Android 4.0, IceCreamSandwich)
                  * @deprecated
                  * <p class="caution"><strong>This class was deprecated in API level 21.</strong></p>
                  *  Use something else.
-                 * @since 4.0 IceCreamSandwich (14)
+                 * @since 14
                  */
                 @Deprecated public static final java.lang.String ACTION_NEW_VIDEO = "android.hardware.action.NEW_VIDEO";
                 }
@@ -1280,8 +1280,8 @@ class DocAnalyzerTest : DriverTest() {
                 """
                 package test.pkg;
                 /**
-                 * Requires API level 21
-                 * @since 5.0 Lollipop (21)
+                 * Requires API level 21 (Android 5.0, Lollipop)
+                 * @since 21
                  */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 @androidx.annotation.RequiresApi(21)

@@ -214,25 +214,16 @@ interface ModifierList {
             }
 
             if (includeAnnotations) {
-                //  if includeDepecated we want to do it
-                //  unless runtimeOnly is false, in which case we'd include it too
-                // e.g. emit @Deprecated if includeDeprecated && !runtimeOnly
-                if (item.deprecated &&
-                    (!options.compatOutput || target == AnnotationTarget.STUBS_FILE) &&
-                    (runtimeAnnotationsOnly || includeDeprecated)
-                ) {
-                    writer.write("@Deprecated")
-                    writer.write(if (separateLines) "\n" else " ")
-                }
-
                 writeAnnotations(
-                    list = list,
-                    runtimeAnnotationsOnly = runtimeAnnotationsOnly,
-                    skipNullnessAnnotations = skipNullnessAnnotations,
-                    omitCommonPackages = omitCommonPackages,
-                    separateLines = separateLines,
-                    writer = writer,
-                    target = target
+                    item,
+                    target,
+                    runtimeAnnotationsOnly,
+                    includeDeprecated,
+                    writer,
+                    separateLines,
+                    list,
+                    skipNullnessAnnotations,
+                    omitCommonPackages
                 )
             } else {
                 // We always include @Deprecated annotation in stub files
@@ -407,6 +398,39 @@ interface ModifierList {
                     writer.write("strictfp ")
                 }
             }
+        }
+
+        fun writeAnnotations(
+            item: Item,
+            target: AnnotationTarget,
+            runtimeAnnotationsOnly: Boolean,
+            includeDeprecated: Boolean,
+            writer: Writer,
+            separateLines: Boolean,
+            list: ModifierList,
+            skipNullnessAnnotations: Boolean,
+            omitCommonPackages: Boolean
+        ) {
+            //  if includeDeprecated we want to do it
+            //  unless runtimeOnly is false, in which case we'd include it too
+            // e.g. emit @Deprecated if includeDeprecated && !runtimeOnly
+            if (item.deprecated &&
+                (!options.compatOutput || target == AnnotationTarget.STUBS_FILE) &&
+                (runtimeAnnotationsOnly || includeDeprecated)
+            ) {
+                writer.write("@Deprecated")
+                writer.write(if (separateLines) "\n" else " ")
+            }
+
+            writeAnnotations(
+                list = list,
+                runtimeAnnotationsOnly = runtimeAnnotationsOnly,
+                skipNullnessAnnotations = skipNullnessAnnotations,
+                omitCommonPackages = omitCommonPackages,
+                separateLines = separateLines,
+                writer = writer,
+                target = target
+            )
         }
 
         fun writeAnnotations(

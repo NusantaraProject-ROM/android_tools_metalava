@@ -29,7 +29,6 @@ import com.android.tools.metalava.model.ParameterItem
 import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.google.common.io.ByteStreams
 import org.objectweb.asm.ClassReader
-import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldInsnNode
@@ -440,7 +439,7 @@ class AnnotationStatistics(val api: Codebase) {
                     if (skipJava && isSkippableOwner(call.owner)) {
                         continue
                     }
-                    val item = findMethod(call)
+                    val item = api.findMethod(call, apiFilter)
                     item?.let {
                         val count = used[it]
                         if (count == null) {
@@ -454,7 +453,7 @@ class AnnotationStatistics(val api: Codebase) {
                     if (skipJava && isSkippableOwner(field.owner)) {
                         continue
                     }
-                    val item = findField(field)
+                    val item = api.findField(field, apiFilter)
                     item?.let {
                         val count = used[it]
                         if (count == null) {
@@ -473,48 +472,4 @@ class AnnotationStatistics(val api: Codebase) {
             owner.startsWith("javax/") ||
             owner.startsWith("kotlin") ||
             owner.startsWith("kotlinx/")
-
-    private fun findField(node: FieldInsnNode): FieldItem? {
-        val cls = findClass(node.owner) ?: return null
-        val field = cls.findField(node.name)
-        return if (field != null && apiFilter.test(field)) {
-            field
-        } else {
-            null
-        }
-    }
-
-    private fun findClass(owner: String): ClassItem? {
-        val className = owner.replace('/', '.').replace('$', '.')
-        val cls = api.findClass(className)
-        return if (cls != null && apiFilter.test(cls)) {
-            cls
-        } else {
-            null
-        }
-    }
-
-    private fun findMethod(node: MethodInsnNode): MethodItem? {
-        val cls = findClass(node.owner) ?: return null
-        val types = Type.getArgumentTypes(node.desc)
-        val parameters = if (types.isNotEmpty()) {
-            val sb = StringBuilder()
-            for (type in types) {
-                if (!sb.isEmpty()) {
-                    sb.append(", ")
-                }
-                sb.append(type.className.replace('/', '.').replace('$', '.'))
-            }
-            sb.toString()
-        } else {
-            ""
-        }
-        val methodName = if (node.name == "<init>") cls.simpleName() else node.name
-        val method = cls.findMethod(methodName, parameters)
-        return if (method != null && apiFilter.test(method)) {
-            method
-        } else {
-            null
-        }
-    }
 }
