@@ -1308,8 +1308,8 @@ class ApiFileTest : DriverTest() {
                 package test.pkg {
                   public abstract class Foo {
                     ctor public Foo();
-                    method @Deprecated public static final synchronized void method1();
-                    method @Deprecated public static final synchronized void method2();
+                    method @Deprecated public static final void method1();
+                    method @Deprecated public static final void method2();
                   }
                   @Deprecated protected static final class Foo.Inner1 {
                     ctor @Deprecated protected Foo.Inner1();
