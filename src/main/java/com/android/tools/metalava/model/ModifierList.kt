@@ -310,7 +310,7 @@ interface ModifierList {
                     writer.write("deprecated ")
                 }
 
-                if (list.isSynchronized()) {
+                if (list.isSynchronized() && (options.compatOutput || target == AnnotationTarget.STUBS_FILE)) {
                     writer.write("synchronized ")
                 }
 
@@ -386,7 +386,7 @@ interface ModifierList {
                     writer.write("volatile ")
                 }
 
-                if (list.isSynchronized()) {
+                if (list.isSynchronized() && (options.compatOutput || target == AnnotationTarget.STUBS_FILE)) {
                     writer.write("synchronized ")
                 }
 
