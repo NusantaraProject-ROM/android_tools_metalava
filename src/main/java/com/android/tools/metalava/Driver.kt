@@ -115,7 +115,7 @@ fun run(
                 } else {
                     val newArgs =
                         if (index != -1) {
-                            args.sliceArray(0..index) + prepend + args.sliceArray(index..args.size) + append
+                            args.sliceArray(0 until index) + prepend + args.sliceArray(index until args.size) + append
                         } else {
                             prepend + args + append
                         }
