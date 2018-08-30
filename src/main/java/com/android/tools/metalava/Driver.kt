@@ -794,15 +794,11 @@ private fun createStubFiles(stubDir: File, codebase: Codebase, docStubs: Boolean
         compatibility.useErasureInThrows = prevCompatibility.useErasureInThrows
     }
 
-    // Fow now, we don't put annotations into documentation stub files, unless you're explicitly
-    // generating only documentation stubs *and* asked to include annotations
-    val generateAnnotations = options.generateAnnotations && (!docStubs || options.stubsDir == null)
-
     val stubWriter =
         StubWriter(
             codebase = codebase,
             stubsDir = stubDir,
-            generateAnnotations = generateAnnotations,
+            generateAnnotations = options.generateAnnotations,
             preFiltered = codebase.preFiltered,
             docStubs = docStubs
         )

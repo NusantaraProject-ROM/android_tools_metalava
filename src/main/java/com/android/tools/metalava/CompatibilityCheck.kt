@@ -671,7 +671,7 @@ class CompatibilityCheck(
         val error = if (new.isInterface()) {
             Errors.ADDED_INTERFACE
         } else {
-            if (compatibility.compat &&
+            if (options.compatOutput &&
                 new.qualifiedName() == "android.telephony.ims.feature.ImsFeature.Capabilities"
             ) {
                 // Special case: Doclava and metalava signature files for the system api

@@ -42,7 +42,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.android.tools.metalava.ConstantsKt.ANDROIDX_NOTNULL;
+import static com.android.tools.metalava.ConstantsKt.ANDROIDX_NONNULL;
 import static com.android.tools.metalava.ConstantsKt.ANDROIDX_NULLABLE;
 import static com.android.tools.metalava.ConstantsKt.JAVA_LANG_ANNOTATION;
 import static com.android.tools.metalava.ConstantsKt.JAVA_LANG_ENUM;
@@ -276,7 +276,7 @@ public class ApiFile {
                 type = type.substring(0, type.length() - 1);
             } else if (!type.endsWith("!")) {
                 if (!TextTypeItem.Companion.isPrimitive(type)) { // Don't add nullness on primitive types like void
-                    annotations = mergeAnnotations(annotations, ANDROIDX_NOTNULL);
+                    annotations = mergeAnnotations(annotations, ANDROIDX_NONNULL);
                 }
             }
         } else if (type.endsWith("?") || type.endsWith("!")) {

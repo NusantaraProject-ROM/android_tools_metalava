@@ -42,7 +42,8 @@ class ConvertJarsToSignatureFiles {
         var api = 1
         while (true) {
             val apiJar = File(
-                root, if (api <= 3)
+                root,
+                if (api <= 3)
                     "prebuilts/tools/common/api-versions/android-$api/android.jar"
                 else
                     "prebuilts/sdk/$api/public/android.jar"
@@ -53,7 +54,7 @@ class ConvertJarsToSignatureFiles {
             val signatureFile = "prebuilts/sdk/$api/public/api/android.txt"
             val oldApiFile = File(root, "prebuilts/sdk/$api/public/api/android.txt")
             val newApiFile =
-                File(root, "prebuilts/sdk/$api/public/api/android.${if (compatibility.compat) "txt" else "sig"}")
+                File(root, "prebuilts/sdk/$api/public/api/android.${if (options.compatOutput) "txt" else "sig"}")
 
             progress("\nWriting signature files $signatureFile for $apiJar")
 
