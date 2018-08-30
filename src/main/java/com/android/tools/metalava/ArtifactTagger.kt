@@ -38,6 +38,9 @@ class ArtifactTagger {
     /** Any registered artifacts? */
     fun any() = artifacts.isNotEmpty()
 
+    /** Remove all registrations */
+    fun clear() = artifacts.clear()
+
     /** Returns the artifacts */
     private fun getRegistrations(): Collection<Map.Entry<File, String>> = artifacts.entries
 
