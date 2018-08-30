@@ -39,6 +39,13 @@ General:
 --color                                  Attempt to colorize the output (defaults to true
                                          if ${"$"}TERM is xterm)
 --no-color                               Do not attempt to colorize the output
+--no-docs                                Cancel any other documentation flags supplied to
+                                         metalava. This is here to make it easier
+                                         customize build system tasks.
+--update-api                             Cancel any other "action" flags other than
+                                         generating signature files. This is here to make
+                                         it easier customize build system tasks,
+                                         particularly for the "make update-api" task.
 
 API sources:
 --source-files <files>                   A comma separated list of source files to be

@@ -22,6 +22,7 @@ import com.android.tools.lint.checks.infrastructure.TestFile
 import com.android.tools.metalava.model.SUPPORT_TYPE_USE_ANNOTATIONS
 import org.intellij.lang.annotations.Language
 import org.junit.Test
+import java.io.FileNotFoundException
 
 @SuppressWarnings("ALL")
 class StubsTest : DriverTest() {
@@ -3586,6 +3587,47 @@ class StubsTest : DriverTest() {
             )
         )
     }
+
+    @Test(expected = FileNotFoundException::class)
+    fun `Test update-api should not generate stubs`() {
+        check(
+            extraArguments = arrayOf(
+                "--update-api",
+                "--exclude-annotations"
+            ),
+            compatibilityMode = false,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    public class Foo {
+                        /**
+                         * @deprecated Use checkPermission instead.
+                         */
+                        @Deprecated
+                        protected boolean inClass(String name) {
+                            return false;
+                        }
+                    }
+                    """
+                )
+            ),
+            api = """
+            package test.pkg {
+              public class Foo {
+                ctor public Foo();
+                method @Deprecated protected boolean inClass(String!);
+              }
+            }
+            """,
+            stubs = arrayOf(
+                """
+                This file should not be generated since --update-api is supplied.
+                """
+            )
+        )
+    }
+
 // TODO: Add in some type variables in method signatures and constructors!
 // TODO: Test what happens when a class extends a hidden extends a public in separate packages,
 // and the hidden has a @hide constructor so the stub in the leaf class doesn't compile -- I should
