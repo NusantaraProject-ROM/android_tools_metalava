@@ -21,11 +21,18 @@ enum class AnnotationTarget {
     /** Write the annotation into the signature file */
     SIGNATURE_FILE,
     /** Write the annotation into stub source files */
-    STUBS_FILE,
+    SDK_STUBS_FILE,
+    /** Write the annotation into doc stub source files */
+    DOC_STUBS_FILE,
     /** Write the annotation into external annotation files */
     EXTERNAL_ANNOTATIONS_FILE,
     /** Don't write the annotation anywhere */
     NONE;
+
+    /** Is this target a stubs file? */
+    fun isStubsFile(): Boolean {
+        return this == SDK_STUBS_FILE || this == DOC_STUBS_FILE
+    }
 }
 
 /** Don't write this annotation anywhere; it is not API significant. */
@@ -43,8 +50,31 @@ val NO_ANNOTATION_TARGETS = setOf(AnnotationTarget.NONE)
  * do with the others since their class definitions conflict with the real androidx library
  * when present) into the external annotations file.
  *
+ * Also includes documentation stubs.
  */
-val ANNOTATION_IN_STUBS = setOf(AnnotationTarget.SIGNATURE_FILE, AnnotationTarget.STUBS_FILE)
+val ANNOTATION_IN_ALL_STUBS = setOf(
+    AnnotationTarget.SIGNATURE_FILE,
+    AnnotationTarget.SDK_STUBS_FILE,
+    AnnotationTarget.DOC_STUBS_FILE
+)
+
+/**
+ * Like [ANNOTATION_IN_ALL_STUBS], but limited to SDK stubs, not included in documentation stubs.
+ * Example: RecentlyNonNull.
+ */
+val ANNOTATION_IN_SDK_STUBS = setOf(AnnotationTarget.SIGNATURE_FILE, AnnotationTarget.SDK_STUBS_FILE)
+
+/**
+ * Like [ANNOTATION_IN_ALL_STUBS], but limited to documentation stubs, not included in SDK stubs.
+ * These are also placed in external annotations since they don't appear in the SDK.
+ *
+ * Example: NonNull.
+ */
+val ANNOTATION_IN_DOC_STUBS_AND_EXTERNAL = setOf(
+    AnnotationTarget.SIGNATURE_FILE,
+    AnnotationTarget.DOC_STUBS_FILE,
+    AnnotationTarget.EXTERNAL_ANNOTATIONS_FILE
+)
 
 /** Annotation is API significant: write it into the signature file and into external annotations file. */
 val ANNOTATION_EXTERNAL = setOf(AnnotationTarget.SIGNATURE_FILE, AnnotationTarget.EXTERNAL_ANNOTATIONS_FILE)
