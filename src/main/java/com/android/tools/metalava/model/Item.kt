@@ -186,6 +186,123 @@ interface Item {
 
     /** Expands the given documentation comment in the current name context */
     fun fullyQualifiedDocumentation(documentation: String): String = documentation
+
+    /** Produces a user visible description of this item, including a label such as "class" or "field" */
+    fun describe(capitalize: Boolean = false) = describe(this, capitalize)
+
+    companion object {
+        fun describe(item: Item, capitalize: Boolean = false): String {
+            return when (item) {
+                is PackageItem -> describe(item, capitalize = capitalize)
+                is ClassItem -> describe(item, capitalize = capitalize)
+                is FieldItem -> describe(item, capitalize = capitalize)
+                is MethodItem -> describe(
+                    item,
+                    includeParameterNames = false,
+                    includeParameterTypes = true,
+                    capitalize = capitalize
+                )
+                is ParameterItem -> describe(
+                    item,
+                    includeParameterNames = true,
+                    includeParameterTypes = true,
+                    capitalize = capitalize
+                )
+                else -> item.toString()
+            }
+        }
+
+        fun describe(
+            item: MethodItem,
+            includeParameterNames: Boolean = false,
+            includeParameterTypes: Boolean = false,
+            includeReturnValue: Boolean = false,
+            capitalize: Boolean = false
+        ): String {
+            val builder = StringBuilder()
+            if (item.isConstructor()) {
+                builder.append(if (capitalize) "Constructor" else "constructor")
+            } else {
+                builder.append(if (capitalize) "Method" else "method")
+            }
+            builder.append(' ')
+            if (includeReturnValue && !item.isConstructor()) {
+                builder.append(item.returnType()?.toSimpleType())
+                builder.append(' ')
+            }
+            appendMethodSignature(builder, item, includeParameterNames, includeParameterTypes)
+            return builder.toString()
+        }
+
+        fun describe(
+            item: ParameterItem,
+            includeParameterNames: Boolean = false,
+            includeParameterTypes: Boolean = false,
+            capitalize: Boolean = false
+        ): String {
+            val builder = StringBuilder()
+            builder.append(if (capitalize) "Parameter" else "parameter")
+            builder.append(' ')
+            builder.append(item.name())
+            builder.append(" in ")
+            val method = item.containingMethod()
+            appendMethodSignature(builder, method, includeParameterNames, includeParameterTypes)
+            return builder.toString()
+        }
+
+        private fun appendMethodSignature(
+            builder: StringBuilder,
+            item: MethodItem,
+            includeParameterNames: Boolean,
+            includeParameterTypes: Boolean
+        ) {
+            builder.append(item.containingClass().qualifiedName())
+            if (!item.isConstructor()) {
+                builder.append('.')
+                builder.append(item.name())
+            }
+            if (includeParameterNames || includeParameterTypes) {
+                builder.append('(')
+                var first = true
+                for (parameter in item.parameters()) {
+                    if (first) {
+                        first = false
+                    } else {
+                        builder.append(',')
+                        if (includeParameterNames && includeParameterTypes) {
+                            builder.append(' ')
+                        }
+                    }
+                    if (includeParameterTypes) {
+                        builder.append(parameter.type().toSimpleType())
+                        if (includeParameterNames) {
+                            builder.append(' ')
+                        }
+                    }
+                    if (includeParameterNames) {
+                        builder.append(parameter.publicName() ?: parameter.name())
+                    }
+                }
+                builder.append(')')
+            }
+        }
+
+        private fun describe(item: FieldItem, capitalize: Boolean = false): String {
+            return if (item.isEnumConstant()) {
+                "${if (capitalize) "Enum" else "enum"} constant ${item.containingClass().qualifiedName()}.${item.name()}"
+            } else {
+                "${if (capitalize) "Field" else "field"} ${item.containingClass().qualifiedName()}.${item.name()}"
+            }
+        }
+
+        private fun describe(item: ClassItem, capitalize: Boolean = false): String {
+            return "${if (capitalize) "Class" else "class"} ${item.qualifiedName()}"
+        }
+
+        private fun describe(item: PackageItem, capitalize: Boolean = false): String {
+            return "${if (capitalize) "Package" else "package"} ${item.qualifiedName()}"
+        }
+    }
 }
 
 abstract class DefaultItem(override val sortingRank: Int = nextRank++) : Item {
