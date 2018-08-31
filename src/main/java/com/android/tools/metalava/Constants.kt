@@ -27,6 +27,8 @@ const val ANDROID_ANNOTATION_PREFIX = "android.annotation."
 const val ANDROIDX_ANNOTATION_PREFIX = "androidx.annotation."
 const val ANDROIDX_NONNULL = "androidx.annotation.NonNull"
 const val ANDROIDX_NULLABLE = "androidx.annotation.Nullable"
+const val ANDROID_SYSTEM_API = "android.annotation.SystemApi"
+const val ANDROID_REQUIRES_PERMISSION = "android.annotation.RequiresPermission"
 const val RECENTLY_NULLABLE = "androidx.annotation.RecentlyNullable"
 const val RECENTLY_NONNULL = "androidx.annotation.RecentlyNonNull"
 

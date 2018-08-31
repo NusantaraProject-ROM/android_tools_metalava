@@ -215,6 +215,9 @@ public class Errors {
     // The plan is for this to be set as an error once (1) existing code is marked as @deprecated
     // and (2) the principle is adopted by the API council
     public static final Error REFERENCES_DEPRECATED = new Error(154, HIDDEN);
+    // Hidden until (1) API council agrees this should be an error, and (2) existing
+    // violations are annotated as @hide
+    public static final Error UNHIDDEN_SYSTEM_API = new Error(155, HIDDEN);
 
     static {
         // Attempt to initialize error names based on the field names
