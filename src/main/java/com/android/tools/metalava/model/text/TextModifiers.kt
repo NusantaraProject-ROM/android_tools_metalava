@@ -77,7 +77,7 @@ class TextModifiers(
     override fun toString(): String {
         val item = owner()
         val writer = StringWriter()
-        ModifierList.write(writer, this, item, target = AnnotationTarget.STUBS_FILE)
+        ModifierList.write(writer, this, item, target = AnnotationTarget.SDK_STUBS_FILE)
         return writer.toString()
     }
 }

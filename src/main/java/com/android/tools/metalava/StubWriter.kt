@@ -59,6 +59,7 @@ class StubWriter(
     filterReference = ApiPredicate(ignoreShown = true, includeDocOnly = docStubs),
     includeEmptyOuterClasses = true
 ) {
+    private val annotationTarget = if (docStubs) AnnotationTarget.DOC_STUBS_FILE else AnnotationTarget.SDK_STUBS_FILE
 
     private val sourceList = StringBuilder(20000)
 
@@ -143,7 +144,7 @@ class StubWriter(
                     // Some bug in UAST triggers duplicate nullability annotations
                     // here; make sure the are filtered out
                     filterDuplicates = true,
-                    target = AnnotationTarget.STUBS_FILE,
+                    target = annotationTarget,
                     writer = writer
                 )
             }
@@ -263,7 +264,7 @@ class StubWriter(
                     // don't take modifier lists, only annotations
                     ModifierList.writeAnnotations(
                         item = field,
-                        target = AnnotationTarget.STUBS_FILE,
+                        target = annotationTarget,
                         runtimeAnnotationsOnly = !generateAnnotations,
                         includeDeprecated = true,
                         writer = writer,
@@ -321,7 +322,7 @@ class StubWriter(
 
         ModifierList.write(
             writer, modifiers, item,
-            target = AnnotationTarget.STUBS_FILE,
+            target = annotationTarget,
             includeAnnotations = true,
             includeDeprecated = true,
             runtimeAnnotationsOnly = !generateAnnotations,

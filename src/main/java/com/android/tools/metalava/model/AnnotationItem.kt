@@ -25,6 +25,8 @@ import com.android.tools.lint.annotations.Extractor.ANDROID_INT_DEF
 import com.android.tools.lint.annotations.Extractor.ANDROID_LONG_DEF
 import com.android.tools.lint.annotations.Extractor.ANDROID_STRING_DEF
 import com.android.tools.metalava.ANDROIDX_ANNOTATION_PREFIX
+import com.android.tools.metalava.ANDROIDX_NONNULL
+import com.android.tools.metalava.ANDROIDX_NULLABLE
 import com.android.tools.metalava.ANDROID_SUPPORT_ANNOTATION_PREFIX
 import com.android.tools.metalava.JAVA_LANG_PREFIX
 import com.android.tools.metalava.Options
@@ -291,8 +293,8 @@ interface AnnotationItem {
                 "android.annotation.SuppressLint" -> return qualifiedName
 
                 // We only change recently/newly nullable annotation if the codebase supports it
-                RECENTLY_NULLABLE -> return if (codebase.supportsStagedNullability) qualifiedName else "androidx.annotation.Nullable"
-                RECENTLY_NONNULL -> return if (codebase.supportsStagedNullability) qualifiedName else "androidx.annotation.NonNull"
+                RECENTLY_NULLABLE -> return if (codebase.supportsStagedNullability) qualifiedName else ANDROIDX_NULLABLE
+                RECENTLY_NONNULL -> return if (codebase.supportsStagedNullability) qualifiedName else ANDROIDX_NONNULL
 
                 else -> {
                     // Some new annotations added to the platform: assume they are support annotations?
@@ -387,7 +389,7 @@ interface AnnotationItem {
                 "java.lang.annotation.Inherited",
                 "java.lang.annotation.Repeatable",
                 "java.lang.annotation.Retention",
-                "java.lang.annotation.Target" -> return ANNOTATION_IN_STUBS
+                "java.lang.annotation.Target" -> return ANNOTATION_IN_ALL_STUBS
             }
 
             if (qualifiedName.startsWith("android.annotation.")) {
@@ -401,7 +403,7 @@ interface AnnotationItem {
             if (qualifiedName == "androidx.annotation.RecentlyNullable" ||
                 qualifiedName == "androidx.annotation.RecentlyNonNull"
             ) {
-                return ANNOTATION_IN_STUBS
+                return ANNOTATION_IN_SDK_STUBS
             }
 
             // Determine the retention of the annotation: source retention annotations go
@@ -412,7 +414,15 @@ interface AnnotationItem {
 
             if (qualifiedName.startsWith("androidx.annotation.")) {
                 if (options.includeSourceRetentionAnnotations) {
-                    return ANNOTATION_IN_STUBS
+                    return ANNOTATION_IN_ALL_STUBS
+                }
+
+                if (qualifiedName == ANDROIDX_NULLABLE || qualifiedName == ANDROIDX_NONNULL) {
+                    // Right now, nullness annotations (other than @RecentlyNullable and @RecentlyNonNull)
+                    // have to go in external annotations since they aren't in the class path for
+                    // annotation processors. However, we do want them showing up in the documentation using
+                    // their real annotation names.
+                    return ANNOTATION_IN_DOC_STUBS_AND_EXTERNAL
                 }
 
                 return ANNOTATION_EXTERNAL
@@ -427,7 +437,7 @@ interface AnnotationItem {
             if (cls.isAnnotationType()) {
                 val retention = cls.getRetention()
                 if (retention == AnnotationRetention.RUNTIME || retention == AnnotationRetention.CLASS) {
-                    return ANNOTATION_IN_STUBS
+                    return ANNOTATION_IN_SDK_STUBS
                 }
             }
 
