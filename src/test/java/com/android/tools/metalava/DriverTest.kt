@@ -508,10 +508,6 @@ abstract class DriverTest {
                 args.add("--show-annotation")
                 args.add("android.annotation.SystemApi")
             }
-            if (includeSystemApiAnnotations && !args.contains("android.annotation.SystemService")) {
-                args.add("--show-annotation")
-                args.add("android.annotation.SystemService")
-            }
             if (includeSystemApiAnnotations && !args.contains("android.annotation.TestApi")) {
                 args.add("--show-annotation")
                 args.add("android.annotation.TestApi")
