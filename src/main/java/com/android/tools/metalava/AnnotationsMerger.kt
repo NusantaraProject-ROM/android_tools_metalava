@@ -614,7 +614,7 @@ class AnnotationsMerger(
                 }
             }
 
-            isNonNull(name) -> return codebase.createAnnotation("@$ANDROIDX_NOTNULL")
+            isNonNull(name) -> return codebase.createAnnotation("@$ANDROIDX_NONNULL")
 
             isNullable(name) -> return codebase.createAnnotation("@$ANDROIDX_NULLABLE")
 
@@ -640,7 +640,7 @@ class AnnotationsMerger(
     private fun isNonNull(name: String): Boolean {
         return name == IDEA_NOTNULL ||
             name == ANDROID_NOTNULL ||
-            name == ANDROIDX_NOTNULL ||
+            name == ANDROIDX_NONNULL ||
             name == SUPPORT_NOTNULL
     }
 
