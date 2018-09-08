@@ -638,4 +638,30 @@ class ApiFromTextTest : DriverTest() {
             api = source
         )
     }
+
+    @Test
+    fun `Deprecated enum constant`() {
+        val source = """
+                package androidx.annotation {
+                  @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS) @java.lang.annotation.Target({java.lang.annotation.ElementType.ANNOTATION_TYPE, java.lang.annotation.ElementType.TYPE, java.lang.annotation.ElementType.METHOD, java.lang.annotation.ElementType.CONSTRUCTOR, java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.PACKAGE}) public @interface RestrictTo {
+                    method public abstract androidx.annotation.RestrictTo.Scope[] value();
+                  }
+                  public static enum RestrictTo.Scope {
+                    enum_constant @Deprecated public static final androidx.annotation.RestrictTo.Scope GROUP_ID;
+                    enum_constant public static final androidx.annotation.RestrictTo.Scope LIBRARY;
+                    enum_constant public static final androidx.annotation.RestrictTo.Scope LIBRARY_GROUP;
+                    enum_constant public static final androidx.annotation.RestrictTo.Scope SUBCLASSES;
+                    enum_constant public static final androidx.annotation.RestrictTo.Scope TESTS;
+                  }
+                }
+                """
+
+        check(
+            compatibilityMode = false,
+            inputKotlinStyleNulls = true,
+            outputKotlinStyleNulls = true,
+            signatureSource = source,
+            api = source
+        )
+    }
 }
