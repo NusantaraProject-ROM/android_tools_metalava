@@ -176,6 +176,12 @@ class DocAnalyzer(
                     return
                 }
 
+                if (item is ClassItem && name == item.qualifiedName()) {
+                    // The annotation annotates itself; we shouldn't attempt to recursively
+                    // pull in documentation from it; the documentation is already complete.
+                    return
+                }
+
                 // Some annotations include the documentation they want inlined into usage docs.
                 // Copy those here:
 

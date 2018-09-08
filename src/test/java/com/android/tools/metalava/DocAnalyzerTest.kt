@@ -1354,6 +1354,101 @@ class DocAnalyzerTest : DriverTest() {
     }
 
     @Test
+    fun `Annotation annotating self`() {
+        check(
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                        package test.pkg;
+                        import java.lang.annotation.Retention;
+                        import java.lang.annotation.RetentionPolicy;
+                        /**
+                         * Documentation here
+                         */
+                        @SuppressWarnings("WeakerAccess")
+                        @MyAnnotation
+                        @Retention(RetentionPolicy.SOURCE)
+                        public @interface MyAnnotation {
+                        }
+                    """
+                )
+            ),
+            checkCompilation = true,
+            checkDoclava1 = false,
+            stubs = arrayOf(
+                """
+                package test.pkg;
+                /**
+                 * Documentation here
+                 */
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.SOURCE)
+                public @interface MyAnnotation {
+                }
+                """
+            )
+        )
+    }
+
+    @Test
+    fun `Annotation annotating itself indirectly`() {
+        check(
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                        package test.pkg;
+
+                        /**
+                         * Documentation 1 here
+                         */
+                        @SuppressWarnings("WeakerAccess")
+                        @MyAnnotation2
+                        public @interface MyAnnotation1 {
+                        }
+                    """
+                ),
+                java(
+                    """
+                        package test.pkg;
+
+                        /**
+                         * Documentation 2 here
+                         */
+                        @SuppressWarnings("WeakerAccess")
+                        @MyAnnotation1
+                        public @interface MyAnnotation2 {
+                        }
+                    """
+                )
+            ),
+            checkCompilation = true,
+            checkDoclava1 = false,
+            stubs = arrayOf(
+                """
+                package test.pkg;
+                /**
+                 * Documentation 1 here
+                 */
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                @test.pkg.MyAnnotation2
+                public @interface MyAnnotation1 {
+                }
+                """,
+                """
+                package test.pkg;
+                /**
+                 * Documentation 2 here
+                 */
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                @test.pkg.MyAnnotation1
+                public @interface MyAnnotation2 {
+                }
+                """
+            )
+        )
+    }
+
+    @Test
     fun `Invoke external documentation tool`() {
         val jdkPath = getJdkPath()
         if (jdkPath == null) {
