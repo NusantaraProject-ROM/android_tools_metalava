@@ -47,6 +47,7 @@ class ShowAnnotationTest : DriverTest() {
             ),
 
             extraArguments = arrayOf(
+                "--error", "UnhiddenSystemApi",
                 "--hide-package", "android.annotation",
                 "--hide-package", "android.support.annotation"
             ),
@@ -105,6 +106,7 @@ class ShowAnnotationTest : DriverTest() {
             ),
 
             extraArguments = arrayOf(
+                "--error", "UnhiddenSystemApi",
                 "--hide-package", "android.annotation",
                 "--hide-package", "android.support.annotation"
             ),

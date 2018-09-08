@@ -16,6 +16,7 @@
 
 package com.android.tools.metalava.model.text
 
+import com.android.tools.metalava.JAVA_LANG_DEPRECATED
 import com.android.tools.metalava.model.AnnotationAttribute
 import com.android.tools.metalava.model.AnnotationItem
 import com.android.tools.metalava.model.AnnotationTarget
@@ -56,6 +57,11 @@ class TextModifiers(
                 codebase,
                 if (index == -1) source.substring(1) else source.substring(1, index)
             )
+
+            // @Deprecated is also treated as a "modifier"
+            if (qualifiedName == JAVA_LANG_DEPRECATED) {
+                setDeprecated(true)
+            }
 
             val attributes =
                 if (index == -1) {
