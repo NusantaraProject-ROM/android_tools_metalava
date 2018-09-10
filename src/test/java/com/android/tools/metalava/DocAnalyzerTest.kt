@@ -1371,6 +1371,19 @@ class DocAnalyzerTest : DriverTest() {
                         public @interface MyAnnotation {
                         }
                     """
+                ),
+                java(
+                    """
+                        package test.pkg;
+
+                        /**
+                         * Other documentation here
+                         */
+                        @SuppressWarnings("WeakerAccess")
+                        @MyAnnotation
+                        public class OtherClass {
+                        }
+                    """
                 )
             ),
             checkCompilation = true,
@@ -1384,6 +1397,16 @@ class DocAnalyzerTest : DriverTest() {
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.SOURCE)
                 public @interface MyAnnotation {
+                }
+                """,
+                """
+                package test.pkg;
+                /**
+                 * Other documentation here
+                 */
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class OtherClass {
+                public OtherClass() { throw new RuntimeException("Stub!"); }
                 }
                 """
             )
