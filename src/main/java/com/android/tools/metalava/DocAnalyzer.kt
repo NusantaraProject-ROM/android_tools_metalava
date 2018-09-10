@@ -175,6 +175,11 @@ class DocAnalyzer(
                     // Ignore java.lang.Retention etc.
                     return
                 }
+                if (name == "libcore.mmodule.IntraCoreMModuleApi") {
+                    // Ignore libcore.mmodule.IntraCoreMModuleApi used in the core internal APIs
+                    // because it annotates itself and causes recursion if we don't.
+                    return
+                }
 
                 if (item is ClassItem && name == item.qualifiedName()) {
                     // The annotation annotates itself; we shouldn't attempt to recursively
