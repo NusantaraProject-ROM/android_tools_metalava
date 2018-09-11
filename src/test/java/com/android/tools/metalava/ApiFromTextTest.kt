@@ -664,4 +664,49 @@ class ApiFromTextTest : DriverTest() {
             api = source
         )
     }
+
+    @Test
+    fun `Type parameters in v2 format`() {
+        val source = """
+                package androidx.collection {
+                  public class Constants {
+                    field public static final String GOOD_IRI_CHAR = "a-zA-Z0-9\u00a0-\ud7ff\uf900-\ufdcf\ufdf0-\uffef";
+                    field public static final char HEX_INPUT = 61184; // 0xef00 '\uef00'
+                    field protected int field00;
+                    field public static final boolean field01 = true;
+                    field public static final int field02 = 42; // 0x2a
+                    field public static final String field09 = "String with \"escapes\" and \u00a9...";
+                  }
+                  public class MyMap<Key, Value> {
+                    method public Key! getReplacement(Key!);
+                  }
+                }
+                package androidx.paging {
+                  public abstract class DataSource<Key, Value> {
+                    method @AnyThread public void addInvalidatedCallback(androidx.paging.DataSource.InvalidatedCallback);
+                    method @AnyThread public void invalidate();
+                    method @WorkerThread public boolean isInvalid();
+                    method public abstract <ToValue> androidx.paging.DataSource<Key,ToValue> map(androidx.arch.core.util.Function<Value,ToValue>);
+                    method public abstract <ToValue> androidx.paging.DataSource<Key,ToValue> mapByPage(androidx.arch.core.util.Function<java.util.List<Value>,java.util.List<ToValue>>);
+                    method @AnyThread public void removeInvalidatedCallback(androidx.paging.DataSource.InvalidatedCallback);
+                  }
+                  public abstract class ItemKeyedDataSource<Key, Value> extends androidx.paging.DataSource<Key, Value> {
+                    method public abstract Key getKey(Value);
+                    method public boolean isContiguous();
+                    method public abstract void loadAfter(androidx.paging.ItemKeyedDataSource.LoadParams<Key>, androidx.paging.ItemKeyedDataSource.LoadCallback<Value>);
+                    method public abstract void loadBefore(androidx.paging.ItemKeyedDataSource.LoadParams<Key>, androidx.paging.ItemKeyedDataSource.LoadCallback<Value>);
+                    method public abstract void loadInitial(androidx.paging.ItemKeyedDataSource.LoadInitialParams<Key>, androidx.paging.ItemKeyedDataSource.LoadInitialCallback<Value>);
+                    method public final <ToValue> androidx.paging.ItemKeyedDataSource<Key,ToValue> map(androidx.arch.core.util.Function<Value,ToValue>);
+                    method public final <ToValue> androidx.paging.ItemKeyedDataSource<Key,ToValue> mapByPage(androidx.arch.core.util.Function<java.util.List<Value>,java.util.List<ToValue>>);
+                  }
+                }
+                """
+        check(
+            compatibilityMode = false,
+            inputKotlinStyleNulls = true,
+            outputKotlinStyleNulls = true,
+            signatureSource = source,
+            api = source
+        )
+    }
 }

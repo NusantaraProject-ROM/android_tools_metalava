@@ -613,7 +613,7 @@ public class ApiFile {
                 }
             } else if ("char".equals(type)) {
                 return (char) Integer.parseInt(val);
-            } else if (JAVA_LANG_STRING.equals(type)) {
+            } else if (JAVA_LANG_STRING.equals(type) || "String".equals(type)) {
                 if ("null".equals(val)) {
                     return null;
                 } else {
