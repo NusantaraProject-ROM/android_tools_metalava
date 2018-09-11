@@ -485,6 +485,38 @@ interface AnnotationItem {
                 }
             }
         }
+
+        /**
+         * If the given element has an *implicit* nullness, return it. This returns
+         * true for implicitly nullable elements, such as the parameter to the equals
+         * method, false for implicitly non null elements (such as annotation type
+         * members), and null if there is no implicit nullness.
+         */
+        fun getImplicitNullness(item: Item): Boolean? {
+            var nullable: Boolean? = null
+
+            // Constant field not initialized to null?
+            if (item is FieldItem &&
+                (item.isEnumConstant() || item.modifiers.isFinal() && item.initialValue(false) != null)) {
+                // Assigned to constant: not nullable
+                nullable = false
+            }
+
+            // Annotation type members cannot be null
+            if (item is MemberItem && item.containingClass().isAnnotationType()) {
+                nullable = false
+            }
+
+            // Equals and toString have known nullness
+            if (item is MethodItem && item.name() == "toString" && item.parameters().isEmpty()) {
+                nullable = false
+            } else if (item is ParameterItem && item.containingMethod().name() == "equals" &&
+                item.containingMethod().parameters().size == 1) {
+                nullable = true
+            }
+
+            return nullable
+        }
     }
 }
 

@@ -432,7 +432,7 @@ private fun processFlags() {
 
     Disposer.dispose(LintCoreApplicationEnvironment.get().parentDisposable)
 
-    if (!options.quiet) {
+    if (options.verbose) {
         val packageCount = codebase.size()
         options.stdout.println("\n$PROGRAM_NAME finished handling $packageCount packages in $stopwatch")
         options.stdout.flush()
