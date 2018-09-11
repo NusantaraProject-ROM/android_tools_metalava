@@ -75,12 +75,37 @@ class CompatibilityCheck(
     var foundProblems = false
 
     override fun compare(old: Item, new: Item) {
+        val oldModifiers = old.modifiers
+        val newModifiers = new.modifiers
+        if (oldModifiers.isOperator() && !newModifiers.isOperator()) {
+            report(
+                Errors.OPERATOR_REMOVAL,
+                new,
+                "Cannot remove `operator` modifier from ${describe(new)}: Incompatible change"
+            )
+        }
+
+        if (oldModifiers.isInfix() && !newModifiers.isInfix()) {
+            report(
+                Errors.INFIX_REMOVAL,
+                new,
+                "Cannot remove `infix` modifier from ${describe(new)}: Incompatible change"
+            )
+        }
+
         // Should not remove nullness information
         // Can't change information incompatibly
         val oldNullnessAnnotation = findNullnessAnnotation(old)
         if (oldNullnessAnnotation != null) {
             val newNullnessAnnotation = findNullnessAnnotation(new)
             if (newNullnessAnnotation == null) {
+                val implicitNullness = AnnotationItem.getImplicitNullness(new)
+                if (implicitNullness == true && isNullable(old)) {
+                    return
+                }
+                if (implicitNullness == false && !isNullable(old)) {
+                    return
+                }
                 val name = AnnotationItem.simpleName(oldNullnessAnnotation)
                 report(
                     Errors.INVALID_NULL_CONVERSION, new,
@@ -111,24 +136,6 @@ class CompatibilityCheck(
                     }
                 }
             }
-        }
-
-        val oldModifiers = old.modifiers
-        val newModifiers = new.modifiers
-        if (oldModifiers.isOperator() && !newModifiers.isOperator()) {
-            report(
-                Errors.OPERATOR_REMOVAL,
-                new,
-                "Cannot remove `operator` modifier from ${describe(new)}: Incompatible change"
-            )
-        }
-
-        if (oldModifiers.isInfix() && !newModifiers.isInfix()) {
-            report(
-                Errors.INFIX_REMOVAL,
-                new,
-                "Cannot remove `infix` modifier from ${describe(new)}: Incompatible change"
-            )
         }
     }
 
@@ -626,6 +633,13 @@ class CompatibilityCheck(
     }
 
     private fun handleRemoved(error: Error, item: Item) {
+        if (!item.emit) {
+            // It's a stub; this can happen when analyzing partial APIs
+            // such as a signature file for a library referencing types
+            // from the upstream library dependencies.
+            return
+        }
+
         if (base != null) {
             // We're diffing "overlay" APIs, such as system or test API files,
             // where the signature files only list a delta from the full, "base" API.
