@@ -1902,6 +1902,7 @@ val restrictToSource: TestFile = java(
         enum Scope {
             LIBRARY,
             LIBRARY_GROUP,
+            /** @deprecated */
             @Deprecated
             GROUP_ID,
             TESTS,

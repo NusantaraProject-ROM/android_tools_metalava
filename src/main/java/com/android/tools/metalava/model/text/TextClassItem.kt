@@ -111,12 +111,15 @@ open class TextClassItem(
     override fun containingPackage(): PackageItem =
         containingClass?.containingPackage() ?: containingPackage ?: error(this)
 
-    override fun toType(): TypeItem = codebase.obtainTypeFromString(
-        if (typeParameterList().toString().isNotEmpty())
-            // TODO: No, handle List<String>[], though this is highly unlikely in a class
-            qualifiedName() + "<" + typeParameterList() + ">"
-        else qualifiedName()
-    )
+    override fun toType(): TypeItem {
+        val typeParameterListString = typeParameterList().toString()
+        return codebase.obtainTypeFromString(
+            if (typeParameterListString.isNotEmpty()) {
+                // TODO: No, handle List<String>[], though this is highly unlikely in a class
+                qualifiedName() + typeParameterListString
+            } else qualifiedName()
+        )
+    }
 
     override fun hasTypeVariables(): Boolean {
         return typeInfo?.hasTypeArguments() ?: false

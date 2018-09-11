@@ -17,6 +17,7 @@
 package com.android.tools.metalava.model.text
 
 import com.android.tools.metalava.JAVA_LANG_OBJECT
+import com.android.tools.metalava.JAVA_LANG_PREFIX
 import com.android.tools.metalava.doclava1.TextCodebase
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.Item
@@ -72,7 +73,29 @@ class TextTypeItem(
 
         return when (other) {
             is TextTypeItem -> toString() == other.toString()
-            is TypeItem -> toTypeString().replace(" ", "") == other.toTypeString().replace(" ", "")
+            is TypeItem -> {
+                val thisString = toTypeString()
+                val otherString = other.toTypeString()
+                if (thisString == otherString) {
+                    return true
+                }
+                if (thisString[0] == otherString[0]) {
+                    val thisCondensed = thisString.replace(" ", "")
+                    val otherCondensed = otherString.replace(" ", "")
+                    if (thisCondensed == otherCondensed) {
+                        return true
+                    }
+                }
+                if (thisString.startsWith(JAVA_LANG_PREFIX) && thisString.endsWith(otherString) &&
+                    thisString.length == otherString.length + JAVA_LANG_PREFIX.length
+                ) {
+                    // When reading signature files, it's sometimes ambiguous whether a name
+                    // references a java.lang. implicit class or a type parameter.
+                    return true
+                }
+
+                return false
+            }
             else -> false
         }
     }
@@ -228,7 +251,7 @@ class TextTypeItem(
             return s
         }
 
-        private fun eraseTypeArguments(s: String): String {
+        fun eraseTypeArguments(s: String): String {
             val index = s.indexOf('<')
             if (index != -1) {
                 var balance = 0
