@@ -165,11 +165,27 @@ interface ModifierList {
         }
     }
 
+    /** User visible description of the visibility in this modifier list */
     fun getVisibilityString(): String {
         return when {
             isPublic() -> "public"
             isProtected() -> "protected"
             isPackagePrivate() -> "package private"
+            isInternal() -> "internal"
+            isPrivate() -> "private"
+            else -> error(toString())
+        }
+    }
+
+    /**
+     * Like [getVisibilityString], but package private has no modifiers; this typically corresponds to
+     * the source code for the visibility modifiers in the modifier list
+     */
+    fun getVisibilityModifiers(): String {
+        return when {
+            isPublic() -> "public"
+            isProtected() -> "protected"
+            isPackagePrivate() -> ""
             isInternal() -> "internal"
             isPrivate() -> "private"
             else -> error(toString())

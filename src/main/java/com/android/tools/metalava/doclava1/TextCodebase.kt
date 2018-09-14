@@ -73,7 +73,7 @@ class TextCodebase(location: File) : DefaultCodebase(location) {
     override fun getPackages(): PackageList {
         val list = ArrayList<PackageItem>(mPackages.values)
         list.sortWith(PackageItem.comparator)
-        return PackageList(list)
+        return PackageList(this, list)
     }
 
     override fun size(): Int {

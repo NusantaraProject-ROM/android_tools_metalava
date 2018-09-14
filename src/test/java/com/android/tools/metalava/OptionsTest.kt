@@ -87,6 +87,8 @@ Documentation:
 
 Extracting Signature Files:
 --api <file>                             Generate a signature descriptor file
+--api-xml <file>                         Like --api, but emits the API in the JDiff XML
+                                         format instead
 --private-api <file>                     Generate a signature descriptor file listing the
                                          exact private APIs
 --dex-api <file>                         Generate a DEX signature descriptor file listing

@@ -47,6 +47,7 @@ private const val ARG_CLASS_PATH = "--classpath"
 private const val ARG_SOURCE_PATH = "--source-path"
 private const val ARG_SOURCE_FILES = "--source-files"
 private const val ARG_API = "--api"
+private const val ARG_XML_API = "--api-xml"
 private const val ARG_PRIVATE_API = "--private-api"
 private const val ARG_DEX_API = "--dex-api"
 private const val ARG_PRIVATE_DEX_API = "--private-dex-api"
@@ -268,6 +269,9 @@ class Options(
 
     /** If set, a file to write an API file to. Corresponds to the --api/-api flag. */
     var apiFile: File? = null
+
+    /** Like [apiFile], but with JDiff xml format. */
+    var apiXmlFile: File? = null
 
     /** If set, a file to write the private API file to. Corresponds to the --private-api/-privateApi flag. */
     var privateApiFile: File? = null
@@ -500,8 +504,8 @@ class Options(
                 )
 
                 "-sdkvalues", ARG_SDK_VALUES -> sdkValueDir = stringToNewDir(getValue(args, ++index))
-
                 ARG_API, "-api" -> apiFile = stringToNewFile(getValue(args, ++index))
+                ARG_XML_API -> apiXmlFile = stringToNewFile(getValue(args, ++index))
                 ARG_DEX_API, "-dexApi" -> dexApiFile = stringToNewFile(getValue(args, ++index))
                 ARG_DEX_API_MAPPING, "-apiMapping" -> dexApiMappingFile = stringToNewFile(getValue(args, ++index))
 
@@ -1421,6 +1425,7 @@ class Options(
             "", "\nExtracting Signature Files:",
             // TODO: Document --show-annotation!
             "$ARG_API <file>", "Generate a signature descriptor file",
+            "$ARG_XML_API <file>", "Like $ARG_API, but emits the API in the JDiff XML format instead",
             "$ARG_PRIVATE_API <file>", "Generate a signature descriptor file listing the exact private APIs",
             "$ARG_DEX_API <file>", "Generate a DEX signature descriptor file listing the APIs",
             "$ARG_PRIVATE_DEX_API <file>", "Generate a DEX signature descriptor file listing the exact private APIs",
