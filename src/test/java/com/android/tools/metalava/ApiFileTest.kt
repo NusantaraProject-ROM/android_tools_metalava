@@ -668,7 +668,7 @@ class ApiFileTest : DriverTest() {
                         }
 
                         @JvmOverloads
-                        fun String.blahblahblah(firstArg: String = "hello", secondArg: Int = "42", thirdArg: String = "world") {
+                        fun String.blahblahblah(firstArg: String = "hello", secondArg: Int = 42, thirdArg: String = "world") {
                         }
                     """
                 )
@@ -677,8 +677,8 @@ class ApiFileTest : DriverTest() {
                 package androidx.content {
                   public final class TestKt {
                     ctor public TestKt();
-                    method public static void blahblahblah(String, String firstArg = "hello", int secondArg = "42", String thirdArg = "world");
-                    method public static void blahblahblah(String, String firstArg = "hello", int secondArg = "42");
+                    method public static void blahblahblah(String, String firstArg = "hello", int secondArg = 42, String thirdArg = "world");
+                    method public static void blahblahblah(String, String firstArg = "hello", int secondArg = 42);
                     method public static void blahblahblah(String, String firstArg = "hello");
                     method public static void blahblahblah(String);
                     method public static void edit(android.content.SharedPreferences, boolean commit = false, kotlin.jvm.functions.Function1<? super android.content.SharedPreferences.Editor,kotlin.Unit> action);
@@ -2248,7 +2248,7 @@ class ApiFileTest : DriverTest() {
     @Test
     fun `Test include overridden @Deprecated even if annotated with @hide`() {
         check(
-            checkDoclava1 = true,
+            checkDoclava1 = false, // line numbers differ; they include comments; we point straight to modifier list
             sourceFiles = *arrayOf(
                 java(
                     """
