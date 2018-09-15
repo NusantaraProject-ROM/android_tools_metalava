@@ -47,9 +47,9 @@ class ShowAnnotationTest : DriverTest() {
             ),
 
             extraArguments = arrayOf(
-                "--error", "UnhiddenSystemApi",
-                "--hide-package", "android.annotation",
-                "--hide-package", "android.support.annotation"
+                ARG_ERROR, "UnhiddenSystemApi",
+                ARG_HIDE_PACKAGE, "android.annotation",
+                ARG_HIDE_PACKAGE, "android.support.annotation"
             ),
 
             api = """
@@ -106,9 +106,9 @@ class ShowAnnotationTest : DriverTest() {
             ),
 
             extraArguments = arrayOf(
-                "--error", "UnhiddenSystemApi",
-                "--hide-package", "android.annotation",
-                "--hide-package", "android.support.annotation"
+                ARG_ERROR, "UnhiddenSystemApi",
+                ARG_HIDE_PACKAGE, "android.annotation",
+                ARG_HIDE_PACKAGE, "android.support.annotation"
             ),
 
             api = """
@@ -167,9 +167,9 @@ class ShowAnnotationTest : DriverTest() {
             ),
 
             extraArguments = arrayOf(
-                "--show-annotation", "android.annotation.TestApi",
-                "--hide-package", "android.annotation",
-                "--hide-package", "android.support.annotation"
+                ARG_SHOW_ANNOTATION, "android.annotation.TestApi",
+                ARG_HIDE_PACKAGE, "android.annotation",
+                ARG_HIDE_PACKAGE, "android.support.annotation"
             ),
 
             api = """
@@ -249,9 +249,9 @@ class ShowAnnotationTest : DriverTest() {
                 """,
             includeSystemApiAnnotations = true,
             extraArguments = arrayOf(
-                "--show-annotation", "android.annotation.TestApi",
-                "--hide-package", "android.annotation",
-                "--hide-package", "android.support.annotation"
+                ARG_SHOW_ANNOTATION, "android.annotation.TestApi",
+                ARG_HIDE_PACKAGE, "android.annotation",
+                ARG_HIDE_PACKAGE, "android.support.annotation"
             )
         )
     }

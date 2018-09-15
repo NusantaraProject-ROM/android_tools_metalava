@@ -181,7 +181,7 @@ class AndroidApiChecksTest : DriverTest() {
                 src/android/pkg/NullMentions.java:19: warning: Return value of 'method4' documentation mentions 'null' without declaring @NonNull or @Nullable [Nullable:123]
                 src/android/pkg/NullMentions.java:8: warning: Field 'field2' documentation mentions 'null' without declaring @NonNull or @Nullable [Nullable:123]
                 """,
-            extraArguments = arrayOf("--warning", "Nullable"), // Hidden by default
+            extraArguments = arrayOf(ARG_WARNING, "Nullable"), // Hidden by default
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -225,7 +225,7 @@ class AndroidApiChecksTest : DriverTest() {
             warnings = """
                 src/android/pkg/NullMentions.java:15: warning: Field 'field1' documentation mentions constants without declaring an @IntDef [IntDef:124]
                 """,
-            extraArguments = arrayOf("--warning", "IntDef"), // Hidden by default
+            extraArguments = arrayOf(ARG_WARNING, "IntDef"), // Hidden by default
             sourceFiles = *arrayOf(
                 java(
                     """

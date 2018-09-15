@@ -38,86 +38,86 @@ var options = Options(emptyArray())
 
 private const val MAX_LINE_WIDTH = 90
 
-private const val ARGS_COMPAT_OUTPUT = "--compatible-output"
-private const val ARG_HELP = "--help"
-private const val ARG_VERSION = "--version"
-private const val ARG_QUIET = "--quiet"
-private const val ARG_VERBOSE = "--verbose"
-private const val ARG_CLASS_PATH = "--classpath"
-private const val ARG_SOURCE_PATH = "--source-path"
-private const val ARG_SOURCE_FILES = "--source-files"
-private const val ARG_API = "--api"
-private const val ARG_XML_API = "--api-xml"
-private const val ARG_PRIVATE_API = "--private-api"
-private const val ARG_DEX_API = "--dex-api"
-private const val ARG_PRIVATE_DEX_API = "--private-dex-api"
-private const val ARG_SDK_VALUES = "--sdk-values"
-private const val ARG_REMOVED_API = "--removed-api"
-private const val ARG_REMOVED_DEX_API = "--removed-dex-api"
-private const val ARG_MERGE_ANNOTATIONS = "--merge-annotations"
-private const val ARG_INPUT_API_JAR = "--input-api-jar"
-private const val ARG_EXACT_API = "--exact-api"
-private const val ARG_STUBS = "--stubs"
-private const val ARG_DOC_STUBS = "--doc-stubs"
-private const val ARG_STUBS_SOURCE_LIST = "--write-stubs-source-list"
-private const val ARG_DOC_STUBS_SOURCE_LIST = "--write-doc-stubs-source-list"
-private const val ARG_PROGUARD = "--proguard"
-private const val ARG_EXTRACT_ANNOTATIONS = "--extract-annotations"
-private const val ARG_EXCLUDE_ANNOTATIONS = "--exclude-annotations"
-private const val ARG_HIDE_PACKAGE = "--hide-package"
-private const val ARG_MANIFEST = "--manifest"
-private const val ARG_PREVIOUS_API = "--previous-api"
-private const val ARG_CURRENT_API = "--current-api"
-private const val ARG_MIGRATE_NULLNESS = "--migrate-nullness"
-private const val ARG_CHECK_COMPATIBILITY = "--check-compatibility"
-private const val ARG_CHECK_COMPATIBILITY_API_CURRENT = "--check-compatibility:api:current"
-private const val ARG_CHECK_COMPATIBILITY_API_RELEASED = "--check-compatibility:api:released"
-private const val ARG_CHECK_COMPATIBILITY_REMOVED_CURRENT = "--check-compatibility:removed:current"
-private const val ARG_CHECK_COMPATIBILITY_REMOVED_RELEASED = "--check-compatibility:removed:released"
-private const val ARG_INPUT_KOTLIN_NULLS = "--input-kotlin-nulls"
-private const val ARG_OUTPUT_KOTLIN_NULLS = "--output-kotlin-nulls"
-private const val ARG_OUTPUT_DEFAULT_VALUES = "--output-default-values"
-private const val ARG_ANNOTATION_COVERAGE_STATS = "--annotation-coverage-stats"
-private const val ARG_ANNOTATION_COVERAGE_OF = "--annotation-coverage-of"
-private const val ARG_WRITE_CLASS_COVERAGE_TO = "--write-class-coverage-to"
-private const val ARG_WRITE_MEMBER_COVERAGE_TO = "--write-member-coverage-to"
-private const val ARG_WARNINGS_AS_ERRORS = "--warnings-as-errors"
-private const val ARG_LINTS_AS_ERRORS = "--lints-as-errors"
-private const val ARG_SHOW_ANNOTATION = "--show-annotation"
-private const val ARG_SHOW_UNANNOTATED = "--show-unannotated"
-private const val ARG_COLOR = "--color"
-private const val ARG_NO_COLOR = "--no-color"
-private const val ARG_OMIT_COMMON_PACKAGES = "--omit-common-packages"
-private const val ARG_SKIP_JAVA_IN_COVERAGE_REPORT = "--skip-java-in-coverage-report"
-private const val ARG_NO_BANNER = "--no-banner"
-private const val ARG_ERROR = "--error"
-private const val ARG_WARNING = "--warning"
-private const val ARG_LINT = "--lint"
-private const val ARG_HIDE = "--hide"
-private const val ARG_UNHIDE_CLASSPATH_CLASSES = "--unhide-classpath-classes"
-private const val ARG_ALLOW_REFERENCING_UNKNOWN_CLASSES = "--allow-referencing-unknown-classes"
-private const val ARG_NO_UNKNOWN_CLASSES = "--no-unknown-classes"
-private const val ARG_APPLY_API_LEVELS = "--apply-api-levels"
-private const val ARG_GENERATE_API_LEVELS = "--generate-api-levels"
-private const val ARG_ANDROID_JAR_PATTERN = "--android-jar-pattern"
-private const val ARG_CURRENT_VERSION = "--current-version"
-private const val ARG_CURRENT_CODENAME = "--current-codename"
-private const val ARG_CURRENT_JAR = "--current-jar"
-private const val ARG_CHECK_KOTLIN_INTEROP = "--check-kotlin-interop"
-private const val ARG_PUBLIC = "--public"
-private const val ARG_PROTECTED = "--protected"
-private const val ARG_PACKAGE = "--package"
-private const val ARG_PRIVATE = "--private"
-private const val ARG_HIDDEN = "--hidden"
-private const val ARG_NO_DOCS = "--no-docs"
-private const val ARG_JAVA_SOURCE = "--java-source"
-private const val ARG_REGISTER_ARTIFACT = "--register-artifact"
-private const val ARG_COPY_ANNOTATIONS = "--copy-annotations"
-private const val ARG_INCLUDE_ANNOTATION_CLASSES = "--include-annotation-classes"
-private const val ARG_REWRITE_ANNOTATIONS = "--rewrite-annotations"
-private const val ARG_INCLUDE_SOURCE_RETENTION = "--include-source-retention"
-private const val ARG_INCLUDE_SIG_VERSION = "--include-signature-version"
-private const val ARG_UPDATE_API = "--update-api"
+const val ARGS_COMPAT_OUTPUT = "--compatible-output"
+const val ARG_HELP = "--help"
+const val ARG_VERSION = "--version"
+const val ARG_QUIET = "--quiet"
+const val ARG_VERBOSE = "--verbose"
+const val ARG_CLASS_PATH = "--classpath"
+const val ARG_SOURCE_PATH = "--source-path"
+const val ARG_SOURCE_FILES = "--source-files"
+const val ARG_API = "--api"
+const val ARG_XML_API = "--api-xml"
+const val ARG_CONVERT_TO_JDIFF = "--convert-to-jdiff"
+const val ARG_PRIVATE_API = "--private-api"
+const val ARG_DEX_API = "--dex-api"
+const val ARG_PRIVATE_DEX_API = "--private-dex-api"
+const val ARG_SDK_VALUES = "--sdk-values"
+const val ARG_REMOVED_API = "--removed-api"
+const val ARG_REMOVED_DEX_API = "--removed-dex-api"
+const val ARG_MERGE_ANNOTATIONS = "--merge-annotations"
+const val ARG_INPUT_API_JAR = "--input-api-jar"
+const val ARG_EXACT_API = "--exact-api"
+const val ARG_STUBS = "--stubs"
+const val ARG_DOC_STUBS = "--doc-stubs"
+const val ARG_STUBS_SOURCE_LIST = "--write-stubs-source-list"
+const val ARG_DOC_STUBS_SOURCE_LIST = "--write-doc-stubs-source-list"
+const val ARG_PROGUARD = "--proguard"
+const val ARG_EXTRACT_ANNOTATIONS = "--extract-annotations"
+const val ARG_EXCLUDE_ANNOTATIONS = "--exclude-annotations"
+const val ARG_HIDE_PACKAGE = "--hide-package"
+const val ARG_MANIFEST = "--manifest"
+const val ARG_MIGRATE_NULLNESS = "--migrate-nullness"
+const val ARG_CHECK_COMPATIBILITY = "--check-compatibility"
+const val ARG_CHECK_COMPATIBILITY_API_CURRENT = "--check-compatibility:api:current"
+const val ARG_CHECK_COMPATIBILITY_API_RELEASED = "--check-compatibility:api:released"
+const val ARG_CHECK_COMPATIBILITY_REMOVED_CURRENT = "--check-compatibility:removed:current"
+const val ARG_CHECK_COMPATIBILITY_REMOVED_RELEASED = "--check-compatibility:removed:released"
+const val ARG_INPUT_KOTLIN_NULLS = "--input-kotlin-nulls"
+const val ARG_OUTPUT_KOTLIN_NULLS = "--output-kotlin-nulls"
+const val ARG_OUTPUT_DEFAULT_VALUES = "--output-default-values"
+const val ARG_ANNOTATION_COVERAGE_STATS = "--annotation-coverage-stats"
+const val ARG_ANNOTATION_COVERAGE_OF = "--annotation-coverage-of"
+const val ARG_WRITE_CLASS_COVERAGE_TO = "--write-class-coverage-to"
+const val ARG_WRITE_MEMBER_COVERAGE_TO = "--write-member-coverage-to"
+const val ARG_WARNINGS_AS_ERRORS = "--warnings-as-errors"
+const val ARG_LINTS_AS_ERRORS = "--lints-as-errors"
+const val ARG_SHOW_ANNOTATION = "--show-annotation"
+const val ARG_SHOW_UNANNOTATED = "--show-unannotated"
+const val ARG_COLOR = "--color"
+const val ARG_NO_COLOR = "--no-color"
+const val ARG_OMIT_COMMON_PACKAGES = "--omit-common-packages"
+const val ARG_SKIP_JAVA_IN_COVERAGE_REPORT = "--skip-java-in-coverage-report"
+const val ARG_NO_BANNER = "--no-banner"
+const val ARG_ERROR = "--error"
+const val ARG_WARNING = "--warning"
+const val ARG_LINT = "--lint"
+const val ARG_HIDE = "--hide"
+const val ARG_UNHIDE_CLASSPATH_CLASSES = "--unhide-classpath-classes"
+const val ARG_ALLOW_REFERENCING_UNKNOWN_CLASSES = "--allow-referencing-unknown-classes"
+const val ARG_NO_UNKNOWN_CLASSES = "--no-unknown-classes"
+const val ARG_APPLY_API_LEVELS = "--apply-api-levels"
+const val ARG_GENERATE_API_LEVELS = "--generate-api-levels"
+const val ARG_ANDROID_JAR_PATTERN = "--android-jar-pattern"
+const val ARG_CURRENT_VERSION = "--current-version"
+const val ARG_CURRENT_CODENAME = "--current-codename"
+const val ARG_CURRENT_JAR = "--current-jar"
+const val ARG_CHECK_KOTLIN_INTEROP = "--check-kotlin-interop"
+const val ARG_PUBLIC = "--public"
+const val ARG_PROTECTED = "--protected"
+const val ARG_PACKAGE = "--package"
+const val ARG_PRIVATE = "--private"
+const val ARG_HIDDEN = "--hidden"
+const val ARG_NO_DOCS = "--no-docs"
+const val ARG_JAVA_SOURCE = "--java-source"
+const val ARG_REGISTER_ARTIFACT = "--register-artifact"
+const val ARG_INCLUDE_ANNOTATIONS = "--include-annotations"
+const val ARG_COPY_ANNOTATIONS = "--copy-annotations"
+const val ARG_INCLUDE_ANNOTATION_CLASSES = "--include-annotation-classes"
+const val ARG_REWRITE_ANNOTATIONS = "--rewrite-annotations"
+const val ARG_INCLUDE_SOURCE_RETENTION = "--include-source-retention"
+const val ARG_INCLUDE_SIG_VERSION = "--include-signature-version"
+const val ARG_UPDATE_API = "--update-api"
 const val ARG_DEX_API_MAPPING = "--dex-api-mapping"
 const val ARG_GENERATE_DOCUMENTATION = "--generate-documentation"
 
@@ -149,6 +149,8 @@ class Options(
     private val mutableHidePackages: MutableList<String> = mutableListOf()
     /** Internal list backing [skipEmitPackages] */
     private val mutableSkipEmitPackages: MutableList<String> = mutableListOf()
+    /** Internal list backing [convertToXmlFiles] */
+    private val mutableConvertToXmlFiles: MutableList<Pair<File, File>> = mutableListOf()
 
     /** Ignored flags we've already warned about - store here such that we don't keep reporting them */
     private val alreadyWarned: MutableSet<String> = mutableSetOf()
@@ -342,9 +344,6 @@ class Options(
     /** The list of compatibility checks to run */
     val compatibilityChecks: List<CheckRequest> = mutableCompatibilityChecks
 
-    /** Whether we should migrate nulls based on the previous API in [migrateNullsFrom] */
-    var migrateNulls: Boolean = false
-
     /** Existing external annotation files to merge in */
     var mergeAnnotations: List<File> = mutableMergeAnnotations
 
@@ -422,6 +421,9 @@ class Options(
 
     /** Map from XML API descriptor file to corresponding artifact id name */
     val artifactRegistrations = ArtifactTagger()
+
+    /** List of signature files to export as JDiff files */
+    val convertToXmlFiles = mutableConvertToXmlFiles
 
     /** Temporary folder to use instead of the JDK default, if any */
     var tempFolder: File? = null
@@ -543,7 +545,7 @@ class Options(
                 // Note that this only affects stub generation, not signature files.
                 // For signature files, clear the compatibility mode
                 // (--annotations-in-signatures)
-                "--include-annotations" -> generateAnnotations = true
+                ARG_INCLUDE_ANNOTATIONS -> generateAnnotations = true
 
                 // Flag used by test suite to avoid including locations in
                 // the output when diffing against golden files
@@ -593,17 +595,14 @@ class Options(
                 ARG_INCLUDE_ANNOTATION_CLASSES -> copyStubAnnotationsFrom = stringToExistingDir(getValue(args, ++index))
                 ARG_INCLUDE_SOURCE_RETENTION -> includeSourceRetentionAnnotations = true
 
-                ARG_PREVIOUS_API -> {
+                "--previous-api" -> {
                     migrateNullsFrom = stringToExistingFile(getValue(args, ++index))
-                    /* Don't flag this yet: allow a short quiet grace period
                     reporter.report(Errors.DEPRECATED_OPTION, null as File?,
-                        "$ARG_PREVIOUS_API is deprecated; instead " +
+                        "--previous-api is deprecated; instead " +
                         "use $ARG_MIGRATE_NULLNESS $migrateNullsFrom")
-                    */
                 }
 
                 ARG_MIGRATE_NULLNESS -> {
-                    migrateNulls = true
                     // See if the next argument specifies the nullness API codebase
                     if (index < args.size - 1) {
                         val nextArg = args[index + 1]
@@ -617,14 +616,12 @@ class Options(
                     }
                 }
 
-                ARG_CURRENT_API -> {
+                "--current-api" -> {
                     val file = stringToExistingFile(getValue(args, ++index))
                     mutableCompatibilityChecks.add(CheckRequest(file, ApiType.PUBLIC_API, ReleaseType.DEV))
-                    /* Don't flag this yet: allow a short quiet grace period
                     reporter.report(Errors.DEPRECATED_OPTION, null as File?,
-                        "$ARG_CURRENT_API is deprecated; instead " +
-                            "use $ARG_CHECK_COMPATIBILITY $checkCompatibilityApiCurrent")
-                    */
+                        "--current-api is deprecated; instead " +
+                            "use $ARG_CHECK_COMPATIBILITY_API_CURRENT")
                 }
 
                 ARG_CHECK_COMPATIBILITY -> {
@@ -795,6 +792,12 @@ class Options(
                     val descriptor = stringToExistingFile(getValue(args, ++index))
                     val artifactId = getValue(args, ++index)
                     artifactRegistrations.register(artifactId, descriptor)
+                }
+
+                ARG_CONVERT_TO_JDIFF -> {
+                    val signatureFile = stringToExistingFile(getValue(args, ++index))
+                    val jDiffFile = stringToNewFile(getValue(args, ++index))
+                    mutableConvertToXmlFiles.add(Pair(signatureFile, jDiffFile))
                 }
 
                 "--write-android-jar-signatures" -> {
@@ -1127,10 +1130,6 @@ class Options(
 
     /** Makes sure that the flag combinations make sense */
     private fun checkFlagConsistency() {
-        if (migrateNulls && migrateNullsFrom == null) {
-            throw DriverException(stderr = "$ARG_MIGRATE_NULLNESS requires $ARG_PREVIOUS_API")
-        }
-
         if (apiJar != null && sources.isNotEmpty()) {
             throw DriverException(stderr = "Specify either $ARG_SOURCE_FILES or $ARG_INPUT_API_JAR, not both")
         }
@@ -1203,6 +1202,7 @@ class Options(
         return file
     }
 
+    @Suppress("unused")
     private fun stringToExistingDirs(value: String): List<File> {
         val files = mutableListOf<File>()
         for (path in value.split(File.pathSeparatorChar)) {
@@ -1247,6 +1247,7 @@ class Options(
         return file
     }
 
+    @Suppress("unused")
     private fun stringToExistingFileOrDir(value: String): File {
         val file = fileForPath(value)
         if (!file.exists()) {
@@ -1425,7 +1426,6 @@ class Options(
             "", "\nExtracting Signature Files:",
             // TODO: Document --show-annotation!
             "$ARG_API <file>", "Generate a signature descriptor file",
-            "$ARG_XML_API <file>", "Like $ARG_API, but emits the API in the JDiff XML format instead",
             "$ARG_PRIVATE_API <file>", "Generate a signature descriptor file listing the exact private APIs",
             "$ARG_DEX_API <file>", "Generate a DEX signature descriptor file listing the APIs",
             "$ARG_PRIVATE_DEX_API <file>", "Generate a DEX signature descriptor file listing the exact private APIs",
@@ -1487,6 +1487,11 @@ class Options(
             "$ARG_WARNING <id>", "Report issues of the given id as warnings",
             "$ARG_LINT <id>", "Report issues of the given id as having lint-severity",
             "$ARG_HIDE <id>", "Hide/skip issues of the given id",
+
+            "", "\nJDiff:",
+            "$ARG_XML_API <file>", "Like $ARG_API, but emits the API in the JDiff XML format instead",
+            "$ARG_CONVERT_TO_JDIFF <sig> <xml>", "Reads in the given signature file, and writes it out " +
+                "in the JDiff XML format. Can be specified multiple times.",
 
             "", "\nStatistics:",
             ARG_ANNOTATION_COVERAGE_STATS, "Whether $PROGRAM_NAME should emit coverage statistics for " +

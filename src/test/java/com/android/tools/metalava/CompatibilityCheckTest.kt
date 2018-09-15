@@ -248,7 +248,7 @@ CompatibilityCheckTest : DriverTest() {
                 ),
                 supportParameterName
             ),
-            extraArguments = arrayOf("--hide-package", "androidx.annotation")
+            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation")
         )
     }
 
@@ -796,7 +796,7 @@ CompatibilityCheckTest : DriverTest() {
                 ),
                 suppressLintSource
             ),
-            extraArguments = arrayOf("--hide-package", "android.annotation")
+            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "android.annotation")
         )
     }
 
@@ -1728,9 +1728,9 @@ CompatibilityCheckTest : DriverTest() {
             ),
 
             extraArguments = arrayOf(
-                "--show-annotation", "android.annotation.TestApi",
-                "--hide-package", "android.annotation",
-                "--hide-package", "android.support.annotation"
+                ARG_SHOW_ANNOTATION, "android.annotation.TestApi",
+                ARG_HIDE_PACKAGE, "android.annotation",
+                ARG_HIDE_PACKAGE, "android.support.annotation"
             ),
 
             checkCompatibilityApi =
@@ -2165,7 +2165,7 @@ CompatibilityCheckTest : DriverTest() {
                 checkDoclava1 = false,
                 extraArguments = arrayOf(
                     "--omit-locations",
-                    "--hide",
+                    ARG_HIDE,
                     suppressLevels[apiLevel]
                         ?: "AddedPackage,AddedClass,AddedMethod,AddedInterface,AddedField,ChangedDeprecated,RemovedField,RemovedClass,RemovedDeprecatedClass" +
                         (if ((apiLevel == 19 || apiLevel == 20) && loadPrevAsSignature) ",ChangedType" else "")
@@ -2192,7 +2192,7 @@ CompatibilityCheckTest : DriverTest() {
                     checkDoclava1 = false,
                     extraArguments = arrayOf(
                         "--omit-locations",
-                        "--hide",
+                        ARG_HIDE,
                         suppressLevels[apiLevel]
                             ?: "AddedPackage,AddedClass,AddedMethod,AddedInterface,AddedField,ChangedDeprecated,RemovedField,RemovedClass,RemovedDeprecatedClass"
                     ),

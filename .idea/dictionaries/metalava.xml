@@ -8,6 +8,7 @@
       <w>bytecode</w>
       <w>canonicalized</w>
       <w>codebases</w>
+      <w>compat</w>
       <w>ctor</w>
       <w>dataname</w>
       <w>devsite</w>
@@ -28,6 +29,7 @@
       <w>interop</w>
       <w>jaif</w>
       <w>javadocs</w>
+      <w>jdiff</w>
       <w>jvmstatic</w>
       <w>knowntags</w>
       <w>kotlinx</w>
@@ -43,6 +45,7 @@
       <w>nullness</w>
       <w>offlinemode</w>
       <w>parsecomments</w>
+      <w>proguard</w>
       <w>realtime</w>
       <w>referenceonly</w>
       <w>resourcesdir</w>

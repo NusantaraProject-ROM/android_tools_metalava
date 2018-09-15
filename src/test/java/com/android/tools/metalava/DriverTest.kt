@@ -19,7 +19,6 @@ package com.android.tools.metalava
 import com.android.SdkConstants
 import com.android.SdkConstants.DOT_JAVA
 import com.android.SdkConstants.DOT_KT
-import com.android.SdkConstants.VALUE_TRUE
 import com.android.ide.common.process.DefaultProcessExecutor
 import com.android.ide.common.process.LoggedProcessOutputHandler
 import com.android.ide.common.process.ProcessException
@@ -45,6 +44,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
+import org.junit.Before
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import java.io.File
@@ -59,6 +59,11 @@ const val CHECK_STUB_COMPILATION = false
 abstract class DriverTest {
     @get:Rule
     var temporaryFolder = TemporaryFolder()
+
+    @Before
+    fun setup() {
+        System.setProperty(ENV_VAR_METALAVA_TESTS_RUNNING, SdkConstants.VALUE_TRUE)
+    }
 
     private fun createProject(vararg files: TestFile): File {
         val dir = temporaryFolder.newFolder("project")
@@ -251,10 +256,13 @@ abstract class DriverTest {
         /**
          * Whether to include the signature version in signatures
          */
-        includeSignatureVersion: Boolean = false
+        includeSignatureVersion: Boolean = false,
+        /**
+         * List of signature files to convert to JDiff XML and the
+         * expected XML output
+         */
+        convertToJDiff: List<Pair<String, String>> = emptyList()
     ) {
-        System.setProperty(ENV_VAR_METALAVA_TESTS_RUNNING, VALUE_TRUE)
-
         // Ensure different API clients don't interfere with each other
         try {
             val method = ApiLookup::class.java.getDeclaredMethod("dispose")
@@ -303,6 +311,9 @@ abstract class DriverTest {
         val packages = sourceFiles.asSequence().map { findPackage(it.getContents()!!) }.filterNotNull().toSet()
 
         val sourcePathDir = File(project, "src")
+        if (!sourcePathDir.isDirectory) {
+            sourcePathDir.mkdirs()
+        }
         val sourcePath = sourcePathDir.path
         val sourceList =
             if (signatureSource != null) {
@@ -315,7 +326,7 @@ abstract class DriverTest {
                 } else {
                     arrayOf(
                         signatureFile.path,
-                        "--hide",
+                        ARG_HIDE,
                         "HiddenSuperclass"
                     ) // Suppress warning #111
                 }
@@ -333,7 +344,7 @@ abstract class DriverTest {
                 .map { it.path }
                 .joinToString(separator = File.pathSeparator) { it }
 
-            arrayOf("--classpath", classpathString)
+            arrayOf(ARG_CLASS_PATH, classpathString)
         } else {
             emptyArray()
         }
@@ -348,7 +359,7 @@ abstract class DriverTest {
         val mergeAnnotationsArgs = if (mergeXmlAnnotations != null) {
             val merged = File(project, "merged-annotations.xml")
             Files.asCharSink(merged, Charsets.UTF_8).write(mergeXmlAnnotations.trimIndent())
-            arrayOf("--merge-annotations", merged.path)
+            arrayOf(ARG_MERGE_ANNOTATIONS, merged.path)
         } else {
             emptyArray()
         }
@@ -356,7 +367,7 @@ abstract class DriverTest {
         val signatureAnnotationsArgs = if (mergeSignatureAnnotations != null) {
             val merged = File(project, "merged-annotations.txt")
             Files.asCharSink(merged, Charsets.UTF_8).write(mergeSignatureAnnotations.trimIndent())
-            arrayOf("--merge-annotations", merged.path)
+            arrayOf(ARG_MERGE_ANNOTATIONS, merged.path)
         } else {
             emptyArray()
         }
@@ -364,7 +375,7 @@ abstract class DriverTest {
         val javaStubAnnotationsArgs = if (mergeJavaStubAnnotations != null) {
             val merged = File(project, "merged-annotations.java")
             Files.asCharSink(merged, Charsets.UTF_8).write(mergeJavaStubAnnotations.trimIndent())
-            arrayOf("--merge-annotations", merged.path)
+            arrayOf(ARG_MERGE_ANNOTATIONS, merged.path)
         } else {
             emptyArray()
         }
@@ -437,44 +448,44 @@ abstract class DriverTest {
         val manifestFileArgs = if (manifest != null) {
             val file = File(project, "manifest.xml")
             Files.asCharSink(file, Charsets.UTF_8).write(manifest.trimIndent())
-            arrayOf("--manifest", file.path)
+            arrayOf(ARG_MANIFEST, file.path)
         } else {
             emptyArray()
         }
 
         val migrateNullsArguments = if (migrateNullsApiFile != null) {
-            arrayOf("--migrate-nullness", migrateNullsApiFile.path)
+            arrayOf(ARG_MIGRATE_NULLNESS, migrateNullsApiFile.path)
         } else {
             emptyArray()
         }
 
         val checkCompatibilityArguments = if (checkCompatibilityApiFile != null) {
-            arrayOf("--check-compatibility:api:current", checkCompatibilityApiFile.path)
+            arrayOf(ARG_CHECK_COMPATIBILITY_API_CURRENT, checkCompatibilityApiFile.path)
         } else {
             emptyArray()
         }
 
         val checkCompatibilityApiReleasedArguments = if (checkCompatibilityApiReleasedFile != null) {
-            arrayOf("--check-compatibility:api:released", checkCompatibilityApiReleasedFile.path)
+            arrayOf(ARG_CHECK_COMPATIBILITY_API_RELEASED, checkCompatibilityApiReleasedFile.path)
         } else {
             emptyArray()
         }
 
         val checkCompatibilityRemovedCurrentArguments = if (checkCompatibilityRemovedApiCurrentFile != null) {
-            arrayOf("--check-compatibility:removed:current", checkCompatibilityRemovedApiCurrentFile.path)
+            arrayOf(ARG_CHECK_COMPATIBILITY_REMOVED_CURRENT, checkCompatibilityRemovedApiCurrentFile.path)
         } else {
             emptyArray()
         }
 
         val checkCompatibilityRemovedReleasedArguments = if (checkCompatibilityRemovedApiReleasedFile != null) {
-            arrayOf("--check-compatibility:removed:released", checkCompatibilityRemovedApiReleasedFile.path)
+            arrayOf(ARG_CHECK_COMPATIBILITY_REMOVED_RELEASED, checkCompatibilityRemovedApiReleasedFile.path)
         } else {
             emptyArray()
         }
 
-        val quiet = if (expectedOutput != null && !extraArguments.contains("--verbose")) {
+        val quiet = if (expectedOutput != null && !extraArguments.contains(ARG_VERBOSE)) {
             // If comparing output, avoid noisy output such as the banner etc
-            arrayOf("--quiet")
+            arrayOf(ARG_QUIET)
         } else {
             emptyArray()
         }
@@ -490,7 +501,7 @@ abstract class DriverTest {
                 val file = jar.createFile(root)
                 sb.append(file.path)
             }
-            arrayOf("--annotation-coverage-of", sb.toString())
+            arrayOf(ARG_ANNOTATION_COVERAGE_OF, sb.toString())
         } else {
             emptyArray()
         }
@@ -498,7 +509,7 @@ abstract class DriverTest {
         var proguardFile: File? = null
         val proguardKeepArguments = if (proguard != null) {
             proguardFile = File(project, "proguard.cfg")
-            arrayOf("--proguard", proguardFile.path)
+            arrayOf(ARG_PROGUARD, proguardFile.path)
         } else {
             emptyArray()
         }
@@ -506,15 +517,15 @@ abstract class DriverTest {
         val showAnnotationArguments = if (showAnnotations.isNotEmpty() || includeSystemApiAnnotations) {
             val args = mutableListOf<String>()
             for (annotation in showAnnotations) {
-                args.add("--show-annotation")
+                args.add(ARG_SHOW_ANNOTATION)
                 args.add(annotation)
             }
             if (includeSystemApiAnnotations && !args.contains("android.annotation.SystemApi")) {
-                args.add("--show-annotation")
+                args.add(ARG_SHOW_ANNOTATION)
                 args.add("android.annotation.SystemApi")
             }
             if (includeSystemApiAnnotations && !args.contains("android.annotation.TestApi")) {
-                args.add("--show-annotation")
+                args.add(ARG_SHOW_ANNOTATION)
                 args.add("android.annotation.TestApi")
             }
             args.toTypedArray()
@@ -524,14 +535,14 @@ abstract class DriverTest {
 
         val showUnannotatedArgs =
             if (showUnannotated) {
-                arrayOf("--show-unannotated")
+                arrayOf(ARG_SHOW_UNANNOTATED)
             } else {
                 emptyArray()
             }
 
         val includeSourceRetentionAnnotationArgs =
             if (includeSourceRetentionAnnotations) {
-                arrayOf("--include-source-retention")
+                arrayOf(ARG_INCLUDE_SOURCE_RETENTION)
             } else {
                 emptyArray()
             }
@@ -539,7 +550,7 @@ abstract class DriverTest {
         var removedApiFile: File? = null
         val removedArgs = if (removedApi != null) {
             removedApiFile = temporaryFolder.newFile("removed.txt")
-            arrayOf("--removed-api", removedApiFile.path)
+            arrayOf(ARG_REMOVED_API, removedApiFile.path)
         } else {
             emptyArray()
         }
@@ -547,7 +558,7 @@ abstract class DriverTest {
         var removedDexApiFile: File? = null
         val removedDexArgs = if (removedDexApi != null) {
             removedDexApiFile = temporaryFolder.newFile("removed-dex.txt")
-            arrayOf("--removed-dex-api", removedDexApiFile.path)
+            arrayOf(ARG_REMOVED_DEX_API, removedDexApiFile.path)
         } else {
             emptyArray()
         }
@@ -555,7 +566,7 @@ abstract class DriverTest {
         var apiFile: File? = null
         val apiArgs = if (api != null) {
             apiFile = temporaryFolder.newFile("public-api.txt")
-            arrayOf("--api", apiFile.path)
+            arrayOf(ARG_API, apiFile.path)
         } else {
             emptyArray()
         }
@@ -563,7 +574,7 @@ abstract class DriverTest {
         var exactApiFile: File? = null
         val exactApiArgs = if (exactApi != null) {
             exactApiFile = temporaryFolder.newFile("exact-api.txt")
-            arrayOf("--exact-api", exactApiFile.path)
+            arrayOf(ARG_EXACT_API, exactApiFile.path)
         } else {
             emptyArray()
         }
@@ -571,7 +582,7 @@ abstract class DriverTest {
         var apiXmlFile: File? = null
         val apiXmlArgs = if (apiXml != null) {
             apiXmlFile = temporaryFolder.newFile("public-api-xml.txt")
-            arrayOf("--api-xml", apiXmlFile.path)
+            arrayOf(ARG_XML_API, apiXmlFile.path)
         } else {
             emptyArray()
         }
@@ -579,7 +590,7 @@ abstract class DriverTest {
         var privateApiFile: File? = null
         val privateApiArgs = if (privateApi != null) {
             privateApiFile = temporaryFolder.newFile("private.txt")
-            arrayOf("--private-api", privateApiFile.path)
+            arrayOf(ARG_PRIVATE_API, privateApiFile.path)
         } else {
             emptyArray()
         }
@@ -587,7 +598,7 @@ abstract class DriverTest {
         var dexApiFile: File? = null
         val dexApiArgs = if (dexApi != null) {
             dexApiFile = temporaryFolder.newFile("public-dex.txt")
-            arrayOf("--dex-api", dexApiFile.path)
+            arrayOf(ARG_DEX_API, dexApiFile.path)
         } else {
             emptyArray()
         }
@@ -595,7 +606,7 @@ abstract class DriverTest {
         var dexApiMappingFile: File? = null
         val dexApiMappingArgs = if (dexApiMapping != null) {
             dexApiMappingFile = temporaryFolder.newFile("api-mapping.txt")
-            arrayOf("--dex-api-mapping", dexApiMappingFile.path)
+            arrayOf(ARG_DEX_API_MAPPING, dexApiMappingFile.path)
         } else {
             emptyArray()
         }
@@ -603,7 +614,27 @@ abstract class DriverTest {
         var privateDexApiFile: File? = null
         val privateDexApiArgs = if (privateDexApi != null) {
             privateDexApiFile = temporaryFolder.newFile("private-dex.txt")
-            arrayOf("--private-dex-api", privateDexApiFile.path)
+            arrayOf(ARG_PRIVATE_DEX_API, privateDexApiFile.path)
+        } else {
+            emptyArray()
+        }
+
+        val convertToJDiffFiles = mutableListOf<Pair<File, File>>()
+        val convertToJDiffArgs = if (convertToJDiff.isNotEmpty()) {
+            val args = mutableListOf<String>()
+            var index = 1
+            for ((signatures, xml) in convertToJDiff) {
+                val convertSig = temporaryFolder.newFile("jdiff-signatures$index.txt")
+                convertSig.writeText(signatures.trimIndent(), Charsets.UTF_8)
+                val output = temporaryFolder.newFile("jdiff-output$index.xml")
+                convertToJDiffFiles += Pair(convertSig, output)
+                index++
+
+                args += ARG_CONVERT_TO_JDIFF
+                args += convertSig.path
+                args += output.path
+            }
+            args.toTypedArray()
         } else {
             emptyArray()
         }
@@ -612,9 +643,9 @@ abstract class DriverTest {
         val stubsArgs = if (stubs.isNotEmpty()) {
             stubsDir = temporaryFolder.newFolder("stubs")
             if (docStubs) {
-                arrayOf("--doc-stubs", stubsDir.path)
+                arrayOf(ARG_DOC_STUBS, stubsDir.path)
             } else {
-                arrayOf("--stubs", stubsDir.path)
+                arrayOf(ARG_STUBS, stubsDir.path)
             }
         } else {
             emptyArray()
@@ -623,7 +654,7 @@ abstract class DriverTest {
         var stubsSourceListFile: File? = null
         val stubsSourceListArgs = if (stubsSourceList != null) {
             stubsSourceListFile = temporaryFolder.newFile("droiddoc-src-list")
-            arrayOf("--write-stubs-source-list", stubsSourceListFile.path)
+            arrayOf(ARG_STUBS_SOURCE_LIST, stubsSourceListFile.path)
         } else {
             emptyArray()
         }
@@ -633,7 +664,7 @@ abstract class DriverTest {
             ApiLookup::class.java.getDeclaredMethod("dispose").apply { isAccessible = true }.invoke(null)
             applyApiLevelsXmlFile = temporaryFolder.newFile("api-versions.xml")
             Files.asCharSink(applyApiLevelsXmlFile!!, Charsets.UTF_8).write(applyApiLevelsXml.trimIndent())
-            arrayOf("--apply-api-levels", applyApiLevelsXmlFile.path)
+            arrayOf(ARG_APPLY_API_LEVELS, applyApiLevelsXmlFile.path)
         } else {
             emptyArray()
         }
@@ -655,7 +686,7 @@ abstract class DriverTest {
             if (kotlinPath.isNotEmpty() &&
                 sourceList.asSequence().any { it.endsWith(DOT_KT) }
             ) {
-                arrayOf("--classpath", kotlinPath.joinToString(separator = File.pathSeparator) { it })
+                arrayOf(ARG_CLASS_PATH, kotlinPath.joinToString(separator = File.pathSeparator) { it })
             } else {
                 emptyArray()
             }
@@ -670,7 +701,7 @@ abstract class DriverTest {
             sdk_widgets != null
         ) {
             val dir = File(project, "sdk-files")
-            sdkFilesArgs = arrayOf("--sdk-values", dir.path)
+            sdkFilesArgs = arrayOf(ARG_SDK_VALUES, dir.path)
             sdkFilesDir = dir
         } else {
             sdkFilesArgs = emptyArray()
@@ -685,7 +716,7 @@ abstract class DriverTest {
                 Files.asCharSink(signatureFile, Charsets.UTF_8).write(signatures.trimIndent())
                 index++
 
-                args.add("--register-artifact")
+                args.add(ARG_REGISTER_ARTIFACT)
                 args.add(signatureFile.path)
                 args.add(artifactId)
             }
@@ -697,15 +728,15 @@ abstract class DriverTest {
         val extractedAnnotationsZip: File?
         val extractAnnotationsArgs = if (extractAnnotations != null) {
             extractedAnnotationsZip = temporaryFolder.newFile("extracted-annotations.zip")
-            arrayOf("--extract-annotations", extractedAnnotationsZip.path)
+            arrayOf(ARG_EXTRACT_ANNOTATIONS, extractedAnnotationsZip.path)
         } else {
             extractedAnnotationsZip = null
             emptyArray()
         }
 
         val actualOutput = runDriver(
-            "--no-color",
-            "--no-banner",
+            ARG_NO_COLOR,
+            ARG_NO_BANNER,
 
             // Tell metalava where to store temp folder: place them under the
             // test root folder such that we clean up the output strings referencing
@@ -716,16 +747,16 @@ abstract class DriverTest {
             // For the tests we want to treat references to APIs like java.io.Closeable
             // as a class that is part of the API surface, not as a hidden class as would
             // be the case when analyzing a complete API surface
-            // "--unhide-classpath-classes",
-            "--allow-referencing-unknown-classes",
+            // ARG_UNHIDE_CLASSPATH_CLASSES,
+            ARG_ALLOW_REFERENCING_UNKNOWN_CLASSES,
 
             // Annotation generation temporarily turned off by default while integrating with
             // SDK builds; tests need these
-            "--include-annotations",
+            ARG_INCLUDE_ANNOTATIONS,
 
-            "--sourcepath",
+            ARG_SOURCE_PATH,
             sourcePath,
-            "--classpath",
+            ARG_CLASS_PATH,
             androidJar.path,
             *classpathArgs,
             *kotlinPathArgs,
@@ -740,11 +771,11 @@ abstract class DriverTest {
             *dexApiMappingArgs,
             *stubsArgs,
             *stubsSourceListArgs,
-            "--compatible-output=${if (compatibilityMode) "yes" else "no"}",
-            "--output-kotlin-nulls=${if (outputKotlinStyleNulls) "yes" else "no"}",
-            "--input-kotlin-nulls=${if (inputKotlinStyleNulls) "yes" else "no"}",
-            "--omit-common-packages=${if (omitCommonPackages) "yes" else "no"}",
-            "--include-signature-version=${if (includeSignatureVersion) "yes" else "no"}",
+            "$ARGS_COMPAT_OUTPUT=${if (compatibilityMode) "yes" else "no"}",
+            "$ARG_OUTPUT_KOTLIN_NULLS=${if (outputKotlinStyleNulls) "yes" else "no"}",
+            "$ARG_INPUT_KOTLIN_NULLS=${if (inputKotlinStyleNulls) "yes" else "no"}",
+            "$ARG_OMIT_COMMON_PACKAGES=${if (omitCommonPackages) "yes" else "no"}",
+            "$ARG_INCLUDE_SIG_VERSION=${if (includeSignatureVersion) "yes" else "no"}",
             *coverageStats,
             *quiet,
             *mergeAnnotationsArgs,
@@ -757,6 +788,7 @@ abstract class DriverTest {
             *checkCompatibilityRemovedReleasedArguments,
             *proguardKeepArguments,
             *manifestFileArgs,
+            *convertToJDiffArgs,
             *applyApiLevelsXmlArgs,
             *showAnnotationArguments,
             *showUnannotatedArgs,
@@ -777,18 +809,32 @@ abstract class DriverTest {
 
         if (api != null && apiFile != null) {
             assertTrue("${apiFile.path} does not exist even though --api was used", apiFile.exists())
-            val expectedText = readFile(apiFile, stripBlankLines, trim)
-            assertEquals(stripComments(api, stripLineComments = false).trimIndent(), expectedText)
+            val actualText = readFile(apiFile, stripBlankLines, trim)
+            assertEquals(stripComments(api, stripLineComments = false).trimIndent(), actualText)
             // Make sure we can read back the files we write
             ApiFile.parseApi(apiFile, options.outputKotlinStyleNulls, true)
         }
 
         if (apiXml != null && apiXmlFile != null) {
-            assertTrue("${apiXmlFile.path} does not exist even though --api-xml was used", apiXmlFile.exists())
-            val expectedText = readFile(apiXmlFile, stripBlankLines, trim)
-            assertEquals(stripComments(apiXml, stripLineComments = false).trimIndent(), expectedText)
+            assertTrue("${apiXmlFile.path} does not exist even though $ARG_XML_API was used",
+                apiXmlFile.exists())
+            val actualText = readFile(apiXmlFile, stripBlankLines, trim)
+            assertEquals(stripComments(apiXml, stripLineComments = false).trimIndent(), actualText)
             // Make sure we can read back the files we write
             XmlUtils.parseDocument(apiXmlFile.readText(Charsets.UTF_8), false)
+        }
+
+        if (convertToJDiffFiles.isNotEmpty()) {
+            for (i in 0 until convertToJDiff.size) {
+                val expected = convertToJDiff[i].second
+                val converted = convertToJDiffFiles[i].second
+                assertTrue("${converted.path} does not exist even though $ARG_CONVERT_TO_JDIFF was used",
+                    converted.exists())
+                val actualText = readFile(converted, stripBlankLines, trim)
+                assertEquals(stripComments(expected, stripLineComments = false).trimIndent(), actualText)
+                // Make sure we can read back the files we write
+                XmlUtils.parseDocument(converted.readText(Charsets.UTF_8), false)
+            }
         }
 
         if (removedApi != null && removedApiFile != null) {
@@ -796,8 +842,8 @@ abstract class DriverTest {
                 "${removedApiFile.path} does not exist even though --removed-api was used",
                 removedApiFile.exists()
             )
-            val expectedText = readFile(removedApiFile, stripBlankLines, trim)
-            assertEquals(stripComments(removedApi, stripLineComments = false).trimIndent(), expectedText)
+            val actualText = readFile(removedApiFile, stripBlankLines, trim)
+            assertEquals(stripComments(removedApi, stripLineComments = false).trimIndent(), actualText)
             // Make sure we can read back the files we write
             ApiFile.parseApi(removedApiFile, options.outputKotlinStyleNulls, true)
         }
@@ -807,8 +853,8 @@ abstract class DriverTest {
                 "${removedDexApiFile.path} does not exist even though --removed-dex-api was used",
                 removedDexApiFile.exists()
             )
-            val expectedText = readFile(removedDexApiFile, stripBlankLines, trim)
-            assertEquals(stripComments(removedDexApi, stripLineComments = false).trimIndent(), expectedText)
+            val actualText = readFile(removedDexApiFile, stripBlankLines, trim)
+            assertEquals(stripComments(removedDexApi, stripLineComments = false).trimIndent(), actualText)
         }
 
         if (exactApi != null && exactApiFile != null) {
@@ -816,8 +862,8 @@ abstract class DriverTest {
                 "${exactApiFile.path} does not exist even though --exact-api was used",
                 exactApiFile.exists()
             )
-            val expectedText = readFile(exactApiFile, stripBlankLines, trim)
-            assertEquals(stripComments(exactApi, stripLineComments = false).trimIndent(), expectedText)
+            val actualText = readFile(exactApiFile, stripBlankLines, trim)
+            assertEquals(stripComments(exactApi, stripLineComments = false).trimIndent(), actualText)
             // Make sure we can read back the files we write
             ApiFile.parseApi(exactApiFile, options.outputKotlinStyleNulls, true)
         }
@@ -827,8 +873,8 @@ abstract class DriverTest {
                 "${privateApiFile.path} does not exist even though --private-api was used",
                 privateApiFile.exists()
             )
-            val expectedText = readFile(privateApiFile, stripBlankLines, trim)
-            assertEquals(stripComments(privateApi, stripLineComments = false).trimIndent(), expectedText)
+            val actualText = readFile(privateApiFile, stripBlankLines, trim)
+            assertEquals(stripComments(privateApi, stripLineComments = false).trimIndent(), actualText)
             // Make sure we can read back the files we write
             ApiFile.parseApi(privateApiFile, options.outputKotlinStyleNulls, true)
         }
@@ -838,8 +884,8 @@ abstract class DriverTest {
                 "${dexApiFile.path} does not exist even though --dex-api was used",
                 dexApiFile.exists()
             )
-            val expectedText = readFile(dexApiFile, stripBlankLines, trim)
-            assertEquals(stripComments(dexApi, stripLineComments = false).trimIndent(), expectedText)
+            val actualText = readFile(dexApiFile, stripBlankLines, trim)
+            assertEquals(stripComments(dexApi, stripLineComments = false).trimIndent(), actualText)
         }
 
         if (privateDexApi != null && privateDexApiFile != null) {
@@ -847,8 +893,8 @@ abstract class DriverTest {
                 "${privateDexApiFile.path} does not exist even though --private-dex-api was used",
                 privateDexApiFile.exists()
             )
-            val expectedText = readFile(privateDexApiFile, stripBlankLines, trim)
-            assertEquals(stripComments(privateDexApi, stripLineComments = false).trimIndent(), expectedText)
+            val actualText = readFile(privateDexApiFile, stripBlankLines, trim)
+            assertEquals(stripComments(privateDexApi, stripLineComments = false).trimIndent(), actualText)
         }
 
         if (dexApiMapping != null && dexApiMappingFile != null) {
@@ -856,8 +902,8 @@ abstract class DriverTest {
                 "${dexApiMappingFile.path} does not exist even though --dex-api-maping was used",
                 dexApiMappingFile.exists()
             )
-            val expectedText = readFile(dexApiMappingFile, stripBlankLines, trim)
-            assertEquals(stripComments(dexApiMapping, stripLineComments = false).trimIndent(), expectedText)
+            val actualText = readFile(dexApiMappingFile, stripBlankLines, trim)
+            assertEquals(stripComments(dexApiMapping, stripLineComments = false).trimIndent(), actualText)
         }
 
         if (proguard != null && proguardFile != null) {
@@ -953,8 +999,8 @@ abstract class DriverTest {
                         )
                     }
                 }
-                val expectedText = readFile(stubFile, stripBlankLines, trim)
-                assertEquals(stub, expectedText)
+                val actualText = readFile(stubFile, stripBlankLines, trim)
+                assertEquals(stub, actualText)
             }
         }
 
@@ -963,8 +1009,8 @@ abstract class DriverTest {
                 "${stubsSourceListFile.path} does not exist even though --write-stubs-source-list was used",
                 stubsSourceListFile.exists()
             )
-            val expectedText = readFile(stubsSourceListFile, stripBlankLines, trim)
-            assertEquals(stripComments(stubsSourceList, stripLineComments = false).trimIndent(), expectedText)
+            val actualText = readFile(stubsSourceListFile, stripBlankLines, trim)
+            assertEquals(stripComments(stubsSourceList, stripLineComments = false).trimIndent(), actualText)
         }
 
         if (checkCompilation && stubsDir != null && CHECK_STUB_COMPILATION) {
@@ -1318,13 +1364,13 @@ abstract class DriverTest {
         // separately on each test; slower but reliable.
 
         val doclavaArg = when (argument) {
-            "--api" -> "-api"
-            "--removed-api" -> "-removedApi"
+            ARG_API -> "-api"
+            ARG_REMOVED_API -> "-removedApi"
             else -> if (argument.startsWith("--")) argument.substring(1) else argument
         }
 
         val showAnnotationArgsDoclava1: Array<String> = if (showAnnotationArgs.isNotEmpty()) {
-            showAnnotationArgs.map { if (it == "--show-annotation") "-showAnnotation" else it }.toTypedArray()
+            showAnnotationArgs.map { if (it == ARG_SHOW_ANNOTATION) "-showAnnotation" else it }.toTypedArray()
         } else {
             emptyArray()
         }
