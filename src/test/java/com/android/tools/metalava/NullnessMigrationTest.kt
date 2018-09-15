@@ -273,7 +273,7 @@ class NullnessMigrationTest : DriverTest() {
                 androidxNonNullSource,
                 androidxNullableSource
             ),
-            extraArguments = arrayOf("--hide-package", "androidx.annotation"),
+            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation"),
             api = if (SUPPORT_TYPE_USE_ANNOTATIONS) {
                 """
                 package test.pkg {
@@ -323,7 +323,7 @@ class NullnessMigrationTest : DriverTest() {
                 androidxNonNullSource,
                 androidxNullableSource
             ),
-            extraArguments = arrayOf("--hide-package", "androidx.annotation"),
+            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation"),
             api = if (SUPPORT_TYPE_USE_ANNOTATIONS) {
                 """
                 package test.pkg {
@@ -371,7 +371,7 @@ class NullnessMigrationTest : DriverTest() {
                 androidxNonNullSource,
                 androidxNullableSource
             ),
-            extraArguments = arrayOf("--hide-package", "androidx.annotation"),
+            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation"),
             // TODO: Handle multiple nullness annotations
             migrateNullsApi =
             """
@@ -439,7 +439,7 @@ class NullnessMigrationTest : DriverTest() {
                 androidxNonNullSource,
                 androidxNullableSource
             ),
-            extraArguments = arrayOf("--hide-package", "androidx.annotation"),
+            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation"),
             // TODO: Handle multiple nullness annotations
             migrateNullsApi =
             """
@@ -517,7 +517,7 @@ class NullnessMigrationTest : DriverTest() {
                   }
                 }
             """,
-            extraArguments = arrayOf("--hide-package", "androidx.annotation"),
+            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation"),
             stubs = if (SUPPORT_TYPE_USE_ANNOTATIONS) {
                 arrayOf(
                     """

@@ -80,7 +80,7 @@ class ArtifactTaggerTest : DriverTest() {
                     }
                 """
             ),
-            extraArguments = arrayOf("--error", "NoArtifactData,BrokenArtifactFile"),
+            extraArguments = arrayOf(ARG_ERROR, "NoArtifactData,BrokenArtifactFile"),
             warnings = """
                 src/test/pkg/foo/Foo.java:2: error: Class test.pkg.foo.Foo belongs to multiple artifacts: my.library.group:foo:1.0.0 and my.library.group:bar:3.1.4 [BrokenArtifactFile:130]
                 src/test/pkg/foo/Foo.java:4: error: Class test.pkg.foo.Foo.Inner belongs to multiple artifacts: my.library.group:foo:1.0.0 and my.library.group:bar:3.1.4 [BrokenArtifactFile:130]
