@@ -16,6 +16,8 @@
 
 package com.android.tools.metalava.apilevels
 
+import com.android.tools.metalava.ARG_ANDROID_JAR_PATTERN
+import com.android.tools.metalava.ARG_GENERATE_API_LEVELS
 import com.android.tools.metalava.DriverTest
 import com.android.utils.XmlUtils
 import com.google.common.truth.Truth
@@ -46,11 +48,11 @@ class ApiGeneratorTest : DriverTest() {
 
         check(
             extraArguments = arrayOf(
-                "--generate-api-levels",
+                ARG_GENERATE_API_LEVELS,
                 outputPath,
-                "--android-jar-pattern",
+                ARG_ANDROID_JAR_PATTERN,
                 "${oldSdkJars.path}/android-%/android.jar",
-                "--android-jar-pattern",
+                ARG_ANDROID_JAR_PATTERN,
                 "${platformJars.path}/%/public/android.jar"
             ),
             checkDoclava1 = false,

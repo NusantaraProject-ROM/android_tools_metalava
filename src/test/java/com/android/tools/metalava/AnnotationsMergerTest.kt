@@ -56,9 +56,9 @@ class AnnotationsMergerTest : DriverTest() {
             ),
             // Skip the annotations themselves from the output
             extraArguments = arrayOf(
-                "--hide-package", "android.annotation",
-                "--hide-package", "androidx.annotation",
-                "--hide-package", "android.support.annotation"
+                ARG_HIDE_PACKAGE, "android.annotation",
+                ARG_HIDE_PACKAGE, "androidx.annotation",
+                ARG_HIDE_PACKAGE, "android.support.annotation"
             ),
             api = """
                 package test.pkg {

@@ -3332,7 +3332,7 @@ class StubsTest : DriverTest() {
                 @androidx.annotation.Nullable
                 package test.pkg;
                 """,
-            extraArguments = arrayOf("--hide-package", "androidx.annotation")
+            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation")
         )
     }
 
@@ -3410,14 +3410,14 @@ class StubsTest : DriverTest() {
                 }
                 """
             ),
-            extraArguments = arrayOf("--hide-package", "androidx.annotation")
+            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation")
         )
     }
 
     @Test
     fun `Ensure we emit both deprecated javadoc and annotation with exclude-annotations`() {
         check(
-            extraArguments = arrayOf("--exclude-annotations"),
+            extraArguments = arrayOf(ARG_EXCLUDE_ANNOTATIONS),
             compatibilityMode = false,
             sourceFiles = *arrayOf(
                 java(
@@ -3455,7 +3455,7 @@ class StubsTest : DriverTest() {
     @Test
     fun `Ensure we emit runtime and deprecated annotations in stubs with exclude-annotations`() {
         check(
-            extraArguments = arrayOf("--exclude-annotations"),
+            extraArguments = arrayOf(ARG_EXCLUDE_ANNOTATIONS),
             compatibilityMode = false,
             sourceFiles = *arrayOf(
                 java(
@@ -3592,8 +3592,8 @@ class StubsTest : DriverTest() {
     fun `Test update-api should not generate stubs`() {
         check(
             extraArguments = arrayOf(
-                "--update-api",
-                "--exclude-annotations"
+                ARG_UPDATE_API,
+                ARG_EXCLUDE_ANNOTATIONS
             ),
             compatibilityMode = false,
             sourceFiles = *arrayOf(

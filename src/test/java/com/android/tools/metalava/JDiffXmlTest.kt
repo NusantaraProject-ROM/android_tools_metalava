@@ -474,4 +474,70 @@ class JDiffXmlTest : DriverTest() {
             """
         )
     }
+
+    @Test
+    fun `Test conversion flag`() {
+        check(
+            compatibilityMode = true,
+            convertToJDiff = listOf(
+                Pair(
+                    """
+                    package test.pkg {
+                      public class MyTest1 {
+                        ctor public MyTest1();
+                      }
+                    }
+                    """,
+                    """
+                    <api>
+                    <package name="test.pkg"
+                    >
+                    <class name="MyTest1"
+                     extends="java.lang.Object"
+                     abstract="false"
+                     static="false"
+                     final="false"
+                     deprecated="not deprecated"
+                     visibility="public"
+                    >
+                    <constructor name="MyTest1"
+                     type="test.pkg.MyTest1"
+                     static="false"
+                     final="false"
+                     deprecated="not deprecated"
+                     visibility="public"
+                    >
+                    </constructor>
+                    </class>
+                    </package>
+                    </api>
+                    """
+                ),
+                Pair(
+                    """
+                    package test.pkg {
+                      public class MyTest2 {
+                      }
+                    }
+                    """,
+                    """
+                    <api>
+                    <package name="test.pkg"
+                    >
+                    <class name="MyTest2"
+                     extends="java.lang.Object"
+                     abstract="false"
+                     static="false"
+                     final="false"
+                     deprecated="not deprecated"
+                     visibility="public"
+                    >
+                    </class>
+                    </package>
+                    </api>
+                    """
+                )
+            )
+        )
+    }
 }
