@@ -35,6 +35,7 @@ import com.android.tools.metalava.doclava1.Errors
 import com.android.utils.FileUtils
 import com.android.utils.SdkUtils
 import com.android.utils.StdLogger
+import com.android.utils.XmlUtils
 import com.google.common.base.Charsets
 import com.google.common.io.ByteStreams
 import com.google.common.io.Closeables
@@ -134,7 +135,11 @@ abstract class DriverTest {
         /** Any jars to add to the class path */
         classpath: Array<TestFile>? = null,
         /** The API signature content (corresponds to --api) */
+        @Language("TEXT")
         api: String? = null,
+        /** The API signature content (corresponds to --api-xml) */
+        @Language("XML")
+        apiXml: String? = null,
         /** The exact API signature content (corresponds to --exact-api) */
         exactApi: String? = null,
         /** The removed API (corresponds to --removed-api) */
@@ -563,6 +568,14 @@ abstract class DriverTest {
             emptyArray()
         }
 
+        var apiXmlFile: File? = null
+        val apiXmlArgs = if (apiXml != null) {
+            apiXmlFile = temporaryFolder.newFile("public-api-xml.txt")
+            arrayOf("--api-xml", apiXmlFile.path)
+        } else {
+            emptyArray()
+        }
+
         var privateApiFile: File? = null
         val privateApiArgs = if (privateApi != null) {
             privateApiFile = temporaryFolder.newFile("private.txt")
@@ -719,6 +732,7 @@ abstract class DriverTest {
             *removedArgs,
             *removedDexArgs,
             *apiArgs,
+            *apiXmlArgs,
             *exactApiArgs,
             *privateApiArgs,
             *dexApiArgs,
@@ -767,6 +781,14 @@ abstract class DriverTest {
             assertEquals(stripComments(api, stripLineComments = false).trimIndent(), expectedText)
             // Make sure we can read back the files we write
             ApiFile.parseApi(apiFile, options.outputKotlinStyleNulls, true)
+        }
+
+        if (apiXml != null && apiXmlFile != null) {
+            assertTrue("${apiXmlFile.path} does not exist even though --api-xml was used", apiXmlFile.exists())
+            val expectedText = readFile(apiXmlFile, stripBlankLines, trim)
+            assertEquals(stripComments(apiXml, stripLineComments = false).trimIndent(), expectedText)
+            // Make sure we can read back the files we write
+            XmlUtils.parseDocument(apiXmlFile.readText(Charsets.UTF_8), false)
         }
 
         if (removedApi != null && removedApiFile != null) {
@@ -946,7 +968,7 @@ abstract class DriverTest {
         }
 
         if (checkCompilation && stubsDir != null && CHECK_STUB_COMPILATION) {
-            val generated = gatherSources(listOf(stubsDir)).map { it.path }.toList().toTypedArray()
+            val generated = gatherSources(listOf(stubsDir)).asSequence().map { it.path }.toList().toTypedArray()
 
             // Also need to include on the compile path annotation classes referenced in the stubs
             val extraAnnotationsDir = File("stub-annotations/src/main/java")
@@ -954,7 +976,8 @@ abstract class DriverTest {
                 fail("Couldn't find $extraAnnotationsDir: Is the pwd set to the root of the metalava source code?")
                 fail("Couldn't find $extraAnnotationsDir: Is the pwd set to the root of an Android source tree?")
             }
-            val extraAnnotations = gatherSources(listOf(extraAnnotationsDir)).map { it.path }.toList().toTypedArray()
+            val extraAnnotations =
+                gatherSources(listOf(extraAnnotationsDir)).asSequence().map { it.path }.toList().toTypedArray()
 
             if (!runCommand(
                     "${getJdkPath()}/bin/javac", arrayOf(
@@ -978,7 +1001,7 @@ abstract class DriverTest {
             api != null && apiFile != null
         ) {
             apiFile.delete()
-            checkSignaturesWithDoclava1(
+            checkSignaturesWithDoclava(
                 api = api,
                 argument = "-api",
                 output = apiFile,
@@ -996,11 +1019,32 @@ abstract class DriverTest {
             )
         }
 
+        if (CHECK_OLD_DOCLAVA_TOO && checkDoclava1 && apiXml != null && apiXmlFile != null) {
+            apiXmlFile.delete()
+
+            // Either we write the signatureSource, or you must have specified an API report
+            val signatureFile: File =
+                apiFile ?: if (signatureSource != null) {
+                    val temp = temporaryFolder.newFile("jdiff-doclava-api.txt")
+                    temp.writeText(signatureSource.trimIndent(), Charsets.UTF_8)
+                    temp
+                } else {
+                    fail("When verifying XML files with doclava you must either specify signatureSource or api")
+                    error("Unreachable")
+                }
+
+            // Need to emit the codebase
+            generateJDiffXmlWithDoclava1(signatureFile, apiXmlFile)
+
+            val actualText = cleanupString(readFile(apiXmlFile, stripBlankLines, trim), project, true)
+            assertEquals(actualText, stripComments(apiXml, stripLineComments = false).trimIndent())
+        }
+
         if (CHECK_OLD_DOCLAVA_TOO && checkDoclava1 && signatureSource == null &&
             exactApi != null && exactApiFile != null
         ) {
             exactApiFile.delete()
-            checkSignaturesWithDoclava1(
+            checkSignaturesWithDoclava(
                 api = exactApi,
                 argument = "-exactApi",
                 output = exactApiFile,
@@ -1022,7 +1066,7 @@ abstract class DriverTest {
             removedApi != null && removedApiFile != null
         ) {
             removedApiFile.delete()
-            checkSignaturesWithDoclava1(
+            checkSignaturesWithDoclava(
                 api = removedApi,
                 argument = "-removedApi",
                 output = removedApiFile,
@@ -1043,7 +1087,7 @@ abstract class DriverTest {
         if (CHECK_OLD_DOCLAVA_TOO && checkDoclava1 && signatureSource == null && stubsDir != null) {
             stubsDir.deleteRecursively()
             val firstFile = File(stubsDir, sourceFiles[0].targetPath.substring("src/".length))
-            checkSignaturesWithDoclava1(
+            checkSignaturesWithDoclava(
                 api = stubs[0],
                 argument = "-stubs",
                 output = stubsDir,
@@ -1063,7 +1107,7 @@ abstract class DriverTest {
 
         if (CHECK_OLD_DOCLAVA_TOO && checkDoclava1 && proguard != null && proguardFile != null) {
             proguardFile.delete()
-            checkSignaturesWithDoclava1(
+            checkSignaturesWithDoclava(
                 api = proguard,
                 argument = "-proguard",
                 output = proguardFile,
@@ -1085,7 +1129,7 @@ abstract class DriverTest {
             privateApi != null && privateApiFile != null
         ) {
             privateApiFile.delete()
-            checkSignaturesWithDoclava1(
+            checkSignaturesWithDoclava(
                 api = privateApi,
                 argument = "-privateApi",
                 output = privateApiFile,
@@ -1109,7 +1153,7 @@ abstract class DriverTest {
             privateDexApi != null && privateDexApiFile != null
         ) {
             privateDexApiFile.delete()
-            checkSignaturesWithDoclava1(
+            checkSignaturesWithDoclava(
                 api = privateDexApi,
                 argument = "-privateDexApi",
                 output = privateDexApiFile,
@@ -1133,7 +1177,7 @@ abstract class DriverTest {
             dexApi != null && dexApiFile != null
         ) {
             dexApiFile.delete()
-            checkSignaturesWithDoclava1(
+            checkSignaturesWithDoclava(
                 api = dexApi,
                 argument = "-dexApi",
                 output = dexApiFile,
@@ -1157,7 +1201,7 @@ abstract class DriverTest {
             dexApiMapping != null && dexApiMappingFile != null
         ) {
             dexApiMappingFile.delete()
-            checkSignaturesWithDoclava1(
+            checkSignaturesWithDoclava(
                 api = dexApiMapping,
                 argument = "-apiMapping",
                 output = dexApiMappingFile,
@@ -1223,7 +1267,34 @@ abstract class DriverTest {
         return s
     }
 
-    private fun checkSignaturesWithDoclava1(
+    private fun generateJDiffXmlWithDoclava1(signatureFile: File, xmlOutput: File) {
+        val docLava1 = findDoclava()
+
+        val args = arrayOf(
+            "-convert2xml",
+            signatureFile.path,
+            xmlOutput.path
+        )
+
+        val message = "\n${args.joinToString(separator = "\n") { "\"$it\"," }}"
+        println("Running doclava1 with the following args:\n$message")
+
+        val jdkPath = findJdk()
+        if (!runCommand(
+                "$jdkPath/bin/java",
+                arrayOf(
+                    "-classpath",
+                    "${docLava1.path}:$jdkPath/lib/tools.jar",
+                    "com.google.doclava.apicheck.ApiCheck",
+                    *args
+                )
+            )
+        ) {
+            return
+        }
+    }
+
+    private fun checkSignaturesWithDoclava(
         api: String,
         argument: String,
         output: File,
@@ -1263,40 +1334,8 @@ abstract class DriverTest {
             emptyArray()
         }
 
-        val docLava1 = File("testlibs/doclava-1.0.6-full-SNAPSHOT.jar")
-        if (!docLava1.isFile) {
-            /*
-                Not checked in (it's 22MB).
-                To generate the doclava1 jar, add this to external/doclava/build.gradle and run ./gradlew shadowJar:
-
-                // shadow jar: Includes all dependencies
-                buildscript {
-                    repositories {
-                        jcenter()
-                    }
-                    dependencies {
-                        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.2'
-                    }
-                }
-                apply plugin: 'com.github.johnrengelman.shadow'
-                shadowJar {
-                   baseName = "doclava-$version-full-SNAPSHOT"
-                   classifier = null
-                   version = null
-                }
-
-                and finally
-                $ cp ../../out/host/gradle/external/jdiff/build/libs/doclava-*-SNAPSHOT-full-SNAPSHOT.jar \
-                     testlibs/doclava-1.0.6-full-SNAPSHOT.jar
-
-             */
-            fail("Couldn't find $docLava1: Is the pwd set to the root of the metalava source code?")
-        }
-
-        val jdkPath = getJdkPath()
-        if (jdkPath == null) {
-            fail("JDK not found in the environment; make sure \$JAVA_HOME is set.")
-        }
+        val docLava1 = findDoclava()
+        val jdkPath = findJdk()
 
         val hidePackageArgs = mutableListOf<String>()
         options.hidePackages.forEach {
@@ -1372,6 +1411,47 @@ abstract class DriverTest {
 
         val actualText = cleanupString(readFile(expected, stripBlankLines, trim), project, skipTestRoot)
         assertEquals(stripComments(api, stripLineComments = false).trimIndent(), actualText)
+    }
+
+    private fun findJdk(): String? {
+        val jdkPath = getJdkPath()
+        if (jdkPath == null) {
+            fail("JDK not found in the environment; make sure \$JAVA_HOME is set.")
+        }
+        return jdkPath
+    }
+
+    private fun findDoclava(): File {
+        val docLava1 = File("testlibs/doclava-1.0.6-full-SNAPSHOT.jar")
+        if (!docLava1.isFile) {
+            /*
+                Not checked in (it's 22MB).
+                To generate the doclava1 jar, add this to external/doclava/build.gradle and run ./gradlew shadowJar:
+
+                // shadow jar: Includes all dependencies
+                buildscript {
+                    repositories {
+                        jcenter()
+                    }
+                    dependencies {
+                        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.2'
+                    }
+                }
+                apply plugin: 'com.github.johnrengelman.shadow'
+                shadowJar {
+                   baseName = "doclava-$version-full-SNAPSHOT"
+                   classifier = null
+                   version = null
+                }
+
+                and finally
+                $ cp ../../out/host/gradle/external/jdiff/build/libs/doclava-*-SNAPSHOT-full-SNAPSHOT.jar \
+                     testlibs/doclava-1.0.6-full-SNAPSHOT.jar
+
+             */
+            fail("Couldn't find $docLava1: Is the pwd set to the root of the metalava source code?")
+        }
+        return docLava1
     }
 
     private fun runCommand(executable: String, args: Array<String>): Boolean {

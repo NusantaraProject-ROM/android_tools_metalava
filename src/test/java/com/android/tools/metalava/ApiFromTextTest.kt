@@ -330,7 +330,7 @@ class ApiFromTextTest : DriverTest() {
                 field public static java.util.List<java.lang.String> LIST;
               }
             }
-                """
+            """
 
         check(
             compatibilityMode = true,
