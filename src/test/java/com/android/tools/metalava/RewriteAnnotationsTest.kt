@@ -34,10 +34,10 @@ class RewriteAnnotationsTest : DriverTest() {
         assertTrue(source.path, source.isDirectory)
         val target = temporaryFolder.newFolder()
         runDriver(
-            "--no-color",
-            "--no-banner",
+            ARG_NO_COLOR,
+            ARG_NO_BANNER,
 
-            "--copy-annotations",
+            ARG_COPY_ANNOTATIONS,
             source.path,
             target.path
         )
@@ -102,10 +102,10 @@ class RewriteAnnotationsTest : DriverTest() {
         bytecode.createFile(compiledStubs)
 
         runDriver(
-            "--no-color",
-            "--no-banner",
+            ARG_NO_COLOR,
+            ARG_NO_BANNER,
 
-            "--rewrite-annotations",
+            ARG_REWRITE_ANNOTATIONS,
             compiledStubs.path
         )
 
@@ -139,10 +139,10 @@ class RewriteAnnotationsTest : DriverTest() {
         val jarFile = jarDesc.createFile(temporaryFolder.root)
 
         runDriver(
-            "--no-color",
-            "--no-banner",
+            ARG_NO_COLOR,
+            ARG_NO_BANNER,
 
-            "--rewrite-annotations",
+            ARG_REWRITE_ANNOTATIONS,
             jarFile.path
         )
 

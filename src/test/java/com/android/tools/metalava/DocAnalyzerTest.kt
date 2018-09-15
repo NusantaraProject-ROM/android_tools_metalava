@@ -420,7 +420,6 @@ class DocAnalyzerTest : DriverTest() {
                 """
                 package android.widget;
                 /**
-                 * Requires API level 21 (Android 5.0, Lollipop)
                  * @since 21
                  */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
@@ -431,8 +430,6 @@ class DocAnalyzerTest : DriverTest() {
                  * <br>
                  * This method must be called on the thread that originally created
                  * this UI element. This is typically the main thread of your app.
-                 * <br>
-                 * Requires API level 24 (Android 7.0, Nougat)
                  * @since 24
                  * @return blah blah blah
                  */
@@ -1072,7 +1069,6 @@ class DocAnalyzerTest : DriverTest() {
                 """
                 package android.widget;
                 /**
-                 * Requires API level 21 (Android 5.0, Lollipop)
                  * @since 21
                  */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
@@ -1080,8 +1076,6 @@ class DocAnalyzerTest : DriverTest() {
                 public Toolbar() { throw new RuntimeException("Stub!"); }
                 /**
                  * Existing documentation for {@linkplain #getCurrentContentInsetEnd()} here.
-                 * <br>
-                 * Requires API level 24 (Android 7.0, Nougat)
                  * @since 24
                  * @return blah blah blah
                  */
@@ -1142,8 +1136,6 @@ class DocAnalyzerTest : DriverTest() {
                 public class Camera {
                 public Camera() { throw new RuntimeException("Stub!"); }
                 /**
-                 *
-                 * Requires API level 14 (Android 4.0, IceCreamSandwich)
                  * @deprecated
                  * <p class="caution"><strong>This class was deprecated in API level 21.</strong></p>
                  *  Use something else.
@@ -1280,7 +1272,6 @@ class DocAnalyzerTest : DriverTest() {
                 """
                 package test.pkg;
                 /**
-                 * Requires API level 21 (Android 5.0, Lollipop)
                  * @since 21
                  */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
@@ -1495,9 +1486,9 @@ class DocAnalyzerTest : DriverTest() {
 
         check(
             extraArguments = arrayOf(
-                "--write-stubs-source-list",
+                ARG_STUBS_SOURCE_LIST,
                 sourceList,
-                "--generate-documentation",
+                ARG_GENERATE_DOCUMENTATION,
                 javadoc.path,
                 "-sourcepath",
                 "STUBS_DIR",

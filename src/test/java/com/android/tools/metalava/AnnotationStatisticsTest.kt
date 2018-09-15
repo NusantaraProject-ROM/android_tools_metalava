@@ -24,7 +24,7 @@ class AnnotationStatisticsTest : DriverTest() {
     @Test
     fun `Test emitting annotation statistics`() {
         check(
-            extraArguments = arrayOf("--annotation-coverage-stats"),
+            extraArguments = arrayOf(ARG_ANNOTATION_COVERAGE_STATS),
             expectedOutput = """
                 Nullness Annotation Coverage Statistics:
                 0 out of 1 eligible fields (out of 2 total fields) were annotated (0%)
@@ -58,7 +58,7 @@ class AnnotationStatisticsTest : DriverTest() {
     @Test
     fun `Static final initialized fields are not nullable`() {
         check(
-            extraArguments = arrayOf("--annotation-coverage-stats"),
+            extraArguments = arrayOf(ARG_ANNOTATION_COVERAGE_STATS),
             expectedOutput = """
                 Nullness Annotation Coverage Statistics:
                 0 out of 0 eligible fields (out of 0 total fields) were annotated (100%)
