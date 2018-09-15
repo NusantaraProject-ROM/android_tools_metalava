@@ -481,7 +481,7 @@ open class PsiBasedCodebase(location: File, override var description: String = "
 
     override fun getPackages(): PackageList {
         // TODO: Sorting is probably not necessary here!
-        return PackageList(packageMap.values.toMutableList().sortedWith(PackageItem.comparator))
+        return PackageList(this, packageMap.values.toMutableList().sortedWith(PackageItem.comparator))
     }
 
     override fun getPackageDocs(): PackageDocs? {

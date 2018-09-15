@@ -298,6 +298,16 @@ private fun processFlags() {
         ) { printWriter -> DexApiWriter(printWriter, dexApiEmit, apiReference) }
     }
 
+    options.apiXmlFile?.let { apiFile ->
+        val apiType = ApiType.PUBLIC_API
+        val apiEmit = apiType.getEmitFilter()
+        val apiReference = apiType.getReferenceFilter()
+
+        createReportFile(codebase, apiFile, "XML API") { printWriter ->
+            JDiffXmlWriter(printWriter, apiEmit, apiReference, codebase.preFiltered)
+        }
+    }
+
     options.dexApiMappingFile?.let { apiFile ->
         val apiType = ApiType.ALL
         val apiEmit = apiType.getEmitFilter()

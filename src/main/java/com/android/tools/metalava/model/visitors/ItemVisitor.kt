@@ -17,6 +17,7 @@
 package com.android.tools.metalava.model.visitors
 
 import com.android.tools.metalava.model.ClassItem
+import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.CompilationUnit
 import com.android.tools.metalava.model.ConstructorItem
 import com.android.tools.metalava.model.FieldItem
@@ -50,8 +51,9 @@ open class ItemVisitor(
     /** Visits the item. This is always called before other more specialized visit methods, such as [visitClass]. */
     open fun visitItem(item: Item) {}
 
-    open fun visitCompilationUnit(unit: CompilationUnit) {}
+    open fun visitCodebase(codebase: Codebase) {}
     open fun visitPackage(pkg: PackageItem) {}
+    open fun visitCompilationUnit(unit: CompilationUnit) {}
     open fun visitClass(cls: ClassItem) {}
     open fun visitConstructor(constructor: ConstructorItem) {
         if (visitConstructorsAsMethods) {
@@ -65,6 +67,7 @@ open class ItemVisitor(
     open fun visitProperty(property: PropertyItem) {}
 
     open fun afterVisitItem(item: Item) {}
+    open fun afterVisitCodebase(codebase: Codebase) {}
     open fun afterVisitPackage(pkg: PackageItem) {}
     open fun afterVisitCompilationUnit(unit: CompilationUnit) {}
     open fun afterVisitClass(cls: ClassItem) {}
