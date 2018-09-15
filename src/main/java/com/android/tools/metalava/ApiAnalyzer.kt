@@ -532,14 +532,16 @@ class ApiAnalyzer(
     private fun propagateHiddenRemovedAndDocOnly(includingFields: Boolean) {
         packages.accept(object : ItemVisitor(visitConstructorsAsMethods = true, nestInnerClasses = true) {
             override fun visitPackage(pkg: PackageItem) {
-                if (pkg.modifiers.hasShowAnnotation()) {
+                if (options.hidePackages.contains(pkg.qualifiedName())) {
+                    pkg.hidden = true
+                } else if (pkg.modifiers.hasShowAnnotation()) {
                     pkg.hidden = false
                 } else if (pkg.modifiers.hasHideAnnotations()) {
                     pkg.hidden = true
                 }
                 val containingPackage = pkg.containingPackage()
                 if (containingPackage != null) {
-                    if (containingPackage.hidden) {
+                    if (containingPackage.hidden && !containingPackage.isDefault) {
                         pkg.hidden = true
                     }
                     if (containingPackage.docOnly) {
@@ -555,10 +557,16 @@ class ApiAnalyzer(
                     // Make containing package non-hidden if it contains a show-annotation
                     // class. Doclava does this in PackageInfo.isHidden().
                     cls.containingPackage().hidden = false
+                    if (cls.containingClass() != null) {
+                        ensureParentVisible(cls)
+                    }
                 } else if (cls.modifiers.hasHideAnnotations()) {
                     cls.hidden = true
                 } else if (containingClass != null) {
                     if (containingClass.hidden) {
+                        cls.hidden = true
+                    } else if (containingClass.originallyHidden && containingClass.modifiers.hasShowSingleAnnotation()) {
+                        // See explanation in visitMethod
                         cls.hidden = true
                     }
                     if (containingClass.docOnly) {
@@ -570,6 +578,11 @@ class ApiAnalyzer(
                 } else {
                     val containingPackage = cls.containingPackage()
                     if (containingPackage.hidden && !containingPackage.isDefault) {
+                        cls.hidden = true
+                    } else if (containingPackage.originallyHidden) {
+                        // Package was marked hidden; it's been unhidden by some other
+                        // classes (marked with show annotations) but this class
+                        // should continue to default.
                         cls.hidden = true
                     }
                     if (containingPackage.docOnly && !containingPackage.isDefault) {
@@ -584,11 +597,21 @@ class ApiAnalyzer(
             override fun visitMethod(method: MethodItem) {
                 if (method.modifiers.hasShowAnnotation()) {
                     method.hidden = false
+                    ensureParentVisible(method)
                 } else if (method.modifiers.hasHideAnnotations()) {
                     method.hidden = true
                 } else {
                     val containingClass = method.containingClass()
                     if (containingClass.hidden) {
+                        method.hidden = true
+                    } else if (containingClass.originallyHidden && containingClass.modifiers.hasShowSingleAnnotation() &&
+                        // As a special case, we leave default constructors public if the surrounding class is
+                        // unhidden
+                        !method.isImplicitConstructor()
+                    ) {
+                        // This is a member in a class that was hidden but then unhidden;
+                        // but it was unhidden by a non-recursive (single) show annotation, so
+                        // don't inherit the show annotation into this item.
                         method.hidden = true
                     }
                     if (containingClass.docOnly) {
@@ -603,6 +626,7 @@ class ApiAnalyzer(
             override fun visitField(field: FieldItem) {
                 if (field.modifiers.hasShowAnnotation()) {
                     field.hidden = false
+                    ensureParentVisible(field)
                 } else if (field.modifiers.hasHideAnnotations()) {
                     field.hidden = true
                 } else {
@@ -615,6 +639,9 @@ class ApiAnalyzer(
                     */
                     if (includingFields && containingClass.hidden) {
                         field.hidden = true
+                    } else if (containingClass.originallyHidden && containingClass.modifiers.hasShowSingleAnnotation()) {
+                        // See explanation in visitMethod
+                        field.hidden = true
                     }
                     if (containingClass.docOnly) {
                         field.docOnly = true
@@ -622,6 +649,18 @@ class ApiAnalyzer(
                     if (containingClass.removed) {
                         field.removed = true
                     }
+                }
+            }
+
+            private fun ensureParentVisible(item: Item) {
+                val parent = item.parent() ?: return
+                if (parent.hidden && item.modifiers.hasShowSingleAnnotation()) {
+                    val annotation = item.modifiers.annotations().find {
+                        options.showSingleAnnotations.contains(it.qualifiedName())
+                    } ?: options.showSingleAnnotations.first()
+                    reporter.report(Errors.SHOWING_MEMBER_IN_HIDDEN_CLASS, item,
+                        "Attempting to unhide ${item.describe()}, but surrounding ${parent.describe()} is " +
+                            "hidden and should also be annotated with $annotation")
                 }
             }
         })

@@ -29,6 +29,7 @@ abstract class TextItem(
     override var modifiers: TextModifiers
 ) : DefaultItem() {
 
+    override var originallyHidden = false
     override var hidden = false
     override var removed = false
 

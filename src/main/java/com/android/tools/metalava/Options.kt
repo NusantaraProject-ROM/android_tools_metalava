@@ -83,6 +83,8 @@ const val ARG_WRITE_MEMBER_COVERAGE_TO = "--write-member-coverage-to"
 const val ARG_WARNINGS_AS_ERRORS = "--warnings-as-errors"
 const val ARG_LINTS_AS_ERRORS = "--lints-as-errors"
 const val ARG_SHOW_ANNOTATION = "--show-annotation"
+const val ARG_SHOW_SINGLE_ANNOTATION = "--show-single-annotation"
+const val ARG_HIDE_ANNOTATION = "--hide-annotation"
 const val ARG_SHOW_UNANNOTATED = "--show-unannotated"
 const val ARG_COLOR = "--color"
 const val ARG_NO_COLOR = "--no-color"
@@ -137,6 +139,8 @@ class Options(
     private val mutableClassPath: MutableList<File> = mutableListOf()
     /** Internal list backing [showAnnotations] */
     private val mutableShowAnnotations: MutableList<String> = mutableListOf()
+    /** Internal list backing [showSingleAnnotations] */
+    private val mutableShowSingleAnnotations: MutableList<String> = mutableListOf()
     /** Internal list backing [hideAnnotations] */
     private val mutableHideAnnotations: MutableList<String> = mutableListOf()
     /** Internal list backing [stubImportPackages] */
@@ -218,7 +222,14 @@ class Options(
     var sources: List<File> = mutableSources
 
     /** Whether to include APIs with annotations (intended for documentation purposes) */
-    var showAnnotations = mutableShowAnnotations
+    var showAnnotations: List<String> = mutableShowAnnotations
+
+    /**
+     * Like [showAnnotations], but does not work recursively. Note that
+     * these annotations are *also* show annotations and will be added to the above list;
+     * this is a subset.
+     */
+    val showSingleAnnotations: List<String> = mutableShowSingleAnnotations
 
     /**
      * Whether to include unannotated elements if {@link #showAnnotations} is set.
@@ -236,15 +247,15 @@ class Options(
     var stubImportPackages: Set<String> = mutableStubImportPackages
 
     /** Packages to exclude/hide */
-    var hidePackages = mutableHidePackages
+    var hidePackages: List<String> = mutableHidePackages
 
     /** Packages that we should skip generating even if not hidden; typically only used by tests */
-    var skipEmitPackages = mutableSkipEmitPackages
+    var skipEmitPackages: List<String> = mutableSkipEmitPackages
 
     var showAnnotationOverridesVisibility: Boolean = false
 
     /** Annotations to hide */
-    var hideAnnotations = mutableHideAnnotations
+    var hideAnnotations: List<String> = mutableHideAnnotations
 
     /** Whether to report warnings and other diagnostics along the way */
     var quiet = false
@@ -339,7 +350,7 @@ class Options(
     var migrateNullsFrom: File? = null
 
     /** Private backing list for [compatibilityChecks]] */
-    private var mutableCompatibilityChecks = mutableListOf<CheckRequest>()
+    private var mutableCompatibilityChecks: MutableList<CheckRequest> = mutableListOf<CheckRequest>()
 
     /** The list of compatibility checks to run */
     val compatibilityChecks: List<CheckRequest> = mutableCompatibilityChecks
@@ -423,7 +434,7 @@ class Options(
     val artifactRegistrations = ArtifactTagger()
 
     /** List of signature files to export as JDiff files */
-    val convertToXmlFiles = mutableConvertToXmlFiles
+    val convertToXmlFiles: List<Pair<File, File>> = mutableConvertToXmlFiles
 
     /** Temporary folder to use instead of the JDK default, if any */
     var tempFolder: File? = null
@@ -526,6 +537,13 @@ class Options(
 
                 ARG_SHOW_ANNOTATION, "-showAnnotation" -> mutableShowAnnotations.add(getValue(args, ++index))
 
+                ARG_SHOW_SINGLE_ANNOTATION -> {
+                    val annotation = getValue(args, ++index)
+                    mutableShowSingleAnnotations.add(annotation)
+                    // These should also be counted as show annotations
+                    mutableShowAnnotations.add(annotation)
+                }
+
                 ARG_SHOW_UNANNOTATED, "-showUnannotated" -> showUnannotated = true
 
                 "--showAnnotationOverridesVisibility" -> {
@@ -533,7 +551,8 @@ class Options(
                     showAnnotationOverridesVisibility = true
                 }
 
-                "--hideAnnotations", "-hideAnnotation" -> mutableHideAnnotations.add(getValue(args, ++index))
+                ARG_HIDE_ANNOTATION, "--hideAnnotations", "-hideAnnotation" ->
+                    mutableHideAnnotations.add(getValue(args, ++index))
 
                 ARG_STUBS, "-stubs" -> stubsDir = stringToNewDir(getValue(args, ++index))
                 ARG_DOC_STUBS -> docStubsDir = stringToNewDir(getValue(args, ++index))
@@ -1412,7 +1431,12 @@ class Options(
             "$ARG_HIDE_PACKAGE <package>", "Remove the given packages from the API even if they have not been " +
                 "marked with @hide",
 
-            "$ARG_SHOW_ANNOTATION <annotation class>", "Include the given annotation in the API analysis",
+            "$ARG_SHOW_ANNOTATION <annotation class>", "Unhide any hidden elements that are also annotated " +
+                "with the given annotation",
+            "$ARG_SHOW_SINGLE_ANNOTATION <annotation>", "Like $ARG_SHOW_ANNOTATION, but does not apply " +
+                "to members; these must also be explicitly annotated",
+            "$ARG_HIDE_ANNOTATION <annotation class>", "Treat any elements annotated with the given annotation " +
+                "as hidden",
             ARG_SHOW_UNANNOTATED, "Include un-annotated public APIs in the signature file as well",
             "$ARG_JAVA_SOURCE <level>", "Sets the source level for Java source files; default is 1.8.",
 
@@ -1424,7 +1448,6 @@ class Options(
             ARG_HIDDEN, "Include all elements, including hidden",
 
             "", "\nExtracting Signature Files:",
-            // TODO: Document --show-annotation!
             "$ARG_API <file>", "Generate a signature descriptor file",
             "$ARG_PRIVATE_API <file>", "Generate a signature descriptor file listing the exact private APIs",
             "$ARG_DEX_API <file>", "Generate a DEX signature descriptor file listing the APIs",
