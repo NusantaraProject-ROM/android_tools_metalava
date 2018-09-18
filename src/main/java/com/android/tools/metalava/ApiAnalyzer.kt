@@ -398,7 +398,7 @@ class ApiAnalyzer(
         val publicSuperClasses = superClasses.filter { filterEmit.test(it) && !it.isJavaLangObject() }
         for (superClass in publicSuperClasses) {
             for (method in superClass.methods()) {
-                if (!method.modifiers.isAbstract()) {
+                if (!method.modifiers.isAbstract() || !method.modifiers.isPublicOrProtected()) {
                     continue
                 }
                 val name = method.name()
