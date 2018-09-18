@@ -40,7 +40,10 @@ interface TypeItem {
      * [outerAnnotations] controls whether the top level annotation like @Nullable
      * is included, [innerAnnotations] controls whether annotations like @NonNull
      * are included, and [erased] controls whether we return the string for
-     * the raw type, e.g. just "java.util.List"
+     * the raw type, e.g. just "java.util.List". The [kotlinStyleNulls] parameter
+     * controls whether it should return "@Nullable List<String>" as "List<String!>?".
+     * Finally, [filter] specifies a filter to apply to the type annotations, if
+     * any.
      *
      * (The combination [outerAnnotations] = true and [innerAnnotations] = false
      * is not allowed.)
@@ -49,7 +52,9 @@ interface TypeItem {
         outerAnnotations: Boolean = false,
         innerAnnotations: Boolean = outerAnnotations,
         erased: Boolean = false,
-        context: Item? = null
+        kotlinStyleNulls: Boolean = false,
+        context: Item? = null,
+        filter: Predicate<Item>? = null
     ): String
 
     /** Alias for [toTypeString] with erased=true */
@@ -75,8 +80,8 @@ interface TypeItem {
      * from parsing, which may have slightly different formats, e.g. varargs ("...") versus
      * arrays ("[]"), java.lang. prefixes removed in wildcard signatures, etc.
      */
-    fun toCanonicalType(): String {
-        var s = toTypeString()
+    fun toCanonicalType(context: Item? = null): String {
+        var s = toTypeString(context = context)
         while (s.contains(JAVA_LANG_PREFIX)) {
             s = s.replace(JAVA_LANG_PREFIX, "")
         }
@@ -103,7 +108,8 @@ interface TypeItem {
     fun convertType(replacementMap: Map<String, String>?, owner: Item? = null): TypeItem
 
     fun convertTypeString(replacementMap: Map<String, String>?): String {
-        return convertTypeString(toTypeString(outerAnnotations = true, innerAnnotations = true), replacementMap)
+        val typeString = toTypeString(outerAnnotations = true, innerAnnotations = true, kotlinStyleNulls = false)
+        return convertTypeString(typeString, replacementMap)
     }
 
     fun isJavaLangObject(): Boolean {
@@ -163,6 +169,11 @@ interface TypeItem {
 
     /** Returns true if this type represents an array of one or more dimensions */
     fun isArray(): Boolean = arrayDimensions() > 0
+
+    /**
+     * Ensure that we don't include any annotations in the type strings for this type.
+     */
+    fun scrubAnnotations()
 
     companion object {
         /** Shortens types, if configured */

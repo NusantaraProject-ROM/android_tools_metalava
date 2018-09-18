@@ -16,7 +16,6 @@
 
 package com.android.tools.metalava
 
-import com.android.tools.metalava.model.AnnotationItem
 import com.android.tools.metalava.model.AnnotationTarget
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.ConstructorItem
@@ -89,7 +88,7 @@ class SignatureWriter(
         writer.print(name)
         writer.print(" ")
         writeModifiers(field)
-        writeType(field, field.type(), field.modifiers)
+        writeType(field, field.type())
         writer.print(' ')
         writer.print(field.name())
         field.writeValueWithSemicolon(writer, allowDefaultValue = false, requireInitialValue = false)
@@ -99,7 +98,7 @@ class SignatureWriter(
     override fun visitProperty(property: PropertyItem) {
         writer.print("    property ")
         writeModifiers(property)
-        writeType(property, property.type(), property.modifiers)
+        writeType(property, property.type())
         writer.print(' ')
         writer.print(property.name())
         writer.print(";\n")
@@ -120,7 +119,7 @@ class SignatureWriter(
         writeModifiers(method)
         writeTypeParameterList(method.typeParameterList(), addSpace = true)
 
-        writeType(method, method.returnType(), method.modifiers)
+        writeType(method, method.returnType())
         writer.print(' ')
         writer.print(method.name())
         writeParameterList(method)
@@ -205,7 +204,9 @@ class SignatureWriter(
             val superClassString =
                 superClass.toTypeString(
                     erased = compatibility.omitTypeParametersInInterfaces,
-                    context = superClass.asClass()
+                    kotlinStyleNulls = false,
+                    context = superClass.asClass(),
+                    filter = filterReference
                 )
             writer.print(" extends ")
             writer.print(superClassString)
@@ -255,7 +256,9 @@ class SignatureWriter(
                 writer.print(
                     item.toTypeString(
                         erased = compatibility.omitTypeParametersInInterfaces,
-                        context = item.asClass()
+                        kotlinStyleNulls = false,
+                        context = item.asClass(),
+                        filter = filterReference
                     )
                 )
             }
@@ -280,7 +283,7 @@ class SignatureWriter(
                 writer.print(", ")
             }
             writeModifiers(parameter)
-            writeType(parameter, parameter.type(), parameter.modifiers)
+            writeType(parameter, parameter.type())
             if (emitParameterNames) {
                 val name = parameter.publicName()
                 if (name != null) {
@@ -305,14 +308,17 @@ class SignatureWriter(
     private fun writeType(
         item: Item,
         type: TypeItem?,
-        modifiers: ModifierList
+        outputKotlinStyleNulls: Boolean = options.outputKotlinStyleNulls
     ) {
         type ?: return
 
         var typeString = type.toTypeString(
             outerAnnotations = false,
             innerAnnotations = compatibility.annotationsInSignatures,
-            erased = false
+            erased = false,
+            kotlinStyleNulls = outputKotlinStyleNulls,
+            context = item,
+            filter = filterReference
         )
 
         // Strip java.lang. prefix?
@@ -320,7 +326,7 @@ class SignatureWriter(
             typeString = TypeItem.shortenTypes(typeString)
         }
 
-        if (typeString.endsWith(", ?>") && compatibility.includeExtendsObjectInWildcard && item is ParameterItem) {
+        if (compatibility.includeExtendsObjectInWildcard && typeString.endsWith(", ?>") && item is ParameterItem) {
             // This wasn't done universally; just in a few places, so replicate it for those exact places
             val methodName = item.containingMethod().name()
             when (methodName) {
@@ -339,25 +345,6 @@ class SignatureWriter(
         }
 
         writer.print(typeString)
-
-        if (options.outputKotlinStyleNulls && !type.primitive) {
-            var nullable: Boolean? = AnnotationItem.getImplicitNullness(item)
-
-            if (nullable == null) {
-                for (annotation in modifiers.annotations()) {
-                    if (annotation.isNullable()) {
-                        nullable = true
-                    } else if (annotation.isNonNull()) {
-                        nullable = false
-                    }
-                }
-            }
-            when (nullable) {
-                null -> writer.write("!")
-                true -> writer.write("?")
-                // else: non-null: nothing to write
-            }
-        }
     }
 
     private fun writeThrowsList(method: MethodItem) {

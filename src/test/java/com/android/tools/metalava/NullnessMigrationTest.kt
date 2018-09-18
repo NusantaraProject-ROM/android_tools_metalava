@@ -33,8 +33,8 @@ class NullnessMigrationTest : DriverTest() {
                         public Double convert0(Float f) { return null; }
                         @Nullable public Double convert1(@NonNull Float f) { return null; }
                         @Nullable public Double convert2(@NonNull Float f) { return null; }
-                        @Nullable public Double convert3(@NonNull Float f) { return null; }
-                        @Nullable public Double convert4(@NonNull Float f) { return null; }
+                        @NonNull public Double convert3(@Nullable Float f) { return null; }
+                        @NonNull public Double convert4(@NonNull Float f) { return null; }
                     }
                     """
                 ),
@@ -49,8 +49,8 @@ class NullnessMigrationTest : DriverTest() {
                     method public Double! convert0(Float!);
                     method public Double? convert1(Float);
                     method public Double? convert2(Float);
-                    method public Double? convert3(Float);
-                    method public Double? convert4(Float);
+                    method public Double convert3(Float?);
+                    method public Double convert4(Float);
                   }
                 }
                 """,
@@ -335,6 +335,7 @@ class NullnessMigrationTest : DriverTest() {
                     """
                     package test.pkg;
                     import androidx.annotation.Nullable;
+                    import androidx.annotation.NonNull;
                     import java.util.List;
                     public class Test {
                         public @Nullable Integer compute1(@Nullable java.util.List<@Nullable String> list) {
@@ -343,7 +344,9 @@ class NullnessMigrationTest : DriverTest() {
                         public @Nullable Integer compute2(@Nullable java.util.List<@Nullable List<?>> list) {
                             return 5;
                         }
-                        // TODO arrays
+                        public Integer compute3(@NonNull String @Nullable [] @Nullable [] array) {
+                            return 5;
+                        }
                     }
                     """
                 ),
@@ -357,8 +360,9 @@ class NullnessMigrationTest : DriverTest() {
                 package test.pkg {
                   public class Test {
                     ctor public Test();
-                    method @Nullable public Integer compute1(@Nullable java.util.List<@Nullable java.lang.String>);
-                    method @Nullable public Integer compute2(@Nullable java.util.List<@Nullable java.util.List<?>>);
+                    method @Nullable public @Nullable Integer compute1(@Nullable java.util.List<java.lang.@Nullable String>);
+                    method @Nullable public @Nullable Integer compute2(@Nullable java.util.List<java.util.@Nullable List<?>>);
+                    method public Integer compute3(@NonNull String[][]);
                   }
                 }
                 """
@@ -370,6 +374,7 @@ class NullnessMigrationTest : DriverTest() {
                     ctor public Test();
                     method @Nullable public Integer compute1(@Nullable java.util.List<java.lang.String>);
                     method @Nullable public Integer compute2(@Nullable java.util.List<java.util.List<?>>);
+                    method public Integer compute3(@NonNull String[][]);
                   }
                 }
                 """

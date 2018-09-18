@@ -24,6 +24,7 @@ import com.android.ide.common.process.LoggedProcessOutputHandler
 import com.android.ide.common.process.ProcessException
 import com.android.ide.common.process.ProcessInfoBuilder
 import com.android.tools.lint.checks.ApiLookup
+import com.android.tools.lint.checks.infrastructure.ClassName
 import com.android.tools.lint.checks.infrastructure.LintDetectorTest
 import com.android.tools.lint.checks.infrastructure.TestFile
 import com.android.tools.lint.checks.infrastructure.TestFiles
@@ -31,6 +32,7 @@ import com.android.tools.lint.checks.infrastructure.TestFiles.java
 import com.android.tools.lint.checks.infrastructure.stripComments
 import com.android.tools.metalava.doclava1.ApiFile
 import com.android.tools.metalava.doclava1.Errors
+import com.android.tools.metalava.model.SUPPORT_TYPE_USE_ANNOTATIONS
 import com.android.tools.metalava.model.parseDocument
 import com.android.utils.FileUtils
 import com.android.utils.SdkUtils
@@ -69,7 +71,7 @@ abstract class DriverTest {
         System.setProperty(ENV_VAR_METALAVA_TESTS_RUNNING, SdkConstants.VALUE_TRUE)
     }
 
-    private fun createProject(vararg files: TestFile): File {
+    protected fun createProject(vararg files: TestFile): File {
         val dir = temporaryFolder.newFolder("project")
 
         files
@@ -474,7 +476,13 @@ abstract class DriverTest {
         }
 
         val javaStubAnnotationsArgs = if (mergeJavaStubAnnotations != null) {
-            val merged = File(project, "merged-qualifier-annotations.java")
+            // We need to place the qualifier class into its proper package location
+            // to make the parsing machinery happy
+            val cls = ClassName(mergeJavaStubAnnotations)
+            val pkg = cls.packageName
+            val relative = pkg?.replace('.', File.separatorChar) ?: "."
+            val merged = File(project, "qualifier/$relative/${cls.className}.java")
+            merged.parentFile.mkdirs()
             merged.writeText(mergeJavaStubAnnotations.trimIndent())
             arrayOf(ARG_MERGE_QUALIFIER_ANNOTATIONS, merged.path)
         } else {
@@ -482,7 +490,11 @@ abstract class DriverTest {
         }
 
         val inclusionAnnotationsArgs = if (mergeInclusionAnnotations != null) {
-            val merged = File(project, "merged-inclusion-annotations.java")
+            val cls = ClassName(mergeInclusionAnnotations)
+            val pkg = cls.packageName
+            val relative = pkg?.replace('.', File.separatorChar) ?: "."
+            val merged = File(project, "inclusion/$relative/${cls.className}.java")
+            merged.parentFile?.mkdirs()
             merged.writeText(mergeInclusionAnnotations.trimIndent())
             arrayOf(ARG_MERGE_INCLUSION_ANNOTATIONS, merged.path)
         } else {
@@ -1804,7 +1816,7 @@ abstract class DriverTest {
         assertEquals(stripComments(api, stripLineComments = false).trimIndent(), actualText)
     }
 
-    private fun findJdk(): String? {
+    protected fun findJdk(): String? {
         val jdkPath = getJdkPath()
         if (jdkPath == null) {
             fail("JDK not found in the environment; make sure \$JAVA_HOME is set.")
@@ -1981,6 +1993,7 @@ val longDefAnnotationSource: TestFile = java(
     """
 ).indented()
 
+@Suppress("ConstantConditionIf")
 val nonNullSource: TestFile = java(
     """
     package android.annotation;
@@ -1999,7 +2012,7 @@ val nonNullSource: TestFile = java(
      */
     @SuppressWarnings({"WeakerAccess", "JavaDoc"})
     @Retention(SOURCE)
-    @Target({METHOD, PARAMETER, FIELD, TYPE_USE})
+    @Target({METHOD, PARAMETER, FIELD${if (SUPPORT_TYPE_USE_ANNOTATIONS) ", TYPE_USE" else ""}})
     public @interface NonNull {
     }
     """
@@ -2122,6 +2135,7 @@ val broadcastBehaviorSource: TestFile = java(
     """
 ).indented()
 
+@Suppress("ConstantConditionIf")
 val nullableSource: TestFile = java(
     """
     package android.annotation;
@@ -2136,7 +2150,7 @@ val nullableSource: TestFile = java(
      */
     @SuppressWarnings({"WeakerAccess", "JavaDoc"})
     @Retention(SOURCE)
-    @Target({METHOD, PARAMETER, FIELD, TYPE_USE})
+    @Target({METHOD, PARAMETER, FIELD${if (SUPPORT_TYPE_USE_ANNOTATIONS) ", TYPE_USE" else ""}})
     public @interface Nullable {
     }
     """
@@ -2150,7 +2164,7 @@ val supportNonNullSource: TestFile = java(
     import static java.lang.annotation.RetentionPolicy.SOURCE;
     @SuppressWarnings("WeakerAccess")
     @Retention(SOURCE)
-    @Target({METHOD, PARAMETER, FIELD, TYPE_USE})
+    @Target({METHOD, PARAMETER, FIELD, TYPE_USE, TYPE_PARAMETER})
     public @interface NonNull {
     }
     """
@@ -2164,7 +2178,7 @@ val supportNullableSource: TestFile = java(
     import static java.lang.annotation.RetentionPolicy.SOURCE;
     @SuppressWarnings("WeakerAccess")
     @Retention(SOURCE)
-    @Target({METHOD, PARAMETER, FIELD, TYPE_USE})
+    @Target({METHOD, PARAMETER, FIELD, TYPE_USE, TYPE_PARAMETER})
     public @interface Nullable {
     }
     """

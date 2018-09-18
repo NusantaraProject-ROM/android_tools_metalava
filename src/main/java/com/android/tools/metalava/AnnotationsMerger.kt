@@ -56,11 +56,9 @@ import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.DefaultAnnotationItem
 import com.android.tools.metalava.model.DefaultAnnotationValue
-import com.android.tools.metalava.model.FieldItem
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.ModifierList
-import com.android.tools.metalava.model.ParameterItem
 import com.android.tools.metalava.model.TypeItem
 import com.android.tools.metalava.model.parseDocument
 import com.android.tools.metalava.model.psi.PsiAnnotationItem
@@ -115,12 +113,19 @@ class AnnotationsMerger(
         mergeJavaStubsCodebase: (PsiBasedCodebase) -> Unit
     ) {
         val javaStubFiles = mutableListOf<File>()
-        mergeAnnotations.forEach { it ->
+        mergeAnnotations.forEach {
             mergeFileOrDir(it, mergeFile, javaStubFiles)
         }
         if (javaStubFiles.isNotEmpty()) {
-            // TODO: We really want to fail, or at least issue a warning, if there are errors.
-            val javaStubsCodebase = parseSources(javaStubFiles, "Codebase loaded from stubs")
+            // Set up class path to contain our main sources such that we can
+            // resolve types in the stubs
+            val roots = mutableListOf<File>()
+            extractRoots(options.sources, roots)
+            roots.addAll(options.classpath)
+            roots.addAll(options.sourcePath)
+            val classpath = roots.distinct().toList()
+            val javaStubsCodebase = parseSources(javaStubFiles, "Codebase loaded from stubs",
+                classpath = classpath)
             mergeJavaStubsCodebase(javaStubsCodebase)
         }
     }
@@ -160,7 +165,7 @@ class AnnotationsMerger(
                 val xml = Files.asCharSource(file, UTF_8).read()
                 mergeAnnotationsXml(file.path, xml)
             } catch (e: IOException) {
-                error("Aborting: I/O problem during transform: " + e.toString())
+                error("Aborting: I/O problem during transform: $e")
             }
         } else if (file.path.endsWith(".txt") ||
             file.path.endsWith(".signatures") ||
@@ -171,7 +176,7 @@ class AnnotationsMerger(
                 // Others: new signature files (e.g. kotlin-style nullness info)
                 mergeAnnotationsSignatureFile(file.path)
             } catch (e: IOException) {
-                error("Aborting: I/O problem during transform: " + e.toString())
+                error("Aborting: I/O problem during transform: $e")
             }
         }
     }
@@ -193,7 +198,7 @@ class AnnotationsMerger(
                 entry = zis.nextEntry
             }
         } catch (e: IOException) {
-            error("Aborting: I/O problem during transform: " + e.toString())
+            error("Aborting: I/O problem during transform: $e")
         } finally {
             try {
                 Closeables.close(zis, true /* swallowIOException */)
@@ -208,9 +213,9 @@ class AnnotationsMerger(
             val document = parseDocument(xml, false)
             mergeDocument(document)
         } catch (e: Exception) {
-            var message = "Failed to merge " + path + ": " + e.toString()
+            var message = "Failed to merge $path: $e"
             if (e is SAXParseException) {
-                message = "Line " + e.lineNumber + ":" + e.columnNumber + ": " + message
+                message = "Line ${e.lineNumber}:${e.columnNumber}: $message"
             }
             error(message)
             if (e !is IOException) {
@@ -247,6 +252,9 @@ class AnnotationsMerger(
                 for (annotation in old.modifiers.annotations()) {
                     mergeAnnotation(annotation, newModifiers, new)
                 }
+                old.type()?.let {
+                    mergeTypeAnnotations(it, new)
+                }
             }
 
             private fun mergeAnnotation(
@@ -279,24 +287,10 @@ class AnnotationsMerger(
                 }
             }
 
-            override fun compare(old: ParameterItem, new: ParameterItem) {
-                mergeTypeAnnotations(old.type(), new)
-            }
-
-            override fun compare(old: FieldItem, new: FieldItem) {
-                mergeTypeAnnotations(old.type(), new)
-            }
-
-            override fun compare(old: MethodItem, new: MethodItem) {
-                mergeTypeAnnotations(old.returnType(), new)
-            }
-
-            // Merge in type annotations
             private fun mergeTypeAnnotations(
-                typeItem: TypeItem?,
+                typeItem: TypeItem,
                 new: Item
             ) {
-                typeItem ?: return
                 val type = (typeItem as? PsiTypeItem)?.psiType ?: return
                 val typeAnnotations = type.annotations
                 if (typeAnnotations.isNotEmpty()) {
@@ -321,7 +315,10 @@ class AnnotationsMerger(
                 override fun compare(old: Item, new: Item) {
                     // Transfer any show/hide annotations from the external to the main codebase.
                     for (annotation in old.modifiers.annotations()) {
-                        if (inclusionAnnotations.contains(annotation.qualifiedName())) {
+                        val qualifiedName = annotation.qualifiedName() ?: continue
+                        if (inclusionAnnotations.contains(qualifiedName) &&
+                            new.modifiers.findAnnotation(qualifiedName) == null
+                        ) {
                             new.mutableModifiers().addAnnotation(annotation)
                         }
                     }
