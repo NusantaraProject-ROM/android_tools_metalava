@@ -716,7 +716,7 @@ interface ClassItem : Item {
      * If [reverse] is true, compute the reverse map: keys are the variables in
      * the target and the values are the variables in the source.
      */
-    fun mapTypeVariables(target: ClassItem, reverse: Boolean = false): Map<String, String> = codebase.unsupported()
+    fun mapTypeVariables(target: ClassItem): Map<String, String> = codebase.unsupported()
 
     /**
      * Creates a constructor in this class

@@ -623,7 +623,7 @@ abstract class DriverTest {
         val convertToJDiffArgs = if (convertToJDiff.isNotEmpty()) {
             val args = mutableListOf<String>()
             var index = 1
-            for ((signatures, xml) in convertToJDiff) {
+            for ((signatures, _) in convertToJDiff) {
                 val convertSig = temporaryFolder.newFile("jdiff-signatures$index.txt")
                 convertSig.writeText(signatures.trimIndent(), Charsets.UTF_8)
                 val output = temporaryFolder.newFile("jdiff-output$index.xml")
@@ -831,9 +831,9 @@ abstract class DriverTest {
                 assertTrue("${converted.path} does not exist even though $ARG_CONVERT_TO_JDIFF was used",
                     converted.exists())
                 val actualText = readFile(converted, stripBlankLines, trim)
+                XmlUtils.parseDocument(converted.readText(Charsets.UTF_8), false)
                 assertEquals(stripComments(expected, stripLineComments = false).trimIndent(), actualText)
                 // Make sure we can read back the files we write
-                XmlUtils.parseDocument(converted.readText(Charsets.UTF_8), false)
             }
         }
 
@@ -1083,7 +1083,7 @@ abstract class DriverTest {
             generateJDiffXmlWithDoclava1(signatureFile, apiXmlFile)
 
             val actualText = cleanupString(readFile(apiXmlFile, stripBlankLines, trim), project, true)
-            assertEquals(actualText, stripComments(apiXml, stripLineComments = false).trimIndent())
+            assertEquals(stripComments(apiXml, stripLineComments = false).trimIndent(), actualText)
         }
 
         if (CHECK_OLD_DOCLAVA_TOO && checkDoclava1 && signatureSource == null &&

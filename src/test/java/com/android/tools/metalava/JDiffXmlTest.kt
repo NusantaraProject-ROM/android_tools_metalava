@@ -540,4 +540,91 @@ class JDiffXmlTest : DriverTest() {
             )
         )
     }
+
+    @Test
+    fun `Generics in interfaces`() {
+        check(
+            compatibilityMode = false,
+            signatureSource = """
+                    package android.accounts {
+                      public class ArgbEvaluator implements android.animation.DefaultEvaluator<D> implements android.animation.TypeEvaluator<V> {
+                      }
+                    }
+                    """,
+            apiXml =
+            """
+            <api>
+            <package name="android.accounts"
+            >
+            <class name="ArgbEvaluator"
+             extends="java.lang.Object"
+             abstract="false"
+             static="false"
+             final="false"
+             deprecated="not deprecated"
+             visibility="public"
+            >
+            <implements name="android.animation.DefaultEvaluator&lt;D>">
+            </implements>
+            <implements name="android.animation.TypeEvaluator&lt;V>">
+            </implements>
+            <implements name="java.lang.implements">
+            </implements>
+            </class>
+            </package>
+            </api>
+            """
+        )
+    }
+
+    @Test
+    fun `Type Parameter Mapping`() {
+        check(
+            compatibilityMode = false,
+            signatureSource = """
+                package test.pkg {
+                  public interface AbstractList<D,E,F> extends test.pkg.List<A,B,C> {
+                  }
+                  public interface ConcreteList<G,H,I> extends test.pkg.AbstractList<D,E,F> {
+                  }
+                  public interface List<A,B,C> {
+                  }
+                }
+                """,
+            apiXml =
+            """
+            <api>
+            <package name="test.pkg"
+            >
+            <interface name="AbstractList"
+             extends="test.pkg.List&lt;A,B,C>"
+             abstract="false"
+             static="false"
+             final="false"
+             deprecated="not deprecated"
+             visibility="public"
+            >
+            </interface>
+            <interface name="ConcreteList"
+             extends="test.pkg.AbstractList&lt;D,E,F>"
+             abstract="false"
+             static="false"
+             final="false"
+             deprecated="not deprecated"
+             visibility="public"
+            >
+            </interface>
+            <interface name="List"
+             abstract="false"
+             static="false"
+             final="false"
+             deprecated="not deprecated"
+             visibility="public"
+            >
+            </interface>
+            </package>
+            </api>
+            """
+        )
+    }
 }

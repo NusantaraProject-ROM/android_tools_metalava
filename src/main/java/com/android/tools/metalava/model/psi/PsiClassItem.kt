@@ -276,7 +276,7 @@ open class PsiClassItem(
         this.fields = fields
     }
 
-    override fun mapTypeVariables(target: ClassItem, reverse: Boolean): Map<String, String> {
+    override fun mapTypeVariables(target: ClassItem): Map<String, String> {
         val targetPsi = target.psi() as PsiClass
         val maps = mapTypeVariablesToSuperclass(
             psiClass, targetPsi, considerSuperClasses = true,
@@ -325,8 +325,7 @@ open class PsiClassItem(
     override fun createMethod(template: MethodItem): MethodItem {
         val method = template as PsiMethodItem
 
-        val replacementMap = mapTypeVariables(template.containingClass(), reverse = true)
-
+        val replacementMap = mapTypeVariables(template.containingClass())
         val newMethod: PsiMethodItem
         if (replacementMap.isEmpty()) {
             newMethod = PsiMethodItem.create(codebase, this, method)
