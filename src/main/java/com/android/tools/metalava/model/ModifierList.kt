@@ -58,6 +58,7 @@ interface ModifierList {
     fun isEmpty(): Boolean
 
     fun isPackagePrivate() = !(isPublic() || isProtected() || isPrivate())
+    fun isPublicOrProtected() = isPublic() || isProtected()
 
     // Rename? It's not a full equality, it's whether an override's modifier set is significant
     fun equivalentTo(other: ModifierList): Boolean {

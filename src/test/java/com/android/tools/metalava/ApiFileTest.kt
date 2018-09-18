@@ -1034,6 +1034,62 @@ class ApiFileTest : DriverTest() {
     }
 
     @Test
+    fun `Skip inherited package private methods from private parents`() {
+        // In non-compat mode, include public methods from hidden parents too.
+        // Real life example: StringBuilder.setLength
+        // This is just like the above test, but with compat mode disabled.
+        check(
+            compatibilityMode = false,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    public class MyStringBuilder<A,B> extends AbstractMyStringBuilder<A,B> {
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    class AbstractMyStringBuilder<C,D> extends PublicSuper<C,D> {
+                        public void setLength(int length) {
+                        }
+                        @Override boolean isContiguous() {
+                            return true;
+                        }
+                        @Override boolean concrete() {
+                            return false;
+                        }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    public class PublicSuper<E,F> {
+                        abstract boolean isContiguous();
+                        boolean concrete() {
+                            return false;
+                        }
+                    }
+                    """
+                )
+            ),
+            api = """
+                package test.pkg {
+                  public class MyStringBuilder<A, B> extends test.pkg.PublicSuper<A,B> {
+                    ctor public MyStringBuilder();
+                    method public void setLength(int);
+                  }
+                  public class PublicSuper<E, F> {
+                    ctor public PublicSuper();
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
     fun `Annotation class extraction, non-compat mode`() {
         // Interface: makes sure the right modifiers etc are shown (and that "package private" methods
         // in the interface are taken to be public etc)
