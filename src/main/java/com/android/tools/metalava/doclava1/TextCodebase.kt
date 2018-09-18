@@ -88,8 +88,8 @@ class TextCodebase(location: File) : DefaultCodebase(location) {
         for (cl in all) {
             val interfaces = mClassToInterface[cl] ?: continue
             for (interfaceName in interfaces) {
-                val ci = getOrCreateClass(interfaceName, isInterface = true)
-                cl.addInterface(ci.toType())
+                getOrCreateClass(interfaceName, isInterface = true)
+                cl.addInterface(obtainTypeFromString(interfaceName))
             }
         }
     }
@@ -135,8 +135,9 @@ class TextCodebase(location: File) : DefaultCodebase(location) {
                     else -> JAVA_LANG_OBJECT
                 }
             }
+
             val superclass = getOrCreateClass(scName)
-            cl.setSuperClass(superclass)
+            cl.setSuperClass(superclass, obtainTypeFromString(scName))
         }
     }
 
