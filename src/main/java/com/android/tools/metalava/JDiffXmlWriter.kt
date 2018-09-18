@@ -230,9 +230,11 @@ class JDiffXmlWriter(
                     if (!cls.isClass() && superClass.isJavaLangObject()) {
                         return
                     }
-                    superClass.toTypeString(
-                        erased = compatibility.omitTypeParametersInInterfaces,
-                        context = superClass.asClass()
+                    XmlUtils.toXmlAttributeValue(
+                        superClass.toTypeString(
+                            erased = compatibility.omitTypeParametersInInterfaces,
+                            context = superClass.asClass()
+                        )
                     )
                 }
                 cls.isAnnotationType() -> JAVA_LANG_ANNOTATION
@@ -252,7 +254,9 @@ class JDiffXmlWriter(
         if (interfaces.any()) {
             interfaces.sortedWith(TypeItem.comparator).forEach { item ->
                 writer.print("<implements name=\"")
-                writer.print(item.toTypeString(erased = false, context = item.asClass()))
+                val type = item.toTypeString(erased = compatibility.omitTypeParametersInInterfaces, context = cls)
+                val escapedType = XmlUtils.toXmlAttributeValue(type)
+                writer.print(escapedType)
                 writer.println("\">\n</implements>")
             }
         }
