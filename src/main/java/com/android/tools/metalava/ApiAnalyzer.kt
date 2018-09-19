@@ -517,11 +517,20 @@ class ApiAnalyzer(
         }
     }
 
-    /** Merge in external data from all configured sources */
-    fun mergeExternalAnnotations() {
-        val mergeAnnotations = options.mergeAnnotations
-        if (!mergeAnnotations.isEmpty()) {
-            AnnotationsMerger(codebase).merge(mergeAnnotations)
+    /**
+     * Merge in external qualifier annotations (i.e. ones intended to be included in the API written
+     * from all configured sources.
+     */
+    fun mergeExternalQualifierAnnotations() {
+      if (!options.mergeQualifierAnnotations.isEmpty()) {
+            AnnotationsMerger(codebase).mergeQualifierAnnotations(options.mergeQualifierAnnotations)
+        }
+    }
+
+    /** Merge in external show/hide annotations from all configured sources */
+    fun mergeExternalInclusionAnnotations() {
+      if (!options.mergeInclusionAnnotations.isEmpty()) {
+            AnnotationsMerger(codebase).mergeInclusionAnnotations(options.mergeInclusionAnnotations)
         }
     }
 

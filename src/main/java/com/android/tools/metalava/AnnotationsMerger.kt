@@ -79,49 +79,85 @@ import java.util.zip.ZipEntry
 class AnnotationsMerger(
     private val codebase: Codebase
 ) {
-    fun merge(mergeAnnotations: List<File>) {
+
+    /** Merge annotations which will appear in the output API. */
+    fun mergeQualifierAnnotations(files: List<File>) {
+        mergeAll(
+                files,
+                ::mergeQualifierAnnotationsFromFile,
+                ::mergeQualifierAnnotationsFromCodebase)
+    }
+
+    /** Merge annotations which control what is included in the output API. */
+    fun mergeInclusionAnnotations(files: List<File>) {
+        mergeAll(
+                files,
+                {
+                    throw DriverException(
+                            "External inclusion annotations files must be .java, found ${it.path}")
+                },
+                ::mergeInclusionAnnotationsFromCodebase)
+    }
+
+    private fun mergeAll(
+            mergeAnnotations: List<File>,
+            mergeFile: (File) -> Unit,
+            mergeCodebase: (Codebase) -> Unit) {
         val javaStubFiles = mutableListOf<File>()
-        mergeAnnotations.forEach { mergeExisting(it, javaStubFiles) }
-        mergeAnnotationsFromJavaStubFiles(javaStubFiles)
+        mergeAnnotations.forEach { it ->
+            mergeFileOrDir(it, mergeFile, javaStubFiles)
+        }
+        if (javaStubFiles.isNotEmpty()) {
+            // TODO: We really want to fail, or at least issue a warning, if there are errors.
+            val externalCodebase = parseSources(javaStubFiles, "Codebase loaded from stubs")
+            mergeCodebase(externalCodebase)
+        }
     }
 
     /**
      * Merges annotations from `file`, or from all the files under it if `file` is a directory.
-     * Exception: Java stub files are not merged by this method, instead they are added to
-     * `javaStubFiles` and should be merged by [mergeAnnotationsFromJavaStubFiles] later (so that
-     * all the Java stubs can be loaded as a single codebase).
+     * All files apart from Java stub files are merged using [mergeFile]. Java stub files are not
+     * merged by this method, instead they are added to [javaStubFiles] and should be merged later
+     * (so that all the Java stubs can be loaded as a single codebase).
      */
-    private fun mergeExisting(file: File, javaStubFiles: MutableList<File>) {
+    private fun mergeFileOrDir(
+        file: File, mergeFile: (File) -> Unit, javaStubFiles: MutableList<File>) {
         if (file.isDirectory) {
             val files = file.listFiles()
             if (files != null) {
                 for (child in files) {
-                    mergeExisting(child, javaStubFiles)
+                    mergeFileOrDir(child, mergeFile, javaStubFiles)
                 }
             }
         } else if (file.isFile) {
-            if (file.path.endsWith(DOT_JAR) || file.path.endsWith(DOT_ZIP)) {
-                mergeFromJar(file)
-            } else if (file.path.endsWith(DOT_XML)) {
-                try {
-                    val xml = Files.asCharSource(file, Charsets.UTF_8).read()
-                    mergeAnnotationsXml(file.path, xml)
-                } catch (e: IOException) {
-                    error("Aborting: I/O problem during transform: " + e.toString())
-                }
-            } else if (file.path.endsWith(".java")) {
+            if (file.path.endsWith(".java")) {
                 javaStubFiles.add(file)
-            } else if (file.path.endsWith(".txt") ||
-                file.path.endsWith(".signatures") ||
-                file.path.endsWith(".api")
-            ) {
-                try {
-                    // .txt: Old style signature files
-                    // Others: new signature files (e.g. kotlin-style nullness info)
-                    mergeAnnotationsSignatureFile(file.path)
-                } catch (e: IOException) {
-                    error("Aborting: I/O problem during transform: " + e.toString())
-                }
+            } else {
+                mergeFile(file)
+            }
+        }
+    }
+
+    private fun mergeQualifierAnnotationsFromFile(file: File) {
+        if (file.path.endsWith(DOT_JAR) || file.path.endsWith(DOT_ZIP)) {
+            mergeFromJar(file)
+        } else if (file.path.endsWith(DOT_XML)) {
+            try {
+                val xml = Files.asCharSource(file, Charsets.UTF_8).read()
+                mergeAnnotationsXml(file.path, xml)
+            } catch (e: IOException) {
+                error("Aborting: I/O problem during transform: " + e.toString())
+            }
+        } else if (file.path.endsWith(".txt") ||
+            file.path.endsWith(".signatures") ||
+            file.path.endsWith(".api")
+        ) {
+            try {
+                // .txt: Old style signature files
+                // Others: new signature files (e.g. kotlin-style nullness info)
+                mergeAnnotationsSignatureFile(file.path)
+            } catch (e: IOException) {
+                error("Aborting: I/O problem during transform: " + e.toString())
             }
         }
     }
@@ -177,20 +213,14 @@ class AnnotationsMerger(
             val supportsStagedNullability = true
             val signatureCodebase = ApiFile.parseApi(File(path), kotlinStyleNulls, supportsStagedNullability)
             signatureCodebase.description = "Signature files for annotation merger: loaded from $path"
-            mergeAnnotationsFromCodebase(signatureCodebase)
+            mergeQualifierAnnotationsFromCodebase(signatureCodebase)
         } catch (ex: ApiParseException) {
             val message = "Unable to parse signature file $path: ${ex.message}"
             throw DriverException(message)
         }
     }
 
-    private fun mergeAnnotationsFromJavaStubFiles(sources: List<File>) {
-        // TODO: We really want to fail, or at least issue a warning, if there are errors in the sources.
-        val externalCodebase = parseSources(sources, "Codebase loaded from stubs")
-        mergeAnnotationsFromCodebase(externalCodebase)
-    }
-
-    private fun mergeAnnotationsFromCodebase(externalCodebase: Codebase) {
+    private fun mergeQualifierAnnotationsFromCodebase(externalCodebase: Codebase) {
         val visitor = object : ComparisonVisitor() {
             override fun compare(old: Item, new: Item) {
                 val newModifiers = new.modifiers
@@ -224,6 +254,31 @@ class AnnotationsMerger(
         CodebaseComparator().compare(
             visitor, externalCodebase, codebase, ApiPredicate()
         )
+    }
+
+    private fun mergeInclusionAnnotationsFromCodebase(externalCodebase: Codebase) {
+        val inclusionAnnotations = options.showAnnotations union options.hideAnnotations
+        if (inclusionAnnotations.isNotEmpty()) {
+            val visitor = object : ComparisonVisitor() {
+                override fun compare(old: Item, new: Item) {
+                    // Transfer any show/hide annotations from the external to the main codebase.
+                    for (annotation in old.modifiers.annotations()) {
+                        if (inclusionAnnotations.contains(annotation.qualifiedName())) {
+                            new.mutableModifiers().addAnnotation(annotation)
+                        }
+                    }
+                    // The hidden field in the main codebase is already initialized. So if the
+                    // element is hidden in the external codebase, hide it in the main codebase too.
+                    if (old.hidden) {
+                        new.hidden = true
+                    }
+                    if (old.originallyHidden) {
+                        new.originallyHidden = true
+                    }
+                }
+            }
+            CodebaseComparator().compare(visitor, externalCodebase, codebase)
+        }
     }
 
     internal fun error(message: String) {
