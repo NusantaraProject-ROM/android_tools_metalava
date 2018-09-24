@@ -218,6 +218,7 @@ public class Errors {
     // Hidden until (1) API council agrees this should be an error, and (2) existing
     // violations are annotated as @hide
     public static final Error UNHIDDEN_SYSTEM_API = new Error(155, HIDDEN);
+    public static final Error SHOWING_MEMBER_IN_HIDDEN_CLASS = new Error(156, ERROR);
 
     static {
         // Attempt to initialize error names based on the field names
