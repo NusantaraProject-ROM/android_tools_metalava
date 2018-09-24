@@ -48,9 +48,13 @@ abstract class PsiItem(
     override var docOnly = documentation.contains("@doconly")
     @Suppress("LeakingThis")
     override var removed = documentation.contains("@removed")
+
     @Suppress("LeakingThis")
-    override var hidden = (documentation.contains("@hide") || documentation.contains("@pending") ||
-        modifiers.hasHideAnnotations()) && !modifiers.hasShowAnnotation()
+    override var originallyHidden =
+        documentation.contains("@hide") || documentation.contains("@pending") || modifiers.hasHideAnnotations()
+
+    @Suppress("LeakingThis")
+    override var hidden = originallyHidden && !modifiers.hasShowAnnotation()
 
     override fun psi(): PsiElement? = element
 

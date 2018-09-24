@@ -1526,6 +1526,7 @@ class DocAnalyzerTest : DriverTest() {
             ),
             checkCompilation = true,
             checkDoclava1 = false,
+
             stubs = arrayOf(
                 """
                 package test.pkg;
