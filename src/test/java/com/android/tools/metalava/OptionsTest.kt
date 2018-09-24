@@ -69,7 +69,12 @@ API sources:
                                          cross check APIs
 --hide-package <package>                 Remove the given packages from the API even if
                                          they have not been marked with @hide
---show-annotation <annotation class>     Include the given annotation in the API analysis
+--show-annotation <annotation class>     Unhide any hidden elements that are also
+                                         annotated with the given annotation
+--show-single-annotation <annotation>    Like --show-annotation, but does not apply to
+                                         members; these must also be explicitly annotated
+--hide-annotation <annotation class>     Treat any elements annotated with the given
+                                         annotation as hidden
 --show-unannotated                       Include un-annotated public APIs in the signature
                                          file as well
 --java-source <level>                    Sets the source level for Java source files;

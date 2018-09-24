@@ -27,6 +27,7 @@
       <w>inheritdoc</w>
       <w>initializers</w>
       <w>interop</w>
+      <w>intra</w>
       <w>jaif</w>
       <w>javadocs</w>
       <w>jdiff</w>
@@ -37,6 +38,7 @@
       <w>libcore</w>
       <w>libraryroot</w>
       <w>metalava</w>
+      <w>mmodule</w>
       <w>navtree</w>
       <w>navtreeonly</w>
       <w>nodefaultassets</w>

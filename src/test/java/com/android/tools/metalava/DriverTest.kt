@@ -1061,7 +1061,8 @@ abstract class DriverTest {
                 showAnnotationArgs = showAnnotationArguments,
                 stubImportPackages = importedPackages,
                 showUnannotated = showUnannotated,
-                project = project
+                project = project,
+                extraArguments = extraArguments
             )
         }
 
@@ -1104,7 +1105,8 @@ abstract class DriverTest {
                 showAnnotationArgs = showAnnotationArguments,
                 stubImportPackages = importedPackages,
                 showUnannotated = showUnannotated,
-                project = project
+                project = project,
+                extraArguments = extraArguments
             )
         }
 
@@ -1126,7 +1128,8 @@ abstract class DriverTest {
                 showAnnotationArgs = showAnnotationArguments,
                 stubImportPackages = importedPackages,
                 showUnannotated = showUnannotated,
-                project = project
+                project = project,
+                extraArguments = extraArguments
             )
         }
 
@@ -1147,7 +1150,8 @@ abstract class DriverTest {
                 showAnnotationArgs = showAnnotationArguments,
                 stubImportPackages = importedPackages,
                 showUnannotated = showUnannotated,
-                project = project
+                project = project,
+                extraArguments = extraArguments
             )
         }
 
@@ -1167,7 +1171,8 @@ abstract class DriverTest {
                 showAnnotationArgs = showAnnotationArguments,
                 stubImportPackages = importedPackages,
                 showUnannotated = showUnannotated,
-                project = project
+                project = project,
+                extraArguments = extraArguments
             )
         }
 
@@ -1189,9 +1194,10 @@ abstract class DriverTest {
                 showAnnotationArgs = showAnnotationArguments,
                 stubImportPackages = importedPackages,
                 // Workaround: -privateApi is a no-op if you don't also provide -api
-                extraArguments = arrayOf("-api", File(privateApiFile.parentFile, "dummy-api.txt").path),
+                extraDoclavaArguments = arrayOf("-api", File(privateApiFile.parentFile, "dummy-api.txt").path),
                 showUnannotated = showUnannotated,
-                project = project
+                project = project,
+                extraArguments = extraArguments
             )
         }
 
@@ -1213,9 +1219,10 @@ abstract class DriverTest {
                 showAnnotationArgs = showAnnotationArguments,
                 stubImportPackages = importedPackages,
                 // Workaround: -privateDexApi is a no-op if you don't also provide -api
-                extraArguments = arrayOf("-api", File(privateDexApiFile.parentFile, "dummy-api.txt").path),
+                extraDoclavaArguments = arrayOf("-api", File(privateDexApiFile.parentFile, "dummy-api.txt").path),
                 showUnannotated = showUnannotated,
-                project = project
+                project = project,
+                extraArguments = extraArguments
             )
         }
 
@@ -1237,9 +1244,10 @@ abstract class DriverTest {
                 showAnnotationArgs = showAnnotationArguments,
                 stubImportPackages = importedPackages,
                 // Workaround: -dexApi is a no-op if you don't also provide -api
-                extraArguments = arrayOf("-api", File(dexApiFile.parentFile, "dummy-api.txt").path),
+                extraDoclavaArguments = arrayOf("-api", File(dexApiFile.parentFile, "dummy-api.txt").path),
                 showUnannotated = showUnannotated,
-                project = project
+                project = project,
+                extraArguments = extraArguments
             )
         }
 
@@ -1261,10 +1269,11 @@ abstract class DriverTest {
                 showAnnotationArgs = showAnnotationArguments,
                 stubImportPackages = importedPackages,
                 // Workaround: -apiMapping is a no-op if you don't also provide -api
-                extraArguments = arrayOf("-api", File(dexApiMappingFile.parentFile, "dummy-api.txt").path),
+                extraDoclavaArguments = arrayOf("-api", File(dexApiMappingFile.parentFile, "dummy-api.txt").path),
                 showUnannotated = showUnannotated,
                 project = project,
-                skipTestRoot = true
+                skipTestRoot = true,
+                extraArguments = extraArguments
             )
         }
     }
@@ -1353,7 +1362,8 @@ abstract class DriverTest {
         stripBlankLines: Boolean = true,
         showAnnotationArgs: Array<String> = emptyArray(),
         stubImportPackages: List<String>,
-        extraArguments: Array<String> = emptyArray(),
+        extraArguments: Array<String>,
+        extraDoclavaArguments: Array<String> = emptyArray(),
         showUnannotated: Boolean,
         project: File,
         skipTestRoot: Boolean = false
@@ -1369,8 +1379,34 @@ abstract class DriverTest {
             else -> if (argument.startsWith("--")) argument.substring(1) else argument
         }
 
-        val showAnnotationArgsDoclava1: Array<String> = if (showAnnotationArgs.isNotEmpty()) {
-            showAnnotationArgs.map { if (it == ARG_SHOW_ANNOTATION) "-showAnnotation" else it }.toTypedArray()
+        val showAnnotationArgsDoclava1: Array<String> = if (showAnnotationArgs.isNotEmpty() || extraArguments.isNotEmpty()) {
+            val shown = mutableListOf<String>()
+            extraArguments.forEachIndexed { index, s ->
+                if (s == ARG_SHOW_ANNOTATION) {
+                    shown += "-showAnnotation"
+                    shown += extraArguments[index + 1]
+                }
+            }
+            showAnnotationArgs.forEach { s ->
+                shown += if (s == ARG_SHOW_ANNOTATION) {
+                    "-showAnnotation"
+                } else {
+                    s
+                }
+            }
+            shown.toTypedArray()
+        } else {
+            emptyArray()
+        }
+        val hideAnnotationArgsDoclava1: Array<String> = if (extraArguments.isNotEmpty()) {
+            val hidden = mutableListOf<String>()
+            extraArguments.forEachIndexed { index, s ->
+                if (s == ARG_HIDE_ANNOTATION) {
+                    hidden += "-hideAnnotation"
+                    hidden += extraArguments[index + 1]
+                }
+            }
+            hidden.toTypedArray()
         } else {
             emptyArray()
         }
@@ -1416,9 +1452,10 @@ abstract class DriverTest {
             androidJar.path,
 
             *showAnnotationArgsDoclava1,
+            *hideAnnotationArgsDoclava1,
             *showUnannotatedArgs,
             *hidePackageArgs.toTypedArray(),
-            *extraArguments,
+            *extraDoclavaArguments,
 
             // -api, or // -stub, etc
             doclavaArg,
@@ -1687,6 +1724,7 @@ val libcoreNullableSource: TestFile = DriverTest.java(
     }
     """
 ).indented()
+
 val requiresPermissionSource: TestFile = java(
     """
     package android.annotation;
