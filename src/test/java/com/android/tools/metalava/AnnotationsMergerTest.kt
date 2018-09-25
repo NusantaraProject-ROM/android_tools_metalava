@@ -249,11 +249,54 @@ class AnnotationsMergerTest : DriverTest() {
                     void method();
                 }
                 """,
-        api = """
+            api = """
                 package test.pkg {
                   public interface Example {
                     method public void aNotAnnotated();
                     method public void cShown();
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
+    fun `Merge inclusion annotations from Java stub files using --show-single-annotation`() {
+        check(
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                package test.pkg;
+
+                public interface Example {
+                    void aNotAnnotated();
+                    void bShown();
+                }
+                """
+                )
+            ),
+            compatibilityMode = false,
+            outputKotlinStyleNulls = false,
+            omitCommonPackages = false,
+            extraArguments = arrayOf(
+                ARG_HIDE_ANNOTATION, "test.annotation.Hide",
+                ARG_SHOW_SINGLE_ANNOTATION, "test.annotation.Show"
+            ),
+            showUnannotated = true,
+            mergeInclusionAnnotations = """
+                package test.pkg;
+
+                @test.annotation.Hide
+                @test.annotation.Show
+                public interface Example {
+                    void aNotAnnotated();
+                    @test.annotation.Show void bShown();
+                }
+                """,
+            api = """
+                package test.pkg {
+                  public interface Example {
+                    method public void bShown();
                   }
                 }
                 """
