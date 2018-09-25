@@ -51,7 +51,12 @@ abstract class PsiItem(
 
     @Suppress("LeakingThis")
     override var originallyHidden =
-        documentation.contains("@hide") || documentation.contains("@pending") || modifiers.hasHideAnnotations()
+        documentation.contains('@') &&
+            (documentation.contains("@hide") ||
+                documentation.contains("@pending") ||
+                // KDoc:
+                documentation.contains("@suppress")) ||
+            modifiers.hasHideAnnotations()
 
     @Suppress("LeakingThis")
     override var hidden = originallyHidden && !modifiers.hasShowAnnotation()
