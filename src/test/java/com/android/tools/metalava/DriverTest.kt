@@ -181,8 +181,10 @@ abstract class DriverTest {
         @Language("XML") mergeXmlAnnotations: String? = null,
         /** Annotations to merge in (in .txt/.signature format) */
         @Language("TEXT") mergeSignatureAnnotations: String? = null,
-        /** Annotations to merge in (in Java stub format) */
+        /** Qualifier annotations to merge in (in Java stub format) */
         @Language("JAVA") mergeJavaStubAnnotations: String? = null,
+        /** Inclusion annotations to merge in (in Java stub format) */
+        @Language("JAVA") mergeInclusionAnnotations: String? = null,
         /** An optional API signature file content to load **instead** of Java/Kotlin source files */
         @Language("TEXT") signatureSource: String? = null,
         /** An optional API jar file content to load **instead** of Java/Kotlin source files */
@@ -201,6 +203,8 @@ abstract class DriverTest {
         @Language("Proguard") proguard: String? = null,
         /** Show annotations (--show-annotation arguments) */
         showAnnotations: Array<String> = emptyArray(),
+        /** Hide annotations (--hideAnnotation arguments) */
+        hideAnnotations: Array<String> = emptyArray(),
         /** If using [showAnnotations], whether to include unannotated */
         showUnannotated: Boolean = false,
         /** Additional arguments to supply */
@@ -290,6 +294,11 @@ abstract class DriverTest {
                     "annotations output in doclava1"
             )
         }
+        if (compatibilityMode && mergeInclusionAnnotations != null) {
+            fail(
+                "Can't specify both compatibilityMode and mergeInclusionAnnotations"
+            )
+        }
         Errors.resetLevels()
 
         /** Expected output if exiting with an error code */
@@ -359,7 +368,7 @@ abstract class DriverTest {
         val mergeAnnotationsArgs = if (mergeXmlAnnotations != null) {
             val merged = File(project, "merged-annotations.xml")
             Files.asCharSink(merged, Charsets.UTF_8).write(mergeXmlAnnotations.trimIndent())
-            arrayOf(ARG_MERGE_ANNOTATIONS, merged.path)
+            arrayOf(ARG_MERGE_QUALIFIER_ANNOTATIONS, merged.path)
         } else {
             emptyArray()
         }
@@ -367,15 +376,23 @@ abstract class DriverTest {
         val signatureAnnotationsArgs = if (mergeSignatureAnnotations != null) {
             val merged = File(project, "merged-annotations.txt")
             Files.asCharSink(merged, Charsets.UTF_8).write(mergeSignatureAnnotations.trimIndent())
-            arrayOf(ARG_MERGE_ANNOTATIONS, merged.path)
+            arrayOf(ARG_MERGE_QUALIFIER_ANNOTATIONS, merged.path)
         } else {
             emptyArray()
         }
 
         val javaStubAnnotationsArgs = if (mergeJavaStubAnnotations != null) {
-            val merged = File(project, "merged-annotations.java")
+            val merged = File(project, "merged-qualifier-annotations.java")
             Files.asCharSink(merged, Charsets.UTF_8).write(mergeJavaStubAnnotations.trimIndent())
-            arrayOf(ARG_MERGE_ANNOTATIONS, merged.path)
+            arrayOf(ARG_MERGE_QUALIFIER_ANNOTATIONS, merged.path)
+        } else {
+            emptyArray()
+        }
+
+        val inclusionAnnotationsArgs = if (mergeInclusionAnnotations != null) {
+            val merged = File(project, "merged-inclusion-annotations.java")
+            Files.asCharSink(merged, Charsets.UTF_8).write(mergeInclusionAnnotations.trimIndent())
+            arrayOf(ARG_MERGE_INCLUSION_ANNOTATIONS, merged.path)
         } else {
             emptyArray()
         }
@@ -527,6 +544,17 @@ abstract class DriverTest {
             if (includeSystemApiAnnotations && !args.contains("android.annotation.TestApi")) {
                 args.add(ARG_SHOW_ANNOTATION)
                 args.add("android.annotation.TestApi")
+            }
+            args.toTypedArray()
+        } else {
+            emptyArray()
+        }
+
+        val hideAnnotationArguments = if (hideAnnotations.isNotEmpty()) {
+            val args = mutableListOf<String>()
+            for (annotation in hideAnnotations) {
+                args.add(ARG_HIDE_ANNOTATION)
+                args.add(annotation)
             }
             args.toTypedArray()
         } else {
@@ -781,6 +809,7 @@ abstract class DriverTest {
             *mergeAnnotationsArgs,
             *signatureAnnotationsArgs,
             *javaStubAnnotationsArgs,
+            *inclusionAnnotationsArgs,
             *migrateNullsArguments,
             *checkCompatibilityArguments,
             *checkCompatibilityApiReleasedArguments,
@@ -791,6 +820,7 @@ abstract class DriverTest {
             *convertToJDiffArgs,
             *applyApiLevelsXmlArgs,
             *showAnnotationArguments,
+            *hideAnnotationArguments,
             *showUnannotatedArgs,
             *includeSourceRetentionAnnotationArgs,
             *sdkFilesArgs,

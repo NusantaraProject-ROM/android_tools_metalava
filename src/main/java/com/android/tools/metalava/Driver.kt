@@ -664,8 +664,9 @@ private fun loadFromSources(): Codebase {
     progress("\nAnalyzing API: ")
 
     val analyzer = ApiAnalyzer(codebase)
+    analyzer.mergeExternalInclusionAnnotations()
     analyzer.computeApi()
-    analyzer.mergeExternalAnnotations()
+    analyzer.mergeExternalQualifierAnnotations()
     analyzer.handleStripping()
 
     if (options.checkKotlinInterop) {
@@ -754,8 +755,9 @@ fun loadFromJarFile(apiJar: File, manifest: File? = null, preFiltered: Boolean =
     val apiEmit = ApiPredicate(ignoreShown = true)
     val apiReference = ApiPredicate(ignoreShown = true)
     val analyzer = ApiAnalyzer(codebase)
+    analyzer.mergeExternalInclusionAnnotations()
     analyzer.computeApi()
-    analyzer.mergeExternalAnnotations()
+    analyzer.mergeExternalQualifierAnnotations()
     analyzer.generateInheritedStubs(apiEmit, apiReference)
     codebase.bindingContext = trace.bindingContext
     return codebase

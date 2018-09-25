@@ -173,7 +173,7 @@ class AnnotationsMergerTest : DriverTest() {
     }
 
     @Test
-    fun `Merge Java stub files`() {
+    fun `Merge qualifier annotations from Java stub files`() {
         check(
             sourceFiles = *arrayOf(
                 java(
@@ -203,6 +203,57 @@ class AnnotationsMergerTest : DriverTest() {
                 package test.pkg {
                   public interface Appendable {
                     method @androidx.annotation.NonNull public test.pkg.Appendable append(@androidx.annotation.Nullable java.lang.CharSequence);
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
+    fun `Merge inclusion annotations from Java stub files`() {
+        check(
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                package test.pkg;
+
+                public interface Example {
+                    void aNotAnnotated();
+                    void bHidden();
+                    void cShown();
+                }
+
+                public interface HiddenExample {
+                    void method();
+                }
+                """
+                )
+            ),
+            compatibilityMode = false,
+            outputKotlinStyleNulls = false,
+            omitCommonPackages = false,
+            hideAnnotations = arrayOf("test.annotation.Hide"),
+            showAnnotations = arrayOf("test.annotation.Show"),
+            showUnannotated = true,
+            mergeInclusionAnnotations = """
+                package test.pkg;
+
+                public interface Example {
+                    void aNotAnnotated();
+                    @test.annotation.Hide void bHidden();
+                    @test.annotation.Hide @test.annotation.Show void cShown();
+                }
+
+                @test.annotation.Hide
+                public interface HiddenExample {
+                    void method();
+                }
+                """,
+        api = """
+                package test.pkg {
+                  public interface Example {
+                    method public void aNotAnnotated();
+                    method public void cShown();
                   }
                 }
                 """
