@@ -55,7 +55,8 @@ const val ARG_PRIVATE_DEX_API = "--private-dex-api"
 const val ARG_SDK_VALUES = "--sdk-values"
 const val ARG_REMOVED_API = "--removed-api"
 const val ARG_REMOVED_DEX_API = "--removed-dex-api"
-const val ARG_MERGE_ANNOTATIONS = "--merge-annotations"
+const val ARG_MERGE_QUALIFIER_ANNOTATIONS = "--merge-qualifier-annotations"
+const val ARG_MERGE_INCLUSION_ANNOTATIONS = "--merge-inclusion-annotations"
 const val ARG_INPUT_API_JAR = "--input-api-jar"
 const val ARG_EXACT_API = "--exact-api"
 const val ARG_STUBS = "--stubs"
@@ -145,8 +146,10 @@ class Options(
     private val mutableHideAnnotations: MutableList<String> = mutableListOf()
     /** Internal list backing [stubImportPackages] */
     private val mutableStubImportPackages: MutableSet<String> = mutableSetOf()
-    /** Internal list backing [mergeAnnotations] */
-    private val mutableMergeAnnotations: MutableList<File> = mutableListOf()
+    /** Internal list backing [mergeQualifierAnnotations] */
+    private val mutableMergeQualifierAnnotations: MutableList<File> = mutableListOf()
+    /** Internal list backing [mergeInclusionAnnotations] */
+    private val mutableMergeInclusionAnnotations: MutableList<File> = mutableListOf()
     /** Internal list backing [annotationCoverageOf] */
     private val mutableAnnotationCoverageOf: MutableList<File> = mutableListOf()
     /** Internal list backing [hidePackages] */
@@ -356,7 +359,8 @@ class Options(
     val compatibilityChecks: List<CheckRequest> = mutableCompatibilityChecks
 
     /** Existing external annotation files to merge in */
-    var mergeAnnotations: List<File> = mutableMergeAnnotations
+    var mergeQualifierAnnotations: List<File> = mutableMergeQualifierAnnotations
+    var mergeInclusionAnnotations: List<File> = mutableMergeInclusionAnnotations
 
     /** Set of jars and class files for existing apps that we want to measure coverage of */
     var annotationCoverageOf: List<File> = mutableAnnotationCoverageOf
@@ -510,7 +514,14 @@ class Options(
                     }
                 }
 
-                ARG_MERGE_ANNOTATIONS, "--merge-zips" -> mutableMergeAnnotations.addAll(
+                // TODO: Remove the legacy --merge-annotations flag once it's no longer used to update P docs
+                ARG_MERGE_QUALIFIER_ANNOTATIONS, "--merge-zips", "--merge-annotations" -> mutableMergeQualifierAnnotations.addAll(
+                    stringToExistingDirsOrFiles(
+                        getValue(args, ++index)
+                    )
+                )
+
+                ARG_MERGE_INCLUSION_ANNOTATIONS -> mutableMergeInclusionAnnotations.addAll(
                     stringToExistingDirsOrFiles(
                         getValue(args, ++index)
                     )
@@ -1419,10 +1430,16 @@ class Options(
                 "`${File.pathSeparator}`) containing classes that should be on the classpath when parsing the " +
                 "source files",
 
-            "$ARG_MERGE_ANNOTATIONS <file>", "An external annotations file to merge and overlay " +
-                "the sources, or a directory of such files. Formats supported are: IntelliJ's " +
-                "external annotations database format, .jar or .zip files containing those, " +
-                "Android signature files, and Java stub files.",
+            "$ARG_MERGE_QUALIFIER_ANNOTATIONS <file>", "An external annotations file to merge and overlay " +
+                "the sources, or a directory of such files. Should be used for annotations intended for " +
+                "inclusion in the API to be written out, e.g. nullability. Formats supported are: IntelliJ's " +
+                "external annotations database format, .jar or .zip files containing those, Android signature " +
+                "files, and Java stub files.",
+
+            "$ARG_MERGE_INCLUSION_ANNOTATIONS <file>", "An external annotations file to merge and overlay " +
+                "the sources, or a directory of such files. Should be used for annotations which determine " +
+                "inclusion in the API to be written out, i.e. show and hide. The only format supported is " +
+                "Java stub files.",
 
             "$ARG_INPUT_API_JAR <file>", "A .jar file to read APIs from directly",
 
@@ -1448,6 +1465,7 @@ class Options(
             ARG_HIDDEN, "Include all elements, including hidden",
 
             "", "\nExtracting Signature Files:",
+            // TODO: Document --show-annotation!
             "$ARG_API <file>", "Generate a signature descriptor file",
             "$ARG_PRIVATE_API <file>", "Generate a signature descriptor file listing the exact private APIs",
             "$ARG_DEX_API <file>", "Generate a DEX signature descriptor file listing the APIs",

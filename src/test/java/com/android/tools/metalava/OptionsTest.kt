@@ -58,12 +58,19 @@ API sources:
 --classpath <paths>                      One or more directories or jars (separated by
                                          `:`) containing classes that should be on the
                                          classpath when parsing the source files
---merge-annotations <file>               An external annotations file to merge and overlay
-                                         the sources, or a directory of such files.
+--merge-qualifier-annotations <file>     An external annotations file to merge and overlay
+                                         the sources, or a directory of such files. Should
+                                         be used for annotations intended for inclusion in
+                                         the API to be written out, e.g. nullability.
                                          Formats supported are: IntelliJ's external
                                          annotations database format, .jar or .zip files
                                          containing those, Android signature files, and
                                          Java stub files.
+--merge-inclusion-annotations <file>     An external annotations file to merge and overlay
+                                         the sources, or a directory of such files. Should
+                                         be used for annotations which determine inclusion
+                                         in the API to be written out, i.e. show and hide.
+                                         The only format supported is Java stub files.
 --input-api-jar <file>                   A .jar file to read APIs from directly
 --manifest <file>                        A manifest file, used to for check permissions to
                                          cross check APIs
