@@ -17,20 +17,12 @@
 package com.android.tools.metalava.model.psi
 
 import com.android.tools.metalava.model.DefaultItem
-import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MutableModifierList
-import com.android.tools.metalava.model.PackageItem
 import com.android.tools.metalava.model.ParameterItem
-import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiDocCommentOwner
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiModifierListOwner
-import com.intellij.psi.PsiReference
-import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.javadoc.PsiDocTag
-import com.intellij.psi.javadoc.PsiInlineDocTag
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.sourcePsiElement
@@ -130,178 +122,12 @@ abstract class PsiItem(
         documentation = mergeDocumentation(documentation, element, comment.trim(), tagSection, append)
     }
 
-    private fun packageName(): String? {
-        var curr: Item? = this
-        while (curr != null) {
-            if (curr is PackageItem) {
-                return curr.qualifiedName()
-            }
-            curr = curr.parent()
-        }
-
-        return null
-    }
-
     override fun fullyQualifiedDocumentation(): String {
         return fullyQualifiedDocumentation(documentation)
     }
 
     override fun fullyQualifiedDocumentation(documentation: String): String {
-        if (documentation.isBlank() || !containsLinkTags(documentation)) {
-            return documentation
-        }
-
-        if (!(documentation.contains("@link") || // includes @linkplain
-                documentation.contains("@see") ||
-                documentation.contains("@throws"))
-        ) {
-            // No relevant tags that need to be expanded/rewritten
-            return documentation
-        }
-
-        val comment =
-            try {
-                codebase.getComment(documentation, psi())
-            } catch (throwable: Throwable) {
-                // TODO: Get rid of line comments as documentation
-                // Invalid comment
-                if (documentation.startsWith("//") && documentation.contains("/**")) {
-                    return fullyQualifiedDocumentation(documentation.substring(documentation.indexOf("/**")))
-                }
-                codebase.getComment(documentation, psi())
-            }
-        val sb = StringBuilder(documentation.length)
-        var curr = comment.firstChild
-        while (curr != null) {
-            if (curr is PsiDocTag) {
-                sb.append(getExpanded(curr))
-            } else {
-                sb.append(curr.text)
-            }
-            curr = curr.nextSibling
-        }
-
-        return sb.toString()
-    }
-
-    private fun getExpanded(tag: PsiDocTag): String {
-        val text = tag.text
-        var valueElement = tag.valueElement
-        val reference = extractReference(tag)
-        var resolved = reference?.resolve()
-        var referenceText = reference?.element?.text
-        if (resolved == null && tag.name == "throws") {
-            // Workaround: @throws does not provide a valid reference to the class
-            val dataElements = tag.dataElements
-            if (dataElements.isNotEmpty()) {
-                if (dataElements[0] is PsiInlineDocTag) {
-                    val innerReference = extractReference(dataElements[0] as PsiInlineDocTag)
-                    resolved = innerReference?.resolve()
-                    if (innerReference != null && resolved == null) {
-                        referenceText = innerReference.canonicalText
-                        resolved = codebase.createReferenceFromText(referenceText, psi()).resolve()
-                    } else {
-                        referenceText = innerReference?.element?.text
-                    }
-                }
-                if (resolved == null || referenceText == null) {
-                    val exceptionName = dataElements[0].text
-                    val exceptionReference = codebase.createReferenceFromText(exceptionName, psi())
-                    resolved = exceptionReference.resolve()
-                    referenceText = exceptionName
-                } else {
-                    // Create a placeholder value since the inline tag
-                    // wipes it out
-                    val t = dataElements[0].text
-                    val index = text.indexOf(t) + t.length
-                    val suffix = text.substring(index)
-                    val dummyTag = codebase.createDocTagFromText("@${tag.name} $suffix")
-                    valueElement = dummyTag.valueElement
-                }
-            } else {
-                return text
-            }
-        }
-
-        if (resolved != null && referenceText != null) {
-            if (referenceText.startsWith("#")) {
-                // Already a local/relative reference
-                return text
-            }
-
-            when (resolved) {
-                // TODO: If not absolute, preserve syntax
-                is PsiClass -> {
-                    if (samePackage(resolved)) {
-                        return text
-                    }
-                    val qualifiedName = resolved.qualifiedName ?: return text
-                    if (referenceText == qualifiedName) {
-                        // Already absolute
-                        return text
-                    }
-                    return when {
-                        valueElement != null -> {
-                            val start = valueElement.startOffsetInParent
-                            val end = start + valueElement.textLength
-                            text.substring(0, start) + qualifiedName + text.substring(end)
-                        }
-                        tag.name == "see" -> {
-                            val suffix = text.substring(text.indexOf(referenceText) + referenceText.length)
-                            "@see $qualifiedName$suffix"
-                        }
-                        text.startsWith("{") -> "{@${tag.name} $qualifiedName $referenceText}"
-                        else -> "@${tag.name} $qualifiedName $referenceText"
-                    }
-                }
-                is PsiMember -> {
-                    val containing = resolved.containingClass ?: return text
-                    if (samePackage(containing)) {
-                        return text
-                    }
-                    val qualifiedName = containing.qualifiedName ?: return text
-                    if (referenceText.startsWith(qualifiedName)) {
-                        // Already absolute
-                        return text
-                    }
-
-                    val name = containing.name ?: return text
-                    if (valueElement != null) {
-                        val start = valueElement.startOffsetInParent
-                        val close = text.lastIndexOf('}')
-                        if (close == -1) {
-                            return text // invalid javadoc
-                        }
-                        val memberPart = text.substring(text.indexOf(name, start) + name.length, close)
-                        return "${text.substring(0, start)}$qualifiedName$memberPart $referenceText}"
-                    }
-                }
-            }
-        }
-
-        return text
-    }
-
-    private fun samePackage(cls: PsiClass): Boolean {
-        val pkg = packageName() ?: return false
-        return cls.qualifiedName == "$pkg.${cls.name}"
-    }
-
-    // Copied from UnnecessaryJavaDocLinkInspection
-    private fun extractReference(tag: PsiDocTag): PsiReference? {
-        val valueElement = tag.valueElement
-        if (valueElement != null) {
-            return valueElement.reference
-        }
-        // hack around the fact that a reference to a class is apparently
-        // not a PsiDocTagValue
-        val dataElements = tag.dataElements
-        if (dataElements.isEmpty()) {
-            return null
-        }
-        val salientElement: PsiElement = dataElements.firstOrNull { it !is PsiWhiteSpace } ?: return null
-        val child = salientElement.firstChild
-        return if (child !is PsiReference) null else child
+        return toFullyQualifiedDocumentation(this, documentation)
     }
 
     /** Finish initialization of the item */
@@ -340,20 +166,6 @@ abstract class PsiItem(
             }
 
             return ""
-        }
-
-        fun containsLinkTags(documentation: String): Boolean {
-            var index = 0
-            while (true) {
-                index = documentation.indexOf('@', index)
-                if (index == -1) {
-                    return false
-                }
-                if (!documentation.startsWith("@code", index)) {
-                    return true
-                }
-                index++
-            }
         }
 
         fun modifiers(

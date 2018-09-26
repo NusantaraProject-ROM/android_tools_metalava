@@ -16,7 +16,7 @@ import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MemberItem
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.ParameterItem
-import com.android.tools.metalava.model.psi.PsiItem.Companion.containsLinkTags
+import com.android.tools.metalava.model.psi.containsLinkTags
 import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.android.tools.metalava.model.visitors.VisibleItemVisitor
 import com.google.common.io.Files
