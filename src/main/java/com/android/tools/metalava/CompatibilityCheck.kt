@@ -736,7 +736,7 @@ class CompatibilityCheck(
                 includeInterfaces = false
             )
         }
-        if (inherited != null && !inherited.modifiers.isAbstract()) {
+        if (inherited == null || !inherited.modifiers.isAbstract()) {
             val error = if (new.modifiers.isAbstract()) Errors.ADDED_ABSTRACT_METHOD else Errors.ADDED_METHOD
             handleAdded(error, new)
         }
