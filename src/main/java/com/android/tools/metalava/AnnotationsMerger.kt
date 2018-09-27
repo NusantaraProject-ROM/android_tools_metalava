@@ -100,9 +100,10 @@ class AnnotationsMerger(
     }
 
     private fun mergeAll(
-            mergeAnnotations: List<File>,
-            mergeFile: (File) -> Unit,
-            mergeCodebase: (Codebase) -> Unit) {
+        mergeAnnotations: List<File>,
+        mergeFile: (File) -> Unit,
+        mergeCodebase: (Codebase) -> Unit
+    ) {
         val javaStubFiles = mutableListOf<File>()
         mergeAnnotations.forEach { it ->
             mergeFileOrDir(it, mergeFile, javaStubFiles)
@@ -121,7 +122,10 @@ class AnnotationsMerger(
      * (so that all the Java stubs can be loaded as a single codebase).
      */
     private fun mergeFileOrDir(
-        file: File, mergeFile: (File) -> Unit, javaStubFiles: MutableList<File>) {
+        file: File,
+        mergeFile: (File) -> Unit,
+        javaStubFiles: MutableList<File>
+    ) {
         if (file.isDirectory) {
             val files = file.listFiles()
             if (files != null) {
