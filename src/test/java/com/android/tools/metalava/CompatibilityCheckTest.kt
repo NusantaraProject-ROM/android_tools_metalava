@@ -573,6 +573,7 @@ CompatibilityCheckTest : DriverTest() {
                         package test.pkg;
                         @SuppressWarnings({"ConstantConditions", "NullableProblems"})
                         public abstract class AbstractMap<K, V> implements java.util.Map {
+                            private AbstractMap() { }
                             public V put(K k, V v) { return null; }
                             public java.util.Set<K> keySet() { return null; }
                             public V put(K k, V v) { return null; }
@@ -584,7 +585,33 @@ CompatibilityCheckTest : DriverTest() {
                     """
                         package test.pkg;
                         public abstract class EnumMap<K extends java.lang.Enum<K>, V> extends test.pkg.AbstractMap  {
+                            private EnumMap() { }
                             public V put(K k, V v) { return null; }
+                        }
+                        """
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `Added constructor`() {
+        // Regression test for issue 116619591
+        check(
+            warnings = "src/test/pkg/AbstractMap.java:2: error: Added constructor test.pkg.AbstractMap() [AddedMethod:4]",
+            compatibilityMode = false,
+            checkCompatibilityApi = """
+                package test.pkg {
+                  public abstract class AbstractMap<K, V> implements java.util.Map {
+                  }
+                }
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                        package test.pkg;
+                        @SuppressWarnings({"ConstantConditions", "NullableProblems"})
+                        public abstract class AbstractMap<K, V> implements java.util.Map {
                         }
                         """
                 )
@@ -2014,6 +2041,7 @@ CompatibilityCheckTest : DriverTest() {
                     package androidx.collection;
 
                     public class SimpleArrayMap<K, V> {
+                        private SimpleArrayMap() { }
                     }
                     """
                 ).indented()
@@ -2030,6 +2058,7 @@ CompatibilityCheckTest : DriverTest() {
                 // Signature format: 2.0
                 package androidx.collection {
                   public class MyMap<Key, Value> {
+                    ctor public MyMap();
                     field public Key! myField;
                     method public Key! getReplacement(Key!);
                   }

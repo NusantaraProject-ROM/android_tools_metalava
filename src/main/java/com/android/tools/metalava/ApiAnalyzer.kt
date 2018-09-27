@@ -522,14 +522,14 @@ class ApiAnalyzer(
      * from all configured sources.
      */
     fun mergeExternalQualifierAnnotations() {
-      if (!options.mergeQualifierAnnotations.isEmpty()) {
+        if (!options.mergeQualifierAnnotations.isEmpty()) {
             AnnotationsMerger(codebase).mergeQualifierAnnotations(options.mergeQualifierAnnotations)
         }
     }
 
     /** Merge in external show/hide annotations from all configured sources */
     fun mergeExternalInclusionAnnotations() {
-      if (!options.mergeInclusionAnnotations.isEmpty()) {
+        if (!options.mergeInclusionAnnotations.isEmpty()) {
             AnnotationsMerger(codebase).mergeInclusionAnnotations(options.mergeInclusionAnnotations)
         }
     }
@@ -667,9 +667,11 @@ class ApiAnalyzer(
                     val annotation = item.modifiers.annotations().find {
                         options.showSingleAnnotations.contains(it.qualifiedName())
                     } ?: options.showSingleAnnotations.first()
-                    reporter.report(Errors.SHOWING_MEMBER_IN_HIDDEN_CLASS, item,
+                    reporter.report(
+                        Errors.SHOWING_MEMBER_IN_HIDDEN_CLASS, item,
                         "Attempting to unhide ${item.describe()}, but surrounding ${parent.describe()} is " +
-                            "hidden and should also be annotated with $annotation")
+                            "hidden and should also be annotated with $annotation"
+                    )
                 }
             }
         })
