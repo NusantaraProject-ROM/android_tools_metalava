@@ -404,10 +404,10 @@ open class CodePrinter(
                     return value.toString()
                 }
                 is Byte -> {
-                    return Integer.toHexString(value.toInt())
+                    return value.toString()
                 }
                 is Short -> {
-                    return Integer.toHexString(value.toInt())
+                    return value.toString()
                 }
                 is Float -> {
                     return when (value) {
