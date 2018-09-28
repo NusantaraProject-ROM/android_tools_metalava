@@ -627,4 +627,108 @@ class JDiffXmlTest : DriverTest() {
             """
         )
     }
+
+    @Test
+    fun `Half float short from signature file`() {
+        check(
+            compatibilityMode = false,
+            signatureSource = """
+                package test.pkg {
+                  public class Test {
+                    ctor public Test();
+                    field public static final short LOWEST_VALUE = -1025; // 0xfffffbff
+                  }
+                }
+            """,
+            apiXml =
+            """
+                <api>
+                <package name="test.pkg"
+                >
+                <class name="Test"
+                 extends="java.lang.Object"
+                 abstract="false"
+                 static="false"
+                 final="false"
+                 deprecated="not deprecated"
+                 visibility="public"
+                >
+                <constructor name="Test"
+                 type="test.pkg.Test"
+                 static="false"
+                 final="false"
+                 deprecated="not deprecated"
+                 visibility="public"
+                >
+                </constructor>
+                <field name="LOWEST_VALUE"
+                 type="short"
+                 transient="false"
+                 volatile="false"
+                 value="-1025"
+                 static="true"
+                 final="true"
+                 deprecated="not deprecated"
+                 visibility="public"
+                >
+                </field>
+                </class>
+                </package>
+                </api>
+            """
+        )
+    }
+
+    @Test
+    fun `Half float short from source`() {
+        check(
+            compatibilityMode = false,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                      package test.pkg;
+                      public class Test {
+                        public static final short LOWEST_VALUE = (short) 0xfbff;
+                      }
+                      """
+                )
+            ),
+            apiXml =
+            """
+                <api>
+                <package name="test.pkg"
+                >
+                <class name="Test"
+                 extends="java.lang.Object"
+                 abstract="false"
+                 static="false"
+                 final="false"
+                 deprecated="not deprecated"
+                 visibility="public"
+                >
+                <constructor name="Test"
+                 type="test.pkg.Test"
+                 static="false"
+                 final="false"
+                 deprecated="not deprecated"
+                 visibility="public"
+                >
+                </constructor>
+                <field name="LOWEST_VALUE"
+                 type="short"
+                 transient="false"
+                 volatile="false"
+                 value="-1025"
+                 static="true"
+                 final="true"
+                 deprecated="not deprecated"
+                 visibility="public"
+                >
+                </field>
+                </class>
+                </package>
+                </api>
+            """
+        )
+    }
 }
