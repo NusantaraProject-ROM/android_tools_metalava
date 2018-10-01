@@ -66,6 +66,7 @@ const val ARG_DOC_STUBS_SOURCE_LIST = "--write-doc-stubs-source-list"
 const val ARG_PROGUARD = "--proguard"
 const val ARG_EXTRACT_ANNOTATIONS = "--extract-annotations"
 const val ARG_EXCLUDE_ANNOTATIONS = "--exclude-annotations"
+const val ARG_EXCLUDE_DOCUMENTATION_FROM_STUBS = "--exclude-documentation-from-stubs"
 const val ARG_HIDE_PACKAGE = "--hide-package"
 const val ARG_MANIFEST = "--manifest"
 const val ARG_MIGRATE_NULLNESS = "--migrate-nullness"
@@ -173,6 +174,13 @@ class Options(
      * been configured via ${#ARG_GENERATE_DOCUMENTATION}
      */
     var noDocs = false
+
+    /**
+     * Whether to include element documentation (javadoc and KDoc) is in the generated stubs.
+     * (Copyright notices are not affected by this, they are always included. Documentation stubs
+     * (--doc-stubs) are not affected.)
+     */
+    var includeDocumentationInStubs = true
 
     /**
      * Whether metalava is invoked as part of updating the API files. When this is true, metalava
@@ -571,6 +579,8 @@ class Options(
                 ARG_DOC_STUBS_SOURCE_LIST -> docStubsSourceList = stringToNewFile(getValue(args, ++index))
 
                 ARG_EXCLUDE_ANNOTATIONS -> generateAnnotations = false
+
+                ARG_EXCLUDE_DOCUMENTATION_FROM_STUBS -> includeDocumentationInStubs = false
 
                 // Note that this only affects stub generation, not signature files.
                 // For signature files, clear the compatibility mode
@@ -1498,6 +1508,9 @@ class Options(
                 "just list this as @NonNull. Another difference is that @doconly elements are included in " +
                 "documentation stubs, but not regular stubs, etc.",
             ARG_EXCLUDE_ANNOTATIONS, "Exclude annotations such as @Nullable from the stub files",
+            ARG_EXCLUDE_DOCUMENTATION_FROM_STUBS, "Exclude element documentation (javadoc and kdoc) " +
+                "from the generated stubs. (Copyright notices are not affected by this, they are always included. " +
+                "Documentation stubs (--doc-stubs) are not affected.)",
             "$ARG_STUBS_SOURCE_LIST <file>", "Write the list of generated stub files into the given source " +
                 "list file. If generating documentation stubs and you haven't also specified " +
                 "$ARG_DOC_STUBS_SOURCE_LIST, this list will refer to the documentation stubs; " +

@@ -64,6 +64,10 @@ class StubsTest : DriverTest() {
             sourceFiles = *arrayOf(
                 java(
                     """
+                    /*
+                     * This is the copyright header.
+                     */
+
                     package test.pkg;
                     /** This is the documentation for the class */
                     @SuppressWarnings("ALL")
@@ -91,6 +95,9 @@ class StubsTest : DriverTest() {
                 )
             ),
             source = """
+                /*
+                 * This is the copyright header.
+                 */
                 package test.pkg;
                 /** This is the documentation for the class */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
@@ -3585,6 +3592,106 @@ class StubsTest : DriverTest() {
                 }
                 """
             )
+        )
+    }
+
+    @Test
+    fun `Generate stubs with --exclude-documentation-from-stubs`() {
+        checkStubs(
+            extraArguments = arrayOf(ARG_EXCLUDE_DOCUMENTATION_FROM_STUBS),
+            compatibilityMode = false,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    /*
+                     * This is the copyright header.
+                     */
+
+                    package test.pkg;
+
+                    /** This is the documentation for the class */
+                    public class Foo {
+
+                        /** My field doc */
+                        protected static final String field = "a\nb\n\"test\"";
+
+                        /**
+                         * Method documentation.
+                         */
+                        protected static void onCreate(String parameter1) {
+                            // This is not in the stub
+                            System.out.println(parameter1);
+                        }
+                    }
+                    """
+                )
+            ),
+            // Excludes javadoc because of ARG_EXCLUDE_DOCUMENTATION_FROM_STUBS:
+            source = """
+                /*
+                 * This is the copyright header.
+                 */
+                package test.pkg;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class Foo {
+                public Foo() { throw new RuntimeException("Stub!"); }
+                protected static void onCreate(java.lang.String parameter1) { throw new RuntimeException("Stub!"); }
+                protected static final java.lang.String field = "a\nb\n\"test\"";
+                }
+                """
+        )
+    }
+
+    @Test
+    fun `Generate documentation stubs with --exclude-documentation-from-stubs`() {
+        checkStubs(
+            extraArguments = arrayOf(ARG_EXCLUDE_DOCUMENTATION_FROM_STUBS),
+            compatibilityMode = false,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    /*
+                     * This is the copyright header.
+                     */
+
+                    package test.pkg;
+
+                    /** This is the documentation for the class */
+                    public class Foo {
+
+                        /** My field doc */
+                        protected static final String field = "a\nb\n\"test\"";
+
+                        /**
+                         * Method documentation.
+                         */
+                        protected static void onCreate(String parameter1) {
+                            // This is not in the stub
+                            System.out.println(parameter1);
+                        }
+                    }
+                    """
+                )
+            ),
+            docStubs = true,
+            // Includes javadoc despite ARG_EXCLUDE_DOCUMENTATION_FROM_STUBS, because of docStubs:
+            source = """
+                /*
+                 * This is the copyright header.
+                 */
+                package test.pkg;
+                /** This is the documentation for the class */
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class Foo {
+                public Foo() { throw new RuntimeException("Stub!"); }
+                /**
+                 * Method documentation.
+                 */
+                protected static void onCreate(java.lang.String parameter1) { throw new RuntimeException("Stub!"); }
+                /** My field doc */
+                protected static final java.lang.String field = "a\nb\n\"test\"";
+                }
+                """
         )
     }
 

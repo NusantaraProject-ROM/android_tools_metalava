@@ -284,11 +284,13 @@ class StubWriter(
     }
 
     private fun appendDocumentation(item: Item, writer: PrintWriter) {
-        val documentation = item.documentation
-        if (documentation.isNotBlank()) {
-            val trimmed = trimDocIndent(documentation)
-            writer.println(trimmed)
-            writer.println()
+        if (options.includeDocumentationInStubs || docStubs) {
+            val documentation = item.documentation
+            if (documentation.isNotBlank()) {
+                val trimmed = trimDocIndent(documentation)
+                writer.println(trimmed)
+                writer.println()
+            }
         }
     }
 
