@@ -145,6 +145,11 @@ Generating Stubs:
                                          stubs, but not regular stubs, etc.
 --exclude-annotations                    Exclude annotations such as @Nullable from the
                                          stub files
+--exclude-documentation-from-stubs       Exclude element documentation (javadoc and kdoc)
+                                         from the generated stubs. (Copyright notices are
+                                         not affected by this, they are always included.
+                                         Documentation stubs (--doc-stubs) are not
+                                         affected.)
 --write-stubs-source-list <file>         Write the list of generated stub files into the
                                          given source list file. If generating
                                          documentation stubs and you haven't also
