@@ -33,7 +33,7 @@ java_library {
     srcs: [
         "stub-annotations/src/main/java/**/*.java",
     ],
-    no_framework_libs: true,
+    sdk_version: "core_current",
 }
 
 genrule {
@@ -58,7 +58,7 @@ java_library {
     srcs: [
         ":private-stub-annotations",
     ],
-    no_framework_libs: true,
+    sdk_version: "core_current",
 }
 
 droiddoc_exported_dir {
