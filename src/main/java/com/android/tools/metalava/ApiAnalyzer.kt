@@ -29,6 +29,7 @@ import com.android.tools.metalava.model.PackageItem
 import com.android.tools.metalava.model.PackageList
 import com.android.tools.metalava.model.ParameterItem
 import com.android.tools.metalava.model.TypeItem
+import com.android.tools.metalava.model.psi.EXPAND_DOCUMENTATION
 import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.android.tools.metalava.model.visitors.ItemVisitor
 import java.util.ArrayList
@@ -494,8 +495,10 @@ class ApiAnalyzer(
             method.inheritedFrom = it.containingClass()
 
             // The documentation may use relative references to classes in import statements
-            // in the original class, so expand the documentation to be fully qualified
-            method.documentation = it.fullyQualifiedDocumentation()
+            // in the original class, so expand the documentation to be fully qualified.
+            if (!EXPAND_DOCUMENTATION) {
+                method.documentation = it.fullyQualifiedDocumentation()
+            }
             cls.addMethod(method)
         }
     }

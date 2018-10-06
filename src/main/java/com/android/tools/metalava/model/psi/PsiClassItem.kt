@@ -553,7 +553,7 @@ open class PsiClassItem(
          * Computes the "full" class name; this is not the qualified class name (e.g. with package)
          * but for an inner class it includes all the outer classes
          */
-        private fun computeFullClassName(cls: PsiClass): String {
+        fun computeFullClassName(cls: PsiClass): String {
             if (cls.containingClass == null) {
                 val name = cls.name
                 return name!!
