@@ -1226,6 +1226,7 @@ class DocAnalyzerTest : DriverTest() {
                     package android.content.pm;
                     public abstract class PackageManager {
                         public static final String FEATURE_LOCATION = "android.hardware.location";
+                        public boolean hasSystemFeature(String feature) { return false; }
                     }
                     """
                 ),

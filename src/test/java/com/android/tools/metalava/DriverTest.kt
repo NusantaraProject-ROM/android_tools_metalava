@@ -1723,7 +1723,7 @@ val nonNullSource: TestFile = java(
     """
 ).indented()
 
-val libcoreNonNullSource: TestFile = DriverTest.java(
+val libcoreNonNullSource: TestFile = java(
     """
     package libcore.util;
     import static java.lang.annotation.ElementType.*;
@@ -1739,7 +1739,7 @@ val libcoreNonNullSource: TestFile = DriverTest.java(
     """
 ).indented()
 
-val libcoreNullableSource: TestFile = DriverTest.java(
+val libcoreNullableSource: TestFile = java(
     """
     package libcore.util;
     import static java.lang.annotation.ElementType.*;
