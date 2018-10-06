@@ -25,7 +25,7 @@ class PsiBasedCodebaseTest : DriverTest() {
     fun `Regression test for issue 112931426`() {
         check(
             sourceFiles = *arrayOf(
-                DriverTest.java(
+                java(
                     """
                     package test.pkg2;
                     public class Foo {
