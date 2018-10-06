@@ -30,6 +30,7 @@ import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.ModifierList
 import com.android.tools.metalava.model.PackageItem
 import com.android.tools.metalava.model.TypeParameterList
+import com.android.tools.metalava.model.psi.EXPAND_DOCUMENTATION
 import com.android.tools.metalava.model.psi.PsiClassItem
 import com.android.tools.metalava.model.psi.trimDocIndent
 import com.android.tools.metalava.model.visitors.ApiVisitor
@@ -206,18 +207,20 @@ class StubWriter(
                 writer.println()
             }
 
-            compilationUnit?.getImportStatements(filterReference)?.let {
-                for (item in it) {
-                    when (item) {
-                        is PackageItem ->
-                            writer.println("import ${item.qualifiedName()}.*;")
-                        is ClassItem ->
-                            writer.println("import ${item.qualifiedName()};")
-                        is MemberItem ->
-                            writer.println("import static ${item.containingClass().qualifiedName()}.${item.name()};")
+            if (EXPAND_DOCUMENTATION) {
+                compilationUnit?.getImportStatements(filterReference)?.let {
+                    for (item in it) {
+                        when (item) {
+                            is PackageItem ->
+                                writer.println("import ${item.qualifiedName()}.*;")
+                            is ClassItem ->
+                                writer.println("import ${item.qualifiedName()};")
+                            is MemberItem ->
+                                writer.println("import static ${item.containingClass().qualifiedName()}.${item.name()};")
+                        }
                     }
+                    writer.println()
                 }
-                writer.println()
             }
         }
 
@@ -285,7 +288,11 @@ class StubWriter(
 
     private fun appendDocumentation(item: Item, writer: PrintWriter) {
         if (options.includeDocumentationInStubs || docStubs) {
-            val documentation = item.documentation
+            val documentation = if (docStubs && EXPAND_DOCUMENTATION) {
+                item.fullyQualifiedDocumentation()
+            } else {
+                item.documentation
+            }
             if (documentation.isNotBlank()) {
                 val trimmed = trimDocIndent(documentation)
                 writer.println(trimmed)
