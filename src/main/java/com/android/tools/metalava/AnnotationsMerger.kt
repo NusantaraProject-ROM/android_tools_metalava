@@ -59,6 +59,7 @@ import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.parseDocument
 import com.android.tools.metalava.model.psi.PsiAnnotationItem
+import com.android.tools.metalava.model.psi.PsiBasedCodebase
 import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.google.common.base.Charsets
 import com.google.common.io.ByteStreams
@@ -85,7 +86,7 @@ class AnnotationsMerger(
         mergeAll(
                 files,
                 ::mergeQualifierAnnotationsFromFile,
-                ::mergeQualifierAnnotationsFromCodebase)
+                ::mergeAndValidateQualifierAnnotationsFromJavaStubsCodebase)
     }
 
     /** Merge annotations which control what is included in the output API. */
@@ -102,7 +103,7 @@ class AnnotationsMerger(
     private fun mergeAll(
         mergeAnnotations: List<File>,
         mergeFile: (File) -> Unit,
-        mergeCodebase: (Codebase) -> Unit
+        mergeJavaStubsCodebase: (PsiBasedCodebase) -> Unit
     ) {
         val javaStubFiles = mutableListOf<File>()
         mergeAnnotations.forEach { it ->
@@ -110,8 +111,8 @@ class AnnotationsMerger(
         }
         if (javaStubFiles.isNotEmpty()) {
             // TODO: We really want to fail, or at least issue a warning, if there are errors.
-            val externalCodebase = parseSources(javaStubFiles, "Codebase loaded from stubs")
-            mergeCodebase(externalCodebase)
+            val javaStubsCodebase = parseSources(javaStubFiles, "Codebase loaded from stubs")
+            mergeJavaStubsCodebase(javaStubsCodebase)
         }
     }
 
@@ -221,6 +222,15 @@ class AnnotationsMerger(
         } catch (ex: ApiParseException) {
             val message = "Unable to parse signature file $path: ${ex.message}"
             throw DriverException(message)
+        }
+    }
+
+    private fun mergeAndValidateQualifierAnnotationsFromJavaStubsCodebase(javaStubsCodebase: PsiBasedCodebase) {
+        mergeQualifierAnnotationsFromCodebase(javaStubsCodebase)
+        if (options.validateNullabilityFromMergedStubs) {
+            options.nullabilityAnnotationsValidator?.validateAll(
+                codebase,
+                javaStubsCodebase.getTopLevelClassesFromSource().map(ClassItem::qualifiedName))
         }
     }
 

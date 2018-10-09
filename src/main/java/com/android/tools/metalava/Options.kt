@@ -57,6 +57,9 @@ const val ARG_REMOVED_API = "--removed-api"
 const val ARG_REMOVED_DEX_API = "--removed-dex-api"
 const val ARG_MERGE_QUALIFIER_ANNOTATIONS = "--merge-qualifier-annotations"
 const val ARG_MERGE_INCLUSION_ANNOTATIONS = "--merge-inclusion-annotations"
+const val ARG_VALIDATE_NULLABILITY_FROM_MERGED_STUBS = "--validate-nullability-from-merged-stubs"
+const val ARG_NULLABILITY_WARNINGS_TXT = "--nullability-warnings-txt"
+const val ARG_NULLABILITY_ERRORS_NON_FATAL = "--nullability-errors-non-fatal"
 const val ARG_INPUT_API_JAR = "--input-api-jar"
 const val ARG_EXACT_API = "--exact-api"
 const val ARG_STUBS = "--stubs"
@@ -174,6 +177,28 @@ class Options(
      * been configured via ${#ARG_GENERATE_DOCUMENTATION}
      */
     var noDocs = false
+
+    /**
+     * Validator for nullability annotations, if validation is enabled.
+     */
+    var nullabilityAnnotationsValidator: NullablityAnnotationsValidator? = null
+
+    /**
+     * Whether nullability validation errors should be considered fatal.
+     */
+    var nullabilityErrorsFatal = true
+
+    /**
+     * A file to write non-fatal nullability validation issues to. If null, all issues are treated
+     * as fatal or else logged as warnings, depending on the value of [nullabilityErrorsFatal].
+     */
+    var nullabilityWarningsTxt: File? = null
+
+    /**
+     * Whether to validate nullability for all the classes where we are merging annotations from
+     * external java stub files. If true, [nullabilityAnnotationsValidator] must be set.
+     */
+    var validateNullabilityFromMergedStubs = false
 
     /**
      * Whether to include element documentation (javadoc and KDoc) is in the generated stubs.
@@ -534,6 +559,16 @@ class Options(
                         getValue(args, ++index)
                     )
                 )
+
+                ARG_VALIDATE_NULLABILITY_FROM_MERGED_STUBS -> {
+                    validateNullabilityFromMergedStubs = true
+                    nullabilityAnnotationsValidator =
+                        nullabilityAnnotationsValidator ?: NullablityAnnotationsValidator()
+                }
+                ARG_NULLABILITY_WARNINGS_TXT ->
+                    nullabilityWarningsTxt = stringToNewFile(getValue(args, ++index))
+                ARG_NULLABILITY_ERRORS_NON_FATAL ->
+                    nullabilityErrorsFatal = false
 
                 "-sdkvalues", ARG_SDK_VALUES -> sdkValueDir = stringToNewDir(getValue(args, ++index))
                 ARG_API, "-api" -> apiFile = stringToNewFile(getValue(args, ++index))
@@ -1450,6 +1485,16 @@ class Options(
                 "the sources, or a directory of such files. Should be used for annotations which determine " +
                 "inclusion in the API to be written out, i.e. show and hide. The only format supported is " +
                 "Java stub files.",
+
+            ARG_VALIDATE_NULLABILITY_FROM_MERGED_STUBS, "Triggers validation of nullability annotations " +
+                "for any class where $ARG_MERGE_QUALIFIER_ANNOTATIONS includes a Java stub file.",
+
+            "$ARG_NULLABILITY_WARNINGS_TXT <file>", "Specifies where to write warnings encountered during " +
+                "validation of nullability annotations. (Does not trigger validation by itself.)",
+
+            ARG_NULLABILITY_ERRORS_NON_FATAL, "Specifies that errors encountered during validation of " +
+                "nullability annotations should not be treated as errors. They will be written out to the " +
+                "file specified in $ARG_NULLABILITY_WARNINGS_TXT instead.",
 
             "$ARG_INPUT_API_JAR <file>", "A .jar file to read APIs from directly",
 

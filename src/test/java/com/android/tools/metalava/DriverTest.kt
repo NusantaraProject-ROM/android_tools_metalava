@@ -298,6 +298,8 @@ abstract class DriverTest {
         artifacts: Map<String, String>? = null,
         /** Extract annotations and check that the given packages contain the given extracted XML files */
         extractAnnotations: Map<String, String>? = null,
+        /** Creates the nullability annotations validator, and check that the report has the given lines (does not define files to be validated) */
+        validateNullability: Set<String>? = null,
         /**
          * Whether to include source retention annotations in the stubs (in that case they do not
          * go into the extracted annotations zip file)
@@ -807,6 +809,17 @@ abstract class DriverTest {
             extractedAnnotationsZip = null
             emptyArray()
         }
+        val validateNullabilityTxt: File?
+        val validateNullabilityArgs = if (validateNullability != null) {
+            validateNullabilityTxt = temporaryFolder.newFile("validate-nullability.txt")
+            arrayOf(
+                ARG_NULLABILITY_WARNINGS_TXT, validateNullabilityTxt.path,
+                ARG_NULLABILITY_ERRORS_NON_FATAL // for testing, report on errors instead of throwing
+            )
+        } else {
+            validateNullabilityTxt = null
+            emptyArray()
+        }
 
         val actualOutput = runDriver(
             ARG_NO_COLOR,
@@ -874,6 +887,7 @@ abstract class DriverTest {
             *skipEmitPackagesArgs.toTypedArray(),
             *artifactArgs,
             *extractAnnotationsArgs,
+            *validateNullabilityArgs,
             *sourceList,
             *extraArguments,
             expectedFail = expectedFail
@@ -1036,6 +1050,16 @@ abstract class DriverTest {
             for ((pkg, xml) in extractAnnotations) {
                 assertPackageXml(pkg, extractedAnnotationsZip, xml)
             }
+        }
+
+        if (validateNullabilityTxt != null) {
+            assertTrue(
+                "Using $ARG_NULLABILITY_WARNINGS_TXT but $validateNullabilityTxt was not created",
+                validateNullabilityTxt.isFile
+            )
+            var actualReport =
+                Files.asCharSource(validateNullabilityTxt, Charsets.UTF_8).readLines().map(String::trim).toSet()
+            assertEquals(validateNullability, actualReport)
         }
 
         if (stubs.isNotEmpty() && stubsDir != null) {

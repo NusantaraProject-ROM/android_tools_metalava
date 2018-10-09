@@ -89,6 +89,12 @@ open class PsiBasedCodebase(location: File, override var description: String = "
     /** A set of packages to hide */
     private lateinit var hiddenPackages: MutableMap<String, Boolean?>
 
+    /**
+     * A list of the top-level classes declared in the codebase's source (rather than on its
+     * classpath).
+     */
+    private lateinit var topLevelClassesFromSource: MutableList<ClassItem>
+
     private var initializing = false
 
     override fun trustedApi(): Boolean = false
@@ -117,11 +123,11 @@ open class PsiBasedCodebase(location: File, override var description: String = "
         packageClasses = HashMap(PACKAGE_ESTIMATE)
         packageClasses[""] = ArrayList()
         this.methodMap = HashMap(METHOD_ESTIMATE)
+        topLevelClassesFromSource = ArrayList<ClassItem>(CLASS_ESTIMATE)
 
         for (unit in units) {
             tick() // show progress
 
-            val topLevelClasses = mutableListOf<ClassItem>()
             var classes = (unit as? PsiClassOwner)?.classes?.toList() ?: emptyList()
             if (classes.isEmpty()) {
                 val uastContext = project.getComponent(UastContext::class.java)
@@ -155,7 +161,7 @@ open class PsiBasedCodebase(location: File, override var description: String = "
             } else {
                 for (psiClass in classes) {
                     val classItem = createClass(psiClass)
-                    topLevelClasses.add(classItem)
+                    topLevelClassesFromSource.add(classItem)
 
                     if (packageName == null) {
                         packageName = getPackageName(psiClass)
@@ -291,7 +297,7 @@ open class PsiBasedCodebase(location: File, override var description: String = "
         )
         packageToClasses[""] = ArrayList() // ensure we construct one for the default package
 
-        val topLevelClasses = ArrayList<ClassItem>(CLASS_ESTIMATE)
+        topLevelClassesFromSource = ArrayList<ClassItem>(CLASS_ESTIMATE)
 
         try {
             ZipFile(jarFile).use { jar ->
@@ -318,7 +324,7 @@ open class PsiBasedCodebase(location: File, override var description: String = "
                             val psiClass = facade.findClass(qualifiedName, scope) ?: continue
 
                             val classItem = createClass(psiClass)
-                            topLevelClasses.add(classItem)
+                            topLevelClassesFromSource.add(classItem)
 
                             val packageName = getPackageName(psiClass)
                             var list = packageToClasses[packageName]
@@ -631,6 +637,14 @@ open class PsiBasedCodebase(location: File, override var description: String = "
             val psiMethod = (method as PsiMethodItem).psiMethod
             map[psiMethod] = method
         }
+    }
+
+    /**
+     * Returns a list of the top-level classes declared in the codebase's source (rather than on its
+     * classpath).
+     */
+    fun getTopLevelClassesFromSource(): List<ClassItem> {
+        return topLevelClassesFromSource
     }
 
     fun createReferenceFromText(s: String, parent: PsiElement? = null): PsiJavaCodeReferenceElement =
