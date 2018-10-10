@@ -27,7 +27,6 @@ import com.android.tools.metalava.model.text.TextBackedAnnotationItem
 import com.android.tools.metalava.model.visitors.ItemVisitor
 import com.android.tools.metalava.model.visitors.TypeVisitor
 import com.android.tools.metalava.reporter
-import com.android.utils.XmlUtils
 import com.android.utils.XmlUtils.getFirstSubTagByName
 import com.android.utils.XmlUtils.getNextTagByName
 import com.intellij.psi.PsiFile
@@ -275,7 +274,7 @@ abstract class DefaultCodebase(override var location: File) : Codebase {
             }
             try {
                 val map = HashMap<String, String>(600)
-                val doc = XmlUtils.parseDocument(manifest?.readText(UTF_8), true)
+                val doc = parseDocument(manifest?.readText(UTF_8) ?: "", true)
                 var current = getFirstSubTagByName(doc.documentElement, TAG_PERMISSION)
                 while (current != null) {
                     val permissionName = current.getAttributeNS(ANDROID_URI, ATTR_NAME)
