@@ -57,9 +57,9 @@ import com.android.tools.metalava.model.DefaultAnnotationItem
 import com.android.tools.metalava.model.DefaultAnnotationValue
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
+import com.android.tools.metalava.model.parseDocument
 import com.android.tools.metalava.model.psi.PsiAnnotationItem
 import com.android.tools.metalava.model.visitors.ApiVisitor
-import com.android.utils.XmlUtils
 import com.google.common.base.Charsets
 import com.google.common.io.ByteStreams
 import com.google.common.io.Closeables
@@ -195,7 +195,7 @@ class AnnotationsMerger(
 
     private fun mergeAnnotationsXml(path: String, xml: String) {
         try {
-            val document = XmlUtils.parseDocument(xml, false)
+            val document = parseDocument(xml, false)
             mergeDocument(document)
         } catch (e: Exception) {
             var message = "Failed to merge " + path + ": " + e.toString()

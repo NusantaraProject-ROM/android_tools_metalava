@@ -470,9 +470,9 @@ class Options(
             } else {
                 stdout.println(BANNER.trimIndent())
             }
+            stdout.println()
+            stdout.flush()
         }
-        stdout.println()
-        stdout.flush()
 
         var androidJarPatterns: MutableList<String>? = null
         var currentCodeName: String? = null

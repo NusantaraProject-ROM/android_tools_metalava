@@ -31,10 +31,10 @@ import com.android.tools.lint.checks.infrastructure.TestFiles.java
 import com.android.tools.lint.checks.infrastructure.stripComments
 import com.android.tools.metalava.doclava1.ApiFile
 import com.android.tools.metalava.doclava1.Errors
+import com.android.tools.metalava.model.parseDocument
 import com.android.utils.FileUtils
 import com.android.utils.SdkUtils
 import com.android.utils.StdLogger
-import com.android.utils.XmlUtils
 import com.google.common.base.Charsets
 import com.google.common.io.ByteStreams
 import com.google.common.io.Closeables
@@ -47,11 +47,14 @@ import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.PrintStream
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.net.URL
+import kotlin.text.Charsets.UTF_8
 
 const val CHECK_OLD_DOCLAVA_TOO = false
 const val CHECK_STUB_COMPILATION = false
@@ -78,25 +81,68 @@ abstract class DriverTest {
     protected fun runDriver(vararg args: String, expectedFail: String = ""): String {
         resetTicker()
 
-        val sw = StringWriter()
-        val writer = PrintWriter(sw)
-        if (!com.android.tools.metalava.run(arrayOf(*args), writer, writer)) {
-            val actualFail = cleanupString(sw.toString(), null)
-            if (expectedFail != actualFail.replace(".", "").trim()) {
-                if (expectedFail == "Aborting: Found compatibility problems with --check-compatibility" &&
-                    actualFail.startsWith("Aborting: Found compatibility problems checking the ")
-                ) {
-                    // Special case for compat checks; we don't want to force each one of them
-                    // to pass in the right string (which may vary based on whether writing out
-                    // the signature was passed at the same time
-                    // ignore
-                } else {
-                    fail(actualFail)
+        // Capture the actual input and output from System.out/err and compare it
+        // to the output printed through the official writer; they should be the same,
+        // otherwise we have stray println's littered in the code!
+        val previousOut = System.out
+        val previousErr = System.err
+        try {
+            val output = OutputForbiddenWriter("stdout")
+            System.setOut(PrintStream(output))
+            val error = OutputForbiddenWriter("stderr")
+            System.setErr(PrintStream(error))
+
+            val sw = StringWriter()
+            val writer = PrintWriter(sw)
+            if (!com.android.tools.metalava.run(arrayOf(*args), writer, writer)) {
+                val actualFail = cleanupString(sw.toString(), null)
+                if (expectedFail != actualFail.replace(".", "").trim()) {
+                    if (expectedFail == "Aborting: Found compatibility problems with --check-compatibility" &&
+                        actualFail.startsWith("Aborting: Found compatibility problems checking the ")
+                    ) {
+                        // Special case for compat checks; we don't want to force each one of them
+                        // to pass in the right string (which may vary based on whether writing out
+                        // the signature was passed at the same time
+                        // ignore
+                    } else {
+                        fail(actualFail)
+                    }
                 }
             }
+
+            val stdout = output.toString(UTF_8.name())
+            assertTrue(stdout, stdout.isEmpty())
+
+            val stderr = error.toString(UTF_8.name())
+            assertTrue(stderr, stderr.isEmpty())
+
+            val printedOutput = sw.toString()
+            if (printedOutput.isNotEmpty() && printedOutput.trim().isEmpty()) {
+                fail("Printed newlines with nothing else")
+            }
+
+            return printedOutput
+        } finally {
+            System.setOut(previousOut)
+            System.setErr(previousErr)
+        }
+    }
+
+    class OutputForbiddenWriter(private val stream: String) : ByteArrayOutputStream() {
+        override fun write(b: ByteArray?, off: Int, len: Int) {
+            fail("Unexpected write directly to $stream")
+            super.write(b, off, len)
         }
 
-        return sw.toString()
+        override fun write(b: ByteArray?) {
+            fail("Unexpected write directly to $stream")
+            super.write(b)
+        }
+
+        override fun write(b: Int) {
+            fail("Unexpected write directly to $stream")
+            super.write(b)
+        }
     }
 
     private fun findKotlinStdlibPath(): List<String> {
@@ -851,7 +897,7 @@ abstract class DriverTest {
             val actualText = readFile(apiXmlFile, stripBlankLines, trim)
             assertEquals(stripComments(apiXml, stripLineComments = false).trimIndent(), actualText)
             // Make sure we can read back the files we write
-            XmlUtils.parseDocument(apiXmlFile.readText(Charsets.UTF_8), false)
+            parseDocument(apiXmlFile.readText(Charsets.UTF_8), false)
         }
 
         if (convertToJDiffFiles.isNotEmpty()) {
@@ -861,7 +907,7 @@ abstract class DriverTest {
                 assertTrue("${converted.path} does not exist even though $ARG_CONVERT_TO_JDIFF was used",
                     converted.exists())
                 val actualText = readFile(converted, stripBlankLines, trim)
-                XmlUtils.parseDocument(converted.readText(Charsets.UTF_8), false)
+                parseDocument(converted.readText(Charsets.UTF_8), false)
                 assertEquals(stripComments(expected, stripLineComments = false).trimIndent(), actualText)
                 // Make sure we can read back the files we write
             }

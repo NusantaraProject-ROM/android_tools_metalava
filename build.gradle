@@ -25,9 +25,9 @@ apply plugin: 'maven'
 group = 'com.android'
 def versionPropertyFile = file('src/main/resources/version.properties')
 if (versionPropertyFile.canRead()) {
-   Properties versionProps = new Properties()
-   versionProps.load(new FileInputStream(versionPropertyFile))
-   version = versionProps['metalavaVersion']
+    Properties versionProps = new Properties()
+    versionProps.load(new FileInputStream(versionPropertyFile))
+    version = versionProps['metalavaVersion']
 } else {
     throw new FileNotFoundException("Could not read $versionPropertyFile")
 }
@@ -70,10 +70,10 @@ buildscript {
 }
 apply plugin: 'com.github.johnrengelman.shadow'
 shadowJar {
-   baseName = "metalava-$version-full-SNAPSHOT"
-   classifier = null
-   version = null
-   zip64 = true
+    baseName = "metalava-$version-full-SNAPSHOT"
+    classifier = null
+    version = null
+    zip64 = true
 }
 
 defaultTasks 'clean', 'installDist'
