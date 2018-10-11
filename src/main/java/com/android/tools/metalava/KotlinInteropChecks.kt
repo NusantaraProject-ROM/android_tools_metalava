@@ -81,7 +81,6 @@ class KotlinInteropChecks {
             if (checked) {
                 val annotation = method.modifiers.findAnnotation("kotlin.jvm.Throws")
                 if (annotation != null) {
-                    annotation.attributes().first().name
                     val attribute =
                         annotation.findAttribute("exceptionClasses") ?: annotation.findAttribute("value")
                         ?: annotation.attributes().firstOrNull()

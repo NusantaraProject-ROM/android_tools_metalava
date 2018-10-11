@@ -588,18 +588,20 @@ fun invokeDocumentationTool() {
                     }
 
                     override fun createOutput(): ProcessOutput {
+                        val out = PrintWriterOutputStream(options.stdout)
+                        val err = PrintWriterOutputStream(options.stderr)
                         return object : ProcessOutput {
                             override fun getStandardOutput(): OutputStream {
-                                return System.out
+                                return out
                             }
 
                             override fun getErrorOutput(): OutputStream {
-                                return System.err
+                                return err
                             }
 
                             override fun close() {
-                                System.out.flush()
-                                System.err.flush()
+                                out.flush()
+                                err.flush()
                             }
                         }
                     }
@@ -616,7 +618,7 @@ fun invokeDocumentationTool() {
         }
         if (exitCode != 0) {
             val stdout = if (processOutputHandler is CachedProcessOutputHandler)
-                processOutputHandler.processOutput.errorOutputAsString
+                processOutputHandler.processOutput.standardOutputAsString
             else ""
             val stderr = if (processOutputHandler is CachedProcessOutputHandler)
                 processOutputHandler.processOutput.errorOutputAsString
@@ -627,6 +629,29 @@ fun invokeDocumentationTool() {
                 exitCode = exitCode
             )
         }
+    }
+}
+
+class PrintWriterOutputStream(private val writer: PrintWriter) : OutputStream() {
+
+    override fun write(b: ByteArray) {
+        writer.write(String(b, Charsets.UTF_8))
+    }
+
+    override fun write(b: Int) {
+        write(byteArrayOf(b.toByte()), 0, 1)
+    }
+
+    override fun write(b: ByteArray, off: Int, len: Int) {
+        writer.write(String(b, off, len, Charsets.UTF_8))
+    }
+
+    override fun flush() {
+        writer.flush()
+    }
+
+    override fun close() {
+        writer.close()
     }
 }
 
