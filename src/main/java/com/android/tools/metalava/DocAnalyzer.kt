@@ -628,16 +628,27 @@ class DocAnalyzer(
                     return Files.createTempDir()
                 }
 
+                val sb = StringBuilder(PROGRAM_NAME)
+                if (name != null) {
+                    sb.append(File.separator)
+                    sb.append(name)
+                }
+                val relative = sb.toString()
+
                 val tmp = System.getenv("TMPDIR")
                 if (tmp != null) {
-                    val dir = File(tmp, PROGRAM_NAME)
-                    if (create && !dir.isDirectory) {
+                    // Android Build environment: Make sure we're really creating a unique
+                    // temp directory each time since builds could be running in
+                    // parallel here.
+                    val dir = File(tmp, relative)
+                    if (!dir.isDirectory) {
                         dir.mkdirs()
                     }
-                    return dir
+
+                    return java.nio.file.Files.createTempDirectory(dir.toPath(), null).toFile()
                 }
 
-                val dir = File(System.getProperty("java.io.tmpdir"), PROGRAM_NAME)
+                val dir = File(System.getProperty("java.io.tmpdir"), relative)
                 if (create && !dir.isDirectory) {
                     dir.mkdirs()
                 }
