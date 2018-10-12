@@ -628,6 +628,15 @@ class DocAnalyzer(
                     return Files.createTempDir()
                 }
 
+                val tmp = System.getenv("TMPDIR")
+                if (tmp != null) {
+                    val dir = File(tmp, PROGRAM_NAME)
+                    if (create && !dir.isDirectory) {
+                        dir.mkdirs()
+                    }
+                    return dir
+                }
+
                 val dir = File(System.getProperty("java.io.tmpdir"), PROGRAM_NAME)
                 if (create && !dir.isDirectory) {
                     dir.mkdirs()
