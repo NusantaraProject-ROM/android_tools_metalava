@@ -58,6 +58,10 @@ class TextTypeParameterItem(
         return bounds!!
     }
 
+    override fun isReified(): Boolean {
+        return typeParameterString.startsWith("reified")
+    }
+
     companion object {
         fun create(
             codebase: TextCodebase,

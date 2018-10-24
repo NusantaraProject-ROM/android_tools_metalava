@@ -709,4 +709,25 @@ class ApiFromTextTest : DriverTest() {
             api = source
         )
     }
+
+    @Test
+    fun `Signatures with reified in type parameters`() {
+        val source = """
+                package test.pkg {
+                  public final class TestKt {
+                    ctor public TestKt();
+                    method public static inline <T> void a(T t);
+                    method public static inline <reified T> void b(T t);
+                    method public static inline <reified T> void e(T t);
+                    method public static inline <reified T> void f(T, T t);
+                  }
+                }
+                """
+
+        check(
+            compatibilityMode = true,
+            signatureSource = source,
+            api = source
+        )
+    }
 }

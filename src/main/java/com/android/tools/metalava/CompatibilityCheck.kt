@@ -502,6 +502,20 @@ class CompatibilityCheck(
                 }
             }
         }
+
+        if (new.modifiers.isInline() && new.isKotlin()) {
+            val oldTypes = old.typeParameterList().typeParameters()
+            val newTypes = new.typeParameterList().typeParameters()
+            for (i in 0 until oldTypes.size) {
+                if (i == newTypes.size) {
+                    break
+                }
+                if (newTypes[i].isReified() && !oldTypes[i].isReified()) {
+                    val message = "${describe(new, capitalize = true)} made type variable ${newTypes[i].simpleName()} reified: incompatible change"
+                    report(Errors.CHANGED_THROWS, new, message)
+                }
+            }
+        }
     }
 
     private fun describeBounds(
