@@ -19,7 +19,7 @@ package com.android.tools.metalava
 import com.android.tools.metalava.doclava1.Errors
 import com.android.tools.metalava.model.ErrorConfiguration
 
-enum class ReleaseType(val flagName: String, val displayName: String = flagName) {
+enum class ReleaseType(val flagName: String, private val displayName: String = flagName) {
     DEV("current", "development") {
         /**
          * Customization of the severities to apply when doing compatibility checking against the
@@ -89,6 +89,7 @@ enum class ReleaseType(val flagName: String, val displayName: String = flagName)
             error(Errors.REMOVED_INTERFACE)
             error(Errors.REMOVED_METHOD)
             error(Errors.REMOVED_PACKAGE)
+            error(Errors.ADDED_REIFIED)
         }
     }
 
