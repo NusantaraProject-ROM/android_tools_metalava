@@ -311,6 +311,10 @@ interface ModifierList {
                     writer.write("sealed ")
                 }
 
+                if (list.isInline()) {
+                    writer.write("inline ")
+                }
+
                 if (list.isInfix()) {
                     writer.write("infix ")
                 }
@@ -398,6 +402,10 @@ interface ModifierList {
 
                 if (list.isSealed()) {
                     writer.write("sealed ")
+                }
+
+                if (list.isInline()) {
+                    writer.write("inline ")
                 }
 
                 if (list.isInfix()) {

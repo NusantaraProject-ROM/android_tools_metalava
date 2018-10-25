@@ -2080,6 +2080,44 @@ CompatibilityCheckTest : DriverTest() {
         )
     }
 
+    @Test
+    fun `Adding and removing reified`() {
+        check(
+            compatibilityMode = false,
+            inputKotlinStyleNulls = true,
+            warnings = """
+            src/test/pkg/test.kt:5: error: Method test.pkg.TestKt.add made type variable T reified: incompatible change [ChangedThrows:21]
+            src/test/pkg/test.kt:8: error: Method test.pkg.TestKt.two made type variable S reified: incompatible change [ChangedThrows:21]
+            """,
+            checkCompatibilityApi = """
+                package test.pkg {
+                  public final class TestKt {
+                    ctor public TestKt();
+                    method public static inline <T> void add(T! t);
+                    method public static inline <reified T> void remove(T! t);
+                    method public static inline <reified T> void unchanged(T! t);
+                    method public static inline <S, reified T> void two(S! s, T! t);
+                  }
+                }
+                """,
+
+            sourceFiles = *arrayOf(
+                kotlin(
+                    """
+                    @file:Suppress("NOTHING_TO_INLINE", "RedundantVisibilityModifier", "unused")
+
+                    package test.pkg
+
+                    inline fun <reified T> add(t: T) { }
+                    inline fun <T> remove(t: T) { }
+                    inline fun <reified T> unchanged(t: T) { }
+                    inline fun <reified S, T> two(s: S, t: T) { }
+                    """
+                ).indented()
+            )
+        )
+    }
+
     @Ignore("Not currently working: we're getting the wrong PSI results; I suspect caching across the two codebases")
     @Test
     fun `Test All Android API levels`() {
