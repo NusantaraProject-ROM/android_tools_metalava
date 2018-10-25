@@ -23,6 +23,7 @@ import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiDocCommentOwner
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifierListOwner
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.sourcePsiElement
@@ -177,7 +178,7 @@ abstract class PsiItem(
         }
 
         fun isKotlin(element: PsiElement): Boolean {
-            return element.language.id == "kotlin"
+            return element.language === KotlinLanguage.INSTANCE
         }
     }
 }

@@ -53,6 +53,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.PsiWildcardType
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.TypeConversionUtil
+import org.jetbrains.kotlin.asJava.elements.KtLightTypeParameter
 
 /** Represents a type backed by PSI */
 class PsiTypeItem private constructor(private val codebase: PsiBasedCodebase, private val psiType: PsiType) : TypeItem {
@@ -499,6 +500,9 @@ class PsiTypeItem private constructor(private val codebase: PsiBasedCodebase, pr
                             sb.append(">")
                             return
                         } else if (element is PsiTypeParameter) {
+                            if (element is KtLightTypeParameter && element.kotlinOrigin.text.startsWith("reified")) {
+                                sb.append("reified ")
+                            }
                             sb.append(element.name)
                             // TODO: How do I get super -- e.g. "Comparable<? super T>"
                             val extendsList = element.extendsList
