@@ -692,6 +692,7 @@ private fun loadFromSources(): Codebase {
     analyzer.mergeExternalInclusionAnnotations()
     analyzer.computeApi()
     analyzer.mergeExternalQualifierAnnotations()
+    options.nullabilityAnnotationsValidator?.report()
     analyzer.handleStripping()
 
     if (options.checkKotlinInterop) {
@@ -783,6 +784,7 @@ fun loadFromJarFile(apiJar: File, manifest: File? = null, preFiltered: Boolean =
     analyzer.mergeExternalInclusionAnnotations()
     analyzer.computeApi()
     analyzer.mergeExternalQualifierAnnotations()
+    options.nullabilityAnnotationsValidator?.report()
     analyzer.generateInheritedStubs(apiEmit, apiReference)
     codebase.bindingContext = trace.bindingContext
     return codebase
