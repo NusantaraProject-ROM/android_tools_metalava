@@ -220,6 +220,7 @@ public class Errors {
     // violations are annotated as @hide
     public static final Error UNHIDDEN_SYSTEM_API = new Error(155, HIDDEN);
     public static final Error SHOWING_MEMBER_IN_HIDDEN_CLASS = new Error(156, ERROR);
+    public static final Error INVALID_NULLABILITY_ANNOTATION = new Error(157, ERROR);
 
     static {
         // Attempt to initialize error names based on the field names
