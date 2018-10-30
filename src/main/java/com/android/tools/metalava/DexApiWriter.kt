@@ -94,6 +94,7 @@ class DexApiWriter(
     private fun writeLocation(item: Item) {
         val psiItem =
             item.psi() ?: throw DriverException(stderr = "$ARG_DEX_API_MAPPING should only be used on source trees")
-        writer.println(reporter.elementToLocation(psiItem))
+        val location = reporter.elementToLocation(psiItem, false)
+        writer.println(location ?: "<unknown>:-1")
     }
 }
