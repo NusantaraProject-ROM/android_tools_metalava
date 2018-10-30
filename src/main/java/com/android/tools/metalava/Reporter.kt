@@ -196,21 +196,21 @@ open class Reporter(private val rootFolder: File? = null) {
                 file.path
             }
 
-        // Skip doc comments for classes and methods; we usually want to point right to
-        // the class/method definition
+        // Skip doc comments for classes, methods and fields; we usually want to point right to
+        // the class/method/field definition
         val rangeElement = if (!includeDocs && element is PsiModifierListOwner) {
             element.modifierList ?: element
         } else
             element
 
         val range = getTextRange(rangeElement)
-        return if (range == null) {
-            // No source offsets, just use filename
-            path
+        val lineNumber = if (range == null) {
+            // No source offsets, use invalid line number
+            -1
         } else {
-            val lineNumber = getLineNumber(psiFile.text, range.startOffset) + 1
-            "$path:$lineNumber"
+            getLineNumber(psiFile.text, range.startOffset) + 1
         }
+        return "$path:$lineNumber"
     }
 
     /** Returns the 0-based line number */
