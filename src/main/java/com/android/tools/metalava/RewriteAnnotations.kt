@@ -241,7 +241,7 @@ class RewriteAnnotations {
                     name.indexOf("$") == -1 &&
                     !entry.isDirectory
                 ) {
-                    val bytes = zis.readBytes(entry.size.toInt())
+                    val bytes = zis.readBytes()
                     val rewritten = rewriteClass(bytes, name)
                     if (rewritten != null) {
                         zos.write(rewritten)
