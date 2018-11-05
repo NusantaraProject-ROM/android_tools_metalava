@@ -100,6 +100,10 @@ class NullablityAnnotationsValidator() {
         if (type == null) {
             throw DriverException("Missing type on $method item $label")
         }
+        if (method.isEnumValueOfString()) {
+            // Don't validate an enum's valueOf(String) method, which doesn't exist in source.
+            return
+        }
         val annotations = item.modifiers.annotations()
         val nullabilityAnnotations = annotations.filter(this::isAnyNullabilityAnnotation)
         if (nullabilityAnnotations.size > 1) {
@@ -198,3 +202,6 @@ class NullablityAnnotationsValidator() {
         }
     }
 }
+
+private fun MethodItem.isEnumValueOfString() =
+    containingClass().isEnum() && name() == "valueOf" && parameters().map { it.type().toTypeString() } == listOf("java.lang.String")
