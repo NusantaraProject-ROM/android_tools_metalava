@@ -58,7 +58,7 @@ public final class ApiParseException extends Exception {
             sb.append(file).append(':');
         }
         if (line > 0) {
-            sb.append(Integer.toString(line)).append(':');
+            sb.append(line).append(':');
         }
         if (sb.length() > 0) {
             sb.append(' ');
