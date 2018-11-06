@@ -41,7 +41,7 @@ val NO_ANNOTATION_TARGETS = setOf(AnnotationTarget.NONE)
 /**
  * Annotation is API significant: write it into the signature file and stub source code.
  * This would normally be the case for all (API significant) class-retention annotations,
- * but unfortunately due to apt (the annotation proessor) attempting to load all
+ * but unfortunately due to apt (the annotation processor) attempting to load all
  * classes for annotation references that it comes across, that means we cannot
  * compile the stubs with the androidx annotations and leave those in the SDK; apt
  * would also need to have androidx on the classpath. So instead we put all these

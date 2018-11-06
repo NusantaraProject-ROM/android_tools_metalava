@@ -207,6 +207,7 @@ class StubWriter(
                 writer.println()
             }
 
+            @Suppress("ConstantConditionIf")
             if (EXPAND_DOCUMENTATION) {
                 compilationUnit?.getImportStatements(filterReference)?.let {
                     for (item in it) {

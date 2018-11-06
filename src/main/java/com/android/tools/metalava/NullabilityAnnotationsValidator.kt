@@ -33,7 +33,7 @@ private const val RETURN_LABEL = "return value"
 /**
  * Class that validates nullability annotations in the codebase.
  */
-class NullablityAnnotationsValidator() {
+class NullabilityAnnotationsValidator {
 
     private enum class ErrorType {
         MULTIPLE,

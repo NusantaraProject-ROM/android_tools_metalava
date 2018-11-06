@@ -210,7 +210,7 @@ open class Reporter(private val rootFolder: File? = null) {
         } else {
             getLineNumber(psiFile.text, range.startOffset) + 1
         }
-        return "$path:$lineNumber"
+        return if (lineNumber > 0) "$path:$lineNumber" else path
     }
 
     /** Returns the 0-based line number */

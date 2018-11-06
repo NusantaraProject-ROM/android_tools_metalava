@@ -40,11 +40,11 @@ public class Errors {
     public static class Error {
         public final int code;
         @Nullable
-        public String fieldName;
+        String fieldName;
 
         private Severity level;
         private final Severity defaultLevel;
-        public boolean setByUser;
+        boolean setByUser;
 
         /**
          * The name of this error if known
