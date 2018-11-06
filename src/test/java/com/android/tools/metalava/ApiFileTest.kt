@@ -2397,9 +2397,9 @@ class ApiFileTest : DriverTest() {
                 Ltest/pkg/Child;-><init>()V
                 src/test/pkg/Child.java:2
                 Ltest/pkg/Child;->hiddenApi()V
-                src/test/pkg/Child.java:13
+                src/test/pkg/Child.java:16
                 Ltest/pkg/Child;->toString()Ljava/lang/String;
-                src/test/pkg/Child.java:4
+                src/test/pkg/Child.java:8
                 Ltest/pkg/Parent;-><init>()V
                 src/test/pkg/Parent.java:2
                 Ltest/pkg/Parent;->toString()Ljava/lang/String;

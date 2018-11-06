@@ -496,6 +496,7 @@ class ApiAnalyzer(
 
             // The documentation may use relative references to classes in import statements
             // in the original class, so expand the documentation to be fully qualified.
+            @Suppress("ConstantConditionIf")
             if (!EXPAND_DOCUMENTATION) {
                 method.documentation = it.fullyQualifiedDocumentation()
             }
@@ -544,12 +545,10 @@ class ApiAnalyzer(
     private fun propagateHiddenRemovedAndDocOnly(includingFields: Boolean) {
         packages.accept(object : ItemVisitor(visitConstructorsAsMethods = true, nestInnerClasses = true) {
             override fun visitPackage(pkg: PackageItem) {
-                if (options.hidePackages.contains(pkg.qualifiedName())) {
-                    pkg.hidden = true
-                } else if (pkg.modifiers.hasShowAnnotation()) {
-                    pkg.hidden = false
-                } else if (pkg.modifiers.hasHideAnnotations()) {
-                    pkg.hidden = true
+                when {
+                    options.hidePackages.contains(pkg.qualifiedName()) -> pkg.hidden = true
+                    pkg.modifiers.hasShowAnnotation() -> pkg.hidden = false
+                    pkg.modifiers.hasHideAnnotations() -> pkg.hidden = true
                 }
                 val containingPackage = pkg.containingPackage()
                 if (containingPackage != null) {

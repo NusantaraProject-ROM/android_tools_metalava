@@ -120,12 +120,6 @@ class AndroidJarReader {
 
             if (name.endsWith(".class")) {
                 byte[] bytes = ByteStreams.toByteArray(zis);
-                if (bytes == null) {
-                    System.err.println("Warning: Couldn't read " + name);
-                    entry = zis.getNextEntry();
-                    continue;
-                }
-
                 ClassReader reader = new ClassReader(bytes);
                 ClassNode classNode = new ClassNode(Opcodes.ASM5);
                 reader.accept(classNode, 0 /*flags*/);

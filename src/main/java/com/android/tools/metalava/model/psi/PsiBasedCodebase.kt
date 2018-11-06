@@ -123,7 +123,7 @@ open class PsiBasedCodebase(location: File, override var description: String = "
         packageClasses = HashMap(PACKAGE_ESTIMATE)
         packageClasses[""] = ArrayList()
         this.methodMap = HashMap(METHOD_ESTIMATE)
-        topLevelClassesFromSource = ArrayList<ClassItem>(CLASS_ESTIMATE)
+        topLevelClassesFromSource = ArrayList(CLASS_ESTIMATE)
 
         for (unit in units) {
             tick() // show progress
@@ -297,7 +297,7 @@ open class PsiBasedCodebase(location: File, override var description: String = "
         )
         packageToClasses[""] = ArrayList() // ensure we construct one for the default package
 
-        topLevelClassesFromSource = ArrayList<ClassItem>(CLASS_ESTIMATE)
+        topLevelClassesFromSource = ArrayList(CLASS_ESTIMATE)
 
         try {
             ZipFile(jarFile).use { jar ->

@@ -181,7 +181,7 @@ class Options(
     /**
      * Validator for nullability annotations, if validation is enabled.
      */
-    var nullabilityAnnotationsValidator: NullablityAnnotationsValidator? = null
+    var nullabilityAnnotationsValidator: NullabilityAnnotationsValidator? = null
 
     /**
      * Whether nullability validation errors should be considered fatal.
@@ -386,7 +386,7 @@ class Options(
     var migrateNullsFrom: File? = null
 
     /** Private backing list for [compatibilityChecks]] */
-    private var mutableCompatibilityChecks: MutableList<CheckRequest> = mutableListOf<CheckRequest>()
+    private var mutableCompatibilityChecks: MutableList<CheckRequest> = mutableListOf()
 
     /** The list of compatibility checks to run */
     val compatibilityChecks: List<CheckRequest> = mutableCompatibilityChecks
@@ -563,7 +563,7 @@ class Options(
                 ARG_VALIDATE_NULLABILITY_FROM_MERGED_STUBS -> {
                     validateNullabilityFromMergedStubs = true
                     nullabilityAnnotationsValidator =
-                        nullabilityAnnotationsValidator ?: NullablityAnnotationsValidator()
+                        nullabilityAnnotationsValidator ?: NullabilityAnnotationsValidator()
                 }
                 ARG_NULLABILITY_WARNINGS_TXT ->
                     nullabilityWarningsTxt = stringToNewFile(getValue(args, ++index))
