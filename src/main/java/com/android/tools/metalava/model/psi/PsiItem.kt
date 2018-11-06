@@ -35,6 +35,7 @@ abstract class PsiItem(
     override var documentation: String
 ) : DefaultItem() {
 
+    @Suppress("LeakingThis")
     override var deprecated: Boolean = modifiers.isDeprecated()
 
     @Suppress("LeakingThis") // Documentation can change, but we don't want to pick up subsequent @docOnly mutations

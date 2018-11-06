@@ -283,7 +283,6 @@ public class ApiFile {
             throw new ApiParseException("Did you forget to supply --input-kotlin-nulls? Found Kotlin-style null type suffix when parser was not configured " +
                 "to interpret signature file that way: " + type);
         }
-        //noinspection unchecked
         return new Pair<>(type, annotations);
     }
 
@@ -381,7 +380,6 @@ public class ApiFile {
 
         if (returnTypeString.contains("@") && (returnTypeString.indexOf('<') == -1 ||
                 returnTypeString.indexOf('@') < returnTypeString.indexOf('<'))) {
-            //noinspection StringConcatenationInLoop
             returnTypeString += " " + token;
             token = tokenizer.requireToken();
         }
@@ -581,51 +579,61 @@ public class ApiFile {
 
     private static Object parseValue(String type, String val) {
         if (val != null) {
-            if ("boolean".equals(type)) {
-                return "true".equals(val) ? Boolean.TRUE : Boolean.FALSE;
-            } else if ("byte".equals(type)) {
-                return Integer.valueOf(val);
-            } else if ("short".equals(type)) {
-                return Integer.valueOf(val);
-            } else if ("int".equals(type)) {
-                return Integer.valueOf(val);
-            } else if ("long".equals(type)) {
-                return Long.valueOf(val.substring(0, val.length() - 1));
-            } else if ("float".equals(type)) {
-                if ("(1.0f/0.0f)".equals(val) || "(1.0f / 0.0f)".equals(val)) {
-                    return Float.POSITIVE_INFINITY;
-                } else if ("(-1.0f/0.0f)".equals(val) || "(-1.0f / 0.0f)".equals(val)) {
-                    return Float.NEGATIVE_INFINITY;
-                } else if ("(0.0f/0.0f)".equals(val) || "(0.0f / 0.0f)".equals(val)) {
-                    return Float.NaN;
-                } else {
-                    return Float.valueOf(val);
-                }
-            } else if ("double".equals(type)) {
-                if ("(1.0/0.0)".equals(val) || "(1.0 / 0.0)".equals(val)) {
-                    return Double.POSITIVE_INFINITY;
-                } else if ("(-1.0/0.0)".equals(val) || "(-1.0 / 0.0)".equals(val)) {
-                    return Double.NEGATIVE_INFINITY;
-                } else if ("(0.0/0.0)".equals(val) || "(0.0 / 0.0)".equals(val)) {
-                    return Double.NaN;
-                } else {
-                    return Double.valueOf(val);
-                }
-            } else if ("char".equals(type)) {
-                return (char) Integer.parseInt(val);
-            } else if (JAVA_LANG_STRING.equals(type) || "String".equals(type)) {
-                if ("null".equals(val)) {
+            switch (type) {
+                case "boolean":
+                    return "true".equals(val) ? Boolean.TRUE : Boolean.FALSE;
+                case "byte":
+                    return Integer.valueOf(val);
+                case "short":
+                    return Integer.valueOf(val);
+                case "int":
+                    return Integer.valueOf(val);
+                case "long":
+                    return Long.valueOf(val.substring(0, val.length() - 1));
+                case "float":
+                    switch (val) {
+                        case "(1.0f/0.0f)":
+                        case "(1.0f / 0.0f)":
+                            return Float.POSITIVE_INFINITY;
+                        case "(-1.0f/0.0f)":
+                        case "(-1.0f / 0.0f)":
+                            return Float.NEGATIVE_INFINITY;
+                        case "(0.0f/0.0f)":
+                        case "(0.0f / 0.0f)":
+                            return Float.NaN;
+                        default:
+                            return Float.valueOf(val);
+                    }
+                case "double":
+                    switch (val) {
+                        case "(1.0/0.0)":
+                        case "(1.0 / 0.0)":
+                            return Double.POSITIVE_INFINITY;
+                        case "(-1.0/0.0)":
+                        case "(-1.0 / 0.0)":
+                            return Double.NEGATIVE_INFINITY;
+                        case "(0.0/0.0)":
+                        case "(0.0 / 0.0)":
+                            return Double.NaN;
+                        default:
+                            return Double.valueOf(val);
+                    }
+                case "char":
+                    return (char) Integer.parseInt(val);
+                case JAVA_LANG_STRING:
+                case "String":
+                    if ("null".equals(val)) {
+                        return null;
+                    } else {
+                        return javaUnescapeString(val.substring(1, val.length() - 1));
+                    }
+                case "null":
                     return null;
-                } else {
-                    return javaUnescapeString(val.substring(1, val.length() - 1));
-                }
+                default:
+                    return val;
             }
         }
-        if ("null".equals(val)) {
-            return null;
-        } else {
-            return val;
-        }
+        return null;
     }
 
     private static void parseProperty(TextCodebase api, Tokenizer tokenizer, TextClassItem cl, String token)

@@ -1057,7 +1057,7 @@ abstract class DriverTest {
                 "Using $ARG_NULLABILITY_WARNINGS_TXT but $validateNullabilityTxt was not created",
                 validateNullabilityTxt.isFile
             )
-            var actualReport =
+            val actualReport =
                 Files.asCharSource(validateNullabilityTxt, Charsets.UTF_8).readLines().map(String::trim).toSet()
             assertEquals(validateNullability, actualReport)
         }
