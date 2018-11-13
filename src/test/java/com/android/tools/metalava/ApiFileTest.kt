@@ -2828,65 +2828,6 @@ class ApiFileTest : DriverTest() {
     }
 
     @Test
-    fun `Including private interfaces from types`() {
-        check(
-            checkDoclava1 = true,
-            sourceFiles = *arrayOf(
-                java("""package test.pkg1; interface Interface1 { }"""),
-                java("""package test.pkg1; abstract class Class1 { }"""),
-                java("""package test.pkg1; abstract class Class2 { }"""),
-                java("""package test.pkg1; abstract class Class3 { }"""),
-                java("""package test.pkg1; abstract class Class4 { }"""),
-                java("""package test.pkg1; abstract class Class5 { }"""),
-                java("""package test.pkg1; abstract class Class6 { }"""),
-                java("""package test.pkg1; abstract class Class7 { }"""),
-                java("""package test.pkg1; abstract class Class8 { }"""),
-                java("""package test.pkg1; abstract class Class9 { }"""),
-                java(
-                    """
-                    package test.pkg1;
-
-                    import java.util.List;
-                    import java.util.Map;
-                    public abstract class Usage implements List<Class1> {
-                       <T extends java.lang.Comparable<? super T>> void sort(java.util.List<T> list) {}
-                       public Class3 myClass1 = null;
-                       public List<? extends Class4> myClass2 = null;
-                       public Map<String, ? extends Class5> myClass3 = null;
-                       public <T extends Class6> void mySort(List<Class7> list, T element) {}
-                       public void ellipsisType(Class8... myargs);
-                       public void arrayType(Class9[] myargs);
-                    }
-                    """
-                )
-            ),
-
-            // TODO: Test annotations! (values, annotation classes, etc.)
-            warnings = """
-                    src/test/pkg1/Usage.java:12: warning: Parameter myargs references hidden type test.pkg1.Class9[]. [HiddenTypeParameter:121]
-                    src/test/pkg1/Usage.java:11: warning: Parameter myargs references hidden type test.pkg1.Class8.... [HiddenTypeParameter:121]
-                    src/test/pkg1/Usage.java:10: warning: Parameter list references hidden type class test.pkg1.Class7. [HiddenTypeParameter:121]
-                    src/test/pkg1/Usage.java:7: warning: Field Usage.myClass1 references hidden type test.pkg1.Class3. [HiddenTypeParameter:121]
-                    src/test/pkg1/Usage.java:8: warning: Field Usage.myClass2 references hidden type class test.pkg1.Class4. [HiddenTypeParameter:121]
-                    src/test/pkg1/Usage.java:9: warning: Field Usage.myClass3 references hidden type class test.pkg1.Class5. [HiddenTypeParameter:121]
-                    """,
-            api = """
-                    package test.pkg1 {
-                      public abstract class Usage implements java.util.List {
-                        ctor public Usage();
-                        method public void arrayType(test.pkg1.Class9[]);
-                        method public void ellipsisType(test.pkg1.Class8...);
-                        method public <T extends test.pkg1.Class6> void mySort(java.util.List<test.pkg1.Class7>, T);
-                        field public test.pkg1.Class3 myClass1;
-                        field public java.util.List<? extends test.pkg1.Class4> myClass2;
-                        field public java.util.Map<java.lang.String, ? extends test.pkg1.Class5> myClass3;
-                      }
-                    }
-                """
-        )
-    }
-
-    @Test
     fun `Test KDoc suppress`() {
         // Basic class; also checks that default constructor is made explicit
         check(
