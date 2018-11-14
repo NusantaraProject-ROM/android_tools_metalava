@@ -930,7 +930,7 @@ class ApiAnalyzer(
         allTopLevelClasses
             .filter { it.checkLevel() && it.emit && !it.hidden() }
             .forEach {
-                cantStripThis(it, filter, notStrippable, stubImportPackages)
+                cantStripThis(it, filter, notStrippable, stubImportPackages, it, "self")
             }
 
         // complain about anything that looks includeable but is not supposed to
@@ -1014,7 +1014,8 @@ class ApiAnalyzer(
             } else if (cl.deprecated) {
                 // not hidden, but deprecated
                 reporter.report(Errors.DEPRECATED, cl, "Class ${cl.qualifiedName()} is deprecated")
-            } else {
+            } else if (reporter.isSuppressed(Errors.REFERENCES_HIDDEN, cl)) {
+                // If we're not reporting hidden references, bring the type back
                 // Bring this class back
                 cl.hidden = false
                 cl.removed = false
@@ -1026,7 +1027,9 @@ class ApiAnalyzer(
         cl: ClassItem,
         filter: Predicate<Item>,
         notStrippable: MutableSet<ClassItem>,
-        stubImportPackages: Set<String>?
+        stubImportPackages: Set<String>?,
+        from: Item,
+        usage: String
     ) {
         if (stubImportPackages != null && stubImportPackages.contains(cl.containingPackage().qualifiedName())) {
             // if the package is imported then it does not need stubbing.
@@ -1035,6 +1038,11 @@ class ApiAnalyzer(
 
         if (cl.isFromClassPath()) {
             return
+        }
+
+        if ((cl.isHiddenOrRemoved() || cl.isPackagePrivate) && !cl.isTypeParameter) {
+            reporter.report(Errors.REFERENCES_HIDDEN, from,
+                "Class ${cl.qualifiedName()} is ${if (cl.isHiddenOrRemoved()) "hidden" else "not public"} but was referenced ($usage) from public ${from.describe(false)}")
         }
 
         if (!notStrippable.add(cl)) {
@@ -1052,16 +1060,19 @@ class ApiAnalyzer(
             if (!fieldType.primitive) {
                 val typeClass = fieldType.asClass()
                 if (typeClass != null) {
-                    cantStripThis(typeClass, filter, notStrippable, stubImportPackages)
+                    cantStripThis(typeClass, filter, notStrippable, stubImportPackages, field, "as field type")
                 }
                 for (cls in fieldType.typeArgumentClasses()) {
-                    cantStripThis(cls, filter, notStrippable, stubImportPackages)
+                    if (cls == typeClass) {
+                        continue
+                    }
+                    cantStripThis(cls, filter, notStrippable, stubImportPackages, field, "as field type argument class")
                 }
             }
         }
         // cant strip any of the type's generics
         for (cls in cl.typeArgumentClasses()) {
-            cantStripThis(cls, filter, notStrippable, stubImportPackages)
+            cantStripThis(cls, filter, notStrippable, stubImportPackages, cl, "as type argument")
         }
         // cant strip any of the annotation elements
         // cantStripThis(cl.annotationElements(), notStrippable);
@@ -1071,7 +1082,7 @@ class ApiAnalyzer(
         // blow the outer class open if this is an inner class
         val containingClass = cl.containingClass()
         if (containingClass != null) {
-            cantStripThis(containingClass, filter, notStrippable, stubImportPackages)
+            cantStripThis(containingClass, filter, notStrippable, stubImportPackages, cl, "as containing class")
         }
         // blow open super class and interfaces
         // TODO: Consider using val superClass = cl.filteredSuperclass(filter)
@@ -1092,7 +1103,10 @@ class ApiAnalyzer(
                     )
                 }
             } else {
-                cantStripThis(superClass, filter, notStrippable, stubImportPackages)
+                // doclava would also mark the package private super classes as unhidden, but that's not
+                // right (this was just done for its stub handling)
+                //   cantStripThis(superClass, filter, notStrippable, stubImportPackages, cl, "as super class")
+
                 if (superClass.isPrivate && !superClass.isFromClassPath()) {
                     reporter.report(
                         Errors.PRIVATE_SUPERCLASS, cl, "Public class " +
@@ -1116,34 +1130,40 @@ class ApiAnalyzer(
                 continue
             }
             for (typeParameterClass in method.typeArgumentClasses()) {
-                cantStripThis(typeParameterClass, filter, notStrippable, stubImportPackages)
+                cantStripThis(typeParameterClass, filter, notStrippable, stubImportPackages, method, "as type parameter")
             }
             for (parameter in method.parameters()) {
                 for (parameterTypeClass in parameter.type().typeArgumentClasses()) {
-                    cantStripThis(parameterTypeClass, filter, notStrippable, stubImportPackages)
+                    cantStripThis(parameterTypeClass, filter, notStrippable, stubImportPackages, parameter, "as parameter type")
                     for (tcl in parameter.type().typeArgumentClasses()) {
+                        if (tcl == parameterTypeClass) {
+                            continue
+                        }
                         if (tcl.isHiddenOrRemoved()) {
                             reporter.report(
                                 Errors.UNAVAILABLE_SYMBOL, method,
-                                "Parameter of hidden type ${tcl.fullName()}" +
+                                "Parameter of hidden type ${tcl.fullName()} " +
                                     "in ${method.containingClass().qualifiedName()}.${method.name()}()"
                             )
                         } else {
-                            cantStripThis(tcl, filter, notStrippable, stubImportPackages)
+                            cantStripThis(tcl, filter, notStrippable, stubImportPackages, parameter, "as type parameter")
                         }
                     }
                 }
             }
             for (thrown in method.throwsTypes()) {
-                cantStripThis(thrown, filter, notStrippable, stubImportPackages)
+                cantStripThis(thrown, filter, notStrippable, stubImportPackages, method, "as exception")
             }
             val returnType = method.returnType()
             if (returnType != null && !returnType.primitive) {
                 val returnTypeClass = returnType.asClass()
                 if (returnTypeClass != null) {
-                    cantStripThis(returnTypeClass, filter, notStrippable, stubImportPackages)
+                    cantStripThis(returnTypeClass, filter, notStrippable, stubImportPackages, method, "as return type")
                     for (tyItem in returnType.typeArgumentClasses()) {
-                        cantStripThis(tyItem, filter, notStrippable, stubImportPackages)
+                        if (tyItem == returnTypeClass) {
+                            continue
+                        }
+                        cantStripThis(tyItem, filter, notStrippable, stubImportPackages, method, "as return type parameter")
                     }
                 }
             }

@@ -251,8 +251,7 @@ class NullnessMigrationTest : DriverTest() {
     @Test
     fun `Check type use annotations`() {
         check(
-            outputKotlinStyleNulls = false,
-            compatibilityMode = false,
+            format = 2, // compat=false, kotlin-style-nulls=false
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -276,6 +275,7 @@ class NullnessMigrationTest : DriverTest() {
             extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation"),
             api = if (SUPPORT_TYPE_USE_ANNOTATIONS) {
                 """
+                // Signature format: 2.0
                 package test.pkg {
                   public class Test {
                     ctor public Test();
@@ -286,6 +286,7 @@ class NullnessMigrationTest : DriverTest() {
                 """
             } else {
                 """
+                // Signature format: 2.0
                 package test.pkg {
                   public class Test {
                     ctor public Test();

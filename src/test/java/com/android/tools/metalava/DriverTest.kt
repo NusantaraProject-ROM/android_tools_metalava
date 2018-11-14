@@ -313,7 +313,11 @@ abstract class DriverTest {
          * List of signature files to convert to JDiff XML and the
          * expected XML output
          */
-        convertToJDiff: List<Pair<String, String>> = emptyList()
+        convertToJDiff: List<Pair<String, String>> = emptyList(),
+        /**
+         * Signature file format
+         */
+        format: Int? = null
     ) {
         // Ensure different API clients don't interfere with each other
         try {
@@ -809,6 +813,7 @@ abstract class DriverTest {
             extractedAnnotationsZip = null
             emptyArray()
         }
+
         val validateNullabilityTxt: File?
         val validateNullabilityArgs = if (validateNullability != null) {
             validateNullabilityTxt = temporaryFolder.newFile("validate-nullability.txt")
@@ -818,6 +823,12 @@ abstract class DriverTest {
             )
         } else {
             validateNullabilityTxt = null
+            emptyArray()
+        }
+
+        val signatureFormatArgs = if (format != null) {
+            arrayOf("$ARG_FORMAT=v$format")
+        } else {
             emptyArray()
         }
 
@@ -858,7 +869,7 @@ abstract class DriverTest {
             *dexApiMappingArgs,
             *stubsArgs,
             *stubsSourceListArgs,
-            "$ARGS_COMPAT_OUTPUT=${if (compatibilityMode) "yes" else "no"}",
+            "$ARG_COMPAT_OUTPUT=${if (compatibilityMode) "yes" else "no"}",
             "$ARG_OUTPUT_KOTLIN_NULLS=${if (outputKotlinStyleNulls) "yes" else "no"}",
             "$ARG_INPUT_KOTLIN_NULLS=${if (inputKotlinStyleNulls) "yes" else "no"}",
             "$ARG_OMIT_COMMON_PACKAGES=${if (omitCommonPackages) "yes" else "no"}",
@@ -888,6 +899,7 @@ abstract class DriverTest {
             *artifactArgs,
             *extractAnnotationsArgs,
             *validateNullabilityArgs,
+            *signatureFormatArgs,
             *sourceList,
             *extraArguments,
             expectedFail = expectedFail
