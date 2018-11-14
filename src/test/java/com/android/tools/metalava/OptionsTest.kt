@@ -76,6 +76,10 @@ API sources:
                                           for any class where
                                           --merge-qualifier-annotations includes a Java
                                           stub file.
+--validate-nullability-from-list          Triggers validation of nullability annotations
+                                          for any class listed in the named file (one
+                                          top-level class per line, # prefix for comment
+                                          line).
 --nullability-warnings-txt <file>         Specifies where to write warnings encountered
                                           during validation of nullability annotations.
                                           (Does not trigger validation by itself.)

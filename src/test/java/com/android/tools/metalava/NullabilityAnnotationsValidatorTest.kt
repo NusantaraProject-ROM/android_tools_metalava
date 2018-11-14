@@ -233,4 +233,43 @@ class NullabilityAnnotationsValidatorTest : DriverTest() {
             )
         )
     }
+
+    @Test
+    fun `Using class list`() {
+        check(
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                        package test.pkg;
+
+                        import libcore.util.Nullable;
+
+                        // This will be validated. It is missing an annotation on its return type.
+                        public interface Appendable {
+                            Appendable append(@Nullable CharSequence csq) throws IOException;
+                        }
+
+                        // This is missing an annotation on its return type, but will not be validated.
+                        public interface List<T> {
+                            T get(int index);
+                        }
+                    """
+            ),
+            libcoreNullableSource
+        ),
+        compatibilityMode = false,
+        outputKotlinStyleNulls = false,
+        omitCommonPackages = false,
+        extraArguments = arrayOf(ARG_VALIDATE_NULLABILITY_FROM_MERGED_STUBS),
+        validateNullabilityFromList =
+            """
+                # a comment, then a blank line, then the class to validate
+
+                test.pkg.Appendable
+            """,
+        validateNullability = setOf(
+            "WARNING: method test.pkg.Appendable.append(CharSequence), return value, MISSING"
+        )
+    )
+  }
 }
