@@ -221,6 +221,8 @@ public class Errors {
     public static final Error UNHIDDEN_SYSTEM_API = new Error(155, HIDDEN);
     public static final Error SHOWING_MEMBER_IN_HIDDEN_CLASS = new Error(156, ERROR);
     public static final Error INVALID_NULLABILITY_ANNOTATION = new Error(157, ERROR);
+    // Temporarily hidden until source code is updated to be compliant
+    public static final Error REFERENCES_HIDDEN = new Error(158, HIDDEN);
 
     static {
         // Attempt to initialize error names based on the field names
