@@ -232,29 +232,6 @@ private fun processFlags() {
         )
     }
 
-    val previousApiFile = options.migrateNullsFrom
-    if (previousApiFile != null) {
-        val previous =
-            if (previousApiFile.path.endsWith(SdkConstants.DOT_JAR)) {
-                loadFromJarFile(previousApiFile)
-            } else {
-                SignatureFileLoader.load(
-                    file = previousApiFile,
-                    kotlinStyleNulls = options.inputKotlinStyleNulls,
-                    supportsStagedNullability = true
-                )
-            }
-
-        // If configured, checks for newly added nullness information compared
-        // to the previous stable API and marks the newly annotated elements
-        // as migrated (which will cause the Kotlin compiler to treat problems
-        // as warnings instead of errors
-
-        migrateNulls(codebase, previous)
-
-        previous.dispose()
-    }
-
     // Based on the input flags, generates various output files such
     // as signature files and/or stubs files
     options.apiFile?.let { apiFile ->
@@ -368,6 +345,29 @@ private fun processFlags() {
 
     for (check in options.compatibilityChecks) {
         checkCompatibility(codebase, check)
+    }
+
+    val previousApiFile = options.migrateNullsFrom
+    if (previousApiFile != null) {
+        val previous =
+            if (previousApiFile.path.endsWith(SdkConstants.DOT_JAR)) {
+                loadFromJarFile(previousApiFile)
+            } else {
+                SignatureFileLoader.load(
+                    file = previousApiFile,
+                    kotlinStyleNulls = options.inputKotlinStyleNulls,
+                    supportsStagedNullability = true
+                )
+            }
+
+        // If configured, checks for newly added nullness information compared
+        // to the previous stable API and marks the newly annotated elements
+        // as migrated (which will cause the Kotlin compiler to treat problems
+        // as warnings instead of errors
+
+        migrateNulls(codebase, previous)
+
+        previous.dispose()
     }
 
     // Now that we've migrated nullness information we can proceed to write non-doc stubs, if any.
