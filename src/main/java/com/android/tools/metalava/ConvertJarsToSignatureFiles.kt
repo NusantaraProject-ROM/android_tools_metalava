@@ -54,7 +54,9 @@ class ConvertJarsToSignatureFiles {
             val signatureFile = "prebuilts/sdk/$api/public/api/android.txt"
             val oldApiFile = File(root, "prebuilts/sdk/$api/public/api/android.txt")
             val newApiFile =
-                File(root, "prebuilts/sdk/$api/public/api/android.${if (options.compatOutput) "txt" else "sig"}")
+                // Place new-style signature files in separate files?
+                // File(root, "prebuilts/sdk/$api/public/api/android.${if (options.compatOutput) "txt" else "v2.txt"}")
+                File(root, "prebuilts/sdk/$api/public/api/android.txt")
 
             progress("\nWriting signature files $signatureFile for $apiJar")
 
@@ -105,6 +107,12 @@ class ConvertJarsToSignatureFiles {
 
             createReportFile(jarCodebase, newApiFile, "API") { printWriter ->
                 SignatureWriter(printWriter, apiEmit, apiReference, jarCodebase.preFiltered)
+            }
+
+            // Delete older redundant .xml files
+            val xmlFile = File(newApiFile.parentFile, "android.xml")
+            if (xmlFile.isFile) {
+                xmlFile.delete()
             }
 
             api++
