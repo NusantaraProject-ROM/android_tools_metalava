@@ -24,18 +24,23 @@ class NullnessMigrationTest : DriverTest() {
     fun `Test Kotlin-style null signatures`() {
         check(
             compatibilityMode = false,
-            signatureSource = """
-                package test.pkg {
-                  public class MyTest {
-                    ctor public MyTest();
-                    method public Double convert0(Float);
-                    method @Nullable public Double convert1(@NonNull Float);
-                    method @Nullable public Double convert2(@NonNull Float);
-                    method @Nullable public Double convert3(@NonNull Float);
-                    method @Nullable public Double convert4(@NonNull Float);
-                  }
-                }
-                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    import androidx.annotation.Nullable;
+                    public class MyTest {
+                        public Double convert0(Float f) { return null; }
+                        @Nullable public Double convert1(@NonNull Float f) { return null; }
+                        @Nullable public Double convert2(@NonNull Float f) { return null; }
+                        @Nullable public Double convert3(@NonNull Float f) { return null; }
+                        @Nullable public Double convert4(@NonNull Float f) { return null; }
+                    }
+                    """
+                ),
+                androidxNonNullSource,
+                androidxNullableSource
+            ),
             api = """
                 package test.pkg {
                   public class MyTest {
@@ -47,7 +52,8 @@ class NullnessMigrationTest : DriverTest() {
                     method public Double? convert4(Float);
                   }
                 }
-                """
+                """,
+            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation")
         )
     }
 
@@ -56,13 +62,21 @@ class NullnessMigrationTest : DriverTest() {
         check(
             outputKotlinStyleNulls = false,
             compatibilityMode = false,
-            signatureSource = """
-                package test.pkg {
-                  public abstract class MyTest {
-                    method @Nullable public Double convert1(Float);
-                  }
-                }
-                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    import androidx.annotation.Nullable;
+                    import androidx.annotation.NonNull;
+                    public abstract class MyTest {
+                        private MyTest() { }
+                        @Nullable public Double convert1(Float f) { return null; }
+                    }
+                    """
+                ),
+                androidxNonNullSource,
+                androidxNullableSource
+            ),
             migrateNullsApi = """
                 package test.pkg {
                   public abstract class MyTest {
@@ -73,10 +87,22 @@ class NullnessMigrationTest : DriverTest() {
             api = """
                 package test.pkg {
                   public abstract class MyTest {
-                    method @RecentlyNullable public Double convert1(Float);
+                    method @Nullable public Double convert1(Float);
                   }
                 }
+                """,
+            stubs = arrayOf(
                 """
+                package test.pkg;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public abstract class MyTest {
+                MyTest() { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.RecentlyNullable
+                public java.lang.Double convert1(java.lang.Float f) { throw new RuntimeException("Stub!"); }
+                }
+                """
+            ),
+            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation")
         )
     }
 
@@ -85,13 +111,20 @@ class NullnessMigrationTest : DriverTest() {
         check(
             outputKotlinStyleNulls = false,
             compatibilityMode = false,
-            signatureSource = """
-                package test.pkg {
-                  public abstract class MyTest {
-                    method public Double convert1(@NonNull Float);
-                  }
-                }
-                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    import androidx.annotation.Nullable;
+                    public abstract class MyTest {
+                        private MyTest() { }
+                        public Double convert1(@NonNull Float f) { return null; }
+                    }
+                    """
+                ),
+                androidxNonNullSource,
+                androidxNullableSource
+            ),
             migrateNullsApi = """
                 package test.pkg {
                   public abstract class MyTest {
@@ -102,10 +135,21 @@ class NullnessMigrationTest : DriverTest() {
             api = """
                 package test.pkg {
                   public abstract class MyTest {
-                    method public Double convert1(@RecentlyNonNull Float);
+                    method public Double convert1(@NonNull Float);
                   }
                 }
+                """,
+            stubs = arrayOf(
                 """
+                package test.pkg;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public abstract class MyTest {
+                MyTest() { throw new RuntimeException("Stub!"); }
+                public java.lang.Double convert1(@androidx.annotation.RecentlyNonNull java.lang.Float f) { throw new RuntimeException("Stub!"); }
+                }
+                """
+            ),
+            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation")
         )
     }
 
@@ -114,18 +158,24 @@ class NullnessMigrationTest : DriverTest() {
         check(
             outputKotlinStyleNulls = false,
             compatibilityMode = false,
-            signatureSource = """
-                package test.pkg {
-                  public class MyTest {
-                    ctor public MyTest();
-                    method public Double convert0(Float);
-                    method @Nullable public Double convert1(@NonNull Float);
-                    method @Nullable public Double convert2(@NonNull Float);
-                    method @Nullable public Double convert3(@NonNull Float);
-                    method @Nullable public Double convert4(@NonNull Float);
-                  }
-                }
-                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    import androidx.annotation.Nullable;
+                    import androidx.annotation.NonNull;
+                    public class MyTest {
+                        public Double convert0(Float f) { return null; }
+                        @Nullable public Double convert1(@NonNull Float f) { return null; }
+                        @Nullable public Double convert2(@NonNull Float f) { return null; }
+                        @Nullable public Double convert3(@NonNull Float f) { return null; }
+                        @Nullable public Double convert4(@NonNull Float f) { return null; }
+                    }
+                    """
+                ),
+                androidxNonNullSource,
+                androidxNullableSource
+            ),
             migrateNullsApi = """
                 package test.pkg {
                   public class MyTest {
@@ -143,13 +193,32 @@ class NullnessMigrationTest : DriverTest() {
                   public class MyTest {
                     ctor public MyTest();
                     method public Double convert0(Float);
-                    method @RecentlyNullable public Double convert1(@RecentlyNonNull Float);
+                    method @Nullable public Double convert1(@NonNull Float);
                     method @Nullable public Double convert2(@NonNull Float);
                     method @Nullable public Double convert3(@NonNull Float);
                     method @Nullable public Double convert4(@NonNull Float);
                   }
                 }
+                """,
+            stubs = arrayOf(
                 """
+                package test.pkg;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class MyTest {
+                public MyTest() { throw new RuntimeException("Stub!"); }
+                public java.lang.Double convert0(java.lang.Float f) { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.RecentlyNullable
+                public java.lang.Double convert1(@androidx.annotation.RecentlyNonNull java.lang.Float f) { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.Nullable
+                public java.lang.Double convert2(@androidx.annotation.NonNull java.lang.Float f) { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.Nullable
+                public java.lang.Double convert3(@androidx.annotation.NonNull java.lang.Float f) { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.Nullable
+                public java.lang.Double convert4(@androidx.annotation.NonNull java.lang.Float f) { throw new RuntimeException("Stub!"); }
+                }
+                """
+            ),
+            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation")
         )
     }
 
@@ -158,18 +227,24 @@ class NullnessMigrationTest : DriverTest() {
         check(
             outputKotlinStyleNulls = true,
             compatibilityMode = false,
-            signatureSource = """
-                package test.pkg {
-                  public class MyTest {
-                    ctor public MyTest();
-                    method public Double convert0(Float);
-                    method @Nullable public Double convert1(@NonNull Float);
-                    method @Nullable public Double convert2(@NonNull Float);
-                    method @Nullable public Double convert3(@NonNull Float);
-                    method @Nullable public Double convert4(@NonNull Float);
-                  }
-                }
-                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    import androidx.annotation.Nullable;
+                    import androidx.annotation.NonNull;
+                    public class MyTest {
+                        public Double convert0(Float f) { return null; }
+                        @Nullable public Double convert1(@NonNull Float f) { return null; }
+                        @Nullable public Double convert2(@NonNull Float f) { return null; }
+                        @Nullable public Double convert3(@NonNull Float f) { return null; }
+                        @Nullable public Double convert4(@NonNull Float f) { return null; }
+                    }
+                    """
+                ),
+                androidxNonNullSource,
+                androidxNullableSource
+            ),
             migrateNullsApi = """
                 package test.pkg {
                   public class MyTest {
@@ -193,7 +268,8 @@ class NullnessMigrationTest : DriverTest() {
                     method public Double? convert4(Float);
                   }
                 }
-                """
+                """,
+            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation")
         )
     }
 
