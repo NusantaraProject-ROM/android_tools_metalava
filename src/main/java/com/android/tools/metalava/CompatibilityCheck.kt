@@ -747,11 +747,12 @@ class CompatibilityCheck(
         val inherited = if (new.isConstructor()) {
             null
         } else {
-            new.containingClass().findMethod(
+            val inherited = new.containingClass().findMethod(
                 new,
                 includeSuperClasses = true,
                 includeInterfaces = false
             )
+            if (inherited === new) null else inherited
         }
         if (inherited == null || !inherited.modifiers.isAbstract()) {
             val error = if (new.modifiers.isAbstract()) Errors.ADDED_ABSTRACT_METHOD else Errors.ADDED_METHOD
@@ -794,11 +795,12 @@ class CompatibilityCheck(
         val inherited = if (old.isConstructor()) {
             null
         } else {
-            from?.findMethod(
+            val inherited = from?.findMethod(
                 old,
                 includeSuperClasses = true,
                 includeInterfaces = from.isInterface()
             )
+            if (inherited === old) null else inherited
         }
         if (inherited == null) {
             val error = if (old.deprecated) Errors.REMOVED_DEPRECATED_METHOD else Errors.REMOVED_METHOD

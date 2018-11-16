@@ -1773,6 +1773,59 @@ CompatibilityCheckTest : DriverTest() {
     }
 
     @Test
+    fun `Partial text file which adds methods to show-annotation API`() {
+        // This happens in system and test files where we only include APIs that differ
+        // from the base IDE. When parsing these code bases we need to gracefully handle
+        // references to inner classes.
+        check(
+            includeSystemApiAnnotations = true,
+            warnings = """
+                TESTROOT/current-api.txt:4: error: Removed method android.rolecontrollerservice.RoleControllerService.onClearRoleHolders() [RemovedMethod:9]
+                src/android/rolecontrollerservice/RoleControllerService.java:7: warning: Added method android.rolecontrollerservice.RoleControllerService.onGrantDefaultRoles() to the system API [AddedAbstractMethod:31]
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package android.rolecontrollerservice;
+
+                    public class Service {
+                    }
+                    """
+                ).indented(),
+                java(
+                    """
+                    package android.rolecontrollerservice;
+                    import android.annotation.SystemApi;
+
+                    /** @hide */
+                    @SystemApi
+                    public abstract class RoleControllerService extends Service {
+                        public abstract void onGrantDefaultRoles();
+                    }
+                    """
+                ),
+                systemApiSource
+            ),
+
+            extraArguments = arrayOf(
+                ARG_SHOW_ANNOTATION, "android.annotation.TestApi",
+                ARG_HIDE_PACKAGE, "android.annotation",
+                ARG_HIDE_PACKAGE, "android.support.annotation"
+            ),
+
+            checkCompatibilityApi =
+                """
+                package android.rolecontrollerservice {
+                  public abstract class RoleControllerService extends android.rolecontrollerservice.Service {
+                    ctor public RoleControllerService();
+                    method public abstract void onClearRoleHolders();
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
     fun `Test verifying simple removed API`() {
         check(
             warnings = """
