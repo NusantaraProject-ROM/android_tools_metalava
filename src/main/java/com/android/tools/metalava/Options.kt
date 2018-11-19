@@ -577,6 +577,7 @@ class Options(
         var baselineFile: File? = null
         var mergeBaseline = false
         var delayedCheckApiFiles = false
+        var skipGenerateAnnotations = false
 
         var index = 0
         while (index < args.size) {
@@ -1304,6 +1305,12 @@ class Options(
                         } else {
                             // All args that don't start with "-" are taken to be filenames
                             mutableSources.addAll(stringToExistingFiles(arg))
+
+                            // Temporary workaround for
+                            // aosp/I73ff403bfc3d9dfec71789a3e90f9f4ea95eabe3
+                            if (arg.endsWith("hwbinder-stubs-docs-stubs.srcjar.rsp")) {
+                                skipGenerateAnnotations = true
+                            }
                         }
                     }
                 }
@@ -1330,6 +1337,10 @@ class Options(
 
         if (noUnknownClasses) {
             allowReferencingUnknownClasses = false
+        }
+
+        if (skipGenerateAnnotations) {
+            generateAnnotations = false
         }
 
         if (updateApi) {

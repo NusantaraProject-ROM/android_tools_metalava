@@ -235,14 +235,20 @@ interface AnnotationItem {
                 "android.annotation.Dimension" -> return "androidx.annotation.Dimension"
 
                 // Null
-                "android.support.annotation.NonNull",
-                "android.annotation.NonNull" -> return "androidx.annotation.NonNull"
-                "android.support.annotation.Nullable",
-                "android.annotation.Nullable" -> return "androidx.annotation.Nullable"
-                "libcore.util.NonNull" -> return "androidx.annotation.NonNull"
-                "libcore.util.Nullable" -> return "androidx.annotation.Nullable"
-                "org.jetbrains.annotations.NotNull" -> return "androidx.annotation.NonNull"
-                "org.jetbrains.annotations.Nullable" -> return "androidx.annotation.Nullable"
+                // We only change recently/newly nullable annotation in stubs
+                RECENTLY_NULLABLE -> return if (target == AnnotationTarget.SDK_STUBS_FILE) qualifiedName else ANDROIDX_NULLABLE
+                RECENTLY_NONNULL -> return if (target == AnnotationTarget.SDK_STUBS_FILE) qualifiedName else ANDROIDX_NONNULL
+                "android.annotation.Nullable" -> return if (target == AnnotationTarget.SDK_STUBS_FILE) qualifiedName else ANDROIDX_NULLABLE
+                "android.annotation.NonNull" -> return if (target == AnnotationTarget.SDK_STUBS_FILE) qualifiedName else ANDROIDX_NONNULL
+                ANDROIDX_NULLABLE -> return if (target == AnnotationTarget.SDK_STUBS_FILE) "android.annotation.Nullable" else ANDROIDX_NULLABLE
+                ANDROIDX_NONNULL -> return if (target == AnnotationTarget.SDK_STUBS_FILE) "android.annotation.NonNull" else ANDROIDX_NONNULL
+
+                "android.support.annotation.NonNull" -> return ANDROIDX_NONNULL
+                "android.support.annotation.Nullable" -> return ANDROIDX_NULLABLE
+                "libcore.util.NonNull" -> return ANDROIDX_NONNULL
+                "libcore.util.Nullable" -> return ANDROIDX_NULLABLE
+                "org.jetbrains.annotations.NotNull" -> return ANDROIDX_NONNULL
+                "org.jetbrains.annotations.Nullable" -> return ANDROIDX_NULLABLE
 
                 // Typedefs
                 "android.support.annotation.IntDef",
@@ -303,8 +309,6 @@ interface AnnotationItem {
                 "android.annotation.TargetApi",
                 "android.annotation.SuppressLint" -> return qualifiedName
 
-                RECENTLY_NULLABLE, RECENTLY_NONNULL -> return qualifiedName
-
                 else -> {
                     // Some new annotations added to the platform: assume they are support annotations?
                     return when {
@@ -313,8 +317,8 @@ interface AnnotationItem {
                             "kotlin.annotations.jvm.internal${qualifiedName.substring(qualifiedName.lastIndexOf('.'))}"
 
                         // Other third party nullness annotations?
-                        isNullableAnnotation(qualifiedName) -> "androidx.annotation.Nullable"
-                        isNonNullAnnotation(qualifiedName) -> "androidx.annotation.NonNull"
+                        isNullableAnnotation(qualifiedName) -> ANDROIDX_NULLABLE
+                        isNonNullAnnotation(qualifiedName) -> ANDROIDX_NONNULL
 
                         // Support library annotations are all included, as is the built-in stuff like @Retention
                         qualifiedName.startsWith(ANDROIDX_ANNOTATION_PREFIX) -> return qualifiedName
@@ -402,6 +406,16 @@ interface AnnotationItem {
                 "java.lang.annotation.Target" -> return ANNOTATION_IN_ALL_STUBS
             }
 
+            // @android.annotation.Nullable and NonNullable specially recognized annotations by the Kotlin
+            // compiler 1.3 and above: they always go in the stubs.
+            if (qualifiedName == "android.annotation.Nullable" ||
+                qualifiedName == "android.annotation.NonNull" ||
+                qualifiedName == ANDROIDX_NULLABLE ||
+                qualifiedName == ANDROIDX_NONNULL
+            ) {
+                return ANNOTATION_IN_ALL_STUBS
+            }
+
             if (qualifiedName.startsWith("android.annotation.")) {
                 // internal annotations not mapped to androidx: things like @SystemApi. Skip from
                 // stubs, external annotations, signature files, etc.
@@ -413,7 +427,7 @@ interface AnnotationItem {
             if (qualifiedName == "androidx.annotation.RecentlyNullable" ||
                 qualifiedName == "androidx.annotation.RecentlyNonNull"
             ) {
-                return ANNOTATION_IN_SDK_STUBS
+                return ANNOTATION_IN_ALL_STUBS
             }
 
             // Determine the retention of the annotation: source retention annotations go
