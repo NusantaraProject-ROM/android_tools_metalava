@@ -300,6 +300,8 @@ abstract class DriverTest {
         extractAnnotations: Map<String, String>? = null,
         /** Creates the nullability annotations validator, and check that the report has the given lines (does not define files to be validated) */
         validateNullability: Set<String>? = null,
+        /** Enable nullability validation for the listed classes */
+        validateNullabilityFromList: String? = null,
         /**
          * Whether to include source retention annotations in the stubs (in that case they do not
          * go into the extracted annotations zip file)
@@ -825,6 +827,16 @@ abstract class DriverTest {
             validateNullabilityTxt = null
             emptyArray()
         }
+        val validateNullablityFromListFile: File?
+        val validateNullabilityFromListArgs = if (validateNullabilityFromList != null) {
+            validateNullablityFromListFile = temporaryFolder.newFile("validate-nullability-classes.txt")
+            Files.asCharSink(validateNullablityFromListFile, Charsets.UTF_8).write(validateNullabilityFromList)
+            arrayOf(
+                ARG_VALIDATE_NULLABILITY_FROM_LIST, validateNullablityFromListFile.path
+            )
+        } else {
+            emptyArray()
+        }
 
         val signatureFormatArgs = if (format != null) {
             arrayOf("$ARG_FORMAT=v$format")
@@ -899,6 +911,7 @@ abstract class DriverTest {
             *artifactArgs,
             *extractAnnotationsArgs,
             *validateNullabilityArgs,
+            *validateNullabilityFromListArgs,
             *signatureFormatArgs,
             *sourceList,
             *extraArguments,
