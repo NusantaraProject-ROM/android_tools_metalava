@@ -26,7 +26,9 @@ import com.android.tools.metalava.model.SUPPORT_TYPE_USE_ANNOTATIONS
 import com.android.tools.metalava.model.TypeItem
 import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.google.common.io.Files
+import java.io.File
 import java.io.PrintWriter
+import java.nio.charset.StandardCharsets
 
 private const val RETURN_LABEL = "return value"
 
@@ -79,7 +81,7 @@ class NullabilityAnnotationsValidator {
     fun validateAll(codebase: Codebase, topLevelClassNames: List<String>) {
         for (topLevelClassName in topLevelClassNames) {
             val topLevelClass = codebase.findClass(topLevelClassName)
-                    ?: throw DriverException("External nullability annotations reference class $topLevelClassName which could not be found in main codebase")
+                    ?: throw DriverException("Trying to validate nullability annotations for class $topLevelClassName which could not be found in main codebase")
             // Visit methods to check their return type, and parameters to check them. Don't visit
             // constructors as we don't want to check their return types. This visits members of
             // inner classes as well.
@@ -93,6 +95,22 @@ class NullabilityAnnotationsValidator {
                     checkItem(parameter.containingMethod(), parameter.toString(), parameter.type(), parameter)
                 }
             })
+        }
+    }
+
+    /**
+     * As [validateAll], reading the list of class names from [topLevelClassesList]. The file names
+     * one top-level class per line, and lines starting with # are skipped. Does nothing if
+     * [topLevelClassesList] is null.
+     */
+    fun validateAllFrom(codebase: Codebase, topLevelClassesList: File?) {
+        if (topLevelClassesList != null) {
+            val classes =
+                Files.readLines(topLevelClassesList, StandardCharsets.UTF_8)
+                    .filterNot { it.isBlank() }
+                    .map { it.trim() }
+                    .filterNot { it.startsWith("#") }
+            validateAll(codebase, classes)
         }
     }
 

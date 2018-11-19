@@ -692,6 +692,7 @@ private fun loadFromSources(): Codebase {
     analyzer.mergeExternalInclusionAnnotations()
     analyzer.computeApi()
     analyzer.mergeExternalQualifierAnnotations()
+    options.nullabilityAnnotationsValidator?.validateAllFrom(codebase, options.validateNullabilityFromList)
     options.nullabilityAnnotationsValidator?.report()
     analyzer.handleStripping()
 
@@ -784,6 +785,7 @@ fun loadFromJarFile(apiJar: File, manifest: File? = null, preFiltered: Boolean =
     analyzer.mergeExternalInclusionAnnotations()
     analyzer.computeApi()
     analyzer.mergeExternalQualifierAnnotations()
+    options.nullabilityAnnotationsValidator?.validateAllFrom(codebase, options.validateNullabilityFromList)
     options.nullabilityAnnotationsValidator?.report()
     analyzer.generateInheritedStubs(apiEmit, apiReference)
     codebase.bindingContext = trace.bindingContext

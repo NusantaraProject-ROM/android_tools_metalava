@@ -59,6 +59,7 @@ const val ARG_REMOVED_DEX_API = "--removed-dex-api"
 const val ARG_MERGE_QUALIFIER_ANNOTATIONS = "--merge-qualifier-annotations"
 const val ARG_MERGE_INCLUSION_ANNOTATIONS = "--merge-inclusion-annotations"
 const val ARG_VALIDATE_NULLABILITY_FROM_MERGED_STUBS = "--validate-nullability-from-merged-stubs"
+const val ARG_VALIDATE_NULLABILITY_FROM_LIST = "--validate-nullability-from-list"
 const val ARG_NULLABILITY_WARNINGS_TXT = "--nullability-warnings-txt"
 const val ARG_NULLABILITY_ERRORS_NON_FATAL = "--nullability-errors-non-fatal"
 const val ARG_INPUT_API_JAR = "--input-api-jar"
@@ -200,6 +201,12 @@ class Options(
      * external java stub files. If true, [nullabilityAnnotationsValidator] must be set.
      */
     var validateNullabilityFromMergedStubs = false
+
+    /**
+     * A file containing a list of classes whose nullability annotations should be validated. If
+     * set, [nullabilityAnnotationsValidator] must also be set.
+     */
+    var validateNullabilityFromList: File? = null
 
     /**
      * Whether to include element documentation (javadoc and KDoc) is in the generated stubs.
@@ -563,6 +570,11 @@ class Options(
 
                 ARG_VALIDATE_NULLABILITY_FROM_MERGED_STUBS -> {
                     validateNullabilityFromMergedStubs = true
+                    nullabilityAnnotationsValidator =
+                        nullabilityAnnotationsValidator ?: NullabilityAnnotationsValidator()
+                }
+                ARG_VALIDATE_NULLABILITY_FROM_LIST -> {
+                    validateNullabilityFromList = stringToExistingFile(getValue(args, ++index))
                     nullabilityAnnotationsValidator =
                         nullabilityAnnotationsValidator ?: NullabilityAnnotationsValidator()
                 }
@@ -1508,6 +1520,9 @@ class Options(
 
             ARG_VALIDATE_NULLABILITY_FROM_MERGED_STUBS, "Triggers validation of nullability annotations " +
                 "for any class where $ARG_MERGE_QUALIFIER_ANNOTATIONS includes a Java stub file.",
+
+            ARG_VALIDATE_NULLABILITY_FROM_LIST, "Triggers validation of nullability annotations " +
+                "for any class listed in the named file (one top-level class per line, # prefix for comment line).",
 
             "$ARG_NULLABILITY_WARNINGS_TXT <file>", "Specifies where to write warnings encountered during " +
                 "validation of nullability annotations. (Does not trigger validation by itself.)",
