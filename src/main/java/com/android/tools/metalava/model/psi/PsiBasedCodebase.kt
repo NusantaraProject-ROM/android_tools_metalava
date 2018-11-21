@@ -153,7 +153,8 @@ open class PsiBasedCodebase(location: File, override var description: String = "
                                 Errors.BOTH_PACKAGE_INFO_AND_HTML,
                                 unit,
                                 "It is illegal to provide both a package-info.java file and a " +
-                                    "package.html file for the same package")
+                                    "package.html file for the same package"
+                            )
                         }
                         packageDocs[packageName] = text
                     }

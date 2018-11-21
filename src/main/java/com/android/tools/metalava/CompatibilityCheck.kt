@@ -511,7 +511,10 @@ class CompatibilityCheck(
                     break
                 }
                 if (newTypes[i].isReified() && !oldTypes[i].isReified()) {
-                    val message = "${describe(new, capitalize = true)} made type variable ${newTypes[i].simpleName()} reified: incompatible change"
+                    val message = "${describe(
+                        new,
+                        capitalize = true
+                    )} made type variable ${newTypes[i].simpleName()} reified: incompatible change"
                     report(Errors.CHANGED_THROWS, new, message)
                 }
             }
