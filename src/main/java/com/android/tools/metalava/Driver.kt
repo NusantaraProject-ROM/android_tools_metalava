@@ -676,7 +676,7 @@ private fun loadFromSources(): Codebase {
 
     val sources = if (options.sources.isEmpty()) {
         if (options.verbose) {
-            options.stdout.println("No source files specified: recursively including all sources found in the source path")
+            options.stdout.println("No source files specified: recursively including all sources found in the source path (${options.sourcePath.joinToString()}})")
         }
         gatherSources(options.sourcePath)
     } else {
@@ -738,10 +738,12 @@ internal fun parseSources(sources: List<File>, description: String): PsiBasedCod
         options.javaLanguageLevel
 
     val joined = mutableListOf<File>()
-    joined.addAll(options.sourcePath.map { it.absoluteFile })
+    joined.addAll(options.sourcePath.mapNotNull { if (it.path.isNotBlank()) it.absoluteFile else null })
     joined.addAll(options.classpath.map { it.absoluteFile })
     // Add in source roots implied by the source files
-    extractRoots(options.sources, joined)
+    val sourceRoots = mutableListOf<File>()
+    extractRoots(options.sources, sourceRoots)
+    joined.addAll(sourceRoots)
 
     // Create project environment with those paths
     projectEnvironment.registerPaths(joined)
@@ -749,7 +751,7 @@ internal fun parseSources(sources: List<File>, description: String): PsiBasedCod
     val kotlinFiles = sources.filter { it.path.endsWith(SdkConstants.DOT_KT) }
     val trace = KotlinLintAnalyzerFacade().analyze(kotlinFiles, joined, project)
 
-    val rootDir = options.sourcePath.firstOrNull() ?: File("").canonicalFile
+    val rootDir = sourceRoots.firstOrNull() ?: options.sourcePath.firstOrNull() ?: File("").canonicalFile
 
     val units = Extractor.createUnitsForFiles(project, sources)
     val packageDocs = gatherHiddenPackagesFromJavaDocs(options.sourcePath)
@@ -948,6 +950,11 @@ fun tick() {
 
 private fun addSourceFiles(list: MutableList<File>, file: File) {
     if (file.isDirectory) {
+        if (java.nio.file.Files.isSymbolicLink(file.toPath())) {
+            reporter.report(Errors.IGNORING_SYMLINK, file,
+                "Ignoring symlink during source file discovery directory traversal")
+            return
+        }
         val files = file.listFiles()
         if (files != null) {
             for (child in files) {
@@ -964,6 +971,10 @@ private fun addSourceFiles(list: MutableList<File>, file: File) {
 fun gatherSources(sourcePath: List<File>): List<File> {
     val sources = Lists.newArrayList<File>()
     for (file in sourcePath) {
+        if (file.path.isBlank()) {
+            // --source-path "" means don't search source path; use "." for pwd
+            continue
+        }
         addSourceFiles(sources, file.absoluteFile)
     }
     return sources
@@ -977,6 +988,12 @@ private fun addHiddenPackages(
     pkg: String
 ) {
     if (file.isDirectory) {
+        // Ignore symbolic links during traversal
+        if (java.nio.file.Files.isSymbolicLink(file.toPath())) {
+            reporter.report(Errors.IGNORING_SYMLINK, file,
+                "Ignoring symlink during package.html discovery directory traversal")
+            return
+        }
         val files = file.listFiles()
         if (files != null) {
             for (child in files) {
@@ -1040,6 +1057,10 @@ private fun gatherHiddenPackagesFromJavaDocs(sourcePath: List<File>): PackageDoc
     val overviewHtml = HashMap<String, String>(10)
     val set = HashSet<String>(100)
     for (file in sourcePath) {
+        if (file.path.isBlank()) {
+            // Ignoring empty paths, which means "no source path search". Use "." for current directory.
+            continue
+        }
         addHiddenPackages(packageComments, overviewHtml, set, file, "")
     }
     return PackageDocs(packageComments, overviewHtml, set)
