@@ -19,6 +19,7 @@ package com.android.tools.metalava
 import com.android.SdkConstants.ATTR_VALUE
 import com.android.tools.metalava.Severity.ERROR
 import com.android.tools.metalava.Severity.HIDDEN
+import com.android.tools.metalava.Severity.INFO
 import com.android.tools.metalava.Severity.INHERIT
 import com.android.tools.metalava.Severity.LINT
 import com.android.tools.metalava.Severity.WARNING
@@ -44,6 +45,12 @@ enum class Severity(private val displayName: String) {
     INHERIT("inherit"),
 
     HIDDEN("hidden"),
+
+    /**
+     * Information level are for issues that are informational only; may or
+     * may not be a problem.
+     */
+    INFO("info"),
 
     /**
      * Lint level means that we encountered inconsistent or broken documentation.
@@ -267,6 +274,7 @@ open class Reporter(private val rootFolder: File? = null) {
             }
             when (effectiveSeverity) {
                 LINT -> sb.append(terminalAttributes(foreground = TerminalColor.CYAN)).append("lint: ")
+                INFO -> sb.append(terminalAttributes(foreground = TerminalColor.CYAN)).append("info: ")
                 WARNING -> sb.append(terminalAttributes(foreground = TerminalColor.YELLOW)).append("warning: ")
                 ERROR -> sb.append(terminalAttributes(foreground = TerminalColor.RED)).append("error: ")
                 INHERIT, HIDDEN -> {
@@ -283,6 +291,7 @@ open class Reporter(private val rootFolder: File? = null) {
                 // according to doclava1 there are some people or tools parsing old format
                 when (effectiveSeverity) {
                     LINT -> sb.append("lint ")
+                    INFO -> sb.append("info ")
                     WARNING -> sb.append("warning ")
                     ERROR -> sb.append("error ")
                     INHERIT, HIDDEN -> {
@@ -293,6 +302,7 @@ open class Reporter(private val rootFolder: File? = null) {
             } else {
                 when (effectiveSeverity) {
                     LINT -> sb.append("lint: ")
+                    INFO -> sb.append("info: ")
                     WARNING -> sb.append("warning: ")
                     ERROR -> sb.append("error: ")
                     INHERIT, HIDDEN -> {
