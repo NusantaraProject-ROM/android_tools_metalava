@@ -540,12 +540,18 @@ class Options(
 
                 ARG_SOURCE_PATH, "--sources", "--sourcepath", "-sourcepath" -> {
                     val path = getValue(args, ++index)
-                    if (path.endsWith(SdkConstants.DOT_JAVA)) {
-                        throw DriverException(
-                            "$arg should point to a source root directory, not a source file ($path)"
-                        )
+                    if (path.isBlank()) {
+                        // Don't compute absolute path; we want to skip this file later on.
+                        // For current directory one should use ".", not "".
+                        mutableSourcePath.add(File(""))
+                    } else {
+                        if (path.endsWith(SdkConstants.DOT_JAVA)) {
+                            throw DriverException(
+                                "$arg should point to a source root directory, not a source file ($path)"
+                            )
+                        }
+                        mutableSourcePath.addAll(stringToExistingDirsOrJars(path))
                     }
-                    mutableSourcePath.addAll(stringToExistingDirsOrJars(path))
                 }
 
                 ARG_SOURCE_FILES -> {

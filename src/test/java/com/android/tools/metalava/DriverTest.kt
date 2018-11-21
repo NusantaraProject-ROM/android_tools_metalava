@@ -319,7 +319,12 @@ abstract class DriverTest {
         /**
          * Signature file format
          */
-        format: Int? = null
+        format: Int? = null,
+        /**
+         * Hook for performing additional initialization of the project
+         * directory
+         */
+        projectSetup: ((File) -> Unit)? = null
     ) {
         // Ensure different API clients don't interfere with each other
         try {
@@ -843,6 +848,9 @@ abstract class DriverTest {
         } else {
             emptyArray()
         }
+
+        // Run optional additional setup steps on the project directory
+        projectSetup?.invoke(project)
 
         val actualOutput = runDriver(
             ARG_NO_COLOR,

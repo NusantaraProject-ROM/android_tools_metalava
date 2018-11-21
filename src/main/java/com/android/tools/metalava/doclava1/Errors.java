@@ -29,6 +29,7 @@ import java.util.Map;
 import static com.android.sdklib.SdkVersionInfo.underlinesToCamelCase;
 import static com.android.tools.metalava.Severity.ERROR;
 import static com.android.tools.metalava.Severity.HIDDEN;
+import static com.android.tools.metalava.Severity.INFO;
 import static com.android.tools.metalava.Severity.INHERIT;
 import static com.android.tools.metalava.Severity.LINT;
 import static com.android.tools.metalava.Severity.WARNING;
@@ -223,6 +224,7 @@ public class Errors {
     public static final Error INVALID_NULLABILITY_ANNOTATION = new Error(157, ERROR);
     // Temporarily hidden until source code is updated to be compliant
     public static final Error REFERENCES_HIDDEN = new Error(158, HIDDEN);
+    public static final Error IGNORING_SYMLINK = new Error(159, INFO);
 
     static {
         // Attempt to initialize error names based on the field names
