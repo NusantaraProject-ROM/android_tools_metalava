@@ -375,7 +375,7 @@ interface AnnotationItem {
 
                 "java.lang.Deprecated", // tracked separately as a pseudo-modifier
 
-                    // Below this when-statement we perform the correct lookup: check API predicate, and check
+                // Below this when-statement we perform the correct lookup: check API predicate, and check
                 // that retention is class or runtime, but we've hardcoded the answers here
                 // for some common annotations.
 
@@ -497,7 +497,8 @@ interface AnnotationItem {
 
             // Constant field not initialized to null?
             if (item is FieldItem &&
-                (item.isEnumConstant() || item.modifiers.isFinal() && item.initialValue(false) != null)) {
+                (item.isEnumConstant() || item.modifiers.isFinal() && item.initialValue(false) != null)
+            ) {
                 // Assigned to constant: not nullable
                 nullable = false
             }
@@ -511,7 +512,8 @@ interface AnnotationItem {
             if (item is MethodItem && item.name() == "toString" && item.parameters().isEmpty()) {
                 nullable = false
             } else if (item is ParameterItem && item.containingMethod().name() == "equals" &&
-                item.containingMethod().parameters().size == 1) {
+                item.containingMethod().parameters().size == 1
+            ) {
                 nullable = true
             }
 

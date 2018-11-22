@@ -117,6 +117,7 @@ interface ModifierList {
             options.showSingleAnnotations.contains(it.qualifiedName())
         }
     }
+
     /**
      * Returns true if this modifier list contains any annotations explicitly passed in
      * via [Options.hideAnnotations]

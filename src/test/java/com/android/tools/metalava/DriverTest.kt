@@ -388,7 +388,7 @@ abstract class DriverTest {
                 sourcePathDir.mkdirs()
                 assert(sourceFiles.isEmpty()) { "Shouldn't combine sources with signature file loads" }
                 val signatureFile = File(project, "load-api.txt")
-                Files.asCharSink(signatureFile, Charsets.UTF_8).write(signatureSource.trimIndent())
+                signatureFile.writeText(signatureSource.trimIndent())
                 if (includeStrippedSuperclassWarnings) {
                     arrayOf(signatureFile.path)
                 } else {
@@ -426,7 +426,7 @@ abstract class DriverTest {
 
         val mergeAnnotationsArgs = if (mergeXmlAnnotations != null) {
             val merged = File(project, "merged-annotations.xml")
-            Files.asCharSink(merged, Charsets.UTF_8).write(mergeXmlAnnotations.trimIndent())
+            merged.writeText(mergeXmlAnnotations.trimIndent())
             arrayOf(ARG_MERGE_QUALIFIER_ANNOTATIONS, merged.path)
         } else {
             emptyArray()
@@ -434,7 +434,7 @@ abstract class DriverTest {
 
         val signatureAnnotationsArgs = if (mergeSignatureAnnotations != null) {
             val merged = File(project, "merged-annotations.txt")
-            Files.asCharSink(merged, Charsets.UTF_8).write(mergeSignatureAnnotations.trimIndent())
+            merged.writeText(mergeSignatureAnnotations.trimIndent())
             arrayOf(ARG_MERGE_QUALIFIER_ANNOTATIONS, merged.path)
         } else {
             emptyArray()
@@ -442,7 +442,7 @@ abstract class DriverTest {
 
         val javaStubAnnotationsArgs = if (mergeJavaStubAnnotations != null) {
             val merged = File(project, "merged-qualifier-annotations.java")
-            Files.asCharSink(merged, Charsets.UTF_8).write(mergeJavaStubAnnotations.trimIndent())
+            merged.writeText(mergeJavaStubAnnotations.trimIndent())
             arrayOf(ARG_MERGE_QUALIFIER_ANNOTATIONS, merged.path)
         } else {
             emptyArray()
@@ -450,7 +450,7 @@ abstract class DriverTest {
 
         val inclusionAnnotationsArgs = if (mergeInclusionAnnotations != null) {
             val merged = File(project, "merged-inclusion-annotations.java")
-            Files.asCharSink(merged, Charsets.UTF_8).write(mergeInclusionAnnotations.trimIndent())
+            merged.writeText(mergeInclusionAnnotations.trimIndent())
             arrayOf(ARG_MERGE_INCLUSION_ANNOTATIONS, merged.path)
         } else {
             emptyArray()
@@ -462,7 +462,7 @@ abstract class DriverTest {
                 jar
             } else {
                 val file = File(project, "current-api.txt")
-                Files.asCharSink(file, Charsets.UTF_8).write(checkCompatibilityApi.trimIndent())
+                file.writeText(checkCompatibilityApi.trimIndent())
                 file
             }
         } else {
@@ -475,7 +475,7 @@ abstract class DriverTest {
                 jar
             } else {
                 val file = File(project, "released-api.txt")
-                Files.asCharSink(file, Charsets.UTF_8).write(checkCompatibilityApiReleased.trimIndent())
+                file.writeText(checkCompatibilityApiReleased.trimIndent())
                 file
             }
         } else {
@@ -488,7 +488,7 @@ abstract class DriverTest {
                 jar
             } else {
                 val file = File(project, "removed-current-api.txt")
-                Files.asCharSink(file, Charsets.UTF_8).write(checkCompatibilityRemovedApiCurrent.trimIndent())
+                file.writeText(checkCompatibilityRemovedApiCurrent.trimIndent())
                 file
             }
         } else {
@@ -501,7 +501,7 @@ abstract class DriverTest {
                 jar
             } else {
                 val file = File(project, "removed-released-api.txt")
-                Files.asCharSink(file, Charsets.UTF_8).write(checkCompatibilityRemovedApiReleased.trimIndent())
+                file.writeText(checkCompatibilityRemovedApiReleased.trimIndent())
                 file
             }
         } else {
@@ -514,7 +514,7 @@ abstract class DriverTest {
                 jar
             } else {
                 val file = File(project, "stable-api.txt")
-                Files.asCharSink(file, Charsets.UTF_8).write(migrateNullsApi.trimIndent())
+                file.writeText(migrateNullsApi.trimIndent())
                 file
             }
         } else {
@@ -523,7 +523,7 @@ abstract class DriverTest {
 
         val manifestFileArgs = if (manifest != null) {
             val file = File(project, "manifest.xml")
-            Files.asCharSink(file, Charsets.UTF_8).write(manifest.trimIndent())
+            file.writeText(manifest.trimIndent())
             arrayOf(ARG_MANIFEST, file.path)
         } else {
             emptyArray()
@@ -750,7 +750,7 @@ abstract class DriverTest {
         val applyApiLevelsXmlArgs = if (applyApiLevelsXml != null) {
             ApiLookup::class.java.getDeclaredMethod("dispose").apply { isAccessible = true }.invoke(null)
             applyApiLevelsXmlFile = temporaryFolder.newFile("api-versions.xml")
-            Files.asCharSink(applyApiLevelsXmlFile!!, Charsets.UTF_8).write(applyApiLevelsXml.trimIndent())
+            applyApiLevelsXmlFile?.writeText(applyApiLevelsXml.trimIndent())
             arrayOf(ARG_APPLY_API_LEVELS, applyApiLevelsXmlFile.path)
         } else {
             emptyArray()
@@ -800,7 +800,7 @@ abstract class DriverTest {
             var index = 1
             for ((artifactId, signatures) in artifacts) {
                 val signatureFile = temporaryFolder.newFile("signature-file-$index.txt")
-                Files.asCharSink(signatureFile, Charsets.UTF_8).write(signatures.trimIndent())
+                signatureFile.writeText(signatures.trimIndent())
                 index++
 
                 args.add(ARG_REGISTER_ARTIFACT)
@@ -835,7 +835,7 @@ abstract class DriverTest {
         val validateNullablityFromListFile: File?
         val validateNullabilityFromListArgs = if (validateNullabilityFromList != null) {
             validateNullablityFromListFile = temporaryFolder.newFile("validate-nullability-classes.txt")
-            Files.asCharSink(validateNullablityFromListFile, Charsets.UTF_8).write(validateNullabilityFromList)
+            validateNullablityFromListFile.writeText(validateNullabilityFromList)
             arrayOf(
                 ARG_VALIDATE_NULLABILITY_FROM_LIST, validateNullablityFromListFile.path
             )
@@ -939,8 +939,10 @@ abstract class DriverTest {
         }
 
         if (apiXml != null && apiXmlFile != null) {
-            assertTrue("${apiXmlFile.path} does not exist even though $ARG_XML_API was used",
-                apiXmlFile.exists())
+            assertTrue(
+                "${apiXmlFile.path} does not exist even though $ARG_XML_API was used",
+                apiXmlFile.exists()
+            )
             val actualText = readFile(apiXmlFile, stripBlankLines, trim)
             assertEquals(stripComments(apiXml, stripLineComments = false).trimIndent(), actualText)
             // Make sure we can read back the files we write
@@ -951,8 +953,10 @@ abstract class DriverTest {
             for (i in 0 until convertToJDiff.size) {
                 val expected = convertToJDiff[i].second
                 val converted = convertToJDiffFiles[i].second
-                assertTrue("${converted.path} does not exist even though $ARG_CONVERT_TO_JDIFF was used",
-                    converted.exists())
+                assertTrue(
+                    "${converted.path} does not exist even though $ARG_CONVERT_TO_JDIFF was used",
+                    converted.exists()
+                )
                 val actualText = readFile(converted, stripBlankLines, trim)
                 parseDocument(converted.readText(Charsets.UTF_8), false)
                 assertEquals(stripComments(expected, stripLineComments = false).trimIndent(), actualText)
@@ -1512,25 +1516,26 @@ abstract class DriverTest {
             else -> if (argument.startsWith("--")) argument.substring(1) else argument
         }
 
-        val showAnnotationArgsDoclava1: Array<String> = if (showAnnotationArgs.isNotEmpty() || extraArguments.isNotEmpty()) {
-            val shown = mutableListOf<String>()
-            extraArguments.forEachIndexed { index, s ->
-                if (s == ARG_SHOW_ANNOTATION) {
-                    shown += "-showAnnotation"
-                    shown += extraArguments[index + 1]
+        val showAnnotationArgsDoclava1: Array<String> =
+            if (showAnnotationArgs.isNotEmpty() || extraArguments.isNotEmpty()) {
+                val shown = mutableListOf<String>()
+                extraArguments.forEachIndexed { index, s ->
+                    if (s == ARG_SHOW_ANNOTATION) {
+                        shown += "-showAnnotation"
+                        shown += extraArguments[index + 1]
+                    }
                 }
-            }
-            showAnnotationArgs.forEach { s ->
-                shown += if (s == ARG_SHOW_ANNOTATION) {
-                    "-showAnnotation"
-                } else {
-                    s
+                showAnnotationArgs.forEach { s ->
+                    shown += if (s == ARG_SHOW_ANNOTATION) {
+                        "-showAnnotation"
+                    } else {
+                        s
+                    }
                 }
+                shown.toTypedArray()
+            } else {
+                emptyArray()
             }
-            shown.toTypedArray()
-        } else {
-            emptyArray()
-        }
         val hideAnnotationArgsDoclava1: Array<String> = if (extraArguments.isNotEmpty()) {
             val hidden = mutableListOf<String>()
             extraArguments.forEachIndexed { index, s ->

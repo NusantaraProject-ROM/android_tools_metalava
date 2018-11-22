@@ -34,13 +34,11 @@ import com.android.tools.metalava.model.psi.EXPAND_DOCUMENTATION
 import com.android.tools.metalava.model.psi.PsiClassItem
 import com.android.tools.metalava.model.psi.trimDocIndent
 import com.android.tools.metalava.model.visitors.ApiVisitor
-import com.google.common.io.Files
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
 import java.io.PrintWriter
-import kotlin.text.Charsets.UTF_8
 
 class StubWriter(
     private val codebase: Codebase,
@@ -81,7 +79,7 @@ class StubWriter(
         } else {
             sourceList.toString()
         }
-        Files.asCharSink(target, UTF_8).write(contents)
+        target.writeText(contents)
     }
 
     private fun startFile(sourceFile: File) {

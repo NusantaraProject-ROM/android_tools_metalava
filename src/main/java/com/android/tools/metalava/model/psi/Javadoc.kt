@@ -538,7 +538,8 @@ fun containsLinkTags(documentation: String): Boolean {
             !documentation.startsWith("@param", index) &&
             !documentation.startsWith("@deprecated", index) &&
             !documentation.startsWith("@inheritDoc", index) &&
-            !documentation.startsWith("@return", index)) {
+            !documentation.startsWith("@return", index)
+        ) {
             return true
         }
 

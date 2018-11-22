@@ -81,7 +81,7 @@ class NullabilityAnnotationsValidator {
     fun validateAll(codebase: Codebase, topLevelClassNames: List<String>) {
         for (topLevelClassName in topLevelClassNames) {
             val topLevelClass = codebase.findClass(topLevelClassName)
-                    ?: throw DriverException("Trying to validate nullability annotations for class $topLevelClassName which could not be found in main codebase")
+                ?: throw DriverException("Trying to validate nullability annotations for class $topLevelClassName which could not be found in main codebase")
             // Visit methods to check their return type, and parameters to check them. Don't visit
             // constructors as we don't want to check their return types. This visits members of
             // inner classes as well.
@@ -212,8 +212,8 @@ class NullabilityAnnotationsValidator {
 
         // Non-fatal issues are written to the warnings .txt file if present, else logged.
         if (warningsTxtFile != null) {
-            PrintWriter(Files.asCharSink(warningsTxtFile, Charsets.UTF_8).openBufferedStream()).use {
-                w -> nonFatalIssues.forEach { w.println(it) }
+            PrintWriter(Files.asCharSink(warningsTxtFile, Charsets.UTF_8).openBufferedStream()).use { w ->
+                nonFatalIssues.forEach { w.println(it) }
             }
         } else {
             nonFatalIssues.forEach { reporter.warning(it.method, "Nullability issue: $it") }
@@ -222,4 +222,6 @@ class NullabilityAnnotationsValidator {
 }
 
 private fun MethodItem.isEnumValueOfString() =
-    containingClass().isEnum() && name() == "valueOf" && parameters().map { it.type().toTypeString() } == listOf("java.lang.String")
+    containingClass().isEnum() && name() == "valueOf" && parameters().map {
+        it.type().toTypeString()
+    } == listOf("java.lang.String")
