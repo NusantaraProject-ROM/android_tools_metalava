@@ -45,7 +45,6 @@ import java.util.zip.ZipOutputStream
  * package private when compiled and packaged on their own such that annotation processors
  * can find them. See b/110532131 for details.
  */
-
 class RewriteAnnotations {
     /** Modifies annotation source files such that they are package private */
     fun modifyAnnotationSources(codebase: Codebase?, source: File, target: File, pkg: String = "") {

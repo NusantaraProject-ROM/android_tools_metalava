@@ -84,20 +84,23 @@ class AnnotationsMerger(
     /** Merge annotations which will appear in the output API. */
     fun mergeQualifierAnnotations(files: List<File>) {
         mergeAll(
-                files,
-                ::mergeQualifierAnnotationsFromFile,
-                ::mergeAndValidateQualifierAnnotationsFromJavaStubsCodebase)
+            files,
+            ::mergeQualifierAnnotationsFromFile,
+            ::mergeAndValidateQualifierAnnotationsFromJavaStubsCodebase
+        )
     }
 
     /** Merge annotations which control what is included in the output API. */
     fun mergeInclusionAnnotations(files: List<File>) {
         mergeAll(
-                files,
-                {
-                    throw DriverException(
-                            "External inclusion annotations files must be .java, found ${it.path}")
-                },
-                ::mergeInclusionAnnotationsFromCodebase)
+            files,
+            {
+                throw DriverException(
+                    "External inclusion annotations files must be .java, found ${it.path}"
+                )
+            },
+            ::mergeInclusionAnnotationsFromCodebase
+        )
     }
 
     private fun mergeAll(
@@ -230,7 +233,8 @@ class AnnotationsMerger(
         if (options.validateNullabilityFromMergedStubs) {
             options.nullabilityAnnotationsValidator?.validateAll(
                 codebase,
-                javaStubsCodebase.getTopLevelClassesFromSource().map(ClassItem::qualifiedName))
+                javaStubsCodebase.getTopLevelClassesFromSource().map(ClassItem::qualifiedName)
+            )
         }
     }
 

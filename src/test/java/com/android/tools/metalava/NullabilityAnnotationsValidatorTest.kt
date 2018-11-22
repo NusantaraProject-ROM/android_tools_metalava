@@ -154,7 +154,7 @@ class NullabilityAnnotationsValidatorTest : DriverTest() {
         check(
             sourceFiles = *arrayOf(
                 java(
-                """
+                    """
                         package test.pkg;
 
                         public interface Appendable {
@@ -254,22 +254,22 @@ class NullabilityAnnotationsValidatorTest : DriverTest() {
                             T get(int index);
                         }
                     """
+                ),
+                libcoreNullableSource
             ),
-            libcoreNullableSource
-        ),
-        compatibilityMode = false,
-        outputKotlinStyleNulls = false,
-        omitCommonPackages = false,
-        extraArguments = arrayOf(ARG_VALIDATE_NULLABILITY_FROM_MERGED_STUBS),
-        validateNullabilityFromList =
+            compatibilityMode = false,
+            outputKotlinStyleNulls = false,
+            omitCommonPackages = false,
+            extraArguments = arrayOf(ARG_VALIDATE_NULLABILITY_FROM_MERGED_STUBS),
+            validateNullabilityFromList =
             """
                 # a comment, then a blank line, then the class to validate
 
                 test.pkg.Appendable
             """,
-        validateNullability = setOf(
-            "WARNING: method test.pkg.Appendable.append(CharSequence), return value, MISSING"
+            validateNullability = setOf(
+                "WARNING: method test.pkg.Appendable.append(CharSequence), return value, MISSING"
+            )
         )
-    )
-  }
+    }
 }

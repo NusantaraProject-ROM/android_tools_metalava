@@ -319,8 +319,8 @@ class AnnotationStatistics(val api: Codebase) {
             sorted,
             {
                 val member = it as MemberItem
-                "${member.containingClass().simpleName()}.${member.name()}${if (member is MethodItem) "(${member.parameters().joinToString {
-                    parameter -> parameter.type().toSimpleType()
+                "${member.containingClass().simpleName()}.${member.name()}${if (member is MethodItem) "(${member.parameters().joinToString { parameter ->
+                    parameter.type().toSimpleType()
                 }})" else ""}"
             },
             { used[it]!! },
