@@ -1156,7 +1156,8 @@ class DocAnalyzerTest : DriverTest() {
             checkDoclava1 = false,
             sourceFiles = *arrayOf(
                 source("src/overview.html", "<html>My overview docs</html>"),
-                source("src/test/visible/package.html",
+                source(
+                    "src/test/visible/package.html",
                     """
                     <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
                     <!-- not a body tag: <body> -->

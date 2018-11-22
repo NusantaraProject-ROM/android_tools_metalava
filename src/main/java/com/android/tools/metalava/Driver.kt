@@ -402,7 +402,7 @@ private fun processFlags() {
                     path
                 }
             }
-            Files.asCharSink(file, UTF_8).write(contents)
+            file.writeText(contents)
         }
         options.stubsSourceList?.let(writeStubsFile)
         options.docStubsSourceList?.let(writeStubsFile)

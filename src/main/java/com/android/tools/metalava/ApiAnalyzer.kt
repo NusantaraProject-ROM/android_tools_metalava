@@ -1041,8 +1041,12 @@ class ApiAnalyzer(
         }
 
         if ((cl.isHiddenOrRemoved() || cl.isPackagePrivate) && !cl.isTypeParameter) {
-            reporter.report(Errors.REFERENCES_HIDDEN, from,
-                "Class ${cl.qualifiedName()} is ${if (cl.isHiddenOrRemoved()) "hidden" else "not public"} but was referenced ($usage) from public ${from.describe(false)}")
+            reporter.report(
+                Errors.REFERENCES_HIDDEN, from,
+                "Class ${cl.qualifiedName()} is ${if (cl.isHiddenOrRemoved()) "hidden" else "not public"} but was referenced ($usage) from public ${from.describe(
+                    false
+                )}"
+            )
         }
 
         if (!notStrippable.add(cl)) {
@@ -1130,11 +1134,25 @@ class ApiAnalyzer(
                 continue
             }
             for (typeParameterClass in method.typeArgumentClasses()) {
-                cantStripThis(typeParameterClass, filter, notStrippable, stubImportPackages, method, "as type parameter")
+                cantStripThis(
+                    typeParameterClass,
+                    filter,
+                    notStrippable,
+                    stubImportPackages,
+                    method,
+                    "as type parameter"
+                )
             }
             for (parameter in method.parameters()) {
                 for (parameterTypeClass in parameter.type().typeArgumentClasses()) {
-                    cantStripThis(parameterTypeClass, filter, notStrippable, stubImportPackages, parameter, "as parameter type")
+                    cantStripThis(
+                        parameterTypeClass,
+                        filter,
+                        notStrippable,
+                        stubImportPackages,
+                        parameter,
+                        "as parameter type"
+                    )
                     for (tcl in parameter.type().typeArgumentClasses()) {
                         if (tcl == parameterTypeClass) {
                             continue
@@ -1146,7 +1164,14 @@ class ApiAnalyzer(
                                     "in ${method.containingClass().qualifiedName()}.${method.name()}()"
                             )
                         } else {
-                            cantStripThis(tcl, filter, notStrippable, stubImportPackages, parameter, "as type parameter")
+                            cantStripThis(
+                                tcl,
+                                filter,
+                                notStrippable,
+                                stubImportPackages,
+                                parameter,
+                                "as type parameter"
+                            )
                         }
                     }
                 }
@@ -1163,7 +1188,14 @@ class ApiAnalyzer(
                         if (tyItem == returnTypeClass) {
                             continue
                         }
-                        cantStripThis(tyItem, filter, notStrippable, stubImportPackages, method, "as return type parameter")
+                        cantStripThis(
+                            tyItem,
+                            filter,
+                            notStrippable,
+                            stubImportPackages,
+                            method,
+                            "as return type parameter"
+                        )
                     }
                 }
             }
