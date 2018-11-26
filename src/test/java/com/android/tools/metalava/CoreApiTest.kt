@@ -83,7 +83,6 @@ class CoreApiTest : DriverTest() {
                 }
                 package test.pkg {
                   public class Exposed {
-                    ctor public Exposed();
                     method public void exposed();
                     field public java.lang.String exposed;
                   }
@@ -106,7 +105,7 @@ class CoreApiTest : DriverTest() {
                  */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class Exposed {
-                public Exposed() { throw new RuntimeException("Stub!"); }
+                Exposed() { throw new RuntimeException("Stub!"); }
                 public void exposed() { throw new RuntimeException("Stub!"); }
                 public java.lang.String exposed;
                 }

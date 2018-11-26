@@ -615,11 +615,7 @@ class ApiAnalyzer(
                     val containingClass = method.containingClass()
                     if (containingClass.hidden) {
                         method.hidden = true
-                    } else if (containingClass.originallyHidden && containingClass.modifiers.hasShowSingleAnnotation() &&
-                        // As a special case, we leave default constructors public if the surrounding class is
-                        // unhidden
-                        !method.isImplicitConstructor()
-                    ) {
+                    } else if (containingClass.originallyHidden && containingClass.modifiers.hasShowSingleAnnotation()) {
                         // This is a member in a class that was hidden but then unhidden;
                         // but it was unhidden by a non-recursive (single) show annotation, so
                         // don't inherit the show annotation into this item.
