@@ -31,6 +31,7 @@ import com.android.tools.metalava.model.text.TextTypeParameterList;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import kotlin.Pair;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -80,7 +81,7 @@ public class ApiFile {
             if ("package".equals(token)) {
                 parsePackage(api, tokenizer);
             } else {
-                throw new ApiParseException("expected package got " + token, tokenizer.getLine());
+                throw new ApiParseException("expected package got " + token, tokenizer);
             }
         }
 
@@ -101,7 +102,7 @@ public class ApiFile {
         pkg = new TextPackageItem(api, name, tokenizer.pos());
         token = tokenizer.requireToken();
         if (!"{".equals(token)) {
-            throw new ApiParseException("expected '{' got " + token, tokenizer.getLine());
+            throw new ApiParseException("expected '{' got " + token, tokenizer);
         }
         while (true) {
             token = tokenizer.requireToken();
@@ -201,7 +202,7 @@ public class ApiFile {
             ext = JAVA_LANG_ENUM;
             token = tokenizer.requireToken();
         } else {
-            throw new ApiParseException("missing class or interface. got: " + token, tokenizer.getLine());
+            throw new ApiParseException("missing class or interface. got: " + token, tokenizer);
         }
         assertIdent(tokenizer, token);
         name = token;
@@ -232,7 +233,11 @@ public class ApiFile {
         }
         // Resolve superclass after done parsing
         api.mapClassToSuper(cl, ext);
-        if ("implements".equals(token)) {
+        if ("implements".equals(token) || "extends".equals(token) ||
+                isInterface && ext != null && !token.equals("{")) {
+            if (!token.equals("implements") && !token.equals("extends")) {
+                api.mapClassToInterface(cl, token);
+            }
             while (true) {
                 token = tokenizer.requireToken();
                 if ("{".equals(token)) {
@@ -253,7 +258,7 @@ public class ApiFile {
             cl.setIsAnnotationType(true);
         }
         if (!"{".equals(token)) {
-            throw new ApiParseException("expected {", tokenizer.getLine());
+            throw new ApiParseException("expected {, was " + token, tokenizer);
         }
         token = tokenizer.requireToken();
         while (true) {
@@ -272,31 +277,31 @@ public class ApiFile {
                 token = tokenizer.requireToken();
                 parseField(api, tokenizer, cl, token, true);
             } else {
-                throw new ApiParseException("expected ctor, enum_constant, field or method", tokenizer.getLine());
+                throw new ApiParseException("expected ctor, enum_constant, field or method", tokenizer);
             }
             token = tokenizer.requireToken();
         }
         pkg.addClass(cl);
     }
 
-    private static Pair<String, List<String>> processKotlinTypeSuffix(TextCodebase api, String token, List<String> annotations) throws ApiParseException {
+    private static Pair<String, List<String>> processKotlinTypeSuffix(TextCodebase api, String type, List<String> annotations) throws ApiParseException {
         if (api.getKotlinStyleNulls()) {
-            if (token.endsWith("?")) {
-                token = token.substring(0, token.length() - 1);
+            if (type.endsWith("?")) {
+                type = type.substring(0, type.length() - 1);
                 annotations = mergeAnnotations(annotations, ANDROIDX_NULLABLE);
-            } else if (token.endsWith("!")) {
-                token = token.substring(0, token.length() - 1);
-            } else if (!token.endsWith("!")) {
-                if (!TextTypeItem.Companion.isPrimitive(token)) { // Don't add nullness on primitive types like void
+            } else if (type.endsWith("!")) {
+                type = type.substring(0, type.length() - 1);
+            } else if (!type.endsWith("!")) {
+                if (!TextTypeItem.Companion.isPrimitive(type)) { // Don't add nullness on primitive types like void
                     annotations = mergeAnnotations(annotations, ANDROIDX_NOTNULL);
                 }
             }
-        } else if (token.endsWith("?") || token.endsWith("!")) {
+        } else if (type.endsWith("?") || type.endsWith("!")) {
             throw new ApiParseException("Did you forget to supply --input-kotlin-nulls? Found Kotlin-style null type suffix when parser was not configured " +
-                "to interpret signature file that way: " + token);
+                "to interpret signature file that way: " + type);
         }
         //noinspection unchecked
-        return new Pair<>(token, annotations);
+        return new Pair<>(type, annotations);
     }
 
     private static Pair<String, List<String>> getAnnotations(Tokenizer tokenizer, String token) throws ApiParseException {
@@ -387,7 +392,7 @@ public class ApiFile {
         name = token.substring(token.lastIndexOf('.') + 1); // For inner classes, strip outer classes from name
         token = tokenizer.requireToken();
         if (!"(".equals(token)) {
-            throw new ApiParseException("expected (", tokenizer.getLine());
+            throw new ApiParseException("expected (", tokenizer);
         }
         method = new TextConstructorItem(api, /*typeParameters*/
             name, /*signature*/ cl, isPublic, isProtected, isPrivate, isInternal, false/*isFinal*/,
@@ -397,14 +402,13 @@ public class ApiFile {
             /*overriddenMethod*/ cl.asTypeInfo(),
             /*thrownExceptions*/ tokenizer.pos(), annotations);
         method.setDeprecated(isDeprecated);
-        token = tokenizer.requireToken();
-        parseParameterList(api, tokenizer, method, /*new HashSet<String>(),*/ token);
+        parseParameterList(api, tokenizer, method);
         token = tokenizer.requireToken();
         if ("throws".equals(token)) {
             token = parseThrows(tokenizer, method);
         }
         if (!";".equals(token)) {
-            throw new ApiParseException("expected ; found " + token, tokenizer.getLine());
+            throw new ApiParseException("expected ; found " + token, tokenizer);
         }
         cl.addConstructor(method);
     }
@@ -424,6 +428,8 @@ public class ApiFile {
         boolean isInfix = false;
         boolean isOperator = false;
         boolean isInline = false;
+        boolean isNative = false;
+        boolean isStrictFp = false;
         TextTypeItem returnType;
         String name;
         TextMethodItem method;
@@ -483,6 +489,14 @@ public class ApiFile {
                     isSynchronized = true;
                     token = tokenizer.requireToken();
                     break;
+                case "native":
+                    isNative = true;
+                    token = tokenizer.requireToken();
+                    break;
+                case "strictfp":
+                    isStrictFp = true;
+                    token = tokenizer.requireToken();
+                    break;
                 case "infix":
                     isInfix = true;
                     token = tokenizer.requireToken();
@@ -509,30 +523,56 @@ public class ApiFile {
         Pair<String, List<String>> kotlinTypeSuffix = processKotlinTypeSuffix(api, token, annotations);
         token = kotlinTypeSuffix.getFirst();
         annotations = kotlinTypeSuffix.getSecond();
-        returnType = api.obtainTypeFromString(token, cl, typeParameterList);
+        String returnTypeString = token;
 
         token = tokenizer.requireToken();
+
+        if (returnTypeString.contains("@") && (returnTypeString.indexOf('<') == -1 ||
+                returnTypeString.indexOf('@') < returnTypeString.indexOf('<'))) {
+            //noinspection StringConcatenationInLoop
+            returnTypeString += " " + token;
+            token = tokenizer.requireToken();
+        }
+        while (true) {
+            if (token.contains("@") && (token.indexOf('<') == -1 ||
+                   token.indexOf('@') < token.indexOf('<'))) {
+                // Type-use annotations in type; keep accumulating
+                returnTypeString += " " + token;
+                token = tokenizer.requireToken();
+                if (token.startsWith("[")) { // TODO: This isn't general purpose; make requireToken smarter!
+                    returnTypeString += " " + token;
+                    token = tokenizer.requireToken();
+                }
+            } else {
+                break;
+            }
+        }
+
+        returnType = api.obtainTypeFromString(returnTypeString, cl, typeParameterList);
+
         assertIdent(tokenizer, token);
         name = token;
         method = new TextMethodItem(
             api, name, /*signature*/ cl,
-            isPublic, isProtected, isPrivate, isInternal, isFinal, isStatic, isAbstract/*isAbstract*/,
-            isSynchronized, false/*isNative*/, isDefault/*isDefault*/, isInfix, isOperator, isInline,
+            isPublic, isProtected, isPrivate, isInternal, isFinal, isStatic, isAbstract,
+            isSynchronized, isNative, isDefault, isStrictFp, isInfix, isOperator, isInline,
             returnType, tokenizer.pos(), annotations);
         method.setDeprecated(isDeprecated);
         method.setTypeParameterList(typeParameterList);
         token = tokenizer.requireToken();
         if (!"(".equals(token)) {
-            throw new ApiParseException("expected (", tokenizer.getLine());
+            throw new ApiParseException("expected (, was " + token, tokenizer);
         }
-        token = tokenizer.requireToken();
-        parseParameterList(api, tokenizer, method, /*typeVariableNames,*/ token);
+        parseParameterList(api, tokenizer, method);
         token = tokenizer.requireToken();
         if ("throws".equals(token)) {
             token = parseThrows(tokenizer, method);
         }
+        if ("default".equals(token)) {
+            token = parseDefault(tokenizer, method);
+        }
         if (!";".equals(token)) {
-            throw new ApiParseException("expected ; found " + token, tokenizer.getLine());
+            throw new ApiParseException("expected ; found " + token, tokenizer);
         }
         cl.addMethod(method);
     }
@@ -637,7 +677,7 @@ public class ApiFile {
             token = tokenizer.requireToken();
         }
         if (!";".equals(token)) {
-            throw new ApiParseException("expected ; found " + token, tokenizer.getLine());
+            throw new ApiParseException("expected ; found " + token, tokenizer);
         }
         try {
             v = parseValue(type, val);
@@ -728,13 +768,17 @@ public class ApiFile {
         }
     }
 
-    private static void parseParameterList(TextCodebase api, Tokenizer tokenizer, TextMethodItem method,
-                                           String token) throws ApiParseException {
+    private static void parseParameterList(TextCodebase api, Tokenizer tokenizer, TextMethodItem method)
+                                           throws ApiParseException {
+        String token = tokenizer.requireToken();
         int index = 0;
         while (true) {
             if (")".equals(token)) {
                 return;
             }
+
+            // Each item can be
+            // annotations optional-modifiers type-with-use-annotations-and-generics optional-name optional-equals-default-value
 
             // Metalava: including annotations in file now
             List<String> annotations = null;
@@ -744,19 +788,30 @@ public class ApiFile {
                 annotations = result.component2();
             }
 
-            Pair<String, List<String>> kotlinTypeSuffix = processKotlinTypeSuffix(api, token, annotations);
-            token = kotlinTypeSuffix.getFirst();
-            annotations = kotlinTypeSuffix.getSecond();
-            String type = token;
-            TextTypeItem typeInfo = api.obtainTypeFromString(token);
-
             boolean vararg = false;
-            token = tokenizer.requireToken();
-
             if ("vararg".equals(token)) {
                 vararg = true;
                 token = tokenizer.requireToken();
             }
+
+            // Token should now represent the type
+            String type = token;
+            token = tokenizer.requireToken();
+            if (token.startsWith("@")) {
+                // Type use annotations within the type, which broke up the tokenizer;
+                // put it back together
+                type += " " + token;
+                token = tokenizer.requireToken();
+                if (token.startsWith("[")) { // TODO: This isn't general purpose; make requireToken smarter!
+                    type += " " + token;
+                    token = tokenizer.requireToken();
+                }
+            }
+
+            Pair<String, List<String>> kotlinTypeSuffix = processKotlinTypeSuffix(api, type, annotations);
+            String typeString = kotlinTypeSuffix.getFirst();
+            annotations = kotlinTypeSuffix.getSecond();
+            TextTypeItem typeInfo = api.obtainTypeFromString(typeString);
 
             String name;
             String publicName;
@@ -785,18 +840,32 @@ public class ApiFile {
                 token = tokenizer.requireToken();
             } else if (")".equals(token)) {
             } else {
-                throw new ApiParseException("expected , found " + token, tokenizer.getLine());
+                throw new ApiParseException("expected , or ), found " + token, tokenizer);
             }
 
-            method.addParameter(new TextParameterItem(api, method, name, publicName, defaultValue, index, type,
+            method.addParameter(new TextParameterItem(api, method, name, publicName, defaultValue, index, typeString,
                 typeInfo,
-                vararg || type.endsWith("..."),
+                vararg || typeString.endsWith("..."),
                 tokenizer.pos(),
                 annotations));
-            if (type.endsWith("...")) {
+            if (typeString.endsWith("...")) {
                 method.setVarargs(true);
             }
             index++;
+        }
+    }
+
+    private static String parseDefault(Tokenizer tokenizer, TextMethodItem method)
+        throws ApiParseException {
+        StringBuilder sb = new StringBuilder();
+        while (true) {
+            String token = tokenizer.requireToken();
+            if (";".equals(token)) {
+                method.setAnnotationDefault(sb.toString());
+                return token;
+            } else {
+                sb.append(token);
+            }
         }
     }
 
@@ -809,12 +878,12 @@ public class ApiFile {
                 return token;
             } else if (",".equals(token)) {
                 if (comma) {
-                    throw new ApiParseException("Expected exception, got ','", tokenizer.getLine());
+                    throw new ApiParseException("Expected exception, got ','", tokenizer);
                 }
                 comma = true;
             } else {
                 if (!comma) {
-                    throw new ApiParseException("Expected ',' or ';' got " + token, tokenizer.getLine());
+                    throw new ApiParseException("Expected ',' or ';' got " + token, tokenizer);
                 }
                 comma = false;
                 method.addException(token);
@@ -833,7 +902,7 @@ public class ApiFile {
 
     private static void assertIdent(Tokenizer tokenizer, String token) throws ApiParseException {
         if (!isIdent(token.charAt(0))) {
-            throw new ApiParseException("Expected identifier: " + token, tokenizer.getLine());
+            throw new ApiParseException("Expected identifier: " + token, tokenizer);
         }
     }
 
@@ -930,7 +999,7 @@ public class ApiFile {
                     }
                     final char k = mBuf[mPos];
                     if (k == '\n' || k == '\r') {
-                        throw new ApiParseException("Unexpected newline for \" starting at " + line, mLine);
+                        throw new ApiParseException("Unexpected newline for \" starting at " + line + " in " + mFilename, mLine);
                     }
                     mPos++;
                     switch (state) {
@@ -953,7 +1022,24 @@ public class ApiFile {
             } else {
                 int genericDepth = 0;
                 do {
-                    while (mPos < mBuf.length && !isSpace(mBuf[mPos]) && !isSeparator(mBuf[mPos], parenIsSep)) {
+                    while (mPos < mBuf.length) {
+                        char d = mBuf[mPos];
+                        if (isSpace(d) || isSeparator(d, parenIsSep)) {
+                            break;
+                        } else if (d == '"') {
+                            // String literal in token: skip the full thing
+                            mPos++;
+                            while (mPos < mBuf.length) {
+                                if (mBuf[mPos] == '"') {
+                                    mPos++;
+                                    break;
+                                } else if (mBuf[mPos] == '\\') {
+                                    mPos++;
+                                }
+                                mPos++;
+                            }
+                            continue;
+                        }
                         mPos++;
                     }
                     if (mPos < mBuf.length) {
@@ -974,6 +1060,11 @@ public class ApiFile {
                 }
                 return new String(mBuf, start, mPos - start);
             }
+        }
+
+        @Nullable
+        public String getFileName() {
+            return mFilename;
         }
     }
 

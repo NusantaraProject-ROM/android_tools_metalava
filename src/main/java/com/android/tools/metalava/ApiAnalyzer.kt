@@ -803,6 +803,22 @@ class ApiAnalyzer(
                 // TODO: Check opposite (doc tag but no annotation)
                 // TODO: Other checks
             }
+
+            override fun visitMethod(method: MethodItem) {
+                // Make sure we don't annotate findViewById & getSystemService as @Nullable.
+                // See for example 68914170.
+                val name = method.name()
+                if ((name == "findViewById" || name == "getSystemService") && method.parameters().size == 1 &&
+                    method.modifiers.hasNullnessInfo()
+                ) {
+                    // In master we generate a warning here; in this branch we won't go in
+                    // and remove the assertions
+                    val annotation = method.modifiers.annotations().find { it.isNullable() }
+                    annotation?.let {
+                        method.mutableModifiers().removeAnnotation(it)
+                    }
+                }
+            }
         })
     }
 

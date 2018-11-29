@@ -16,6 +16,7 @@
 
 package com.android.tools.metalava.model.psi
 
+import com.android.tools.metalava.ExtractAnnotations
 import com.android.tools.metalava.compatibility
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.MethodItem
@@ -23,6 +24,7 @@ import com.android.tools.metalava.model.ModifierList
 import com.android.tools.metalava.model.ParameterItem
 import com.android.tools.metalava.model.TypeItem
 import com.android.tools.metalava.model.TypeParameterList
+import com.intellij.psi.PsiAnnotationMethod
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTypesUtil
@@ -211,6 +213,17 @@ open class PsiMethodItem(
         return exceptions
     }
 
+    override fun defaultValue(): String {
+        if (psiMethod is PsiAnnotationMethod) {
+            val value = psiMethod.defaultValue
+            if (value != null) {
+                return ExtractAnnotations.toSourceExpression(value, this)
+            }
+        }
+
+        return super.defaultValue()
+    }
+
     override fun duplicate(targetContainingClass: ClassItem): PsiMethodItem {
         val duplicated = create(codebase, targetContainingClass as PsiClassItem, psiMethod)
 
@@ -250,7 +263,9 @@ open class PsiMethodItem(
         ModifierList.write(
             modifierString, method.modifiers, method, removeAbstract = false,
             removeFinal = false, addPublic = true,
-            onlyIncludeSignatureAnnotations = true
+            onlyIncludeSignatureAnnotations = false,
+            onlyIncludeStubAnnotations = true,
+            onlyIncludeClassRetentionAnnotations = true
         )
         sb.append(modifierString.toString())
 

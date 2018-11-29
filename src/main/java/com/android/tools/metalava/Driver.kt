@@ -144,6 +144,20 @@ private fun exit(exitCode: Int = 0) {
 private fun processFlags() {
     val stopwatch = Stopwatch.createStarted()
 
+    // --copy-annotations?
+    val privateAnnotationsSource = options.privateAnnotationsSource
+    val privateAnnotationsTarget = options.privateAnnotationsTarget
+    if (privateAnnotationsSource != null && privateAnnotationsTarget != null) {
+        val rewrite = RewriteAnnotations()
+        // Support pointing to both stub-annotations and stub-annotations/src/main/java
+        val src = File(privateAnnotationsSource, "src${File.separator}main${File.separator}java")
+        val source = if (src.isDirectory) src else privateAnnotationsSource
+        rewrite.modifyAnnotationSources(source, privateAnnotationsTarget)
+    }
+
+    // --rewrite-annotations?
+    options.rewriteAnnotations?.let { RewriteAnnotations().rewriteAnnotations(it) }
+
     val codebase =
         if (options.sources.size == 1 && options.sources[0].path.endsWith(SdkConstants.DOT_TXT)) {
             loadFromSignatureFiles(
@@ -154,8 +168,10 @@ private fun processFlags() {
             loadFromJarFile(options.apiJar!!)
         } else if (options.sources.size == 1 && options.sources[0].path.endsWith(SdkConstants.DOT_JAR)) {
             loadFromJarFile(options.sources[0])
-        } else {
+        } else if (options.sources.isNotEmpty() || options.sourcePath.isNotEmpty()) {
             loadFromSources()
+        } else {
+            return
         }
     options.manifest?.let { codebase.manifest = it }
 
@@ -323,7 +339,18 @@ private fun processFlags() {
             it, codebase, docStubs = false,
             writeStubList = options.stubsSourceList != null
         )
+
+        val stubAnnotations = options.copyStubAnnotationsFrom
+        if (stubAnnotations != null) {
+            // Support pointing to both stub-annotations and stub-annotations/src/main/java
+            val src = File(stubAnnotations, "src${File.separator}main${File.separator}java")
+            val source = if (src.isDirectory) src else stubAnnotations
+            source.listFiles()?.forEach { file ->
+                RewriteAnnotations().copyAnnotations(file, File(it, file.name))
+            }
+        }
     }
+
     if (options.docStubsDir == null && options.stubsDir == null) {
         val writeStubsFile: (File) -> Unit = { file ->
             val root = File("").absoluteFile
@@ -375,8 +402,8 @@ fun invokeDocumentationTool() {
     if (args.isNotEmpty()) {
         if (!options.quiet) {
             options.stdout.println(
-                "Invoking external documentation tool ${args[0]} with arguments ${
-                args.slice(1 until args.size).joinToString { it }}"
+                "Invoking external documentation tool ${args[0]} with arguments\n\"${
+                args.slice(1 until args.size).joinToString(separator = "\",\n\"") { it }}\""
             )
             options.stdout.flush()
         }

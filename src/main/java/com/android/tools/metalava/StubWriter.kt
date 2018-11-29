@@ -140,7 +140,9 @@ class StubWriter(
                 // Some bug in UAST triggers duplicate nullability annotations
                 // here; make sure the are filtered out
                 filterDuplicates = true,
-                onlyIncludeSignatureAnnotations = true,
+                onlyIncludeSignatureAnnotations = false,
+                onlyIncludeStubAnnotations = true,
+                onlyIncludeClassRetentionAnnotations = true,
                 writer = writer
             )
             writer.println("package ${pkg.qualifiedName()};")
@@ -302,7 +304,9 @@ class StubWriter(
         ModifierList.write(
             writer, modifiers, item, removeAbstract = removeAbstract, removeFinal = removeFinal,
             addPublic = addPublic, includeAnnotations = generateAnnotations,
-            onlyIncludeSignatureAnnotations = true
+            onlyIncludeSignatureAnnotations = false,
+            onlyIncludeStubAnnotations = true,
+            onlyIncludeClassRetentionAnnotations = true
         )
     }
 
@@ -498,6 +502,14 @@ class StubWriter(
         writer.print(method.name())
         generateParameterList(method)
         generateThrowsList(method)
+
+        if (isAnnotation) {
+            val default = method.defaultValue()
+            if (default.isNotEmpty()) {
+                writer.print(" default ")
+                writer.print(default)
+            }
+        }
 
         if (modifiers.isAbstract() && !removeAbstract && !isEnum || isAnnotation || modifiers.isNative()) {
             writer.println(";")

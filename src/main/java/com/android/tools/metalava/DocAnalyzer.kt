@@ -1,6 +1,7 @@
 package com.android.tools.metalava
 
 import com.android.sdklib.SdkVersionInfo
+import com.android.sdklib.repository.AndroidSdkHandler
 import com.android.tools.lint.LintCliClient
 import com.android.tools.lint.checks.ApiLookup
 import com.android.tools.lint.helpers.DefaultJavaEvaluator
@@ -326,7 +327,18 @@ class DocAnalyzer(
 
                         val field = value.resolve()
                         if (field is FieldItem)
-                            sb.append("{@link ${field.containingClass().qualifiedName()}#${field.name()}}")
+                            if (filterReference.test(field)) {
+                                sb.append("{@link ${field.containingClass().qualifiedName()}#${field.name()}}")
+                            } else {
+                                // Typdef annotation references field which isn't part of the API: don't
+                                // try to link to it.
+                                reporter.report(
+                                    Errors.MISSING_TYPEDEF_CONSTANT, item,
+                                    "Typedef references constant which isn't part of the API, skipping in documentation: " +
+                                        "${field.containingClass().qualifiedName()}#${field.name()}"
+                                )
+                                sb.append(field.containingClass().qualifiedName() + "." + field.name())
+                            }
                         else {
                             sb.append(value.toSource())
                         }
@@ -498,6 +510,10 @@ class DocAnalyzer(
                     return applyApiLevelsXml
                 }
                 return super.findResource(relativePath)
+            }
+
+            override fun getSdk(): AndroidSdkHandler? {
+                return null
             }
 
             override fun getCacheDir(name: String?, create: Boolean): File? {

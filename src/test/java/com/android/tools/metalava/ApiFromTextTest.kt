@@ -43,6 +43,111 @@ class ApiFromTextTest : DriverTest() {
     }
 
     @Test
+    fun `Annotation signatures requiring more complicated token matching`() {
+        val source = """
+                package test {
+                  public class MyTest {
+                    method @RequiresPermission(value="android.permission.AUTHENTICATE_ACCOUNTS", apis="..22") public boolean addAccountExplicitly(android.accounts.Account, String, android.os.Bundle);
+                    method @CheckResult(suggest="#enforceCallingOrSelfPermission(String,\"foo\",String)") public abstract int checkCallingOrSelfPermission(@NonNull String);
+                    method @RequiresPermission(anyOf={"android.permission.MANAGE_ACCOUNTS", "android.permission.USE_CREDENTIALS"}, apis="..22") public void invalidateAuthToken(String, String);
+                  }
+                }
+                """
+        check(
+            compatibilityMode = false,
+            outputKotlinStyleNulls = false,
+            signatureSource = source,
+            api = source
+        )
+    }
+
+    @Test
+    fun `Multiple extends`() {
+        val source = """
+                package test {
+                  public static interface PickConstructors extends test.pkg.PickConstructors.AutoCloseable {
+                  }
+                  public interface XmlResourceParser extends org.xmlpull.v1.XmlPullParser android.util.AttributeSet java.lang.AutoCloseable {
+                    method public void close();
+                  }
+                }
+                """
+        check(
+            compatibilityMode = false,
+            outputKotlinStyleNulls = false,
+            signatureSource = source,
+            api = source
+        )
+    }
+
+    @Test
+    fun `Native and strictfp keywords`() {
+        val source = """
+                package test.pkg {
+                  public class MyTest {
+                    method public native float dotWithNormal(float, float, float);
+                    method public static strictfp double toDegrees(double);
+                  }
+                }
+                """
+        check(
+            compatibilityMode = false,
+            outputKotlinStyleNulls = false,
+            signatureSource = source,
+            api = source
+        )
+    }
+
+    @Test
+    fun `Type use annotations`() {
+        check(
+            compatibilityMode = false,
+            outputKotlinStyleNulls = false,
+            signatureSource = """
+                package test.pkg {
+                  public class MyTest {
+                    method public static int codePointAt(char @NonNull [], int);
+                    method @NonNull public java.util.Set<java.util.Map.@NonNull Entry<K,V>> entrySet();
+                    method @NonNull public java.lang.annotation.@NonNull Annotation @NonNull [] getAnnotations();
+                    method @NonNull public abstract java.lang.annotation.@NonNull Annotation @NonNull [] @NonNull [] getParameterAnnotations();
+                    method @NonNull public @NonNull String @NonNull [] split(@NonNull String, int);
+                    method public static char @NonNull [] toChars(int);
+                  }
+                }
+                """,
+            api = """
+                package test.pkg {
+                  public class MyTest {
+                    method public static int codePointAt(char @NonNull [], int);
+                    method @NonNull public java.util.Set<java.util.Map.@NonNull Entry<K,V>> entrySet();
+                    method @NonNull public java.lang.annotation.Annotation @NonNull [] getAnnotations();
+                    method @NonNull public abstract java.lang.annotation.Annotation @NonNull [] @NonNull [] getParameterAnnotations();
+                    method @NonNull public String @NonNull [] split(@NonNull String, int);
+                    method public static char @NonNull [] toChars(int);
+                  }
+                }
+            """
+        )
+    }
+
+    @Test
+    fun `Vararg modifier`() {
+        val source = """
+                package test.pkg {
+                  public final class Foo {
+                    ctor public Foo();
+                    method public void error(int p = "42", Integer int2 = "null", int p1 = "42", vararg String args);
+                  }
+                }
+                """
+        check(
+            compatibilityMode = false,
+            outputKotlinStyleNulls = false,
+            signatureSource = source
+        )
+    }
+
+    @Test
     fun `Infer fully qualified names from shorter names`() {
         check(
             compatibilityMode = true,
@@ -350,6 +455,27 @@ class ApiFromTextTest : DriverTest() {
             compatibilityMode = false,
             inputKotlinStyleNulls = true,
             omitCommonPackages = false,
+            signatureSource = source,
+            api = source
+        )
+    }
+
+    @Test
+    fun `Signatures with default annotation method values`() {
+        val source = """
+                package libcore.util {
+                  public @interface NonNull {
+                    method public abstract int from() default java.lang.Integer.MIN_VALUE;
+                    method public abstract double fromWithCast() default (double)java.lang.Float.NEGATIVE_INFINITY;
+                    method public abstract String! myString() default "This is a \"string\"";
+                    method public abstract int to() default java.lang.Integer.MAX_VALUE;
+                  }
+                }
+                """
+
+        check(
+            inputKotlinStyleNulls = true,
+            compatibilityMode = false,
             signatureSource = source,
             api = source
         )

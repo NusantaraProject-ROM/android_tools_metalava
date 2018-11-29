@@ -176,6 +176,15 @@ Statistics:
 Extracting Annotations:
 --extract-annotations <zipfile>        Extracts source annotations from the source files
                                        and writes them into the given zip file
+--include-annotation-classes <dir>     Copies the given stub annotation source files into
+                                       the generated stub sources; <dir> is typically
+                                       metalava/stub-annotations/src/main/java/.
+--rewrite-annotations <dir/jar>        For a bytecode folder or output jar, rewrites the
+                                       androidx annotations to be package private
+--include-source-retention             If true, include source-retention annotations in
+                                       the stub files. Does not apply to signature files.
+                                       Source retention annotations are extracted into the
+                                       external annotations files instead.
 
 Injecting API Levels:
 --apply-api-levels <api-versions.xml>  Reads an XML file containing API level descriptions

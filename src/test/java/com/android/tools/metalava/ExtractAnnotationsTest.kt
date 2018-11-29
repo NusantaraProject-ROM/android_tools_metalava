@@ -25,9 +25,10 @@ class ExtractAnnotationsTest : DriverTest() {
     @Test
     fun `Check java typedef extraction and warning about non-source retention of typedefs`() {
         check(
+            includeSourceRetentionAnnotations = false,
             sourceFiles = *arrayOf(
                 java(
-            """
+                    """
                     package test.pkg;
 
                     import android.annotation.IntDef;
@@ -75,7 +76,8 @@ class ExtractAnnotationsTest : DriverTest() {
                 intRangeAnnotationSource
             ),
             warnings = "src/test/pkg/IntDefTest.java:11: error: This typedef annotation class should have @Retention(RetentionPolicy.SOURCE) [AnnotationExtraction:146]",
-            extractAnnotations = mapOf("test.pkg" to """
+            extractAnnotations = mapOf(
+                "test.pkg" to """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <root>
                   <item name="test.pkg.IntDefTest void setFlags(java.lang.Object, int) 1">
@@ -104,6 +106,7 @@ class ExtractAnnotationsTest : DriverTest() {
     @Test
     fun `Check Kotlin and referencing hidden constants from typedef`() {
         check(
+            includeSourceRetentionAnnotations = false,
             sourceFiles = *arrayOf(
                 kotlin(
                     """
@@ -151,24 +154,187 @@ class ExtractAnnotationsTest : DriverTest() {
                 longDefAnnotationSource
             ),
             warnings = "src/test/pkg/LongDefTest.kt:12: error: Typedef class references hidden field field LongDefTestKt.HIDDEN: removed from typedef metadata [HiddenTypedefConstant:148]",
-            extractAnnotations = mapOf("test.pkg" to """
+            extractAnnotations = mapOf(
+                "test.pkg" to """
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <root>
+                      <item name="test.pkg.LongDefTest void setFlags(java.lang.Object, int) 0">
+                        <annotation name="androidx.annotation.NonNull"/>
+                      </item>
+                      <item name="test.pkg.LongDefTest void setFlags(java.lang.Object, int) 1">
+                        <annotation name="androidx.annotation.LongDef">
+                          <val name="flag" val="true" />
+                          <val name="value" val="{test.pkg.LongDefTestKt.STYLE_NORMAL, test.pkg.LongDefTestKt.STYLE_NO_TITLE, test.pkg.LongDefTestKt.STYLE_NO_FRAME, test.pkg.LongDefTestKt.STYLE_NO_INPUT, 3, 4}" />
+                        </annotation>
+                      </item>
+                      <item name="test.pkg.LongDefTest void setStyle(int, int) 0">
+                        <annotation name="androidx.annotation.LongDef">
+                          <val name="value" val="{test.pkg.LongDefTestKt.STYLE_NORMAL, test.pkg.LongDefTestKt.STYLE_NO_TITLE, test.pkg.LongDefTestKt.STYLE_NO_FRAME, test.pkg.LongDefTestKt.STYLE_NO_INPUT}" />
+                        </annotation>
+                      </item>
+                      <item name="test.pkg.LongDefTest.Inner boolean isNull(java.lang.String) 0">
+                        <annotation name="androidx.annotation.Nullable"/>
+                      </item>
+                      <item name="test.pkg.LongDefTest.Inner void setInner(int) 0">
+                        <annotation name="androidx.annotation.LongDef">
+                          <val name="flag" val="true" />
+                          <val name="value" val="{test.pkg.LongDefTestKt.STYLE_NORMAL, test.pkg.LongDefTestKt.STYLE_NO_TITLE, test.pkg.LongDefTestKt.STYLE_NO_FRAME, test.pkg.LongDefTestKt.STYLE_NO_INPUT, 3, 4}" />
+                        </annotation>
+                      </item>
+                      <item name="test.pkg.LongDefTestKt TYPE_1">
+                        <annotation name="androidx.annotation.NonNull"/>
+                      </item>
+                      <item name="test.pkg.LongDefTestKt TYPE_2">
+                        <annotation name="androidx.annotation.NonNull"/>
+                      </item>
+                      <item name="test.pkg.LongDefTestKt UNRELATED_TYPE">
+                        <annotation name="androidx.annotation.NonNull"/>
+                      </item>
+                    </root>
+                """
+            )
+        )
+    }
+
+    @Test
+    fun `Check including only class retention annotations other than typedefs`() {
+        check(
+            includeSourceRetentionAnnotations = true,
+            sourceFiles = *arrayOf(
+                kotlin(
+                    """
+                    @file:Suppress("unused", "UseExpressionBody")
+
+                    package test.pkg
+
+                    import android.annotation.LongDef
+
+                    const val STYLE_NORMAL = 0L
+                    const val STYLE_NO_TITLE = 1L
+                    const val STYLE_NO_FRAME = 2L
+                    const val STYLE_NO_INPUT = 3L
+                    const val UNRELATED = 3L
+                    private const val HIDDEN = 4
+
+                    const val TYPE_1 = "type1"
+                    const val TYPE_2 = "type2"
+                    const val UNRELATED_TYPE = "other"
+
+                    class LongDefTest {
+
+                        /** @hide */
+                        @LongDef(STYLE_NORMAL, STYLE_NO_TITLE, STYLE_NO_FRAME, STYLE_NO_INPUT, HIDDEN)
+                        @Retention(AnnotationRetention.SOURCE)
+                        private annotation class DialogStyle
+
+                        fun setStyle(@DialogStyle style: Int, theme: Int) {}
+
+                        fun testLongDef(arg: Int) {
+                        }
+
+                        @LongDef(STYLE_NORMAL, STYLE_NO_TITLE, STYLE_NO_FRAME, STYLE_NO_INPUT, 3L, 3L + 1L, flag = true)
+                        @Retention(AnnotationRetention.SOURCE)
+                        private annotation class DialogFlags
+
+                        fun setFlags(first: Any, @DialogFlags flags: Int) {}
+
+                        class Inner {
+                            fun setInner(@DialogFlags flags: Int) {}
+                            fun isNull(value: String?): Boolean
+                        }
+                    }"""
+                ).indented(),
+                longDefAnnotationSource
+            ),
+            warnings = "src/test/pkg/LongDefTest.kt:12: error: Typedef class references hidden field field LongDefTestKt.HIDDEN: removed from typedef metadata [HiddenTypedefConstant:148]",
+            extractAnnotations = mapOf(
+                "test.pkg" to """
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <root>
+                      <item name="test.pkg.LongDefTest void setFlags(java.lang.Object, int) 1">
+                        <annotation name="androidx.annotation.LongDef">
+                          <val name="flag" val="true" />
+                          <val name="value" val="{test.pkg.LongDefTestKt.STYLE_NORMAL, test.pkg.LongDefTestKt.STYLE_NO_TITLE, test.pkg.LongDefTestKt.STYLE_NO_FRAME, test.pkg.LongDefTestKt.STYLE_NO_INPUT, 3, 4}" />
+                        </annotation>
+                      </item>
+                      <item name="test.pkg.LongDefTest void setStyle(int, int) 0">
+                        <annotation name="androidx.annotation.LongDef">
+                          <val name="value" val="{test.pkg.LongDefTestKt.STYLE_NORMAL, test.pkg.LongDefTestKt.STYLE_NO_TITLE, test.pkg.LongDefTestKt.STYLE_NO_FRAME, test.pkg.LongDefTestKt.STYLE_NO_INPUT}" />
+                        </annotation>
+                      </item>
+                      <item name="test.pkg.LongDefTest.Inner void setInner(int) 0">
+                        <annotation name="androidx.annotation.LongDef">
+                          <val name="flag" val="true" />
+                          <val name="value" val="{test.pkg.LongDefTestKt.STYLE_NORMAL, test.pkg.LongDefTestKt.STYLE_NO_TITLE, test.pkg.LongDefTestKt.STYLE_NO_FRAME, test.pkg.LongDefTestKt.STYLE_NO_INPUT, 3, 4}" />
+                        </annotation>
+                      </item>
+                    </root>
+                """
+            )
+        )
+    }
+
+    @Test
+    fun `Extract permission annotations`() {
+        check(
+            includeSourceRetentionAnnotations = false,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+
+                    import android.annotation.RequiresPermission;
+
+                    public class PermissionsTest {
+                        @RequiresPermission(Manifest.permission.MY_PERMISSION)
+                        public void myMethod() {
+                        }
+                        @RequiresPermission(anyOf={Manifest.permission.MY_PERMISSION,Manifest.permission.MY_PERMISSION2})
+                        public void myMethod2() {
+                        }
+
+                        @RequiresPermission.Read(@RequiresPermission(Manifest.permission.MY_READ_PERMISSION))
+                        @RequiresPermission.Write(@RequiresPermission(Manifest.permission.MY_WRITE_PERMISSION))
+                        public static final String CONTENT_URI = "";
+                    }
+                    """
+                ).indented(),
+                java(
+                    """
+                    package test.pkg;
+
+                    public class Manifest {
+                        public static final class permission {
+                            public static final String MY_PERMISSION = "android.permission.MY_PERMISSION_STRING";
+                            public static final String MY_PERMISSION2 = "android.permission.MY_PERMISSION_STRING2";
+                            public static final String MY_READ_PERMISSION = "android.permission.MY_READ_PERMISSION_STRING";
+                            public static final String MY_WRITE_PERMISSION = "android.permission.MY_WRITE_PERMISSION_STRING";
+                        }
+                    }
+                    """
+                ).indented(),
+                requiresPermissionSource
+            ),
+            extractAnnotations = mapOf(
+                "test.pkg" to """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <root>
-                  <item name="test.pkg.LongDefTest void setFlags(java.lang.Object, int) 1">
-                    <annotation name="androidx.annotation.LongDef">
-                      <val name="flag" val="true" />
-                      <val name="value" val="{test.pkg.LongDefTestKt.STYLE_NORMAL, test.pkg.LongDefTestKt.STYLE_NO_TITLE, test.pkg.LongDefTestKt.STYLE_NO_FRAME, test.pkg.LongDefTestKt.STYLE_NO_INPUT, 3, 4}" />
+                  <item name="test.pkg.PermissionsTest CONTENT_URI">
+                    <annotation name="androidx.annotation.RequiresPermission.Read">
+                      <val name="value" val="&quot;android.permission.MY_READ_PERMISSION_STRING&quot;" />
+                    </annotation>
+                    <annotation name="androidx.annotation.RequiresPermission.Write">
+                      <val name="value" val="&quot;android.permission.MY_WRITE_PERMISSION_STRING&quot;" />
                     </annotation>
                   </item>
-                  <item name="test.pkg.LongDefTest void setStyle(int, int) 0">
-                    <annotation name="androidx.annotation.LongDef">
-                      <val name="value" val="{test.pkg.LongDefTestKt.STYLE_NORMAL, test.pkg.LongDefTestKt.STYLE_NO_TITLE, test.pkg.LongDefTestKt.STYLE_NO_FRAME, test.pkg.LongDefTestKt.STYLE_NO_INPUT}" />
+                  <item name="test.pkg.PermissionsTest void myMethod()">
+                    <annotation name="androidx.annotation.RequiresPermission">
+                      <val name="value" val="&quot;android.permission.MY_PERMISSION_STRING&quot;" />
                     </annotation>
                   </item>
-                  <item name="test.pkg.LongDefTest.Inner void setInner(int) 0">
-                    <annotation name="androidx.annotation.LongDef">
-                      <val name="flag" val="true" />
-                      <val name="value" val="{test.pkg.LongDefTestKt.STYLE_NORMAL, test.pkg.LongDefTestKt.STYLE_NO_TITLE, test.pkg.LongDefTestKt.STYLE_NO_FRAME, test.pkg.LongDefTestKt.STYLE_NO_INPUT, 3, 4}" />
+                  <item name="test.pkg.PermissionsTest void myMethod2()">
+                    <annotation name="androidx.annotation.RequiresPermission">
+                      <val name="anyOf" val="{&quot;android.permission.MY_PERMISSION_STRING&quot;, &quot;android.permission.MY_PERMISSION_STRING2&quot;}" />
                     </annotation>
                   </item>
                 </root>
@@ -181,6 +347,7 @@ class ExtractAnnotationsTest : DriverTest() {
     @Test
     fun `Include merged annotations in exported source annotations`() {
         check(
+            includeSourceRetentionAnnotations = true,
             compatibilityMode = false,
             outputKotlinStyleNulls = false,
             includeSystemApiAnnotations = false,
@@ -205,7 +372,8 @@ class ExtractAnnotationsTest : DriverTest() {
                   </item>
                 </root>
                 """,
-            extractAnnotations = mapOf("test.pkg" to """
+            extractAnnotations = mapOf(
+                "test.pkg" to """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <root>
                   <item name="test.pkg.MyTest void test(int) 0">
@@ -214,6 +382,45 @@ class ExtractAnnotationsTest : DriverTest() {
                     </annotation>
                   </item>
                 </root>
+                """
+            )
+        )
+    }
+
+    @Test
+    fun `Only including class retention annotations in stubs`() {
+        check(
+            includeSourceRetentionAnnotations = false,
+            compatibilityMode = false,
+            outputKotlinStyleNulls = false,
+            includeSystemApiAnnotations = false,
+            omitCommonPackages = false,
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    import android.annotation.IntRange;
+                    import androidx.annotation.RecentlyNullable;
+                    public class Test {
+                        @RecentlyNullable
+                        public static String sayHello(@IntRange(from = 10) int value) { return "hello " + value; }
+                    }
+                    """
+                ),
+                intRangeAnnotationSource,
+                recentlyNullableSource
+            ),
+            extractAnnotations = mapOf(
+                "test.pkg" to """
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <root>
+                      <item name="test.pkg.Test java.lang.String sayHello(int) 0">
+                        <annotation name="androidx.annotation.IntRange">
+                          <val name="from" val="10" />
+                        </annotation>
+                      </item>
+                    </root>
                 """
             )
         )

@@ -16,6 +16,7 @@
 
 package com.android.tools.metalava
 
+import com.android.tools.metalava.model.SUPPORT_TYPE_USE_ANNOTATIONS
 import org.junit.Test
 
 class NullnessMigrationTest : DriverTest() {
@@ -237,8 +238,8 @@ class NullnessMigrationTest : DriverTest() {
             api = """
                     package libcore.util {
                       public @interface NonNull {
-                        method public abstract int from();
-                        method public abstract int to();
+                        method public abstract int from() default java.lang.Integer.MIN_VALUE;
+                        method public abstract int to() default java.lang.Integer.MAX_VALUE;
                       }
                     }
                     package test.pkg {
@@ -273,11 +274,12 @@ class NullnessMigrationTest : DriverTest() {
                     }
                     """
                 ),
-                supportNonNullSource,
-                supportNullableSource
+                androidxNonNullSource,
+                androidxNullableSource
             ),
             extraArguments = arrayOf("--hide-package", "androidx.annotation"),
-            api = """
+            api = if (SUPPORT_TYPE_USE_ANNOTATIONS) {
+                """
                 package test.pkg {
                   public class Test {
                     ctor public Test();
@@ -286,6 +288,17 @@ class NullnessMigrationTest : DriverTest() {
                   }
                 }
                 """
+            } else {
+                """
+                package test.pkg {
+                  public class Test {
+                    ctor public Test();
+                    method @Nullable public Integer compute1(@Nullable java.util.List<java.lang.String>);
+                    method @Nullable public Integer compute2(@Nullable java.util.List<java.util.List<?>>);
+                  }
+                }
+                """
+            }
         )
     }
 
@@ -315,7 +328,8 @@ class NullnessMigrationTest : DriverTest() {
                 androidxNullableSource
             ),
             extraArguments = arrayOf("--hide-package", "androidx.annotation"),
-            api = """
+            api = if (SUPPORT_TYPE_USE_ANNOTATIONS) {
+                """
                 package test.pkg {
                   public class Test {
                     ctor public Test();
@@ -324,6 +338,17 @@ class NullnessMigrationTest : DriverTest() {
                   }
                 }
                 """
+            } else {
+                """
+                package test.pkg {
+                  public class Test {
+                    ctor public Test();
+                    method @Nullable public Integer compute1(@Nullable java.util.List<java.lang.String>);
+                    method @Nullable public Integer compute2(@NonNull java.util.List<java.util.List<?>>);
+                  }
+                }
+                """
+            }
         )
     }
 
@@ -362,18 +387,33 @@ class NullnessMigrationTest : DriverTest() {
                   }
                 }
                 """,
-            stubs = arrayOf(
-                """
-                package test.pkg;
-                @SuppressWarnings({"unchecked", "deprecation", "all"})
-                public class Foo {
-                public Foo() { throw new RuntimeException("Stub!"); }
-                public static char @androidx.annotation.RecentlyNonNull [] toChars(int codePoint) { throw new RuntimeException("Stub!"); }
-                public static int codePointAt(char @androidx.annotation.RecentlyNonNull [] a, int index) { throw new RuntimeException("Stub!"); }
-                public <T> T @androidx.annotation.RecentlyNonNull [] toArray(T @androidx.annotation.RecentlyNonNull [] a) { throw new RuntimeException("Stub!"); }
-                }
-                """
-            )
+            stubs = if (SUPPORT_TYPE_USE_ANNOTATIONS) {
+                arrayOf(
+                    """
+                    package test.pkg;
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class Foo {
+                    public Foo() { throw new RuntimeException("Stub!"); }
+                    public static char @androidx.annotation.RecentlyNonNull [] toChars(int codePoint) { throw new RuntimeException("Stub!"); }
+                    public static int codePointAt(char @androidx.annotation.RecentlyNonNull [] a, int index) { throw new RuntimeException("Stub!"); }
+                    public <T> T @androidx.annotation.RecentlyNonNull [] toArray(T @androidx.annotation.RecentlyNonNull [] a) { throw new RuntimeException("Stub!"); }
+                    }
+                    """
+                )
+            } else {
+                arrayOf(
+                    """
+                    package test.pkg;
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class Foo {
+                    public Foo() { throw new RuntimeException("Stub!"); }
+                    public static char[] toChars(int codePoint) { throw new RuntimeException("Stub!"); }
+                    public static int codePointAt(char[] a, int index) { throw new RuntimeException("Stub!"); }
+                    public <T> T[] toArray(T[] a) { throw new RuntimeException("Stub!"); }
+                    }
+                    """
+                )
+            }
         )
     }
 
@@ -412,18 +452,33 @@ class NullnessMigrationTest : DriverTest() {
                   }
                 }
                 """,
-            stubs = arrayOf(
-                """
-                package test.pkg;
-                @SuppressWarnings({"unchecked", "deprecation", "all"})
-                public class Foo {
-                public Foo() { throw new RuntimeException("Stub!"); }
-                public static char @androidx.annotation.RecentlyNonNull [] toChars(int codePoint) { throw new RuntimeException("Stub!"); }
-                public static int codePointAt(char @androidx.annotation.RecentlyNonNull [] a, int index) { throw new RuntimeException("Stub!"); }
-                public <T> T @androidx.annotation.RecentlyNonNull [] toArray(T @androidx.annotation.RecentlyNonNull [] a) { throw new RuntimeException("Stub!"); }
-                }
-                """
-            )
+            stubs = if (SUPPORT_TYPE_USE_ANNOTATIONS) {
+                arrayOf(
+                    """
+                    package test.pkg;
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class Foo {
+                    public Foo() { throw new RuntimeException("Stub!"); }
+                    public static char @androidx.annotation.RecentlyNonNull [] toChars(int codePoint) { throw new RuntimeException("Stub!"); }
+                    public static int codePointAt(char @androidx.annotation.RecentlyNonNull [] a, int index) { throw new RuntimeException("Stub!"); }
+                    public <T> T @androidx.annotation.RecentlyNonNull [] toArray(T @androidx.annotation.RecentlyNonNull [] a) { throw new RuntimeException("Stub!"); }
+                    }
+                    """
+                )
+            } else {
+                arrayOf(
+                    """
+                    package test.pkg;
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class Foo {
+                    public Foo() { throw new RuntimeException("Stub!"); }
+                    public static char[] toChars(int codePoint) { throw new RuntimeException("Stub!"); }
+                    public static int codePointAt(char[] a, int index) { throw new RuntimeException("Stub!"); }
+                    public <T> T[] toArray(T[] a) { throw new RuntimeException("Stub!"); }
+                    }
+                    """
+                )
+            }
         )
     }
 }

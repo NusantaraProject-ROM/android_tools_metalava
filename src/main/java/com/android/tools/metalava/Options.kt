@@ -107,6 +107,10 @@ private const val ARG_NO_DOCS = "--no-docs"
 private const val ARG_GENERATE_DOCUMENTATION = "--generate-documentation"
 private const val ARG_JAVA_SOURCE = "--java-source"
 private const val ARG_REGISTER_ARTIFACT = "--register-artifact"
+private const val ARG_COPY_ANNOTATIONS = "--copy-annotations"
+private const val ARG_INCLUDE_ANNOTATION_CLASSES = "--include-annotation-classes"
+private const val ARG_REWRITE_ANNOTATIONS = "--rewrite-annotations"
+private const val ARG_INCLUDE_SOURCE_RETENTION = "--include-source-retention"
 
 class Options(
     args: Array<String>,
@@ -257,6 +261,28 @@ class Options(
 
     /** If set, a file to write extracted annotations to. Corresponds to the --extract-annotations flag. */
     var externalAnnotations: File? = null
+
+    /** For [ARG_COPY_ANNOTATIONS], the source directory to read stub annotations from */
+    var privateAnnotationsSource: File? = null
+
+    /** For [ARG_COPY_ANNOTATIONS], the target directory to write converted stub annotations from */
+    var privateAnnotationsTarget: File? = null
+
+    /**
+     * For [ARG_INCLUDE_ANNOTATION_CLASSES], the directory to copy stub annotation source files into the
+     * stubs folder from
+     */
+    var copyStubAnnotationsFrom: File? = null
+
+    /**
+     * For [ARG_INCLUDE_SOURCE_RETENTION], true if we want to include source-retention annotations
+     * both in the set of files emitted by [ARG_INCLUDE_ANNOTATION_CLASSES] and into the stubs
+     * themselves
+     */
+    var includeSourceRetentionAnnotations = false
+
+    /** For [ARG_REWRITE_ANNOTATIONS], the jar or bytecode folder to rewrite annotations in */
+    var rewriteAnnotations: List<File>? = null
 
     /** A manifest file to read to for example look up available permissions */
     var manifest: File? = null
@@ -523,6 +549,13 @@ class Options(
                 ARG_INPUT_API_JAR -> apiJar = stringToExistingFile(getValue(args, ++index))
 
                 ARG_EXTRACT_ANNOTATIONS -> externalAnnotations = stringToNewFile(getValue(args, ++index))
+                ARG_COPY_ANNOTATIONS -> {
+                    privateAnnotationsSource = stringToExistingDir(getValue(args, ++index))
+                    privateAnnotationsTarget = stringToNewDir(getValue(args, ++index))
+                }
+                ARG_REWRITE_ANNOTATIONS -> rewriteAnnotations = stringToExistingDirsOrJars(getValue(args, ++index))
+                ARG_INCLUDE_ANNOTATION_CLASSES -> copyStubAnnotationsFrom = stringToExistingDir(getValue(args, ++index))
+                ARG_INCLUDE_SOURCE_RETENTION -> includeSourceRetentionAnnotations = true
 
                 ARG_PREVIOUS_API -> previousApi = stringToExistingFile(getValue(args, ++index))
                 ARG_CURRENT_API -> currentApi = stringToExistingFile(getValue(args, ++index))
@@ -556,12 +589,12 @@ class Options(
                 "-werror" -> {
                     // Temporarily disabled; this is used in various builds but is pretty much
                     // never what we want.
-                    //warningsAreErrors = true
+                    // warningsAreErrors = true
                 }
                 "-lerror" -> {
                     // Temporarily disabled; this is used in various builds but is pretty much
                     // never what we want.
-                    //lintsAreErrors = true
+                    // lintsAreErrors = true
                 }
 
                 ARG_CHECK_KOTLIN_INTEROP -> checkKotlinInterop = true
@@ -620,19 +653,33 @@ class Options(
                 ARG_GENERATE_DOCUMENTATION -> {
                     // Digest all the remaining arguments.
                     // Allow "STUBS_DIR" to reference the stubs directory.
+                    var prev = ""
                     invokeDocumentationToolArguments = args.slice(++index until args.size).mapNotNull {
-                        if (it == "STUBS_DIR" && docStubsDir != null) {
-                            docStubsDir?.path
-                        } else if (it == "STUBS_DIR" && stubsDir != null) {
+                        var argument = it
+                        // When generating documentation, use the doc stubs directory rather than the
+                        // original source path
+                        val docStubsDir = docStubsDir
+                        if (docStubsDir != null && (prev == ARG_SOURCE_PATH || prev == "-sourcepath") &&
+                            !argument.contains(docStubsDir.path)) {
+                            // Insert the doc stubs as the default place to look for sources
+                            argument = docStubsDir.path // + File.pathSeparatorChar + argument
+                        }
+                        prev = it
+
+                        if (argument == "STUBS_DIR" && docStubsDir != null) {
+                            docStubsDir.path
+                        } else if (argument == "STUBS_DIR" && stubsDir != null) {
                             stubsDir?.path
-                        } else if (it == "DOC_STUBS_SOURCE_LIST" && docStubsSourceList != null) {
+                        } else if (argument == "DOCS_STUBS_DIR" && docStubsDir != null) {
+                            docStubsDir.path
+                        } else if (argument == "DOC_STUBS_SOURCE_LIST" && docStubsSourceList != null) {
                             "@${docStubsSourceList?.path}"
-                        } else if (it == "STUBS_SOURCE_LIST" && stubsSourceList != null) {
+                        } else if (argument == "STUBS_SOURCE_LIST" && stubsSourceList != null) {
                             "@${stubsSourceList?.path}"
-                        } else if (it == "STUBS_SOURCE_LIST" && docStubsSourceList != null) {
+                        } else if (argument == "STUBS_SOURCE_LIST" && docStubsSourceList != null) {
                             "@${docStubsSourceList?.path}"
                         } else {
-                            it
+                            argument
                         }
                     }.toTypedArray()
 
@@ -1271,7 +1318,17 @@ class Options(
             "", "\nExtracting Annotations:",
             "$ARG_EXTRACT_ANNOTATIONS <zipfile>", "Extracts source annotations from the source files and writes " +
                 "them into the given zip file",
+            "$ARG_INCLUDE_ANNOTATION_CLASSES <dir>", "Copies the given stub annotation source files into the " +
+                "generated stub sources; <dir> is typically $PROGRAM_NAME/stub-annotations/src/main/java/.",
 
+// Soon to be removed; not documented:
+//            "$ARG_COPY_ANNOTATIONS <source> <dest>", "For a source folder full of annotation " +
+//                "sources, generates corresponding package private versions of the same annotations.",
+            "$ARG_REWRITE_ANNOTATIONS <dir/jar>", "For a bytecode folder or output jar, rewrites the " +
+                "androidx annotations to be package private",
+            ARG_INCLUDE_SOURCE_RETENTION, "If true, include source-retention annotations in the stub files. Does " +
+                "not apply to signature files. Source retention annotations are extracted into the external " +
+                "annotations files instead.",
             "", "\nInjecting API Levels:",
             "$ARG_APPLY_API_LEVELS <api-versions.xml>", "Reads an XML file containing API level descriptions " +
                 "and merges the information into the documentation",

@@ -24,6 +24,7 @@ import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MemberItem
+import com.android.tools.metalava.model.SUPPORT_TYPE_USE_ANNOTATIONS
 import com.android.tools.metalava.model.TypeItem
 import com.android.tools.metalava.model.TypeParameterItem
 import com.android.tools.metalava.model.text.TextTypeItem
@@ -73,7 +74,7 @@ class PsiTypeItem private constructor(private val codebase: PsiBasedCodebase, pr
         assert(innerAnnotations || !outerAnnotations) // Can't supply outer=true,inner=false
 
         return if (erased) {
-            if (innerAnnotations || outerAnnotations) {
+            if (SUPPORT_TYPE_USE_ANNOTATIONS && (innerAnnotations || outerAnnotations)) {
                 // Not cached: Not common
                 toTypeString(codebase, psiType, outerAnnotations, innerAnnotations, erased)
             } else {
@@ -84,7 +85,7 @@ class PsiTypeItem private constructor(private val codebase: PsiBasedCodebase, pr
             }
         } else {
             when {
-                outerAnnotations -> {
+                SUPPORT_TYPE_USE_ANNOTATIONS && outerAnnotations -> {
                     if (toAnnotatedString == null) {
                         toAnnotatedString = TypeItem.formatType(
                             toTypeString(
@@ -98,7 +99,7 @@ class PsiTypeItem private constructor(private val codebase: PsiBasedCodebase, pr
                     }
                     toAnnotatedString!!
                 }
-                innerAnnotations -> {
+                SUPPORT_TYPE_USE_ANNOTATIONS && innerAnnotations -> {
                     if (toInnerAnnotatedString == null) {
                         toInnerAnnotatedString = TypeItem.formatType(
                             toTypeString(
@@ -339,7 +340,7 @@ class PsiTypeItem private constructor(private val codebase: PsiBasedCodebase, pr
                 )
             }
 
-            if (outerAnnotations || innerAnnotations) {
+            if (SUPPORT_TYPE_USE_ANNOTATIONS && (innerAnnotations || outerAnnotations)) {
                 val typeString = mapAnnotations(codebase, getCanonicalText(type, true))
                 if (!outerAnnotations && typeString.contains("@")) {
                     // Temporary hack: should use PSI type visitor instead
@@ -404,8 +405,8 @@ class PsiTypeItem private constructor(private val codebase: PsiBasedCodebase, pr
         }
 
         private fun getCanonicalText(type: PsiType, annotated: Boolean): String {
-            val typeString = type.getCanonicalText(annotated)
-            if (!annotated) {
+            val typeString = type.getCanonicalText(annotated && SUPPORT_TYPE_USE_ANNOTATIONS)
+            if (!annotated || !SUPPORT_TYPE_USE_ANNOTATIONS) {
                 return typeString
             }
 
