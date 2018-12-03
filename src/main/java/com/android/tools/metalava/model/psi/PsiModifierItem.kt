@@ -128,6 +128,13 @@ class PsiModifierItem(
                             }
                         }
                     }
+                    if (ktModifierList.hasModifier(KtTokens.SUSPEND_KEYWORD)) {
+                        flags = flags or SUSPEND
+
+                        // Workaround for b/117565118:
+                        // Switch back from private to public
+                        flags = (flags and PRIVATE.inv()) or PUBLIC
+                    }
                 }
             }
 
