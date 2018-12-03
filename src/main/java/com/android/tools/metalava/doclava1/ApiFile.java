@@ -561,6 +561,10 @@ public class ApiFile {
                     modifiers.setInline(true);
                     token = tokenizer.requireToken();
                     break;
+                case "suspend":
+                    modifiers.setSuspend(true);
+                    token = tokenizer.requireToken();
+                    break;
                 case "vararg":
                     modifiers.setVarArg(true);
                     token = tokenizer.requireToken();

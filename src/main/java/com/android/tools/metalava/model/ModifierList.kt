@@ -53,6 +53,7 @@ interface ModifierList {
 
     fun isInternal(): Boolean = false
     fun isInfix(): Boolean = false
+    fun isSuspend(): Boolean = false
     fun isOperator(): Boolean = false
     fun isInline(): Boolean = false
     fun isEmpty(): Boolean
@@ -312,6 +313,10 @@ interface ModifierList {
                     writer.write("sealed ")
                 }
 
+                if (list.isSuspend()) {
+                    writer.write("suspend ")
+                }
+
                 if (list.isInline()) {
                     writer.write("inline ")
                 }
@@ -403,6 +408,10 @@ interface ModifierList {
 
                 if (list.isSealed()) {
                     writer.write("sealed ")
+                }
+
+                if (list.isSuspend()) {
+                    writer.write("suspend ")
                 }
 
                 if (list.isInline()) {

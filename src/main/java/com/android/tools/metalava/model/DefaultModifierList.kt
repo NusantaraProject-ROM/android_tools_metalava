@@ -117,6 +117,10 @@ open class DefaultModifierList(
         return isSet(INFIX)
     }
 
+    override fun isSuspend(): Boolean {
+        return isSet(SUSPEND)
+    }
+
     override fun isOperator(): Boolean {
         return isSet(OPERATOR)
     }
@@ -201,6 +205,10 @@ open class DefaultModifierList(
         set(DEPRECATED, deprecated)
     }
 
+    fun setSuspend(suspend: Boolean) {
+        set(SUSPEND, suspend)
+    }
+
     override fun addAnnotation(annotation: AnnotationItem) {
         if (annotations == null) {
             annotations = mutableListOf()
@@ -268,6 +276,7 @@ open class DefaultModifierList(
         const val INFIX = 1 shl 16
         const val OPERATOR = 1 shl 17
         const val INLINE = 1 shl 18
+        const val SUSPEND = 1 shl 19
 
         private fun bit(modifier: String): Int {
             return when (modifier) {
@@ -290,6 +299,7 @@ open class DefaultModifierList(
                 "infix" -> INFIX
                 "operator" -> OPERATOR
                 "inline" -> INLINE
+                "suspend" -> SUSPEND
                 else -> error("Unsupported modifier $modifier")
             }
         }
@@ -300,6 +310,6 @@ open class DefaultModifierList(
          */
         private const val EQUIVALENCE_MASK = PUBLIC or PROTECTED or PRIVATE or STATIC or ABSTRACT or
             FINAL or TRANSIENT or VOLATILE or SYNCHRONIZED or DEPRECATED or VARARG or
-            SEALED or INTERNAL or INFIX or OPERATOR
+            SEALED or INTERNAL or INFIX or OPERATOR or SUSPEND
     }
 }
