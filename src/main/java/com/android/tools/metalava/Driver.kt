@@ -948,8 +948,13 @@ fun tick() {
     }
 }
 
+private fun skippableDirectory(file: File): Boolean = file.path.endsWith(".git") && file.name == ".git"
+
 private fun addSourceFiles(list: MutableList<File>, file: File) {
     if (file.isDirectory) {
+        if (skippableDirectory(file)) {
+            return
+        }
         if (java.nio.file.Files.isSymbolicLink(file.toPath())) {
             reporter.report(Errors.IGNORING_SYMLINK, file,
                 "Ignoring symlink during source file discovery directory traversal")
@@ -988,6 +993,9 @@ private fun addHiddenPackages(
     pkg: String
 ) {
     if (file.isDirectory) {
+        if (skippableDirectory(file)) {
+            return
+        }
         // Ignore symbolic links during traversal
         if (java.nio.file.Files.isSymbolicLink(file.toPath())) {
             reporter.report(Errors.IGNORING_SYMLINK, file,
