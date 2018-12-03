@@ -463,6 +463,29 @@ class ApiFileTest : DriverTest() {
     }
 
     @Test
+    fun `Suspend functions`() {
+        check(
+            sourceFiles = *arrayOf(
+                kotlin(
+                    """
+                    package test.pkg
+                    suspend inline fun hello() { }
+                    """
+                )
+            ),
+            api = """
+                package test.pkg {
+                  public final class TestKt {
+                    ctor public TestKt();
+                    method public static suspend inline java.lang.Object hello(kotlin.coroutines.experimental.Continuation<? super kotlin.Unit> p);
+                  }
+                }
+                """,
+            checkDoclava1 = false /* doesn't support Kotlin... */
+        )
+    }
+
+    @Test
     fun `Propagate Platform types in Kotlin`() {
         check(
             compatibilityMode = false,
