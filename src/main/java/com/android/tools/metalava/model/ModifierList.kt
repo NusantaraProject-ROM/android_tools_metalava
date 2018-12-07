@@ -491,11 +491,11 @@ interface ModifierList {
             writer: Writer,
             target: AnnotationTarget
         ) {
-            val annotations = list.annotations()
+            var annotations = list.annotations()
 
             // Ensure stable signature file order
             if (annotations.size > 2) {
-                annotations.sortedBy { it.qualifiedName() }
+                annotations = annotations.sortedBy { it.qualifiedName() }
             }
 
             if (annotations.isNotEmpty()) {
