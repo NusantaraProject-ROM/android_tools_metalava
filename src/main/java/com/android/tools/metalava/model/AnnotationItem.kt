@@ -33,6 +33,7 @@ import com.android.tools.metalava.Options
 import com.android.tools.metalava.RECENTLY_NONNULL
 import com.android.tools.metalava.RECENTLY_NULLABLE
 import com.android.tools.metalava.doclava1.ApiPredicate
+import com.android.tools.metalava.model.psi.PsiBasedCodebase
 import com.android.tools.metalava.options
 import java.util.function.Predicate
 
@@ -117,11 +118,13 @@ interface AnnotationItem {
     /** Returns the retention of this annotation */
     val retention: AnnotationRetention
         get() {
-            val qualifiedName = qualifiedName()
-            if (qualifiedName != null) {
-                val cls = codebase.findClass(qualifiedName)
-                if (cls != null && cls.isAnnotationType()) {
-                    return cls.getRetention()
+            val name = qualifiedName()
+            if (name != null) {
+                val cls = codebase.findClass(name) ?: (codebase as? PsiBasedCodebase)?.findOrCreateClass(name)
+                if (cls != null) {
+                    if (cls.isAnnotationType()) {
+                        return cls.getRetention()
+                    }
                 }
             }
 

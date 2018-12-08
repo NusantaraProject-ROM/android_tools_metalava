@@ -1178,7 +1178,7 @@ class ApiFileTest : DriverTest() {
             compatibilityMode = false,
             api = """
                 package android.annotation {
-                  @java.lang.annotation.Target({java.lang.annotation.ElementType.TYPE, java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD, java.lang.annotation.ElementType.PARAMETER, java.lang.annotation.ElementType.CONSTRUCTOR, java.lang.annotation.ElementType.LOCAL_VARIABLE}) @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS) public @interface SuppressLint {
+                  @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS) @java.lang.annotation.Target({java.lang.annotation.ElementType.TYPE, java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD, java.lang.annotation.ElementType.PARAMETER, java.lang.annotation.ElementType.CONSTRUCTOR, java.lang.annotation.ElementType.LOCAL_VARIABLE}) public @interface SuppressLint {
                     method public abstract String[] value();
                   }
                 }
@@ -1188,6 +1188,61 @@ class ApiFileTest : DriverTest() {
                   }
                 }
                 """
+        )
+    }
+
+    @Test
+    fun `Annotation retention`() {
+        // For annotations where the java.lang.annotation classes themselves are not
+        // part of the source tree, ensure that we compute the right retention (runtime, meaning
+        // it should show up in the stubs file.).
+        check(
+            extraArguments = arrayOf(ARG_EXCLUDE_ANNOTATIONS),
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    public @interface Foo {
+                        String value();
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package android.annotation;
+                    import static java.lang.annotation.ElementType.*;
+                    import java.lang.annotation.*;
+                    @Target({TYPE, FIELD, METHOD, PARAMETER, CONSTRUCTOR, LOCAL_VARIABLE})
+                    @Retention(RetentionPolicy.CLASS)
+                    @SuppressWarnings("ALL")
+                    public @interface SuppressLint {
+                        String[] value();
+                    }
+                    """
+                )
+            ),
+            compatibilityMode = true,
+            stubs = arrayOf(
+                // For annotations where the java.lang.annotation classes themselves are not
+                // part of the source tree, ensure that we compute the right retention (runtime, meaning
+                // it should show up in the stubs file.).
+                """
+                package test.pkg;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public @interface Foo {
+                public java.lang.String value();
+                }
+                """,
+                """
+                package android.annotation;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS)
+                @java.lang.annotation.Target({java.lang.annotation.ElementType.TYPE, java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD, java.lang.annotation.ElementType.PARAMETER, java.lang.annotation.ElementType.CONSTRUCTOR, java.lang.annotation.ElementType.LOCAL_VARIABLE})
+                public @interface SuppressLint {
+                public java.lang.String[] value();
+                }
+                """
+            )
         )
     }
 
