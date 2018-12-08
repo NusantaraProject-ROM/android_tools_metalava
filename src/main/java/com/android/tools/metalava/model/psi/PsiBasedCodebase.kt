@@ -512,6 +512,12 @@ open class PsiBasedCodebase(location: File, override var description: String = "
         return classMap[qualifiedName]
     }
 
+    open fun findOrCreateClass(qualifiedName: String): PsiClassItem? {
+        val finder = JavaPsiFacade.getInstance(project)
+        val psiClass = finder.findClass(qualifiedName, GlobalSearchScope.allScope(project)) ?: return null
+        return findOrCreateClass(psiClass)
+    }
+
     open fun findOrCreateClass(psiClass: PsiClass): PsiClassItem {
         val existing = findClass(psiClass)
         if (existing != null) {
