@@ -102,6 +102,84 @@ class UnhideApisTest : DriverTest() {
     }
 
     @Test
+    fun `Do not warn about package private access when generating package private stubs`() {
+        // Like above test, but with --package and therefore fewer warnings
+        check(
+            extraArguments = arrayOf(
+                ARG_PACKAGE,
+                ARG_HIDE,
+                "HiddenSuperclass",
+                ARG_HIDE,
+                "UnavailableSymbol",
+                ARG_HIDE,
+                "HiddenTypeParameter",
+                ARG_ERROR,
+                "ReferencesHidden"
+            ),
+            warnings = """
+            src/test/pkg/Foo.java:4: error: Class test.pkg.Hidden2 is hidden but was referenced (as field type) from public field test.pkg.Foo.hidden2 [ReferencesHidden:158]
+            src/test/pkg/Foo.java:5: error: Class test.pkg.Hidden2 is hidden but was referenced (as parameter type) from public parameter hidden2 in test.pkg.Foo.method(test.pkg.Hidden1 hidden1, test.pkg.Hidden2 hidden2) [ReferencesHidden:158]
+            src/test/pkg/Foo.java:5: error: Class test.pkg.Hidden3 is hidden but was referenced (as exception) from public method test.pkg.Foo.method(test.pkg.Hidden1,test.pkg.Hidden2) [ReferencesHidden:158]
+            src/test/pkg/Foo.java:7: error: Class test.pkg.Hidden2 is hidden but was referenced (as type parameter) from public method test.pkg.Foo.get(T) [ReferencesHidden:158]
+            src/test/pkg/Foo.java:9: error: Class test.pkg.Hidden2 is hidden but was referenced (as return type) from public method test.pkg.Foo.getHidden2() [ReferencesHidden:158]
+            """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    public class Foo extends Hidden2 {
+                        public Hidden1 hidden1;
+                        public Hidden2 hidden2;
+                        public void method(Hidden1 hidden1, Hidden2 hidden2) throws Hidden3 {
+                        }
+                        public <S extends Hidden1, T extends Hidden2> S get(T t) { return null; }
+                        public Hidden1 getHidden1() { return null; }
+                        public Hidden2 getHidden2() { return null; }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    // Implicitly not part of the API by being package private
+                    class Hidden1 {
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    /** @hide */
+                    public class Hidden2 {
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    /** @hide */
+                    public class Hidden3 extends IOException {
+                    }
+                    """
+                )
+            ),
+            api = """
+                package test.pkg {
+                  public class Foo {
+                    ctor public Foo();
+                    method public <S extends test.pkg.Hidden1, T extends test.pkg.Hidden2> S get(T);
+                    method public test.pkg.Hidden1 getHidden1();
+                    method public test.pkg.Hidden2 getHidden2();
+                    method public void method(test.pkg.Hidden1, test.pkg.Hidden2) throws test.pkg.Hidden3;
+                    field public test.pkg.Hidden1 hidden1;
+                    field public test.pkg.Hidden2 hidden2;
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
     fun `Including private interfaces from types`() {
         check(
             extraArguments = arrayOf(ARG_ERROR, "ReferencesHidden"),
