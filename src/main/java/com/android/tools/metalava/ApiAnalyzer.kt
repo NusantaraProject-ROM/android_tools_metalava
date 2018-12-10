@@ -1036,7 +1036,7 @@ class ApiAnalyzer(
             return
         }
 
-        if ((cl.isHiddenOrRemoved() || cl.isPackagePrivate) && !cl.isTypeParameter) {
+        if ((cl.isHiddenOrRemoved() || cl.isPackagePrivate && !cl.checkLevel()) && !cl.isTypeParameter) {
             reporter.report(
                 Errors.REFERENCES_HIDDEN, from,
                 "Class ${cl.qualifiedName()} is ${if (cl.isHiddenOrRemoved()) "hidden" else "not public"} but was referenced ($usage) from public ${from.describe(
