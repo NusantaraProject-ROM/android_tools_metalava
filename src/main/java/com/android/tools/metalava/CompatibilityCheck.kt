@@ -753,6 +753,14 @@ class CompatibilityCheck(
                 includeInterfaces = false
             )
         }
+
+        // Builtin annotation methods: just a difference in signature file
+        if ((new.name() == "values" && new.parameters().isEmpty() || new.name() == "valueOf" &&
+                new.parameters().size == 1) && new.containingClass().isEnum()
+        ) {
+            return
+        }
+
         if (inherited == null || inherited == new || !inherited.modifiers.isAbstract()) {
             val error = if (new.modifiers.isAbstract()) Errors.ADDED_ABSTRACT_METHOD else Errors.ADDED_METHOD
             handleAdded(error, new)
