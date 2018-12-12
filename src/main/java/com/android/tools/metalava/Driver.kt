@@ -37,6 +37,7 @@ import com.android.tools.metalava.apilevels.ApiGenerator
 import com.android.tools.metalava.doclava1.ApiPredicate
 import com.android.tools.metalava.doclava1.Errors
 import com.android.tools.metalava.doclava1.FilterPredicate
+import com.android.tools.metalava.doclava1.TextCodebase
 import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.PackageDocs
@@ -187,8 +188,7 @@ private fun processFlags() {
         if (options.sources.size == 1 && options.sources[0].path.endsWith(SdkConstants.DOT_TXT)) {
             SignatureFileLoader.load(
                 file = options.sources[0],
-                kotlinStyleNulls = options.inputKotlinStyleNulls,
-                supportsStagedNullability = true
+                kotlinStyleNulls = options.inputKotlinStyleNulls
             )
         } else if (options.apiJar != null) {
             loadFromJarFile(options.apiJar!!)
@@ -355,8 +355,7 @@ private fun processFlags() {
             } else {
                 SignatureFileLoader.load(
                     file = previousApiFile,
-                    kotlinStyleNulls = options.inputKotlinStyleNulls,
-                    supportsStagedNullability = true
+                    kotlinStyleNulls = options.inputKotlinStyleNulls
                 )
             }
 
@@ -461,8 +460,7 @@ fun processNonCodebaseFlags() {
 
         val signatureApi = SignatureFileLoader.load(
             file = signatureFile,
-            kotlinStyleNulls = options.inputKotlinStyleNulls,
-            supportsStagedNullability = true
+            kotlinStyleNulls = options.inputKotlinStyleNulls
         )
 
         createReportFile(signatureApi, jDiffFile, "JDiff File") { printWriter ->
@@ -487,10 +485,13 @@ fun checkCompatibility(
         } else {
             SignatureFileLoader.load(
                 file = signatureFile,
-                kotlinStyleNulls = options.inputKotlinStyleNulls,
-                supportsStagedNullability = true
+                kotlinStyleNulls = options.inputKotlinStyleNulls
             )
         }
+
+    if (current is TextCodebase && current.format.major > 1 && options.outputFormat < 1) {
+        throw DriverException("Cannot perform compatibility check of signature file $signatureFile in format ${current.format} without analyzing current codebase with $ARG_FORMAT=${current.format}")
+    }
 
     var base: Codebase? = null
     val releaseType = check.releaseType
@@ -528,8 +529,7 @@ fun checkCompatibility(
 
             SignatureFileLoader.load(
                 file = apiFile,
-                kotlinStyleNulls = options.inputKotlinStyleNulls,
-                supportsStagedNullability = true
+                kotlinStyleNulls = options.inputKotlinStyleNulls
             )
         } else {
             // Fast path: if we've already generated a signature file and it's identical, we're good!
@@ -656,19 +656,7 @@ class PrintWriterOutputStream(private val writer: PrintWriter) : OutputStream() 
 }
 
 private fun migrateNulls(codebase: Codebase, previous: Codebase) {
-    val codebaseSupportsNullability = codebase.supportsStagedNullability
-    val prevSupportsNullability = previous.supportsStagedNullability
-    try {
-        previous.supportsStagedNullability = true
-        codebase.supportsStagedNullability = true
-        previous.compareWith(
-            NullnessMigration(), codebase,
-            ApiPredicate()
-        )
-    } finally {
-        previous.supportsStagedNullability = prevSupportsNullability
-        codebase.supportsStagedNullability = codebaseSupportsNullability
-    }
+    previous.compareWith(NullnessMigration(), codebase, ApiPredicate())
 }
 
 private fun loadFromSources(): Codebase {

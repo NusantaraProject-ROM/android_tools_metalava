@@ -25,11 +25,10 @@ object SignatureFileLoader {
     private val map = mutableMapOf<File, Codebase>()
     fun load(
         file: File,
-        kotlinStyleNulls: Boolean = false,
-        supportsStagedNullability: Boolean = false
+        kotlinStyleNulls: Boolean? = null
     ): Codebase {
         return map[file] ?: run {
-            val loaded = loadFromSignatureFiles(file, kotlinStyleNulls, supportsStagedNullability)
+            val loaded = loadFromSignatureFiles(file, kotlinStyleNulls)
             map[file] = loaded
             loaded
         }
@@ -37,11 +36,10 @@ object SignatureFileLoader {
 
     private fun loadFromSignatureFiles(
         file: File,
-        kotlinStyleNulls: Boolean,
-        supportsStagedNullability: Boolean = false
+        kotlinStyleNulls: Boolean? = null
     ): Codebase {
         try {
-            val codebase = ApiFile.parseApi(File(file.path), kotlinStyleNulls, supportsStagedNullability)
+            val codebase = ApiFile.parseApi(File(file.path), kotlinStyleNulls)
             codebase.description = "Codebase loaded from ${file.path}"
             return codebase
         } catch (ex: ApiParseException) {

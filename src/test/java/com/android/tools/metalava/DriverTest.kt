@@ -935,7 +935,7 @@ abstract class DriverTest {
             val actualText = readFile(apiFile, stripBlankLines, trim)
             assertEquals(stripComments(api, stripLineComments = false).trimIndent(), actualText)
             // Make sure we can read back the files we write
-            ApiFile.parseApi(apiFile, options.outputKotlinStyleNulls, true)
+            ApiFile.parseApi(apiFile, options.outputKotlinStyleNulls)
         }
 
         if (apiXml != null && apiXmlFile != null) {
@@ -972,7 +972,7 @@ abstract class DriverTest {
             val actualText = readFile(removedApiFile, stripBlankLines, trim)
             assertEquals(stripComments(removedApi, stripLineComments = false).trimIndent(), actualText)
             // Make sure we can read back the files we write
-            ApiFile.parseApi(removedApiFile, options.outputKotlinStyleNulls, true)
+            ApiFile.parseApi(removedApiFile, options.outputKotlinStyleNulls)
         }
 
         if (removedDexApi != null && removedDexApiFile != null) {
@@ -992,7 +992,7 @@ abstract class DriverTest {
             val actualText = readFile(exactApiFile, stripBlankLines, trim)
             assertEquals(stripComments(exactApi, stripLineComments = false).trimIndent(), actualText)
             // Make sure we can read back the files we write
-            ApiFile.parseApi(exactApiFile, options.outputKotlinStyleNulls, true)
+            ApiFile.parseApi(exactApiFile, options.outputKotlinStyleNulls)
         }
 
         if (privateApi != null && privateApiFile != null) {
@@ -1003,7 +1003,7 @@ abstract class DriverTest {
             val actualText = readFile(privateApiFile, stripBlankLines, trim)
             assertEquals(stripComments(privateApi, stripLineComments = false).trimIndent(), actualText)
             // Make sure we can read back the files we write
-            ApiFile.parseApi(privateApiFile, options.outputKotlinStyleNulls, true)
+            ApiFile.parseApi(privateApiFile, options.outputKotlinStyleNulls)
         }
 
         if (dexApi != null && dexApiFile != null) {

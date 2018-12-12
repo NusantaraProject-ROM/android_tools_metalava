@@ -193,7 +193,7 @@ class ApiFileTest : DriverTest() {
                 )
             ),
             api = """
-                // Signature format: $SIGNATURE_FORMAT
+                // Signature format: $CURRENT_SIGNATURE_FORMAT
                 package test.pkg {
                   public final class Foo {
                     ctor public Foo();
@@ -278,7 +278,7 @@ class ApiFileTest : DriverTest() {
                 androidxNonNullSource
             ),
             api = """
-                // Signature format: $SIGNATURE_FORMAT
+                // Signature format: $CURRENT_SIGNATURE_FORMAT
                 package androidx.core.util {
                   public final class TestKt {
                     ctor public TestKt();

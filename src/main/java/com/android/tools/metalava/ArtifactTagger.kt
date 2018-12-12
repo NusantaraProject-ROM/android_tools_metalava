@@ -64,7 +64,7 @@ class ArtifactTagger {
             val specApi: TextCodebase
             try {
                 val kotlinStyleNulls = options.inputKotlinStyleNulls
-                specApi = ApiFile.parseApi(xmlFile, kotlinStyleNulls, false)
+                specApi = ApiFile.parseApi(xmlFile, kotlinStyleNulls)
             } catch (e: ApiParseException) {
                 reporter.report(
                     Errors.BROKEN_ARTIFACT_FILE, xmlFile,

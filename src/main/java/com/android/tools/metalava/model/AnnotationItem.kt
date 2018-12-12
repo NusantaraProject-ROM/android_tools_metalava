@@ -295,9 +295,7 @@ interface AnnotationItem {
                 "android.annotation.TargetApi",
                 "android.annotation.SuppressLint" -> return qualifiedName
 
-                // We only change recently/newly nullable annotation if the codebase supports it
-                RECENTLY_NULLABLE -> return if (codebase.supportsStagedNullability) qualifiedName else ANDROIDX_NULLABLE
-                RECENTLY_NONNULL -> return if (codebase.supportsStagedNullability) qualifiedName else ANDROIDX_NONNULL
+                RECENTLY_NULLABLE, RECENTLY_NONNULL -> return qualifiedName
 
                 else -> {
                     // Some new annotations added to the platform: assume they are support annotations?

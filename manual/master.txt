@@ -1,3 +1,4 @@
+// Signature format: 2.0
 // APIs annotated in master that haven't been annotated in pi-dev
 package android.content.pm {
   public abstract class PackageManager {

@@ -244,11 +244,17 @@ class Options(
     /** Whether we should omit common packages such as java.lang.* and kotlin.* from signature output */
     var omitCommonPackages = !compatOutput
 
+    /** The output format version being used */
+    var outputFormat: Int = 1
+
     /**
      * Whether reading signature files should assume the input is formatted as Kotlin-style nulls
-     * (e.g. ? means nullable, ! means unknown, empty means not null)
+     * (e.g. ? means nullable, ! means unknown, empty means not null).
+     *
+     * If not specified, it depends on the format of the signature file (v1 and v2 does not use
+     * Kotlin style nulls; v3 does.)
      */
-    var inputKotlinStyleNulls = false
+    var inputKotlinStyleNulls: Boolean? = null
 
     /** If true, treat all warnings as errors */
     var warningsAreErrors: Boolean = false
@@ -457,7 +463,7 @@ class Options(
     /** Level to include for javadoc */
     var docLevel = DocLevel.PROTECTED
 
-    /** Whether to include the signature file format version number ([SIGNATURE_FORMAT]) in signature files */
+    /** Whether to include the signature file format version number ([CURRENT_SIGNATURE_FORMAT]) in signature files */
     var includeSignatureFormatVersion: Boolean = !compatOutput
 
     /**
@@ -1158,6 +1164,7 @@ class Options(
     }
 
     private fun setFormat(format: Int) {
+        outputFormat = format
         compatOutput = format == 1
         outputKotlinStyleNulls = format >= 3
         outputDefaultValues = format >= 2
