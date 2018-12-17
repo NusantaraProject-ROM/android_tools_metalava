@@ -751,6 +751,12 @@ class StubsTest : DriverTest() {
                         public static final String CONSTANT = "MyConstant";
                         protected int mContext;
                         public void method3() { }
+                        // Static: should be included
+                        public static void method3b() { }
+                        // References hidden type: don't inherit
+                        public void method3c(HiddenParent p) { }
+                        // References hidden type: don't inherit
+                        public void method3d(java.util.List<HiddenParent> p) { }
                     }
                     """
                 ), java(
@@ -778,9 +784,14 @@ class StubsTest : DriverTest() {
                 public class MyClass extends test.pkg.PublicParent {
                 public MyClass() { throw new RuntimeException("Stub!"); }
                 public void method4() { throw new RuntimeException("Stub!"); }
+                public static void method3b() { throw new RuntimeException("Stub!"); }
+                public void method2() { throw new RuntimeException("Stub!"); }
+                public void method3() { throw new RuntimeException("Stub!"); }
                 }
                 """,
-            warnings = "src/test/pkg/MyClass.java:2: warning: Public class test.pkg.MyClass stripped of unavailable superclass test.pkg.HiddenParent [HiddenSuperclass:111]"
+            warnings = """
+                src/test/pkg/MyClass.java:2: warning: Public class test.pkg.MyClass stripped of unavailable superclass test.pkg.HiddenParent [HiddenSuperclass:111]
+                """
         )
     }
 
