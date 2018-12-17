@@ -418,6 +418,11 @@ class ApiAnalyzer(
                 if (method.modifiers.isAbstract() || !method.modifiers.isPublic()) {
                     continue
                 }
+
+                if (method.hasHiddenType(filterReference)) {
+                    continue
+                }
+
                 val name = method.name()
                 val list = interfaceNames[name] ?: run {
                     val list = ArrayList<MethodItem>()
@@ -477,7 +482,9 @@ class ApiAnalyzer(
         map.values.forEach { methods ->
             if (methods.size >= 2) {
                 for (candidate in ArrayList(methods)) {
-                    methods.removeAll(candidate.superMethods())
+                    for (superMethod in candidate.allSuperMethods()) {
+                        methods.remove(superMethod)
+                    }
                 }
             }
         }
@@ -1093,9 +1100,6 @@ class ApiAnalyzer(
                 // this is not a desired practice but it's happened, so we deal
                 // with it by finding the first super class which passes checkLevel for purposes of
                 // generating the doc & stub information, and proceeding normally.
-                val publicSuper = cl.publicSuperClass()
-                // TODO: Initialize and pass super type too (in case generics are involved)
-                cl.setSuperClass(publicSuper)
                 if (!superClass.isFromClassPath()) {
                     reporter.report(
                         Errors.HIDDEN_SUPERCLASS, cl, "Public class " + cl.qualifiedName() +

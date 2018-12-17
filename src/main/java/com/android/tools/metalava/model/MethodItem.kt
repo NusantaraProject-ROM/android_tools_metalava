@@ -460,6 +460,49 @@ interface MethodItem : MemberItem {
         return true
     }
 
+    /** Returns whether this method has any types in its signature that does not match the given filter */
+    fun hasHiddenType(filterReference: Predicate<Item>): Boolean {
+        for (parameter in parameters()) {
+            val type = parameter.type()
+            if (type.hasTypeArguments()) {
+                for (argument in type.typeArgumentClasses()) {
+                    if (!filterReference.test(argument)) {
+                        return true
+                    }
+                }
+            }
+            val clz = type.asClass() ?: continue
+            if (!filterReference.test(clz)) {
+                return true
+            }
+        }
+
+        val returnType = returnType()
+        if (returnType != null) {
+            val returnTypeClass = returnType.asClass()
+            if (returnTypeClass != null && !filterReference.test(returnTypeClass)) {
+                return true
+            }
+            if (returnType.hasTypeArguments()) {
+                for (argument in returnType.typeArgumentClasses()) {
+                    if (!filterReference.test(argument)) {
+                        return true
+                    }
+                }
+            }
+        }
+
+        if (typeParameterList().typeParameterCount() > 0) {
+            for (argument in typeArgumentClasses()) {
+                if (!filterReference.test(argument)) {
+                    return true
+                }
+            }
+        }
+
+        return false
+    }
+
     /** Whether this method is a getter/setter for an underlying Kotlin property (val/var) */
     fun isKotlinProperty(): Boolean = false
 }
