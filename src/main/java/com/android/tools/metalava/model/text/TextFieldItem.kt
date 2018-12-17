@@ -61,6 +61,7 @@ class TextFieldItem(
             modifiers.duplicate(), type, constantValue, position
         )
         duplicated.inheritedFrom = containingClass()
+        duplicated.inheritedField = inheritedField
 
         // Preserve flags that may have been inherited (propagated) from surrounding packages
         if (targetContainingClass.hidden) {
@@ -77,6 +78,7 @@ class TextFieldItem(
     }
 
     override var inheritedFrom: ClassItem? = null
+    override var inheritedField: Boolean = false
 
     private var isEnumConstant = false
     override fun isEnumConstant(): Boolean = isEnumConstant

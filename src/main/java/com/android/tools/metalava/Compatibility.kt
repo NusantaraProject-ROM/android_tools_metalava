@@ -165,6 +165,11 @@ class Compatibility(
     var skipInheritedMethods: Boolean = compat
 
     /**
+     * Similar to [skipInheritedMethods], but for field constants.
+     */
+    var skipInheritedConstants: Boolean = compat
+
+    /**
      * Whether to include parameter names in the signature file
      */
     var parameterNames: Boolean = true

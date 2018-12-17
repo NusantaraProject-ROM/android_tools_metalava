@@ -787,6 +787,7 @@ class StubsTest : DriverTest() {
                 public static void method3b() { throw new RuntimeException("Stub!"); }
                 public void method2() { throw new RuntimeException("Stub!"); }
                 public void method3() { throw new RuntimeException("Stub!"); }
+                public static final java.lang.String CONSTANT = "MyConstant";
                 }
                 """,
             warnings = """
@@ -830,6 +831,7 @@ class StubsTest : DriverTest() {
                     public MyClass() { throw new RuntimeException("Stub!"); }
                     public void method1() { throw new RuntimeException("Stub!"); }
                     public void method2() { throw new RuntimeException("Stub!"); }
+                    public static final java.lang.String CONSTANT = "MyConstant";
                     }
                 """
         )
