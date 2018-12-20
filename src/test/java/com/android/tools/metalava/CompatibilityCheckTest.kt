@@ -1932,6 +1932,67 @@ CompatibilityCheckTest : DriverTest() {
     }
 
     @Test
+    fun `Regression test for bug 120847535`() {
+        // Regression test for
+        // 120847535: check-api doesn't fail on method that is in current.txt, but marked @hide @TestApi
+        check(
+            warnings = """
+                TESTROOT/current-api.txt:6: error: Removed method test.view.ViewTreeObserver.registerFrameCommitCallback(Runnable) [RemovedMethod:9]
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.view;
+                    import android.annotation.TestApi;
+                    public final class ViewTreeObserver {
+                         /**
+                         * @hide
+                         */
+                        @TestApi
+                        public void registerFrameCommitCallback(Runnable callback) {
+                        }
+                    }
+                    """
+                ).indented(),
+                java(
+                    """
+                    package test.view;
+                    public final class View {
+                        private View() { }
+                    }
+                    """
+                ).indented(),
+                testApiSource
+            ),
+
+            api = """
+                package test.view {
+                  public final class View {
+                  }
+                  public final class ViewTreeObserver {
+                    ctor public ViewTreeObserver();
+                  }
+                }
+            """,
+            extraArguments = arrayOf(
+                ARG_HIDE_PACKAGE, "android.annotation",
+                ARG_HIDE_PACKAGE, "android.support.annotation"
+            ),
+
+            checkCompatibilityApi = """
+                package test.view {
+                  public final class View {
+                  }
+                  public final class ViewTreeObserver {
+                    ctor public ViewTreeObserver();
+                    method public void registerFrameCommitCallback(java.lang.Runnable);
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
     fun `Test release compatibility checking`() {
         // Different checks are enforced for current vs release API comparisons:
         // we don't flag AddedClasses etc. Removed classes *are* enforced.
