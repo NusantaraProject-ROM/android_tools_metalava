@@ -534,7 +534,7 @@ interface ModifierList {
                         }
                     }
 
-                    val source = annotation.toSource()
+                    val source = annotation.toSource(target)
                     if (omitCommonPackages) {
                         writer.write(AnnotationItem.shortenAnnotation(source))
                     } else {
