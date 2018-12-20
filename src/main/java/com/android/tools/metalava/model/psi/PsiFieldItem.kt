@@ -80,6 +80,7 @@ class PsiFieldItem(
     override fun duplicate(targetContainingClass: ClassItem): PsiFieldItem {
         val duplicated = create(codebase, targetContainingClass as PsiClassItem, psiField)
         duplicated.inheritedFrom = containingClass
+        duplicated.inheritedField = inheritedField
 
         // Preserve flags that may have been inherited (propagated) from surrounding packages
         if (targetContainingClass.hidden) {
@@ -96,6 +97,7 @@ class PsiFieldItem(
     }
 
     override var inheritedFrom: ClassItem? = null
+    override var inheritedField: Boolean = false
 
     override fun equals(other: Any?): Boolean {
         if (this === other) {
