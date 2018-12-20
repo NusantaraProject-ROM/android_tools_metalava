@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,8 @@
 
 package com.android.tools.metalava.model.psi
 
-import com.android.SdkConstants.ATTR_VALUE
+import com.android.SdkConstants
 import com.android.tools.lint.detector.api.ConstantEvaluator
-import com.android.tools.metalava.XmlBackedAnnotationItem
 import com.android.tools.metalava.model.AnnotationArrayAttributeValue
 import com.android.tools.metalava.model.AnnotationAttribute
 import com.android.tools.metalava.model.AnnotationAttributeValue
@@ -26,27 +25,27 @@ import com.android.tools.metalava.model.AnnotationItem
 import com.android.tools.metalava.model.AnnotationSingleAttributeValue
 import com.android.tools.metalava.model.AnnotationTarget
 import com.android.tools.metalava.model.ClassItem
-import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.DefaultAnnotationItem
 import com.android.tools.metalava.model.Item
-import com.android.tools.metalava.model.psi.CodePrinter.Companion.constantToExpression
-import com.android.tools.metalava.model.psi.CodePrinter.Companion.constantToSource
-import com.intellij.psi.PsiAnnotation
-import com.intellij.psi.PsiAnnotationMemberValue
-import com.intellij.psi.PsiArrayInitializerMemberValue
-import com.intellij.psi.PsiBinaryExpression
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiLiteral
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator
 import org.jetbrains.kotlin.asJava.elements.KtLightNullabilityAnnotation
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.util.isArrayInitializer
 
-class PsiAnnotationItem private constructor(
+class UAnnotationItem private constructor(
     override val codebase: PsiBasedCodebase,
-    val psiAnnotation: PsiAnnotation,
+    val uAnnotation: UAnnotation,
     private val originalName: String?
 ) : DefaultAnnotationItem(codebase) {
     private val qualifiedName = AnnotationItem.mapName(codebase, originalName)
@@ -59,7 +58,7 @@ class PsiAnnotationItem private constructor(
 
     override fun toSource(target: AnnotationTarget): String {
         val sb = StringBuilder(60)
-        appendAnnotation(codebase, sb, psiAnnotation, originalName, target)
+        appendAnnotation(codebase, sb, uAnnotation, originalName, target)
         return sb.toString()
     }
 
@@ -68,7 +67,7 @@ class PsiAnnotationItem private constructor(
     }
 
     override fun isNonNull(): Boolean {
-        if (psiAnnotation is KtLightNullabilityAnnotation &&
+        if (uAnnotation.javaPsi is KtLightNullabilityAnnotation &&
             originalName == ""
         ) {
             // Hack/workaround: some UAST annotation nodes do not provide qualified name :=(
@@ -81,16 +80,16 @@ class PsiAnnotationItem private constructor(
 
     override fun attributes(): List<AnnotationAttribute> {
         if (attributes == null) {
-            val psiAttributes = psiAnnotation.parameterList.attributes
-            attributes = if (psiAttributes.isEmpty()) {
+            val uAttributes = uAnnotation.attributeValues
+            attributes = if (uAttributes.isEmpty()) {
                 emptyList()
             } else {
                 val list = mutableListOf<AnnotationAttribute>()
-                for (parameter in psiAttributes) {
+                for (parameter in uAttributes) {
                     list.add(
-                        PsiAnnotationAttribute(
+                        UAnnotationAttribute(
                             codebase,
-                            parameter.name ?: ATTR_VALUE, parameter.value ?: continue
+                            parameter.name ?: SdkConstants.ATTR_VALUE, parameter.expression
                         )
                     )
                 }
@@ -102,38 +101,24 @@ class PsiAnnotationItem private constructor(
     }
 
     companion object {
-        fun create(codebase: PsiBasedCodebase, psiAnnotation: PsiAnnotation, qualifiedName: String? = psiAnnotation.qualifiedName): PsiAnnotationItem {
-            return PsiAnnotationItem(codebase, psiAnnotation, qualifiedName)
+        fun create(codebase: PsiBasedCodebase, uAnnotation: UAnnotation, qualifiedName: String? = uAnnotation.qualifiedName): UAnnotationItem {
+            return UAnnotationItem(codebase, uAnnotation, qualifiedName)
         }
 
-        fun create(codebase: PsiBasedCodebase, original: PsiAnnotationItem): PsiAnnotationItem {
-            return PsiAnnotationItem(codebase, original.psiAnnotation, original.originalName)
-        }
-
-        // TODO: Inline this such that instead of constructing XmlBackedAnnotationItem
-        // and then producing source and parsing it, produce source directly
-        fun create(
-            codebase: Codebase,
-            xmlAnnotation: XmlBackedAnnotationItem,
-            context: Item? = null
-        ): PsiAnnotationItem {
-            if (codebase is PsiBasedCodebase) {
-                return codebase.createAnnotation(xmlAnnotation.toSource(), context)
-            } else {
-                codebase.unsupported("Converting to PSI annotation requires PSI codebase")
-            }
+        fun create(codebase: PsiBasedCodebase, original: UAnnotationItem): UAnnotationItem {
+            return UAnnotationItem(codebase, original.uAnnotation, original.originalName)
         }
 
         private fun appendAnnotation(
             codebase: PsiBasedCodebase,
             sb: StringBuilder,
-            psiAnnotation: PsiAnnotation,
+            uAnnotation: UAnnotation,
             originalName: String?,
             target: AnnotationTarget
         ) {
             val qualifiedName = AnnotationItem.mapName(codebase, originalName, null, target) ?: return
 
-            val attributes = psiAnnotation.parameterList.attributes
+            val attributes = uAnnotation.attributeValues
             if (attributes.isEmpty()) {
                 sb.append("@$qualifiedName")
                 return
@@ -142,9 +127,9 @@ class PsiAnnotationItem private constructor(
             sb.append("@")
             sb.append(qualifiedName)
             sb.append("(")
-            if (attributes.size == 1 && (attributes[0].name == null || attributes[0].name == ATTR_VALUE)) {
+            if (attributes.size == 1 && (attributes[0].name == null || attributes[0].name == SdkConstants.ATTR_VALUE)) {
                 // Special case: omit "value" if it's the only attribute
-                appendValue(codebase, sb, attributes[0].value, target)
+                appendValue(codebase, sb, attributes[0].expression, target)
             } else {
                 var first = true
                 for (attribute in attributes) {
@@ -153,9 +138,9 @@ class PsiAnnotationItem private constructor(
                     } else {
                         sb.append(", ")
                     }
-                    sb.append(attribute.name ?: ATTR_VALUE)
+                    sb.append(attribute.name ?: SdkConstants.ATTR_VALUE)
                     sb.append('=')
-                    appendValue(codebase, sb, attribute.value, target)
+                    appendValue(codebase, sb, attribute.expression, target)
                 }
             }
             sb.append(")")
@@ -164,7 +149,7 @@ class PsiAnnotationItem private constructor(
         private fun appendValue(
             codebase: PsiBasedCodebase,
             sb: StringBuilder,
-            value: PsiAnnotationMemberValue?,
+            value: UExpression?,
             target: AnnotationTarget
         ) {
             // Compute annotation string -- we don't just use value.text here
@@ -174,8 +159,8 @@ class PsiAnnotationItem private constructor(
             //  @android.support.annotation.RequiresPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION)
             when (value) {
                 null -> sb.append("null")
-                is PsiLiteral -> sb.append(constantToSource(value.value))
-                is PsiReference -> {
+                is ULiteralExpression -> sb.append(CodePrinter.constantToSource(value.value))
+                is UReferenceExpression -> {
                     val resolved = value.resolve()
                     when (resolved) {
                         is PsiField -> {
@@ -205,70 +190,77 @@ class PsiAnnotationItem private constructor(
                         }
                         is PsiClass -> resolved.qualifiedName?.let { sb.append(it) }
                         else -> {
-                            sb.append(value.text)
+                            sb.append(value.sourcePsi?.text ?: value.asSourceString())
                         }
                     }
                 }
-                is PsiBinaryExpression -> {
-                    appendValue(codebase, sb, value.lOperand, target)
+                is UBinaryExpression -> {
+                    appendValue(codebase, sb, value.leftOperand, target)
                     sb.append(' ')
-                    sb.append(value.operationSign.text)
+                    sb.append(value.operator.text)
                     sb.append(' ')
-                    appendValue(codebase, sb, value.rOperand, target)
+                    appendValue(codebase, sb, value.rightOperand, target)
                 }
-                is PsiArrayInitializerMemberValue -> {
-                    sb.append('{')
-                    var first = true
-                    for (initializer in value.initializers) {
-                        if (first) {
-                            first = false
-                        } else {
-                            sb.append(", ")
+                is UCallExpression -> {
+                    if (value.isArrayInitializer()) {
+                        sb.append('{')
+                        var first = true
+                        for (initializer in value.valueArguments) {
+                            if (first) {
+                                first = false
+                            } else {
+                                sb.append(", ")
+                            }
+                            appendValue(codebase, sb, initializer, target)
                         }
-                        appendValue(codebase, sb, initializer, target)
+                        sb.append('}')
+                    } else {
+                        println("todo")
                     }
-                    sb.append('}')
                 }
-                is PsiAnnotation -> {
+                is UAnnotation -> {
                     appendAnnotation(codebase, sb, value, value.qualifiedName, target)
                 }
                 else -> {
-                    if (value is PsiExpression) {
-                        val source = getConstantSource(value)
-                        if (source != null) {
-                            sb.append(source)
-                            return
-                        }
+                    val source = getConstantSource(value)
+                    if (source != null) {
+                        sb.append(source)
+                        return
                     }
-                    sb.append(value.text)
+                    sb.append(value.sourcePsi?.text ?: value.asSourceString())
                 }
             }
         }
 
+        private fun getConstantSource(value: UExpression): String? {
+            val constant = value.evaluate()
+            return CodePrinter.constantToExpression(constant)
+        }
+
         private fun getConstantSource(value: PsiExpression): String? {
             val constant = JavaConstantExpressionEvaluator.computeConstantExpression(value, false)
-            return constantToExpression(constant)
+            return CodePrinter.constantToExpression(constant)
         }
     }
 }
 
-class PsiAnnotationAttribute(
+class UAnnotationAttribute(
     codebase: PsiBasedCodebase,
     override val name: String,
-    psiValue: PsiAnnotationMemberValue
+    psiValue: UExpression
 ) : AnnotationAttribute {
-    override val value: AnnotationAttributeValue = PsiAnnotationValue.create(
+    override val value: AnnotationAttributeValue = UAnnotationValue.create(
         codebase, psiValue
     )
 }
 
-abstract class PsiAnnotationValue : AnnotationAttributeValue {
+abstract class UAnnotationValue : AnnotationAttributeValue {
     companion object {
-        fun create(codebase: PsiBasedCodebase, value: PsiAnnotationMemberValue): PsiAnnotationValue {
-            return if (value is PsiArrayInitializerMemberValue) {
-                PsiAnnotationArrayAttributeValue(codebase, value)
+        fun create(codebase: PsiBasedCodebase, value: UExpression): UAnnotationValue {
+            return if (value.isArrayInitializer()) {
+                UAnnotationArrayAttributeValue(codebase, value as UCallExpression)
             } else {
-                PsiAnnotationSingleAttributeValue(codebase, value)
+                UAnnotationSingleAttributeValue(codebase, value)
             }
         }
     }
@@ -276,15 +268,23 @@ abstract class PsiAnnotationValue : AnnotationAttributeValue {
     override fun toString(): String = toSource()
 }
 
-class PsiAnnotationSingleAttributeValue(
+class UAnnotationSingleAttributeValue(
     private val codebase: PsiBasedCodebase,
-    private val psiValue: PsiAnnotationMemberValue
-) : PsiAnnotationValue(), AnnotationSingleAttributeValue {
-    override val valueSource: String = psiValue.text
+    private val psiValue: UExpression
+) : UAnnotationValue(), AnnotationSingleAttributeValue {
+    override val valueSource: String = getText(psiValue)
     override val value: Any?
         get() {
+            if (psiValue is ULiteralExpression) {
+                val value = psiValue.value
+                if (value != null) {
+                    return value
+                } else if (psiValue.isNull) {
+                    return null
+                }
+            }
             if (psiValue is PsiLiteral) {
-                return psiValue.value ?: psiValue.text.removeSurrounding("\"")
+                return psiValue.value ?: getText(psiValue).removeSurrounding("\"")
             }
 
             val value = ConstantEvaluator.evaluate(null, psiValue)
@@ -292,15 +292,15 @@ class PsiAnnotationSingleAttributeValue(
                 return value
             }
 
-            return psiValue.text ?: psiValue.text.removeSurrounding("\"")
+            return getText(psiValue).removeSurrounding("\"")
         }
 
     override fun value(): Any? = value
 
-    override fun toSource(): String = psiValue.text
+    override fun toSource(): String = getText(psiValue)
 
     override fun resolve(): Item? {
-        if (psiValue is PsiReference) {
+        if (psiValue is UReferenceExpression) {
             val resolved = psiValue.resolve()
             when (resolved) {
                 is PsiField -> return codebase.findField(resolved)
@@ -312,11 +312,15 @@ class PsiAnnotationSingleAttributeValue(
     }
 }
 
-class PsiAnnotationArrayAttributeValue(codebase: PsiBasedCodebase, private val value: PsiArrayInitializerMemberValue) :
-    PsiAnnotationValue(), AnnotationArrayAttributeValue {
-    override val values = value.initializers.map {
+class UAnnotationArrayAttributeValue(codebase: PsiBasedCodebase, private val value: UCallExpression) :
+    UAnnotationValue(), AnnotationArrayAttributeValue {
+    override val values = value.valueArguments.map {
         create(codebase, it)
     }.toList()
 
-    override fun toSource(): String = value.text
+    override fun toSource(): String = getText(value)
+}
+
+private fun getText(element: UElement): String {
+    return element.sourcePsi?.text ?: element.asSourceString()
 }

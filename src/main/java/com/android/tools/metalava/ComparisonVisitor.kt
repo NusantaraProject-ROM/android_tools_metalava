@@ -333,7 +333,17 @@ class CodebaseComparator {
                                         val simpleType2 = parameter2.type().toCanonicalType()
                                         delta = simpleType1.compareTo(simpleType2)
                                         if (delta != 0) {
-                                            break
+                                            // Special case: Kotlin coroutines
+                                            if (simpleType1.startsWith("kotlin.coroutines.") && simpleType2.startsWith("kotlin.coroutines.")) {
+                                                val t1 = simpleType1.removePrefix("kotlin.coroutines.").removePrefix("experimental.")
+                                                val t2 = simpleType2.removePrefix("kotlin.coroutines.").removePrefix("experimental.")
+                                                delta = t1.compareTo(t2)
+                                                if (delta != 0) {
+                                                    break
+                                                }
+                                            } else {
+                                                break
+                                            }
                                         }
                                     }
                                 }

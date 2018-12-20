@@ -224,7 +224,8 @@ class DocAnalyzer(
             }
 
             private fun handleKotlinDeprecation(annotation: AnnotationItem, item: Item) {
-                val text = annotation.findAttribute(ATTR_VALUE)?.value?.value()?.toString() ?: return
+                val text = (annotation.findAttribute("message") ?: annotation.findAttribute(ATTR_VALUE))
+                    ?.value?.value()?.toString() ?: return
                 if (text.isBlank() || item.documentation.contains(text)) {
                     return
                 }

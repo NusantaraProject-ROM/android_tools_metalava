@@ -285,6 +285,32 @@ CompatibilityCheckTest : DriverTest() {
     }
 
     @Test
+    fun `Kotlin Coroutines`() {
+        check(
+            warnings = "",
+            compatibilityMode = false,
+            inputKotlinStyleNulls = true,
+            outputKotlinStyleNulls = true,
+            checkCompatibilityApi = """
+                package test.pkg {
+                  public final class TestKt {
+                    ctor public TestKt();
+                    method public static suspend inline java.lang.Object hello(kotlin.coroutines.experimental.Continuation<? super kotlin.Unit>);
+                  }
+                }
+                """,
+            signatureSource = """
+                package test.pkg {
+                  public final class TestKt {
+                    ctor public TestKt();
+                    method public static suspend inline Object hello(@NonNull kotlin.coroutines.Continuation<? super kotlin.Unit> p);
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
     fun `Add flag new methods but not overrides from platform`() {
         check(
             warnings = """

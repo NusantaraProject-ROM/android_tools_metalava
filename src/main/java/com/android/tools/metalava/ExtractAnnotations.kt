@@ -34,6 +34,7 @@ import com.android.tools.metalava.model.psi.CodePrinter
 import com.android.tools.metalava.model.psi.PsiAnnotationItem
 import com.android.tools.metalava.model.psi.PsiClassItem
 import com.android.tools.metalava.model.psi.PsiMethodItem
+import com.android.tools.metalava.model.psi.UAnnotationItem
 import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.google.common.xml.XmlEscapers
 import com.intellij.psi.JavaRecursiveElementVisitor
@@ -234,26 +235,33 @@ class ExtractAnnotations(
                         )
                     }
 
-                    if (typeDefAnnotation is PsiAnnotationItem && typeDefClass is PsiClassItem) {
-                        val result = AnnotationHolder(
-                            typeDefClass, typeDefAnnotation,
-                            annotationLookup.findRealAnnotation(
-                                typeDefAnnotation.psiAnnotation,
-                                typeDefClass.psiClass,
-                                null
+                    val result =
+                        if (typeDefAnnotation is PsiAnnotationItem && typeDefClass is PsiClassItem) {
+                            AnnotationHolder(
+                                typeDefClass, typeDefAnnotation,
+                                annotationLookup.findRealAnnotation(
+                                    typeDefAnnotation.psiAnnotation,
+                                    typeDefClass.psiClass,
+                                    null
+                                )
                             )
-                        )
-                        classToAnnotationHolder[className] = result
-                        addItem(item, result)
-
-                        if (item is PsiMethodItem && result.uAnnotation != null &&
-                            !reporter.isSuppressed(Errors.RETURNING_UNEXPECTED_CONSTANT)
-                        ) {
-                            verifyReturnedConstants(item, result.uAnnotation, result, className)
+                        } else if (typeDefAnnotation is UAnnotationItem && typeDefClass is PsiClassItem) {
+                            AnnotationHolder(
+                                typeDefClass, typeDefAnnotation, typeDefAnnotation.uAnnotation
+                            )
+                        } else {
+                            continue
                         }
 
-                        continue
+                    classToAnnotationHolder[className] = result
+                    addItem(item, result)
+
+                    if (item is PsiMethodItem && result.uAnnotation != null &&
+                        !reporter.isSuppressed(Errors.RETURNING_UNEXPECTED_CONSTANT)
+                    ) {
+                        verifyReturnedConstants(item, result.uAnnotation, result, className)
                     }
+                    continue
                 }
             }
         }
@@ -469,11 +477,12 @@ class ExtractAnnotations(
     ) {
         val annotationItem = annotationHolder.annotationItem
         val uAnnotation = annotationHolder.uAnnotation
-            ?: if (annotationItem is PsiAnnotationItem) {
-                // Imported annotation
-                JavaUAnnotation.wrap(annotationItem.psiAnnotation)
-            } else {
-                return
+            ?: when (annotationItem) {
+                is UAnnotationItem -> annotationItem.uAnnotation
+                is PsiAnnotationItem ->
+                    // Imported annotation
+                    JavaUAnnotation.wrap(annotationItem.psiAnnotation)
+                else -> return
             }
         val qualifiedName = annotationItem.qualifiedName()
 

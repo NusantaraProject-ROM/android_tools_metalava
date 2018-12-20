@@ -357,9 +357,16 @@ open class PsiMethodItem(
                 // methods with super methods also consider this method non-final.)
                 modifiers.setFinal(false)
             }
-            val parameters = psiMethod.parameterList.parameters.mapIndexed { index, parameter ->
-                PsiParameterItem.create(codebase, parameter, index)
-            }
+            val parameters =
+                if (psiMethod is UMethod) {
+                    psiMethod.uastParameters.mapIndexed { index, parameter ->
+                        PsiParameterItem.create(codebase, parameter, index)
+                    }
+                } else {
+                    psiMethod.parameterList.parameters.mapIndexed { index, parameter ->
+                        PsiParameterItem.create(codebase, parameter, index)
+                    }
+                }
             val returnType = codebase.getType(psiMethod.returnType!!)
             val method = PsiMethodItem(
                 codebase = codebase,
