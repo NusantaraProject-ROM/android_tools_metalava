@@ -585,9 +585,27 @@ interface ClassItem : Item {
                 }
                 for (field in clazz.fields()) {
                     if (!predicate.test(field)) {
-                        val clz = this
-                        val duplicated = field.duplicate(clz)
+                        val duplicated = field.duplicate(this)
                         if (predicate.test(duplicated)) {
+                            fields.remove(duplicated)
+                            fields.add(duplicated)
+                        }
+                    }
+                }
+            }
+
+            val superClass = superClass()
+            if (superClass != null && !predicate.test(superClass) && predicate.test(this)) {
+                // Include constants from hidden super classes.
+                for (field in superClass.fields()) {
+                    val fieldModifiers = field.modifiers
+                    if (!fieldModifiers.isStatic() || !fieldModifiers.isFinal() || !fieldModifiers.isPublic()) {
+                        continue
+                    }
+                    if (!field.originallyHidden) {
+                        val duplicated = field.duplicate(this)
+                        if (predicate.test(duplicated)) {
+                            duplicated.inheritedField = true
                             fields.remove(duplicated)
                             fields.add(duplicated)
                         }
@@ -803,6 +821,10 @@ class VisitCandidate(private val cls: ClassItem, private val visitor: ApiVisitor
             return true
         }
 
+        return emitInner()
+    }
+
+    private fun emitInner(): Boolean {
         return innerClasses.any { it.emit() }
     }
 
@@ -827,12 +849,14 @@ class VisitCandidate(private val cls: ClassItem, private val visitor: ApiVisitor
             return
         }
 
-        if (!emit()) {
+        val emitClass = emitClass()
+        val emit = emitClass || emitInner()
+        if (!emit) {
             return
         }
 
-        val emitClass = if (visitor.includeEmptyOuterClasses) emit() else emitClass()
-        if (emitClass) {
+        val emitThis = if (visitor.includeEmptyOuterClasses) emit else emitClass
+        if (emitThis) {
             if (!visitor.visitingPackage) {
                 visitor.visitingPackage = true
                 val pkg = cls.containingPackage()
@@ -882,7 +906,7 @@ class VisitCandidate(private val cls: ClassItem, private val visitor: ApiVisitor
             innerClasses.forEach { it.accept() }
         }
 
-        if (emitClass) {
+        if (emitThis) {
             visitor.afterVisitClass(cls)
             visitor.afterVisitItem(cls)
         }
