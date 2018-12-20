@@ -747,29 +747,20 @@ class CompatibilityCheck(
         val inherited = if (new.isConstructor()) {
             null
         } else {
-            val inherited = new.containingClass().findMethod(
+            new.containingClass().findMethod(
                 new,
                 includeSuperClasses = true,
                 includeInterfaces = false
             )
-            if (inherited === new) null else inherited
         }
-        if (inherited == null || !inherited.modifiers.isAbstract()) {
+        if (inherited == null || inherited == new || !inherited.modifiers.isAbstract()) {
             val error = if (new.modifiers.isAbstract()) Errors.ADDED_ABSTRACT_METHOD else Errors.ADDED_METHOD
             handleAdded(error, new)
         }
     }
 
     override fun added(new: FieldItem) {
-        val codebase = new.codebase
-        if (new.inheritedFrom != null &&
-            // In old signature files, methods inherited from hidden super classes
-            // are not included. An example of this is StringBuilder.setLength.
-            // More details about this are listed in Compatibility.skipInheritedMethods.
-            // We may see these in the codebase but not in the (old) signature files,
-            // so skip these -- they're not really "added".
-            (codebase is TextCodebase && codebase.format.major < 2)
-        ) {
+        if (new.inheritedFrom != null && comparingWithPartialSignatures) {
             return
         }
 
@@ -795,14 +786,14 @@ class CompatibilityCheck(
         val inherited = if (old.isConstructor()) {
             null
         } else {
-            val inherited = from?.findMethod(
+            // This can also return self, specially handled below
+            from?.findMethod(
                 old,
                 includeSuperClasses = true,
                 includeInterfaces = from.isInterface()
             )
-            if (inherited === old) null else inherited
         }
-        if (inherited == null) {
+        if (inherited == null || inherited != old && inherited.isHiddenOrRemoved()) {
             val error = if (old.deprecated) Errors.REMOVED_DEPRECATED_METHOD else Errors.REMOVED_METHOD
             handleRemoved(error, old)
         }
