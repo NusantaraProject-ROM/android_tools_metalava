@@ -1926,6 +1926,7 @@ class ApiFileTest : DriverTest() {
                         ctor public MyClass();
                         method public void method1();
                         method public void method2();
+                        field public static final String CONSTANT = "MyConstant";
                       }
                     }
             """
