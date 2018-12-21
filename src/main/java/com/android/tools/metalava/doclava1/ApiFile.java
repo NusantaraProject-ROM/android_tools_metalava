@@ -180,6 +180,7 @@ public class ApiFile {
         } else if ("enum".equals(token)) {
             isEnum = true;
             modifiers.setFinal(true);
+            modifiers.setStatic(true);
             ext = JAVA_LANG_ENUM;
             token = tokenizer.requireToken();
         } else {
