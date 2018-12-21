@@ -519,7 +519,7 @@ open class PsiClassItem(
             //    method public static android.graphics.ColorSpace.Adaptation valueOf(java.lang.String);
             //    method public static final android.graphics.ColorSpace.Adaptation[] values();
 
-            if (compatibility.defaultAnnotationMethods) {
+            if (compatibility.defaultEnumMethods) {
                 // TODO: Skip if we already have these methods here (but that shouldn't happen; nobody would
                 // type this by hand)
                 addEnumMethod(
