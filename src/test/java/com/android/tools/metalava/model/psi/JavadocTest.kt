@@ -378,11 +378,13 @@ class JavadocTest : DriverTest() {
                     package android.accessibilityservice;
 
                     import android.view.accessibility.AccessibilityEvent;
+                    import android.view.accessibility.AccessibilityRecord;
 
                     /**
                      * <p>
                      * Window content may be retrieved with
-                     * {@link AccessibilityEvent#getSource() AccessibilityEvent.getSource()},
+                     * {@link AccessibilityEvent#getSource() AccessibilityEvent.getSource()}.
+                     * Mention AccessibilityRecords here.
                      * </p>
                      */
                     @SuppressWarnings("all")
@@ -419,7 +421,8 @@ class JavadocTest : DriverTest() {
                 /**
                  * <p>
                  * Window content may be retrieved with
-                 * {@link android.view.accessibility.AccessibilityEvent#getSource() AccessibilityEvent#getSource()},
+                 * {@link android.view.accessibility.AccessibilityEvent#getSource() AccessibilityEvent#getSource()}.
+                 * Mention AccessibilityRecords here.
                  * </p>
                  */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
