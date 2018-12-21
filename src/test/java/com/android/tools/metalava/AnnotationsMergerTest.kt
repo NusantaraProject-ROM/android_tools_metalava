@@ -149,6 +149,7 @@ class AnnotationsMergerTest : DriverTest() {
             ),
             compatibilityMode = false,
             outputKotlinStyleNulls = false,
+            inputKotlinStyleNulls = true,
             omitCommonPackages = false,
             mergeSignatureAnnotations = """
                 package test.pkg {
