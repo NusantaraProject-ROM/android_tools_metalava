@@ -41,7 +41,7 @@ class AnnotationsDifferTest {
                     method public test.pkg.Appendable append(java.lang.CharSequence);
                   }
                 }
-        """.trimIndent(), true, true
+        """.trimIndent(), true
         )
 
         val codebase2 = ApiFile.parseApi(
@@ -52,7 +52,7 @@ class AnnotationsDifferTest {
             method public test.pkg.Appendable append2(java.lang.CharSequence);
           }
         }
-        """.trimIndent(), false, false
+        """.trimIndent(), false
         )
 
         val apiFile = temporaryFolder.newFile("diff.txt")

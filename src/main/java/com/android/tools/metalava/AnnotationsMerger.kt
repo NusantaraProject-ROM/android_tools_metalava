@@ -215,11 +215,7 @@ class AnnotationsMerger(
 
     private fun mergeAnnotationsSignatureFile(path: String) {
         try {
-            // Old style signature files don't support annotations anyway, so we might as well
-            // accept
-            val kotlinStyleNulls = true
-            val supportsStagedNullability = true
-            val signatureCodebase = ApiFile.parseApi(File(path), kotlinStyleNulls, supportsStagedNullability)
+            val signatureCodebase = ApiFile.parseApi(File(path), options.inputKotlinStyleNulls)
             signatureCodebase.description = "Signature files for annotation merger: loaded from $path"
             mergeQualifierAnnotationsFromCodebase(signatureCodebase)
         } catch (ex: ApiParseException) {

@@ -45,7 +45,7 @@ class ApiFromTextTest : DriverTest() {
     @Test
     fun `Handle lambas as default values`() {
         val source = """
-            // Signature format: $SIGNATURE_FORMAT
+            // Signature format: $CURRENT_SIGNATURE_FORMAT
             package androidx.collection {
               public final class LruCacheKt {
                 ctor public LruCacheKt();
@@ -66,7 +66,7 @@ class ApiFromTextTest : DriverTest() {
     @Test
     fun `Handle enum constants as default values`() {
         val source = """
-            // Signature format: $SIGNATURE_FORMAT
+            // Signature format: $CURRENT_SIGNATURE_FORMAT
             package test.pkg {
               public final class Foo {
                 ctor public Foo();
@@ -100,7 +100,7 @@ class ApiFromTextTest : DriverTest() {
     @Test
     fun `Handle complex expressions as default values`() {
         val source = """
-            // Signature format: $SIGNATURE_FORMAT
+            // Signature format: $CURRENT_SIGNATURE_FORMAT
             package androidx.paging {
               public final class PagedListConfigKt {
                 ctor public PagedListConfigKt();
