@@ -33,7 +33,6 @@ class TextBackedAnnotationItemTest {
         override fun findClass(className: String): ClassItem? = unsupported()
         override fun findPackage(pkgName: String): PackageItem? = unsupported()
         override fun trustedApi(): Boolean = false
-        override var supportsStagedNullability: Boolean = false
     }
 
     @Test

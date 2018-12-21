@@ -33,12 +33,6 @@ import com.android.tools.metalava.model.visitors.ApiVisitor
 import java.io.PrintWriter
 import java.util.function.Predicate
 
-/** Current signature format. */
-const val SIGNATURE_FORMAT = "2.0"
-
-/** Marker comment at the beginning of the signature file */
-const val SIGNATURE_FORMAT_PREFIX = "// Signature format: "
-
 class SignatureWriter(
     private val writer: PrintWriter,
     filterEmit: Predicate<Item>,
@@ -57,7 +51,7 @@ class SignatureWriter(
     init {
         if (options.includeSignatureFormatVersion) {
             writer.print(SIGNATURE_FORMAT_PREFIX)
-            writer.println(SIGNATURE_FORMAT)
+            writer.println(CURRENT_SIGNATURE_FORMAT)
         }
     }
 
