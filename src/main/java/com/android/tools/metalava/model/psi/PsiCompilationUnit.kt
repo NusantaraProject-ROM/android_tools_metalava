@@ -152,7 +152,7 @@ class PsiCompilationUnit(val codebase: PsiBasedCodebase, containingFile: PsiFile
                             if (doc.isNotBlank()) {
                                 var found: MutableList<String>? = null
                                 for (name in map.keys()) {
-                                    if (doc.contains(name)) {
+                                    if (docContainsWord(doc, name)) {
                                         if (found == null) {
                                             found = mutableListOf()
                                         }
@@ -195,5 +195,23 @@ class PsiCompilationUnit(val codebase: PsiBasedCodebase, containingFile: PsiFile
         }
 
         return topLevel
+    }
+
+    companion object {
+        // Cache pattern compilation across source files
+        private val regexMap = HashMap<String, Regex>()
+
+        private fun docContainsWord(doc: String, word: String): Boolean {
+            if (!doc.contains(word)) {
+                return false
+            }
+
+            val regex = regexMap[word] ?: run {
+                val new = Regex("""\b$word\b""")
+                regexMap[word] = new
+                new
+            }
+            return regex.find(doc) != null
+        }
     }
 }
