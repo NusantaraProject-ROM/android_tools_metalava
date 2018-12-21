@@ -295,7 +295,7 @@ interface ModifierList {
                     writer.write("default ")
                 }
 
-                if (list.isStatic()) {
+                if (list.isStatic() && (compatibility.staticEnums || classItem == null || !classItem.isEnum())) {
                     writer.write("static ")
                 }
 
@@ -394,7 +394,7 @@ interface ModifierList {
                     writer.write("default ")
                 }
 
-                if (list.isStatic()) {
+                if (list.isStatic() && (compatibility.staticEnums || classItem == null || !classItem.isEnum())) {
                     writer.write("static ")
                 }
 

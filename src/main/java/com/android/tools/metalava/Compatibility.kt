@@ -42,8 +42,8 @@ class Compatibility(
      * and implementing this interface: java.lang.annotation.Annotation */
     var classForAnnotations: Boolean = compat
 
-    /** Add in explicit `valueOf` and `values` methods into annotation classes  */
-    var defaultAnnotationMethods: Boolean = compat
+    /** Add in explicit `valueOf` and `values` methods into enum classes */
+    var defaultEnumMethods: Boolean = compat
 
     /** Whether signature files should contain annotation default values (as is already
      * done for field default values) */
@@ -192,6 +192,9 @@ class Compatibility(
      * including inner classes; for that see [propagateDeprecatedInnerClasses]) as well.
      */
     var propagateDeprecatedMembers = !compat
+
+    /** Whether inner enums should be listed as static in the signature file. */
+    var staticEnums = compat
 
     // Other examples: sometimes we sort by qualified name, sometimes by full name
 }
