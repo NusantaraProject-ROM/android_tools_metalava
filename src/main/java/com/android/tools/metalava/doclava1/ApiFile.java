@@ -300,9 +300,18 @@ public class ApiFile {
                 }
                 token = tokenizer.requireToken();
                 if (token.equals("(")) {
-                    // Annotation arguments
+                    // Annotation arguments; potentially nested
+                    int balance = 0;
                     int start = tokenizer.offset() - 1;
-                    while (!token.equals(")")) {
+                    while (true) {
+                        if (token.equals("(")) {
+                            balance++;
+                        } else if (token.equals(")")) {
+                            balance--;
+                            if (balance == 0) {
+                                break;
+                            }
+                        }
                         token = tokenizer.requireToken();
                     }
                     annotation += tokenizer.getStringFromOffset(start);
