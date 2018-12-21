@@ -2224,6 +2224,32 @@ CompatibilityCheckTest : DriverTest() {
     }
 
     @Test
+    fun `Comparing annotations with methods with v1 signature files`() {
+        check(
+            compatibilityMode = true,
+            checkCompatibilityApi = """
+                package androidx.annotation {
+                  public abstract class RestrictTo implements java.lang.annotation.Annotation {
+                  }
+                  public static final class RestrictTo.Scope extends java.lang.Enum {
+                    method public static androidx.annotation.RestrictTo.Scope valueOf(java.lang.String);
+                    method public static final androidx.annotation.RestrictTo.Scope[] values();
+                    enum_constant public static final deprecated androidx.annotation.RestrictTo.Scope GROUP_ID;
+                    enum_constant public static final androidx.annotation.RestrictTo.Scope LIBRARY;
+                    enum_constant public static final androidx.annotation.RestrictTo.Scope LIBRARY_GROUP;
+                    enum_constant public static final androidx.annotation.RestrictTo.Scope SUBCLASSES;
+                    enum_constant public static final androidx.annotation.RestrictTo.Scope TESTS;
+                  }
+                }
+                """,
+
+            sourceFiles = *arrayOf(
+                restrictToSource
+            )
+        )
+    }
+
+    @Test
     fun `Adding and removing reified`() {
         check(
             compatibilityMode = false,

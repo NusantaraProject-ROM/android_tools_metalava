@@ -46,7 +46,7 @@ import java.util.function.Predicate
  */
 class CompatibilityCheck(
     val filterReference: Predicate<Item>,
-    oldCodebase: Codebase,
+    private val oldCodebase: Codebase,
     private val apiType: ApiType,
     private val base: Codebase? = null
 ) : ComparisonVisitor() {
@@ -758,6 +758,11 @@ class CompatibilityCheck(
         if ((new.name() == "values" && new.parameters().isEmpty() || new.name() == "valueOf" &&
                 new.parameters().size == 1) && new.containingClass().isEnum()
         ) {
+            return
+        }
+
+        // In old signature files, annotation methods are missing! This will show up as an added method.
+        if (new.containingClass().isAnnotationType() && oldCodebase is TextCodebase && oldCodebase.format.major == 1) {
             return
         }
 
