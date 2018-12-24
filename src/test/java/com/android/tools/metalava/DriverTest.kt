@@ -324,7 +324,11 @@ abstract class DriverTest {
          * Hook for performing additional initialization of the project
          * directory
          */
-        projectSetup: ((File) -> Unit)? = null
+        projectSetup: ((File) -> Unit)? = null,
+        /** Baseline file to use, if any */
+        baseline: String? = null,
+        /** Whether to create the baseline if it does not exist. Requires [baseline] to be set. */
+        updateBaseline: Boolean = false
     ) {
         // Ensure different API clients don't interfere with each other
         try {
@@ -756,6 +760,20 @@ abstract class DriverTest {
             emptyArray()
         }
 
+        var baselineFile: File? = null
+        val baselineArgs = if (baseline != null) {
+            baselineFile = temporaryFolder.newFile("baseline.txt")
+            if (!updateBaseline) {
+                baselineFile?.writeText(baseline.trimIndent())
+                arrayOf(ARG_BASELINE, baselineFile.path)
+            } else {
+                baselineFile.delete()
+                arrayOf(ARG_BASELINE, baselineFile.path, ARG_UPDATE_BASELINE)
+            }
+        } else {
+            emptyArray()
+        }
+
         val importedPackageArgs = mutableListOf<String>()
         importedPackages.forEach {
             importedPackageArgs.add("--stub-import-packages")
@@ -909,6 +927,7 @@ abstract class DriverTest {
             *manifestFileArgs,
             *convertToJDiffArgs,
             *applyApiLevelsXmlArgs,
+            *baselineArgs,
             *showAnnotationArguments,
             *hideAnnotationArguments,
             *showUnannotatedArgs,
@@ -947,6 +966,15 @@ abstract class DriverTest {
             assertEquals(stripComments(apiXml, stripLineComments = false).trimIndent(), actualText)
             // Make sure we can read back the files we write
             parseDocument(apiXmlFile.readText(Charsets.UTF_8), false)
+        }
+
+        if (baseline != null && baselineFile != null) {
+            assertTrue(
+                "${baselineFile.path} does not exist even though $ARG_BASELINE was used",
+                baselineFile.exists()
+            )
+            val actualText = readFile(baselineFile, stripBlankLines, trim)
+            assertEquals(stripComments(baseline, stripLineComments = false).trimIndent(), actualText)
         }
 
         if (convertToJDiffFiles.isNotEmpty()) {
