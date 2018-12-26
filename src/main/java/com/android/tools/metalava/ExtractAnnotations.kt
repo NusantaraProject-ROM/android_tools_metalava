@@ -343,8 +343,8 @@ class ExtractAnnotations(
             val attributes = annotation.attributeValues
             if (attributes.size != 1) {
                 reporter.report(
-                    Severity.ERROR, null as PsiElement?,
-                    "Expected exactly one parameter passed to @Retention", Errors.ANNOTATION_EXTRACTION
+                    Errors.ANNOTATION_EXTRACTION, annotation.sourcePsi,
+                    "Expected exactly one parameter passed to @Retention"
                 )
                 return false
             }

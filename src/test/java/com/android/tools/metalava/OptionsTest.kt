@@ -213,6 +213,13 @@ Diffs and Checks:
 --lint <id>                               Report issues of the given id as having
                                           lint-severity
 --hide <id>                               Hide/skip issues of the given id
+--baseline <file>                         Filter out any errors already reported in the
+                                          given baseline file, or create if it does not
+                                          already exist
+--update-baseline                         Rewrite all existing baselines with the current
+                                          set of warnings. If some warnings have been
+                                          fixed, this will delete them from the baseline
+                                          files.
 
 JDiff:
 --api-xml <file>                          Like --api, but emits the API in the JDiff XML

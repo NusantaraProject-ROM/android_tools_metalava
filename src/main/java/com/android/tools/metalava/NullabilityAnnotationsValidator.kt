@@ -207,7 +207,7 @@ class NullabilityAnnotationsValidator {
 
         // Fatal issues are thrown.
         if (fatalIssues.isNotEmpty()) {
-            fatalIssues.forEach { reporter.error(it.method, it.toString(), Errors.INVALID_NULLABILITY_ANNOTATION) }
+            fatalIssues.forEach { reporter.report(Errors.INVALID_NULLABILITY_ANNOTATION, it.method, it.toString()) }
         }
 
         // Non-fatal issues are written to the warnings .txt file if present, else logged.
@@ -216,7 +216,9 @@ class NullabilityAnnotationsValidator {
                 nonFatalIssues.forEach { w.println(it) }
             }
         } else {
-            nonFatalIssues.forEach { reporter.warning(it.method, "Nullability issue: $it") }
+            nonFatalIssues.forEach {
+                reporter.report(Errors.INVALID_NULLABILITY_ANNOTATION_WARNING, it.method, "Nullability issue: $it")
+            }
         }
     }
 }

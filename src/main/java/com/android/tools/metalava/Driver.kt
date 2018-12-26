@@ -103,6 +103,9 @@ fun run(
         stdout.println("----------------------------")
     }
 
+    var exitValue: Boolean
+    var exitCode = 0
+
     try {
         val modifiedArgs =
             if (args.isEmpty()) {
@@ -136,13 +139,11 @@ fun run(
         compatibility = Compatibility(compat = Options.useCompatMode(args))
         options = Options(modifiedArgs, stdout, stderr)
         processFlags()
-        stdout.flush()
-        stderr.flush()
 
-        if (setExitCode && reporter.hasErrors()) {
-            exit(-1)
+        if (reporter.hasErrors()) {
+            exitCode = -1
         }
-        return true
+        exitValue = true
     } catch (e: DriverException) {
         if (e.stderr.isNotBlank()) {
             stderr.println("\n${e.stderr}")
@@ -150,15 +151,19 @@ fun run(
         if (e.stdout.isNotBlank()) {
             stdout.println("\n${e.stdout}")
         }
-        stderr.flush()
-        stdout.flush()
-        if (setExitCode) { // always true in production; not set from tests
-            exit(e.exitCode)
-        }
+        exitCode = e.exitCode
+        exitValue = false
     }
     stdout.flush()
     stderr.flush()
-    return false
+
+    options.baseline?.close()
+
+    if (setExitCode && reporter.hasErrors()) {
+        exit(exitCode)
+    }
+
+    return exitValue
 }
 
 /**
