@@ -125,7 +125,8 @@ open class PsiBasedCodebase(location: File, override var description: String = "
         this.methodMap = HashMap(METHOD_ESTIMATE)
         topLevelClassesFromSource = ArrayList(CLASS_ESTIMATE)
 
-        for (unit in units) {
+        // Make sure we only process the units once; sometimes there's overlap in the source lists
+        for (unit in units.asSequence().distinct()) {
             tick() // show progress
 
             var classes = (unit as? PsiClassOwner)?.classes?.toList() ?: emptyList()

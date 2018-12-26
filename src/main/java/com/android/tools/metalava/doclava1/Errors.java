@@ -224,6 +224,7 @@ public class Errors {
     public static final Error INVALID_NULLABILITY_ANNOTATION = new Error(157, ERROR);
     public static final Error REFERENCES_HIDDEN = new Error(158, ERROR);
     public static final Error IGNORING_SYMLINK = new Error(159, INFO);
+    public static final Error INVALID_NULLABILITY_ANNOTATION_WARNING = new Error(160, WARNING);
 
     static {
         // Attempt to initialize error names based on the field names
@@ -247,6 +248,11 @@ public class Errors {
     @Nullable
     public static Error findErrorById(int id) {
         return idToError.get(id);
+    }
+
+    @Nullable
+    public static Error findErrorById(String id) {
+        return nameToError.get(id);
     }
 
     public static boolean setErrorLevel(String id, Severity level, boolean setByUser) {

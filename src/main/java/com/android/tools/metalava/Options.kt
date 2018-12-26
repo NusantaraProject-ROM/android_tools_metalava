@@ -129,6 +129,8 @@ const val ARG_INCLUDE_SIG_VERSION = "--include-signature-version"
 const val ARG_UPDATE_API = "--update-api"
 const val ARG_DEX_API_MAPPING = "--dex-api-mapping"
 const val ARG_GENERATE_DOCUMENTATION = "--generate-documentation"
+const val ARG_BASELINE = "--baseline"
+const val ARG_UPDATE_BASELINE = "--update-baseline"
 
 class Options(
     args: Array<String>,
@@ -466,6 +468,12 @@ class Options(
     /** Whether to include the signature file format version number ([CURRENT_SIGNATURE_FORMAT]) in signature files */
     var includeSignatureFormatVersion: Boolean = !compatOutput
 
+    /** A baseline to check against */
+    var baseline: Baseline? = null
+
+    /** Whether all baseline files need to be updated */
+    var updateBaseline = false
+
     /**
      * Whether to omit locations for warnings and errors. This is not a flag exposed to users
      * or listed in help; this is intended for the unit test suite, used for example for the
@@ -676,6 +684,17 @@ class Options(
                 "--skip-emit-packages" -> {
                     val packages = getValue(args, ++index)
                     mutableSkipEmitPackages += packages.split(File.pathSeparatorChar)
+                }
+
+                ARG_BASELINE -> {
+                    val file = stringToNewOrExistingFile(getValue(args, ++index))
+                    assert(baseline == null) { "Only one baseline is allowed; found both ${baseline!!.file} and $file" }
+                    baseline = Baseline(file, updateBaseline || !file.isFile)
+                }
+
+                ARG_UPDATE_BASELINE -> {
+                    updateBaseline = true
+                    baseline?.create = true
                 }
 
                 ARG_PUBLIC, "-public" -> docLevel = DocLevel.PUBLIC
@@ -1160,6 +1179,13 @@ class Options(
             artifactRegistrations.clear()
         }
 
+        if (baseline == null && sourcePath.isNotEmpty()) {
+            val defaultBaseline = File(sourcePath[0], "metalava-baseline.txt")
+            if (defaultBaseline.isFile) {
+                baseline = Baseline(defaultBaseline)
+            }
+        }
+
         checkFlagConsistency()
     }
 
@@ -1441,6 +1467,20 @@ class Options(
         return dir
     }
 
+    private fun stringToNewOrExistingFile(value: String): File {
+        val file = fileForPath(value)
+        if (!file.exists()) {
+            val parentFile = file.parentFile
+            if (parentFile != null && !parentFile.isDirectory) {
+                val ok = parentFile.mkdirs()
+                if (!ok) {
+                    throw DriverException("Could not create $parentFile")
+                }
+            }
+        }
+        return file
+    }
+
     private fun stringToNewDir(value: String): File {
         val output = fileForPath(value)
         val ok =
@@ -1635,6 +1675,10 @@ class Options(
             "$ARG_WARNING <id>", "Report issues of the given id as warnings",
             "$ARG_LINT <id>", "Report issues of the given id as having lint-severity",
             "$ARG_HIDE <id>", "Hide/skip issues of the given id",
+            "$ARG_BASELINE <file>", "Filter out any errors already reported in the given baseline file, or " +
+                "create if it does not already exist",
+            ARG_UPDATE_BASELINE, "Rewrite all existing baselines with the current set of warnings. If some " +
+                "warnings have been fixed, this will delete them from the baseline files.",
 
             "", "\nJDiff:",
             "$ARG_XML_API <file>", "Like $ARG_API, but emits the API in the JDiff XML format instead",

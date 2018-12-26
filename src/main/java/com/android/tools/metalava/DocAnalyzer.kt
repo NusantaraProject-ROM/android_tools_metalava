@@ -131,10 +131,11 @@ class DocAnalyzer(
                 }
                 */
                 if (findThreadAnnotations(annotations).size > 1) {
-                    reporter.warning(
-                        item, "Found more than one threading annotation on $item; " +
-                            "the auto-doc feature does not handle this correctly",
-                        Errors.MULTIPLE_THREAD_ANNOTATIONS
+                    reporter.report(
+                        Errors.MULTIPLE_THREAD_ANNOTATIONS,
+                        item,
+                        "Found more than one threading annotation on $item; " +
+                            "the auto-doc feature does not handle this correctly"
                     )
                 }
             }

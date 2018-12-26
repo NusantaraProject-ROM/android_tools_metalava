@@ -291,6 +291,7 @@ class AndroidApiChecks {
 
     companion object {
         val constantPattern: Pattern = Pattern.compile("[A-Z]{3,}_([A-Z]{3,}|\\*)")
+        @Suppress("SpellCheckingInspection")
         val nullPattern: Pattern = Pattern.compile("\\bnull\\b")
     }
 }
