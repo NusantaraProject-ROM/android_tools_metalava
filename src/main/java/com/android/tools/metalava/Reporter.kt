@@ -76,29 +76,34 @@ enum class Severity(private val displayName: String) {
 open class Reporter(private val rootFolder: File? = null) {
     private var hasErrors = false
 
-    fun error(item: Item?, message: String, id: Errors.Error? = null): Boolean {
-        return error(item?.psi(), message, id)
-    }
-
-    fun warning(item: Item?, message: String, id: Errors.Error? = null): Boolean {
-        return warning(item?.psi(), message, id)
-    }
-
-    fun error(element: PsiElement?, message: String, id: Errors.Error? = null): Boolean {
-        // Using lowercase since that's the convention doclava1 is using
-        return report(ERROR, element, message, id)
-    }
-
-    fun warning(element: PsiElement?, message: String, id: Errors.Error? = null): Boolean {
-        return report(WARNING, element, message, id)
-    }
-
     fun report(id: Errors.Error, element: PsiElement?, message: String): Boolean {
-        return report(configuration.getSeverity(id), element, message, id)
+        val severity = configuration.getSeverity(id)
+
+        if (severity == HIDDEN) {
+            return false
+        }
+
+        val baseline = options.baseline
+        if (element != null && baseline != null && baseline.mark(element, message, id)) {
+            return false
+        }
+
+        return report(severity, element, message, id)
     }
 
     fun report(id: Errors.Error, file: File?, message: String): Boolean {
-        return report(configuration.getSeverity(id), file?.path, message, id)
+        val severity = configuration.getSeverity(id)
+
+        if (severity == HIDDEN) {
+            return false
+        }
+
+        val baseline = options.baseline
+        if (file != null && baseline != null && baseline.mark(file, message, id)) {
+            return false
+        }
+
+        return report(severity, file?.path, message, id)
     }
 
     fun report(id: Errors.Error, item: Item?, message: String): Boolean {
@@ -107,6 +112,16 @@ open class Reporter(private val rootFolder: File? = null) {
         }
 
         val severity = configuration.getSeverity(id)
+
+        if (severity == HIDDEN) {
+            return false
+        }
+
+        val baseline = options.baseline
+        if (item != null && baseline != null && baseline.mark(item, message, id)) {
+            return false
+        }
+
         return when (item) {
             is PsiItem -> {
                 report(severity, item.psi(), message, id)
@@ -233,7 +248,7 @@ open class Reporter(private val rootFolder: File? = null) {
         return line
     }
 
-    open fun report(severity: Severity, element: PsiElement?, message: String, id: Errors.Error? = null): Boolean {
+    private fun report(severity: Severity, element: PsiElement?, message: String, id: Errors.Error? = null): Boolean {
         if (severity == HIDDEN) {
             return false
         }

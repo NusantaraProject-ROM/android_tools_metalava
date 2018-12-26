@@ -17,7 +17,6 @@
 package com.android.tools.metalava.model.psi
 
 import com.android.tools.lint.detector.api.ConstantEvaluator
-import com.android.tools.metalava.Severity
 import com.android.tools.metalava.doclava1.Errors
 import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.Item
@@ -30,7 +29,6 @@ import com.intellij.psi.PsiAnnotationMemberValue
 import com.intellij.psi.PsiArrayInitializerMemberValue
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassObjectAccessExpression
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiLiteral
 import com.intellij.psi.PsiReference
@@ -65,7 +63,7 @@ open class CodePrinter(
     private val filterReference: Predicate<Item>? = null
 ) {
     open fun warning(message: String) {
-        reporter.report(Severity.WARNING, null as PsiElement?, message, Errors.INTERNAL_ERROR)
+        reporter.report(Errors.INTERNAL_ERROR, null as Item?, message)
     }
 
     /** Given an annotation member value, returns the corresponding Java source expression */
