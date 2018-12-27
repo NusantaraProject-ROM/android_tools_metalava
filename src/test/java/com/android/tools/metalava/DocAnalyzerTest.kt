@@ -36,6 +36,7 @@ class DocAnalyzerTest : DriverTest() {
             ),
             checkCompilation = false, // needs androidx.annotations in classpath
             checkDoclava1 = false,
+            docStubs = true,
             stubs = arrayOf(
                 """
                 package test.pkg;

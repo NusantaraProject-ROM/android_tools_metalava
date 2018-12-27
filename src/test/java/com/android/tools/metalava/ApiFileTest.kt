@@ -486,6 +486,36 @@ class ApiFileTest : DriverTest() {
     }
 
     @Test
+    fun `Kotlin Generics`() {
+        check(
+            sourceFiles = *arrayOf(
+                kotlin(
+                    """
+                    package test.pkg
+                    class Bar
+                    class Type<in T> {
+                        fun foo(param: Type<Bar>) {
+                        }
+                    }
+                    """
+                )
+            ),
+            api = """
+                package test.pkg {
+                  public final class Bar {
+                    ctor public Bar();
+                  }
+                  public final class Type<T> {
+                    ctor public Type();
+                    method public void foo(test.pkg.Type<? super test.pkg.Bar> param);
+                  }
+                }
+                """,
+            checkDoclava1 = false /* doesn't support Kotlin... */
+        )
+    }
+
+    @Test
     fun `Propagate Platform types in Kotlin`() {
         check(
             compatibilityMode = false,
