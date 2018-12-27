@@ -22,6 +22,8 @@ import com.android.tools.metalava.model.FieldItem
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.PackageItem
+import com.android.tools.metalava.model.SUPPORT_TYPE_USE_ANNOTATIONS
+import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.google.common.io.ByteStreams
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.Opcodes
@@ -65,6 +67,31 @@ class ConvertJarsToSignatureFiles {
             val jarCodebase = loadFromJarFile(apiJar, null, preFiltered = false)
             val apiEmit = ApiType.PUBLIC_API.getEmitFilter()
             val apiReference = ApiType.PUBLIC_API.getReferenceFilter()
+
+            if (api >= 28) {
+                // As of API 28 we'll put nullness annotations into the jar but some of them
+                // may be @RecentlyNullable/@RecentlyNonNull. Translate these back into
+                // normal @Nullable/@NonNull
+                jarCodebase.accept(object : ApiVisitor() {
+                    override fun visitItem(item: Item) {
+                        unmarkRecent(item)
+                        super.visitItem(item)
+                    }
+
+                    private fun unmarkRecent(new: Item) {
+                        val annotation = NullnessMigration.findNullnessAnnotation(new) ?: return
+                        // Nullness information change: Add migration annotation
+                        val annotationClass = if (annotation.isNullable()) ANDROIDX_NULLABLE else ANDROIDX_NONNULL
+
+                        val modifiers = new.mutableModifiers()
+                        modifiers.removeAnnotation(annotation)
+
+                        // Don't map annotation names - this would turn newly non null back into non null
+                        modifiers.addAnnotation(new.codebase.createAnnotation("@$annotationClass", new, mapName = false))
+                    }
+                })
+                assert(!SUPPORT_TYPE_USE_ANNOTATIONS) { "We'll need to rewrite type annotations here too" }
+            }
 
             // Sadly the old signature files have some APIs recorded as deprecated which
             // are not in fact deprecated in the jar files. Try to pull this back in.
