@@ -51,6 +51,7 @@ import com.android.tools.metalava.doclava1.ApiPredicate
 import com.android.tools.metalava.model.AnnotationAttribute
 import com.android.tools.metalava.model.AnnotationAttributeValue
 import com.android.tools.metalava.model.AnnotationItem
+import com.android.tools.metalava.model.AnnotationTarget
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.DefaultAnnotationItem
@@ -749,12 +750,14 @@ class XmlBackedAnnotationItem(
     private val qualifiedName: String,
     private val attributes: List<XmlBackedAnnotationAttribute> = emptyList()
 ) : DefaultAnnotationItem(codebase) {
+
+    override fun originalName(): String? = qualifiedName
     override fun qualifiedName(): String? = AnnotationItem.mapName(codebase, qualifiedName)
 
     override fun attributes() = attributes
 
-    override fun toSource(): String {
-        val qualifiedName = qualifiedName() ?: return ""
+    override fun toSource(target: AnnotationTarget): String {
+        val qualifiedName = AnnotationItem.mapName(codebase, qualifiedName, null, target) ?: return ""
 
         if (attributes.isEmpty()) {
             return "@$qualifiedName"

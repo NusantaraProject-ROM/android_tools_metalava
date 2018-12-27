@@ -1056,15 +1056,15 @@ private fun addHiddenPackages(
 private fun gatherHiddenPackagesFromJavaDocs(sourcePath: List<File>): PackageDocs {
     val packageComments = HashMap<String, String>(100)
     val overviewHtml = HashMap<String, String>(10)
-    val set = HashSet<String>(100)
+    val hiddenPackages = HashSet<String>(100)
     for (file in sourcePath) {
         if (file.path.isBlank()) {
             // Ignoring empty paths, which means "no source path search". Use "." for current directory.
             continue
         }
-        addHiddenPackages(packageComments, overviewHtml, set, file, "")
+        addHiddenPackages(packageComments, overviewHtml, hiddenPackages, file, "")
     }
-    return PackageDocs(packageComments, overviewHtml, set)
+    return PackageDocs(packageComments, overviewHtml, hiddenPackages)
 }
 
 private fun extractRoots(sources: List<File>, sourceRoots: MutableList<File> = mutableListOf()): List<File> {

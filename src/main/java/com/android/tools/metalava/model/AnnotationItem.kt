@@ -53,8 +53,11 @@ interface AnnotationItem {
     /** Fully qualified name of the annotation */
     fun qualifiedName(): String?
 
+    /** Fully qualified name of the annotation (prior to name mapping) */
+    fun originalName(): String?
+
     /** Generates source code for this annotation (using fully qualified names) */
-    fun toSource(): String
+    fun toSource(target: AnnotationTarget = AnnotationTarget.SIGNATURE_FILE): String
 
     /** The applicable targets for this annotation */
     fun targets(): Set<AnnotationTarget>
@@ -142,7 +145,12 @@ interface AnnotationItem {
          * Maps an annotation name to the name to be used in signatures/stubs/external annotation files.
          * Annotations that should not be exported are mapped to null.
          */
-        fun mapName(codebase: Codebase, qualifiedName: String?, filter: Predicate<Item>? = null): String? {
+        fun mapName(
+            codebase: Codebase,
+            qualifiedName: String?,
+            filter: Predicate<Item>? = null,
+            target: AnnotationTarget = AnnotationTarget.SIGNATURE_FILE
+        ): String? {
             qualifiedName ?: return null
 
             when (qualifiedName) {
@@ -326,7 +334,8 @@ interface AnnotationItem {
                             return mapName(
                                 codebase,
                                 ANDROIDX_ANNOTATION_PREFIX + qualifiedName.substring(ANDROID_SUPPORT_ANNOTATION_PREFIX.length),
-                                filter
+                                filter,
+                                target
                             )
                         }
 
