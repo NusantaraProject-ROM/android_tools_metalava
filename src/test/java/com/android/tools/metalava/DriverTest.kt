@@ -315,7 +315,7 @@ abstract class DriverTest {
          * List of signature files to convert to JDiff XML and the
          * expected XML output
          */
-        convertToJDiff: List<Pair<String, String>> = emptyList(),
+        convertToJDiff: List<Triple<String, String, String?>> = emptyList(),
         /**
          * Signature file format
          */
@@ -710,18 +710,30 @@ abstract class DriverTest {
             emptyArray()
         }
 
-        val convertToJDiffFiles = mutableListOf<Pair<File, File>>()
+        val convertToJDiffFiles = mutableListOf<Options.ConvertFile>()
         val convertToJDiffArgs = if (convertToJDiff.isNotEmpty()) {
             val args = mutableListOf<String>()
             var index = 1
-            for ((signatures, _) in convertToJDiff) {
+            for ((signature, _, base) in convertToJDiff) {
                 val convertSig = temporaryFolder.newFile("jdiff-signatures$index.txt")
-                convertSig.writeText(signatures.trimIndent(), Charsets.UTF_8)
+                convertSig.writeText(signature.trimIndent(), Charsets.UTF_8)
                 val output = temporaryFolder.newFile("jdiff-output$index.xml")
-                convertToJDiffFiles += Pair(convertSig, output)
+                val baseFile = if (base != null) {
+                    val baseFile = temporaryFolder.newFile("jdiff-signatures$index-base.txt")
+                    baseFile.writeText(base.trimIndent(), Charsets.UTF_8)
+                    baseFile
+                } else {
+                    null
+                }
+                convertToJDiffFiles += Options.ConvertFile(convertSig, output, baseFile)
                 index++
 
-                args += ARG_CONVERT_TO_JDIFF
+                if (baseFile != null) {
+                    args += ARG_CONVERT_NEW_TO_JDIFF
+                    args += baseFile.path
+                } else {
+                    args += ARG_CONVERT_TO_JDIFF
+                }
                 args += convertSig.path
                 args += output.path
             }
@@ -980,7 +992,7 @@ abstract class DriverTest {
         if (convertToJDiffFiles.isNotEmpty()) {
             for (i in 0 until convertToJDiff.size) {
                 val expected = convertToJDiff[i].second
-                val converted = convertToJDiffFiles[i].second
+                val converted = convertToJDiffFiles[i].toXmlFile
                 assertTrue(
                     "${converted.path} does not exist even though $ARG_CONVERT_TO_JDIFF was used",
                     converted.exists()
