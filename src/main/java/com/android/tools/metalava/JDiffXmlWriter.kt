@@ -147,14 +147,17 @@ class JDiffXmlWriter(
     }
 
     override fun visitField(field: FieldItem) {
-        val modifiers = field.modifiers
+        if (field.isEnumConstant() && compatibility.xmlSkipEnumFields) {
+            return
+        }
 
+        val modifiers = field.modifiers
         val initialValue = field.initialValue(true)
         val value = if (initialValue != null) {
-            XmlUtils.toXmlAttributeValue(CodePrinter.constantToSource(initialValue))
+            escapeAttributeValue(CodePrinter.constantToSource(initialValue))
         } else null
 
-        val fullTypeName = XmlUtils.toXmlAttributeValue(field.type().toTypeString())
+        val fullTypeName = escapeAttributeValue(field.type().toTypeString())
 
         writer.print("<field name=\"")
         writer.print(field.name())
@@ -164,9 +167,11 @@ class JDiffXmlWriter(
         writer.print(modifiers.isTransient())
         writer.print("\"\n volatile=\"")
         writer.print(modifiers.isVolatile())
-        value?.let {
+        if (value != null) {
             writer.print("\"\n value=\"")
-            writer.print(it)
+            writer.print(value)
+        } else if (compatibility.xmlShowArrayFieldsAsNull && field.type().isArray()) {
+            writer.print("\"\n value=\"null")
         }
         writer.print("\"\n static=\"")
         writer.print(modifiers.isStatic())
@@ -195,7 +200,7 @@ class JDiffXmlWriter(
         writer.print(method.name())
         method.returnType()?.let {
             writer.print("\"\n return=\"")
-            writer.print(XmlUtils.toXmlAttributeValue(it.toTypeString()))
+            writer.print(escapeAttributeValue(it.toTypeString()))
         }
         writer.print("\"\n abstract=\"")
         writer.print(modifiers.isAbstract())
@@ -230,7 +235,7 @@ class JDiffXmlWriter(
                     if (!cls.isClass() && superClass.isJavaLangObject()) {
                         return
                     }
-                    XmlUtils.toXmlAttributeValue(
+                    escapeAttributeValue(
                         superClass.toTypeString(
                             erased = compatibility.omitTypeParametersInInterfaces,
                             context = superClass.asClass()
@@ -255,7 +260,7 @@ class JDiffXmlWriter(
             interfaces.sortedWith(TypeItem.comparator).forEach { item ->
                 writer.print("<implements name=\"")
                 val type = item.toTypeString(erased = compatibility.omitTypeParametersInInterfaces, context = cls)
-                val escapedType = XmlUtils.toXmlAttributeValue(type)
+                val escapedType = escapeAttributeValue(type)
                 writer.print(escapedType)
                 writer.println("\">\n</implements>")
             }
@@ -267,7 +272,7 @@ class JDiffXmlWriter(
             // NOTE: We report parameter name as "null" rather than the real name to match
             // doclava's behavior
             writer.print("<parameter name=\"null\" type=\"")
-            writer.print(XmlUtils.toXmlAttributeValue(parameter.type().toTypeString()))
+            writer.print(escapeAttributeValue(parameter.type().toTypeString()))
             writer.println("\">")
             writer.println("</parameter>")
         }
@@ -288,6 +293,15 @@ class JDiffXmlWriter(
                 writer.println("\">")
                 writer.println("</exception>")
             }
+        }
+    }
+
+    private fun escapeAttributeValue(s: String): String {
+        val escaped = XmlUtils.toXmlAttributeValue(s)
+        return if (compatibility.xmlEscapeGreaterThan && escaped.contains(">")) {
+            escaped.replace(">", "&gt;")
+        } else {
+            escaped
         }
     }
 }

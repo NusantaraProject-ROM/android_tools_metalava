@@ -250,6 +250,10 @@ interface Codebase {
             null
         }
     }
+
+    fun isEmpty(): Boolean {
+        return getPackages().packages.isEmpty()
+    }
 }
 
 abstract class DefaultCodebase(override var location: File) : Codebase {

@@ -180,6 +180,14 @@ abstract class DriverTest {
         return System.getenv("JAVA_HOME")
     }
 
+    /** JDiff file conversion candidates */
+    data class ConvertData(
+        val fromApi: String,
+        val toXml: String,
+        val baseApi: String? = null,
+        val strip: Boolean = true
+    )
+
     protected fun check(
         /** The source files to pass to the analyzer */
         vararg sourceFiles: TestFile,
@@ -220,8 +228,10 @@ abstract class DriverTest {
         stripBlankLines: Boolean = true,
         /** Warnings expected to be generated when analyzing these sources */
         warnings: String? = "",
+        /** Signature file format */
+        format: Int? = null,
         /** Whether to run doclava1 on the test output and assert that the output is identical */
-        checkDoclava1: Boolean = compatibilityMode,
+        checkDoclava1: Boolean = compatibilityMode && (format == null || format < 2),
         checkCompilation: Boolean = false,
         /** Annotations to merge in (in .xml format) */
         @Language("XML") mergeXmlAnnotations: String? = null,
@@ -313,13 +323,9 @@ abstract class DriverTest {
         includeSignatureVersion: Boolean = false,
         /**
          * List of signature files to convert to JDiff XML and the
-         * expected XML output
+         * expected XML output.
          */
-        convertToJDiff: List<Triple<String, String, String?>> = emptyList(),
-        /**
-         * Signature file format
-         */
-        format: Int? = null,
+        convertToJDiff: List<ConvertData> = emptyList(),
         /**
          * Hook for performing additional initialization of the project
          * directory
@@ -714,7 +720,9 @@ abstract class DriverTest {
         val convertToJDiffArgs = if (convertToJDiff.isNotEmpty()) {
             val args = mutableListOf<String>()
             var index = 1
-            for ((signature, _, base) in convertToJDiff) {
+            for (convert in convertToJDiff) {
+                val signature = convert.fromApi
+                val base = convert.baseApi
                 val convertSig = temporaryFolder.newFile("jdiff-signatures$index.txt")
                 convertSig.writeText(signature.trimIndent(), Charsets.UTF_8)
                 val output = temporaryFolder.newFile("jdiff-output$index.xml")
@@ -725,14 +733,14 @@ abstract class DriverTest {
                 } else {
                     null
                 }
-                convertToJDiffFiles += Options.ConvertFile(convertSig, output, baseFile)
+                convertToJDiffFiles += Options.ConvertFile(convertSig, output, baseFile, strip = true)
                 index++
 
                 if (baseFile != null) {
-                    args += ARG_CONVERT_NEW_TO_JDIFF
+                    args += if (convert.strip) "-new_api" else ARG_CONVERT_NEW_TO_JDIFF
                     args += baseFile.path
                 } else {
-                    args += ARG_CONVERT_TO_JDIFF
+                    args += if (convert.strip) "-convert2xml" else ARG_CONVERT_TO_JDIFF
                 }
                 args += convertSig.path
                 args += output.path
@@ -991,14 +999,20 @@ abstract class DriverTest {
 
         if (convertToJDiffFiles.isNotEmpty()) {
             for (i in 0 until convertToJDiff.size) {
-                val expected = convertToJDiff[i].second
+                val expected = convertToJDiff[i].toXml
                 val converted = convertToJDiffFiles[i].toXmlFile
+                if (convertToJDiff[i].baseApi != null &&
+                    actualOutput.contains("No API change detected, not generating diff")) {
+                    continue
+                }
                 assertTrue(
                     "${converted.path} does not exist even though $ARG_CONVERT_TO_JDIFF was used",
                     converted.exists()
                 )
                 val actualText = readFile(converted, stripBlankLines, trim)
-                parseDocument(converted.readText(Charsets.UTF_8), false)
+                if (actualText.contains("<api")) {
+                    parseDocument(actualText, false)
+                }
                 assertEquals(stripComments(expected, stripLineComments = false).trimIndent(), actualText)
                 // Make sure we can read back the files we write
             }
@@ -1258,10 +1272,36 @@ abstract class DriverTest {
                 }
 
             // Need to emit the codebase
-            generateJDiffXmlWithDoclava1(signatureFile, apiXmlFile)
+            generateJDiffXmlWithDoclava1(signatureFile, apiXmlFile, null)
 
             val actualText = cleanupString(readFile(apiXmlFile, stripBlankLines, trim), project, true)
             assertEquals(stripComments(apiXml, stripLineComments = false).trimIndent(), actualText)
+        }
+
+        if (CHECK_OLD_DOCLAVA_TOO && checkDoclava1 && convertToJDiff.isNotEmpty()) {
+            var index = 1
+            for (convert in convertToJDiff) {
+                val signature = convert.fromApi
+                val expectedXml = convert.toXml
+                val base = convert.baseApi
+                val strip = convert.strip
+                val convertSig = temporaryFolder.newFile("doclava-jdiff-signatures$index.txt")
+                convertSig.writeText(signature.trimIndent(), Charsets.UTF_8)
+                val output = temporaryFolder.newFile("doclava-jdiff-output$index.xml")
+                val baseFile = if (base != null) {
+                    val baseFile = temporaryFolder.newFile("doclava-jdiff-signatures$index-base.txt")
+                    baseFile.writeText(base.trimIndent(), Charsets.UTF_8)
+                    baseFile
+                } else {
+                    null
+                }
+
+                generateJDiffXmlWithDoclava1(convertSig, output, baseFile, strip = strip)
+
+                val actualText = cleanupString(readFile(output, stripBlankLines, trim), project, true)
+                assertEquals(stripComments(expectedXml, stripLineComments = false).trimIndent(), actualText)
+                index++
+            }
         }
 
         if (CHECK_OLD_DOCLAVA_TOO && checkDoclava1 && signatureSource == null &&
@@ -1499,17 +1539,36 @@ abstract class DriverTest {
         return s
     }
 
-    private fun generateJDiffXmlWithDoclava1(signatureFile: File, xmlOutput: File) {
+    private fun generateJDiffXmlWithDoclava1(
+        signatureFile: File,
+        xmlOutput: File,
+        baseFile: File?,
+        strip: Boolean = false
+    ) {
         val docLava1 = findDoclava()
 
-        val args = arrayOf(
-            "-convert2xml",
-            signatureFile.path,
-            xmlOutput.path
-        )
+        val args = if (baseFile != null) {
+            arrayOf(
+                if (strip) "-new_api" else "-new_api_no_strip",
+                baseFile.path,
+                signatureFile.path,
+                xmlOutput.path
+            )
+        } else {
+            arrayOf(
+                if (strip) "-convert2xml" else "-convert2xmlnostrip",
+                signatureFile.path,
+                xmlOutput.path
+            )
+        }
 
         val message = "\n${args.joinToString(separator = "\n") { "\"$it\"," }}"
         println("Running doclava1 with the following args:\n$message")
+
+        println("My args:")
+        args.forEach {
+            println("\"$it\",")
+        }
 
         val jdkPath = findJdk()
         if (!runCommand(
