@@ -458,17 +458,31 @@ fun processNonCodebaseFlags() {
         ConvertJarsToSignatureFiles().convertJars(root)
     }
 
-    for ((signatureFile, jDiffFile) in options.convertToXmlFiles) {
+    for (convert in options.convertToXmlFiles) {
         val apiType = ApiType.ALL
         val apiEmit = apiType.getEmitFilter()
         val apiReference = apiType.getReferenceFilter()
+        val baseFile = convert.baseApifile
 
         val signatureApi = SignatureFileLoader.load(
-            file = signatureFile,
+            file = convert.fromApiFile,
             kotlinStyleNulls = options.inputKotlinStyleNulls
         )
 
-        createReportFile(signatureApi, jDiffFile, "JDiff File") { printWriter ->
+        val outputApi =
+            if (baseFile != null) {
+                // Convert base on a diff
+                val baseApi = SignatureFileLoader.load(
+                    file = baseFile,
+                    kotlinStyleNulls = options.inputKotlinStyleNulls
+                )
+
+                TextCodebase.computeDelta(baseFile, baseApi, signatureApi)
+            } else {
+                signatureApi
+            }
+
+        createReportFile(outputApi, convert.toXmlFile, "JDiff File") { printWriter ->
             JDiffXmlWriter(printWriter, apiEmit, apiReference, signatureApi.preFiltered)
         }
     }
@@ -949,8 +963,10 @@ private fun addSourceFiles(list: MutableList<File>, file: File) {
             return
         }
         if (java.nio.file.Files.isSymbolicLink(file.toPath())) {
-            reporter.report(Errors.IGNORING_SYMLINK, file,
-                "Ignoring symlink during source file discovery directory traversal")
+            reporter.report(
+                Errors.IGNORING_SYMLINK, file,
+                "Ignoring symlink during source file discovery directory traversal"
+            )
             return
         }
         val files = file.listFiles()
@@ -991,8 +1007,10 @@ private fun addHiddenPackages(
         }
         // Ignore symbolic links during traversal
         if (java.nio.file.Files.isSymbolicLink(file.toPath())) {
-            reporter.report(Errors.IGNORING_SYMLINK, file,
-                "Ignoring symlink during package.html discovery directory traversal")
+            reporter.report(
+                Errors.IGNORING_SYMLINK, file,
+                "Ignoring symlink during package.html discovery directory traversal"
+            )
             return
         }
         val files = file.listFiles()
