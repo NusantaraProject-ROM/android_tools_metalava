@@ -227,6 +227,9 @@ JDiff:
 --convert-to-jdiff <sig> <xml>            Reads in the given signature file, and writes it
                                           out in the JDiff XML format. Can be specified
                                           multiple times.
+--convert-new-to-jdiff <old> <new> <xml>  Reads in the given old and new api files,
+                                          computes the difference, and writes out only the
+                                          new parts of the API in the JDiff XML format.
 
 Statistics:
 --annotation-coverage-stats               Whether metalava should emit coverage statistics

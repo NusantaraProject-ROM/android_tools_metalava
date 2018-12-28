@@ -480,7 +480,7 @@ class JDiffXmlTest : DriverTest() {
         check(
             compatibilityMode = true,
             convertToJDiff = listOf(
-                Pair(
+                Triple(
                     """
                     package test.pkg {
                       public class MyTest1 {
@@ -511,9 +511,10 @@ class JDiffXmlTest : DriverTest() {
                     </class>
                     </package>
                     </api>
-                    """
+                    """,
+                    null
                 ),
-                Pair(
+                Triple(
                     """
                     package test.pkg {
                       public class MyTest2 {
@@ -535,7 +536,8 @@ class JDiffXmlTest : DriverTest() {
                     </class>
                     </package>
                     </api>
-                    """
+                    """,
+                    null
                 )
             )
         )
@@ -729,6 +731,130 @@ class JDiffXmlTest : DriverTest() {
                 </package>
                 </api>
             """
+        )
+    }
+
+    @Test
+    fun `Test convert new`() {
+        check(
+            compatibilityMode = true,
+            convertToJDiff = listOf(
+                Triple(
+                    """
+                    package test.pkg {
+                      public class MyTest1 {
+                        ctor public MyTest1();
+                        method public deprecated int clamp(int);
+                        field public deprecated java.lang.Number myNumber;
+                      }
+                    }
+                    """,
+                    """
+                    <api>
+                    <package name="test.pkg"
+                    >
+                    <class name="MyTest1"
+                     extends="java.lang.Object"
+                     abstract="false"
+                     static="false"
+                     final="false"
+                     deprecated="not deprecated"
+                     visibility="public"
+                    >
+                    <method name="convert"
+                     return="java.lang.Double"
+                     abstract="false"
+                     native="false"
+                     synchronized="false"
+                     static="false"
+                     final="false"
+                     deprecated="not deprecated"
+                     visibility="public"
+                    >
+                    <parameter name="null" type="java.lang.Float">
+                    </parameter>
+                    </method>
+                    <field name="ANY_CURSOR_ITEM_TYPE"
+                     type="java.lang.String"
+                     transient="false"
+                     volatile="false"
+                     value="&quot;vnd.android.cursor.item/*&quot;"
+                     static="true"
+                     final="true"
+                     deprecated="not deprecated"
+                     visibility="public"
+                    >
+                    </field>
+                    </class>
+                    </package>
+                    <package name="test.pkg"
+                    >
+                    <class name="MyTest2"
+                     extends="java.lang.Object"
+                     abstract="false"
+                     static="false"
+                     final="false"
+                     deprecated="not deprecated"
+                     visibility="public"
+                    >
+                    <constructor name="MyTest2"
+                     type="test.pkg.MyTest2"
+                     static="false"
+                     final="false"
+                     deprecated="not deprecated"
+                     visibility="public"
+                    >
+                    </constructor>
+                    <method name="convert"
+                     return="java.lang.Double"
+                     abstract="false"
+                     native="false"
+                     synchronized="false"
+                     static="false"
+                     final="false"
+                     deprecated="not deprecated"
+                     visibility="public"
+                    >
+                    <parameter name="null" type="java.lang.Float">
+                    </parameter>
+                    </method>
+                    </class>
+                    </package>
+                    <package name="test.pkg.new"
+                    >
+                    <class name="MyTest3"
+                     extends="java.lang.Object"
+                     abstract="false"
+                     static="false"
+                     final="false"
+                     deprecated="not deprecated"
+                     visibility="public"
+                    >
+                    </class>
+                    </package>
+                    </api>
+                    """,
+                    """
+                    package test.pkg {
+                      public class MyTest1 {
+                        ctor public MyTest1();
+                        method public deprecated int clamp(int);
+                        method public java.lang.Double convert(java.lang.Float);
+                        field public static final java.lang.String ANY_CURSOR_ITEM_TYPE = "vnd.android.cursor.item/*";
+                        field public deprecated java.lang.Number myNumber;
+                      }
+                      public class MyTest2 {
+                        ctor public MyTest1();
+                        method public java.lang.Double convert(java.lang.Float);
+                      }
+                    }
+                    package test.pkg.new {
+                      public class MyTest3 {
+                      }
+                    }
+                    """
+                )
+            )
         )
     }
 }
