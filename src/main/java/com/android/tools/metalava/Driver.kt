@@ -459,15 +459,16 @@ fun processNonCodebaseFlags() {
     }
 
     for (convert in options.convertToXmlFiles) {
-        val apiType = ApiType.ALL
-        val apiEmit = apiType.getEmitFilter()
-        val apiReference = apiType.getReferenceFilter()
-        val baseFile = convert.baseApifile
-
         val signatureApi = SignatureFileLoader.load(
             file = convert.fromApiFile,
             kotlinStyleNulls = options.inputKotlinStyleNulls
         )
+
+        val apiType = ApiType.ALL
+        val apiEmit = apiType.getEmitFilter()
+        val strip = convert.strip
+        val apiReference = if (strip) apiType.getEmitFilter() else apiType.getReferenceFilter()
+        val baseFile = convert.baseApiFile
 
         val outputApi =
             if (baseFile != null) {
@@ -482,8 +483,20 @@ fun processNonCodebaseFlags() {
                 signatureApi
             }
 
-        createReportFile(outputApi, convert.toXmlFile, "JDiff File") { printWriter ->
-            JDiffXmlWriter(printWriter, apiEmit, apiReference, signatureApi.preFiltered)
+        if (outputApi.isEmpty() && baseFile != null) {
+            // doclava compatibility: emits error warning instead of emitting empty <api/> element
+            options.stdout.println("No API change detected, not generating diff")
+        } else {
+            val output = convert.toXmlFile
+            if (output.path.endsWith(DOT_TXT)) {
+                createReportFile(outputApi, output, "Diff API File") { printWriter ->
+                    SignatureWriter(printWriter, apiEmit, apiReference, signatureApi.preFiltered && !strip)
+                }
+            } else {
+                createReportFile(outputApi, output, "JDiff File") { printWriter ->
+                    JDiffXmlWriter(printWriter, apiEmit, apiReference, signatureApi.preFiltered && !strip)
+                }
+            }
         }
     }
 }
@@ -525,7 +538,12 @@ fun checkCompatibility(
     // file. If we've only emitted one for the new API, use it directly, if not, generate
     // it first
     val new =
-        if (options.showAnnotations.isNotEmpty() || apiType != ApiType.PUBLIC_API) {
+        if (check.codebase != null) {
+            SignatureFileLoader.load(
+                file = check.codebase,
+                kotlinStyleNulls = options.inputKotlinStyleNulls
+            )
+        } else if (options.showAnnotations.isNotEmpty() || apiType != ApiType.PUBLIC_API) {
             val apiFile = apiType.getOptionFile() ?: run {
                 val tempFile = createTempFile("compat-check-signatures-$apiType", DOT_TXT)
                 tempFile.deleteOnExit()

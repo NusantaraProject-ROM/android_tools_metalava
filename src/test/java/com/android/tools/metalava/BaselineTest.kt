@@ -140,7 +140,8 @@ class BaselineTest : DriverTest() {
                     field public test.pkg.Hidden2 hidden2;
                   }
                 }
-                """
+                """,
+            checkDoclava1 = false
         )
     }
 }

@@ -24,6 +24,7 @@ import com.android.tools.metalava.JAVA_LANG_ANNOTATION
 import com.android.tools.metalava.JAVA_LANG_ENUM
 import com.android.tools.metalava.JAVA_LANG_OBJECT
 import com.android.tools.metalava.JAVA_LANG_THROWABLE
+import com.android.tools.metalava.compatibility
 import com.android.tools.metalava.model.AnnotationItem
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.Codebase
@@ -140,7 +141,11 @@ class TextCodebase(location: File) : DefaultCodebase(location) {
                 scName = when {
                     cl.isEnum() -> JAVA_LANG_ENUM
                     cl.isAnnotationType() -> JAVA_LANG_ANNOTATION
-                    else -> JAVA_LANG_OBJECT
+                    else -> {
+                        val existing = cl.superClassType()?.toTypeString()
+                        val s = existing ?: JAVA_LANG_OBJECT
+                        s // unnecessary variable, works around current compiler believing the expression to be nullable
+                    }
                 }
             }
 
@@ -157,18 +162,6 @@ class TextCodebase(location: File) : DefaultCodebase(location) {
             for (methodItem in cl.methods()) {
                 resolveThrowsClasses(methodItem)
             }
-
-            // java.lang.Object has no superclass
-            var scName: String? = mClassToSuper[cl]
-            if (scName == null) {
-                // Make sure we don't set java.lang.Object's super class to itself
-                if (cl.qualifiedName == JAVA_LANG_OBJECT) {
-                    continue
-                }
-                scName = JAVA_LANG_OBJECT
-            }
-            val superclass = getOrCreateClass(scName)
-            cl.setSuperClass(superclass)
         }
     }
 
@@ -280,7 +273,7 @@ class TextCodebase(location: File) : DefaultCodebase(location) {
     }
 
     override fun findPackage(pkgName: String): PackageItem? {
-        return mPackages.values.firstOrNull { pkgName == it.qualifiedName() }
+        return mPackages[pkgName]
     }
 
     override fun accept(visitor: ItemVisitor) {
@@ -359,7 +352,7 @@ class TextCodebase(location: File) : DefaultCodebase(location) {
                 }
 
                 override fun added(new: ClassItem) {
-                    val pkg = getOrAddPackage(new.qualifiedName())
+                    val pkg = getOrAddPackage(new.containingPackage().qualifiedName())
                     pkg.addClass(new as TextClassItem)
                 }
 
@@ -374,6 +367,9 @@ class TextCodebase(location: File) : DefaultCodebase(location) {
                 }
 
                 override fun added(new: FieldItem) {
+                    if (!compatibility.includeFieldsInApiDiff) {
+                        return
+                    }
                     val cls = getOrAddClass(new.containingClass())
                     cls.addField(new as TextFieldItem)
                 }
@@ -384,7 +380,7 @@ class TextCodebase(location: File) : DefaultCodebase(location) {
                 }
 
                 private fun getOrAddClass(fullClass: ClassItem): TextClassItem {
-                    val cls = delta.findClass(fullClass.qualifiedName()) as? TextClassItem
+                    val cls = delta.findClass(fullClass.qualifiedName())
                     if (cls != null) {
                         return cls
                     }
@@ -392,7 +388,7 @@ class TextCodebase(location: File) : DefaultCodebase(location) {
                     val newClass = TextClassItem(
                         delta,
                         SourcePositionInfo.UNKNOWN,
-                        textClass.modifiers as TextModifiers,
+                        textClass.modifiers,
                         textClass.isInterface(),
                         textClass.isEnum(),
                         textClass.isAnnotationType(),
@@ -422,7 +418,7 @@ class TextCodebase(location: File) : DefaultCodebase(location) {
                     delta.addPackage(newPkg)
                     return newPkg
                 }
-            }, signatureApi, baseApi, ApiType.ALL.getReferenceFilter())
+            }, baseApi, signatureApi, ApiType.ALL.getReferenceFilter())
 
             delta.postProcess()
             return delta
