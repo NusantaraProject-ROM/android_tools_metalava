@@ -1272,7 +1272,8 @@ class ApiFileTest : DriverTest() {
                 public java.lang.String[] value();
                 }
                 """
-            )
+            ),
+            checkDoclava1 = false
         )
     }
 
@@ -2974,7 +2975,8 @@ class ApiFileTest : DriverTest() {
                       public class Foo {
                       }
                     }
-                """
+                """,
+            checkDoclava1 = false // doclava is unaware of @suppress
         )
     }
 }
