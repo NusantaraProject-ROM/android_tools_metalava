@@ -157,6 +157,9 @@ interface TypeItem {
      */
     fun markRecent()
 
+    /** Returns true if this type represents an array of one or more dimensions */
+    fun isArray(): Boolean = arrayDimensions() > 0
+
     companion object {
         /** Shortens types, if configured */
         fun shortenTypes(type: String): String {

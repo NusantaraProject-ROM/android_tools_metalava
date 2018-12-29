@@ -196,5 +196,30 @@ class Compatibility(
     /** Whether inner enums should be listed as static in the signature file. */
     var staticEnums = compat
 
+    /**
+     * The -new_api flag in API check (which generates an XML diff of the differences
+     * between two APIs) in doclava was ignoring fields. This flag controls whether
+     * we do the same.
+     */
+    var includeFieldsInApiDiff = !compat
+
+    /**
+     * Whether to escape the > character in JDiff XML files. The XML spec does not require
+     * this but doclava does it.
+     */
+    var xmlEscapeGreaterThan = compat
+
+    /**
+     * When producing JDiff output for field arrays but where we
+     * do not have the value, emit "null" into the JDiff report. This isn't right but matches
+     * what doclava did.
+     */
+    var xmlShowArrayFieldsAsNull = compat
+
+    /**
+     * Doclava was missing enum fields in JDiff reports
+     */
+    var xmlSkipEnumFields = compat
+
     // Other examples: sometimes we sort by qualified name, sometimes by full name
 }

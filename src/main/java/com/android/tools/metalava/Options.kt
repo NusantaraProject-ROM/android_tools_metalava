@@ -497,8 +497,13 @@ class Options(
     /** List of signature files to export as JDiff files */
     val convertToXmlFiles: List<ConvertFile> = mutableConvertToXmlFiles
 
-    /** File conversion candidates */
-    data class ConvertFile(val fromApiFile: File, val toXmlFile: File, val baseApifile: File? = null)
+    /** JDiff file conversion candidates */
+    data class ConvertFile(
+        val fromApiFile: File,
+        val toXmlFile: File,
+        val baseApiFile: File? = null,
+        val strip: Boolean
+    )
 
     /** Temporary folder to use instead of the JDK default, if any */
     var tempFolder: File? = null
@@ -793,6 +798,30 @@ class Options(
                     mutableCompatibilityChecks.add(CheckRequest(file, ApiType.REMOVED, ReleaseType.RELEASED))
                 }
 
+                // Compat flag for the old API check command, invoked from build/make/core/definitions.mk:
+                "--check-api-files" -> {
+                    val stableApiFile = stringToExistingFile(getValue(args, ++index))
+                    val apiFileToBeTested = stringToExistingFile(getValue(args, ++index))
+                    val stableRemovedApiFile = stringToExistingFile(getValue(args, ++index))
+                    val removedApiFileToBeTested = stringToExistingFile(getValue(args, ++index))
+                    mutableCompatibilityChecks.add(
+                        CheckRequest(
+                            stableApiFile,
+                            ApiType.PUBLIC_API,
+                            ReleaseType.RELEASED,
+                            apiFileToBeTested
+                        )
+                    )
+                    mutableCompatibilityChecks.add(
+                        CheckRequest(
+                            stableRemovedApiFile,
+                            ApiType.REMOVED,
+                            ReleaseType.RELEASED,
+                            removedApiFileToBeTested
+                        )
+                    )
+                }
+
                 ARG_ANNOTATION_COVERAGE_STATS -> dumpAnnotationStatistics = true
                 ARG_ANNOTATION_COVERAGE_OF -> mutableAnnotationCoverageOf.addAll(
                     stringToExistingDirsOrJars(
@@ -922,17 +951,23 @@ class Options(
                     artifactRegistrations.register(artifactId, descriptor)
                 }
 
-                ARG_CONVERT_TO_JDIFF, "-convert2xmlnostrip" -> {
+                ARG_CONVERT_TO_JDIFF, "-convert2xml", "-convert2xmlnostrip" -> {
                     val signatureFile = stringToExistingFile(getValue(args, ++index))
                     val jDiffFile = stringToNewFile(getValue(args, ++index))
-                    mutableConvertToXmlFiles.add(ConvertFile(signatureFile, jDiffFile))
+                    val strip = arg == "-convert2xml"
+                    mutableConvertToXmlFiles.add(ConvertFile(signatureFile, jDiffFile, null, strip))
                 }
 
-                ARG_CONVERT_NEW_TO_JDIFF, "-new_api_no_strip" -> {
+                ARG_CONVERT_NEW_TO_JDIFF, "-new_api", "-new_api_no_strip" -> {
                     val baseFile = stringToExistingFile(getValue(args, ++index))
                     val signatureFile = stringToExistingFile(getValue(args, ++index))
                     val jDiffFile = stringToNewFile(getValue(args, ++index))
-                    mutableConvertToXmlFiles.add(ConvertFile(signatureFile, jDiffFile, baseFile))
+                    val strip = arg == "-new_api"
+                    if (arg != ARG_CONVERT_NEW_TO_JDIFF) {
+                        // Using old doclava flags: Compatibility behavior: don't include fields in the output
+                        compatibility.includeFieldsInApiDiff = false
+                    }
+                    mutableConvertToXmlFiles.add(ConvertFile(signatureFile, jDiffFile, baseFile, strip))
                 }
 
                 "--write-android-jar-signatures" -> {
