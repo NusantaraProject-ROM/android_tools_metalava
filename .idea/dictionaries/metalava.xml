@@ -21,6 +21,7 @@
       <w>doclet</w>
       <w>docletpath</w>
       <w>doconly</w>
+      <w>doesnt</w>
       <w>dokka</w>
       <w>droiddoc</w>
       <w>federationapi</w>
@@ -59,6 +60,7 @@
       <w>nullable</w>
       <w>nullness</w>
       <w>offlinemode</w>
+      <w>parcelable</w>
       <w>parsecomments</w>
       <w>prebuilts</w>
       <w>proguard</w>

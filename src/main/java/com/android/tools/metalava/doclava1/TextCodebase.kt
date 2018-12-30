@@ -340,7 +340,8 @@ class TextCodebase(location: File) : DefaultCodebase(location) {
         fun computeDelta(
             baseFile: File,
             baseApi: Codebase,
-            signatureApi: Codebase
+            signatureApi: Codebase,
+            includeFieldsInApiDiff: Boolean = compatibility.includeFieldsInApiDiff
         ): TextCodebase {
             // Compute just the delta
             val delta = TextCodebase(baseFile)
@@ -367,7 +368,7 @@ class TextCodebase(location: File) : DefaultCodebase(location) {
                 }
 
                 override fun added(new: FieldItem) {
-                    if (!compatibility.includeFieldsInApiDiff) {
+                    if (!includeFieldsInApiDiff) {
                         return
                     }
                     val cls = getOrAddClass(new.containingClass())

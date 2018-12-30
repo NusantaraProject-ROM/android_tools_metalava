@@ -180,12 +180,13 @@ abstract class DriverTest {
         return System.getenv("JAVA_HOME")
     }
 
-    /** JDiff file conversion candidates */
+    /** File conversion tasks */
     data class ConvertData(
         val fromApi: String,
-        val toXml: String,
+        val outputFile: String,
         val baseApi: String? = null,
-        val strip: Boolean = true
+        val strip: Boolean = true,
+        val format: Options.OutputFormat = Options.OutputFormat.JDIFF
     )
 
     protected fun check(
@@ -725,7 +726,8 @@ abstract class DriverTest {
                 val base = convert.baseApi
                 val convertSig = temporaryFolder.newFile("jdiff-signatures$index.txt")
                 convertSig.writeText(signature.trimIndent(), Charsets.UTF_8)
-                val output = temporaryFolder.newFile("jdiff-output$index.xml")
+                val extension = if (convert.format == Options.OutputFormat.JDIFF) "xml" else "txt"
+                val output = temporaryFolder.newFile("jdiff-output$index.$extension")
                 val baseFile = if (base != null) {
                     val baseFile = temporaryFolder.newFile("jdiff-signatures$index-base.txt")
                     baseFile.writeText(base.trimIndent(), Charsets.UTF_8)
@@ -733,14 +735,27 @@ abstract class DriverTest {
                 } else {
                     null
                 }
-                convertToJDiffFiles += Options.ConvertFile(convertSig, output, baseFile, strip = true)
+                convertToJDiffFiles += Options.ConvertFile(convertSig, output, baseFile,
+                    strip = true, outputFormat = convert.format)
                 index++
 
                 if (baseFile != null) {
-                    args += if (convert.strip) "-new_api" else ARG_CONVERT_NEW_TO_JDIFF
+                    args +=
+                        when {
+                            convert.format == Options.OutputFormat.V1 -> ARG_CONVERT_NEW_TO_V1
+                            convert.format == Options.OutputFormat.V2 -> ARG_CONVERT_NEW_TO_V2
+                            convert.strip -> "-new_api"
+                            else -> ARG_CONVERT_NEW_TO_JDIFF
+                        }
                     args += baseFile.path
                 } else {
-                    args += if (convert.strip) "-convert2xml" else ARG_CONVERT_TO_JDIFF
+                    args +=
+                        when {
+                            convert.format == Options.OutputFormat.V1 -> ARG_CONVERT_TO_V1
+                            convert.format == Options.OutputFormat.V2 -> ARG_CONVERT_TO_V2
+                            convert.strip -> "-convert2xml"
+                            else -> ARG_CONVERT_TO_JDIFF
+                        }
                 }
                 args += convertSig.path
                 args += output.path
@@ -999,9 +1014,10 @@ abstract class DriverTest {
 
         if (convertToJDiffFiles.isNotEmpty()) {
             for (i in 0 until convertToJDiff.size) {
-                val expected = convertToJDiff[i].toXml
-                val converted = convertToJDiffFiles[i].toXmlFile
+                val expected = convertToJDiff[i].outputFile
+                val converted = convertToJDiffFiles[i].outputFile
                 if (convertToJDiff[i].baseApi != null &&
+                    compatibilityMode &&
                     actualOutput.contains("No API change detected, not generating diff")) {
                     continue
                 }
@@ -1281,8 +1297,11 @@ abstract class DriverTest {
         if (CHECK_OLD_DOCLAVA_TOO && checkDoclava1 && convertToJDiff.isNotEmpty()) {
             var index = 1
             for (convert in convertToJDiff) {
+                if (convert.format != Options.OutputFormat.JDIFF) {
+                    continue
+                }
                 val signature = convert.fromApi
-                val expectedXml = convert.toXml
+                val expectedXml = convert.outputFile
                 val base = convert.baseApi
                 val strip = convert.strip
                 val convertSig = temporaryFolder.newFile("doclava-jdiff-signatures$index.txt")
