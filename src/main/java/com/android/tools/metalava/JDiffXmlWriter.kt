@@ -102,6 +102,34 @@ class JDiffXmlWriter(
         writer.println("\"\n>")
 
         writeInterfaceList(cls)
+
+        if (cls.isEnum() && compatibility.defaultEnumMethods) {
+            writer.println(
+                """
+                <method name="valueOf"
+                 return="${cls.qualifiedName()}"
+                 abstract="false"
+                 native="false"
+                 synchronized="false"
+                 static="true"
+                 final="false"
+                 visibility="public"
+                >
+                <parameter name="null" type="java.lang.String">
+                </parameter>
+                </method>
+                <method name="values"
+                 return="${cls.qualifiedName()}[]"
+                 abstract="false"
+                 native="false"
+                 synchronized="false"
+                 static="true"
+                 final="true"
+                 visibility="public"
+                >
+                </method>""".trimIndent()
+            )
+        }
     }
 
     fun deprecation(item: Item): String {
@@ -154,7 +182,11 @@ class JDiffXmlWriter(
         val modifiers = field.modifiers
         val initialValue = field.initialValue(true)
         val value = if (initialValue != null) {
-            escapeAttributeValue(CodePrinter.constantToSource(initialValue))
+            if (initialValue is Char && compatibility.xmlCharAsInt) {
+                initialValue.toInt().toString()
+            } else {
+                escapeAttributeValue(CodePrinter.constantToSource(initialValue))
+            }
         } else null
 
         val fullTypeName = escapeAttributeValue(field.type().toTypeString())
@@ -170,9 +202,11 @@ class JDiffXmlWriter(
         if (value != null) {
             writer.print("\"\n value=\"")
             writer.print(value)
-        } else if (compatibility.xmlShowArrayFieldsAsNull && field.type().isArray()) {
+        } else if (compatibility.xmlShowArrayFieldsAsNull && (field.type().isArray()/* ||
+                field.modifiers.isFinal() &&  field.modifiers.isStatic() && !field.type().primitive*/)) {
             writer.print("\"\n value=\"null")
         }
+
         writer.print("\"\n static=\"")
         writer.print(modifiers.isStatic())
         writer.print("\"\n final=\"")
@@ -193,6 +227,10 @@ class JDiffXmlWriter(
     override fun visitMethod(method: MethodItem) {
         val modifiers = method.modifiers
 
+        if (method.containingClass().isAnnotationType() && compatibility.xmlSkipAnnotationMethods) {
+            return
+        }
+
         // Note - to match doclava we don't write out the type parameter list
         // (method.typeParameterList()) in JDiff files!
 
@@ -200,14 +238,16 @@ class JDiffXmlWriter(
         writer.print(method.name())
         method.returnType()?.let {
             writer.print("\"\n return=\"")
-            writer.print(escapeAttributeValue(it.toTypeString()))
+            writer.print(escapeAttributeValue(formatType(it)))
         }
         writer.print("\"\n abstract=\"")
         writer.print(modifiers.isAbstract())
         writer.print("\"\n native=\"")
         writer.print(modifiers.isNative())
-        writer.print("\"\n synchronized=\"")
-        writer.print(modifiers.isSynchronized())
+        if (!compatibility.xmlOmitSynchronized) {
+            writer.print("\"\n synchronized=\"")
+            writer.print(modifiers.isSynchronized())
+        }
         writer.print("\"\n static=\"")
         writer.print(modifiers.isStatic())
         writer.print("\"\n final=\"")
@@ -224,12 +264,22 @@ class JDiffXmlWriter(
     }
 
     private fun writeSuperClassAttribute(cls: ClassItem) {
+        if (cls.isInterface() && compatibility.extendsForInterfaceSuperClass) {
+            // Written in the interface section instead
+            return
+        }
+
         val superClass = if (preFiltered)
             cls.superClassType()
         else cls.filteredSuperClassType(filterReference)
 
         val superClassString =
             when {
+                cls.isAnnotationType() -> if (compatibility.xmlAnnotationAsObject) {
+                    JAVA_LANG_OBJECT
+                } else {
+                    JAVA_LANG_ANNOTATION
+                }
                 superClass != null -> {
                     // doclava seems to include java.lang.Object for classes but not interfaces
                     if (!cls.isClass() && superClass.isJavaLangObject()) {
@@ -242,7 +292,6 @@ class JDiffXmlWriter(
                         )
                     )
                 }
-                cls.isAnnotationType() -> JAVA_LANG_ANNOTATION
                 cls.isEnum() -> JAVA_LANG_ENUM
                 else -> return
             }
@@ -252,9 +301,16 @@ class JDiffXmlWriter(
     }
 
     private fun writeInterfaceList(cls: ClassItem) {
-        val interfaces = if (preFiltered)
+        var interfaces = if (preFiltered)
             cls.interfaceTypes().asSequence()
         else cls.filteredInterfaceTypes(filterReference).asSequence()
+
+        if (cls.isInterface() && compatibility.extendsForInterfaceSuperClass) {
+            val superClassType = cls.superClassType()
+            if (superClassType?.isJavaLangObject() == false) {
+                interfaces += superClassType
+            }
+        }
 
         if (interfaces.any()) {
             interfaces.sortedWith(TypeItem.comparator).forEach { item ->
@@ -272,9 +328,18 @@ class JDiffXmlWriter(
             // NOTE: We report parameter name as "null" rather than the real name to match
             // doclava's behavior
             writer.print("<parameter name=\"null\" type=\"")
-            writer.print(escapeAttributeValue(parameter.type().toTypeString()))
+            writer.print(escapeAttributeValue(formatType(parameter.type())))
             writer.println("\">")
             writer.println("</parameter>")
+        }
+    }
+
+    private fun formatType(type: TypeItem): String {
+        val typeString = type.toTypeString()
+        return if (compatibility.spaceAfterCommaInTypes) {
+            typeString.replace(",", ", ").replace(",  ", ", ")
+        } else {
+            typeString
         }
     }
 
@@ -287,7 +352,11 @@ class JDiffXmlWriter(
         if (throws.any()) {
             throws.asSequence().sortedWith(ClassItem.fullNameComparator).forEach { type ->
                 writer.print("<exception name=\"")
-                writer.print(type.fullName())
+                if (options.compatOutput) {
+                    writer.print(type.simpleName())
+                } else {
+                    writer.print(type.fullName())
+                }
                 writer.print("\" type=\"")
                 writer.print(type.qualifiedName())
                 writer.println("\">")
