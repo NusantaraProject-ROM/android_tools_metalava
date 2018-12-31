@@ -180,7 +180,6 @@ public class ApiFile {
             token = tokenizer.requireToken();
         } else if ("interface".equals(token)) {
             isInterface = true;
-            modifiers.setAbstract(true);
             token = tokenizer.requireToken();
         } else if ("@interface".equals(token)) {
             // Annotation
@@ -243,10 +242,6 @@ public class ApiFile {
         }
         if (JAVA_LANG_ENUM.equals(ext)) {
             cl.setIsEnum(true);
-            // Above we marked all enums as static but for a top level class it's implicit
-            if (!cl.fullName().contains(".")) {
-                cl.getModifiers().setStatic(false);
-            }
         } else if (isAnnotation) {
             api.mapClassToInterface(cl, JAVA_LANG_ANNOTATION);
         } else if (api.implementsInterface(cl, JAVA_LANG_ANNOTATION)) {
@@ -428,9 +423,6 @@ public class ApiFile {
         name = token;
         method = new TextMethodItem(api, name, cl, modifiers, returnType, tokenizer.pos());
         method.setDeprecated(modifiers.isDeprecated());
-        if (cl.isInterface() && !modifiers.isDefault()) {
-            modifiers.setAbstract(true);
-        }
         method.setTypeParameterList(typeParameterList);
         if (typeParameterList instanceof TextTypeParameterList) {
             ((TextTypeParameterList) typeParameterList).setOwner(method);
@@ -762,9 +754,7 @@ public class ApiFile {
             if (typeString.endsWith("...")) {
                 modifiers.setVarArg(true);
             }
-            TextTypeItem typeInfo = api.obtainTypeFromString(typeString,
-                (TextClassItem) method.containingClass(),
-                method.typeParameterList());
+            TextTypeItem typeInfo = api.obtainTypeFromString(typeString);
 
             String name;
             String publicName;
