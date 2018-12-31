@@ -387,7 +387,7 @@ class ApiFromTextTest : DriverTest() {
                   }
                   protected static abstract deprecated interface Foo.Inner3 {
                     method public default void method3();
-                    method public static void method4(int);
+                    method public static abstract void method4(int);
                   }
                 }
                 """
@@ -509,7 +509,7 @@ class ApiFromTextTest : DriverTest() {
                   }
                 }
                 package test.pkg {
-                  public static final class Foo extends java.lang.Enum {
+                  public final class Foo extends java.lang.Enum {
                     enum_constant public static final test.pkg.Foo A;
                     enum_constant public static final test.pkg.Foo B;
                   }
