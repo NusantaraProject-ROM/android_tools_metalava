@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
-package com.android.tools.metalava.model
+package com.android.tools.metalava
 
-interface TypeParameterListOwner {
-    fun typeParameterList(): TypeParameterList
-    /** Given a variable in this owner, resolves to a type parameter item */
-    fun resolveParameter(variable: String): TypeParameterItem?
+/** Current signature format. */
+const val CURRENT_SIGNATURE_FORMAT = "2.0"
+
+/** Marker comment at the beginning of the signature file */
+const val SIGNATURE_FORMAT_PREFIX = "// Signature format: "
+
+fun useKotlinStyleNulls(format: Int): Boolean {
+    return format >= 3
 }
