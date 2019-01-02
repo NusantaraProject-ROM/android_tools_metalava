@@ -21,7 +21,6 @@ import com.android.tools.metalava.ApiAnalyzer
 import com.android.tools.metalava.JAVA_LANG_ANNOTATION
 import com.android.tools.metalava.JAVA_LANG_ENUM
 import com.android.tools.metalava.JAVA_LANG_OBJECT
-import com.android.tools.metalava.compatibility
 import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.android.tools.metalava.model.visitors.ItemVisitor
 import com.android.tools.metalava.model.visitors.TypeVisitor
@@ -375,12 +374,7 @@ interface ClassItem : Item {
             a.qualifiedName().compareTo(b.qualifiedName())
         }
 
-        fun classNameSorter(): Comparator<in ClassItem> =
-            if (compatibility.sortClassesBySimpleName) {
-                ClassItem.comparator
-            } else {
-                ClassItem.qualifiedComparator
-            }
+        fun classNameSorter(): Comparator<in ClassItem> = ClassItem.qualifiedComparator
     }
 
     fun findMethod(

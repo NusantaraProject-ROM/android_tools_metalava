@@ -21,7 +21,6 @@ import com.android.tools.metalava.JAVA_LANG_OBJECT
 import com.android.tools.metalava.JAVA_LANG_PREFIX
 import com.android.tools.metalava.JAVA_LANG_STRING
 import com.android.tools.metalava.compatibility
-import com.android.tools.metalava.options
 import java.util.function.Predicate
 
 /**
@@ -168,7 +167,7 @@ interface TypeItem {
     companion object {
         /** Shortens types, if configured */
         fun shortenTypes(type: String): String {
-            if (options.omitCommonPackages) {
+            if (compatibility.omitCommonPackages) {
                 var cleaned = type
                 if (cleaned.contains("@androidx.annotation.")) {
                     cleaned = cleaned.replace("@androidx.annotation.", "@")

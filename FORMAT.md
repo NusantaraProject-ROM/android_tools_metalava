@@ -480,6 +480,20 @@ java.lang.reflect.Method will **not** be shortened to reflect.Method.
 In v3, "type use annotations" are supported which means annotations can appear
 within types.
 
+### Skipping some signatures
+
+If a method overrides another method, and the signatures are the same, the
+overriding method is left out of the signature file. This basically compares the
+modifiers, ignoring some that are not API significant (such as "native"). Note
+also that some modifiers are implicit; for example, if a method is implementing
+a method from an interface, the interface method is implicitly abstract, so the
+implementation will be included in the signature file.
+
+In v2, we take this one step further: If a method differs **only** from its
+overridden method by "final", **and** if the containing class is final, then the
+method is not included in the signature file. The same is the case for
+deprecated.
+
 ### Miscellaneous
 
 Some other minor tweaks in v2:

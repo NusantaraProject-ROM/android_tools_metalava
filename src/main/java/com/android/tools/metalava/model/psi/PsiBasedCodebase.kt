@@ -17,7 +17,6 @@
 package com.android.tools.metalava.model.psi
 
 import com.android.SdkConstants
-import com.android.tools.metalava.compatibility
 import com.android.tools.metalava.doclava1.Errors
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.DefaultCodebase
@@ -414,7 +413,7 @@ open class PsiBasedCodebase(location: File, override var description: String = "
                     }
                 }
                 val last = pkg.lastIndexOf('.')
-                if (last == -1 || !compatibility.inheritPackageDocs) {
+                if (last == -1) {
                     hiddenPackages[packageName] = false
                     break
                 } else {

@@ -69,10 +69,8 @@ interface ModifierList {
 
         if (isStatic() != other.isStatic()) return false
         if (isAbstract() != other.isAbstract()) return false
-        if (isFinal() != other.isFinal()) return false
-        if (!compatibility.skipNativeModifier && isNative() != other.isNative()) return false
-        if (isSynchronized() != other.isSynchronized()) return false
-        if (!compatibility.skipStrictFpModifier && isStrictFp() != other.isStrictFp()) return false
+        if (isFinal() != other.isFinal()) { return false }
+        if (compatibility.includeSynchronized && isSynchronized() != other.isSynchronized()) return false
         if (isTransient() != other.isTransient()) return false
         if (isVolatile() != other.isVolatile()) return false
 
@@ -270,10 +268,6 @@ interface ModifierList {
                 return
             }
 
-            if (compatibility.extraSpaceForEmptyModifiers && item.isPackagePrivate && item is MemberItem) {
-                writer.write(" ")
-            }
-
             // Kotlin order:
             //   https://kotlinlang.org/docs/reference/coding-conventions.html#modifiers
 
@@ -342,20 +336,16 @@ interface ModifierList {
                     writer.write("abstract ")
                 }
 
-                if (list.isNative() && (target.isStubsFile() || !compatibility.skipNativeModifier)) {
+                if (list.isNative() && target.isStubsFile()) {
                     writer.write("native ")
                 }
 
-                if (item.deprecated && includeDeprecated && !target.isStubsFile() && options.compatOutput) {
+                if (item.deprecated && includeDeprecated && !target.isStubsFile() && !compatibility.deprecatedAsAnnotation) {
                     writer.write("deprecated ")
                 }
 
-                if (list.isSynchronized() && (options.compatOutput || target.isStubsFile())) {
+                if (list.isSynchronized() && (compatibility.includeSynchronized || target.isStubsFile())) {
                     writer.write("synchronized ")
-                }
-
-                if (!compatibility.skipStrictFpModifier && list.isStrictFp()) {
-                    writer.write("strictfp ")
                 }
 
                 if (list.isTransient()) {
@@ -366,7 +356,7 @@ interface ModifierList {
                     writer.write("volatile ")
                 }
             } else {
-                if (item.deprecated && includeDeprecated && !target.isStubsFile() && options.compatOutput) {
+                if (item.deprecated && includeDeprecated && !target.isStubsFile() && !compatibility.deprecatedAsAnnotation) {
                     writer.write("deprecated ")
                 }
 
@@ -434,16 +424,12 @@ interface ModifierList {
                     writer.write("volatile ")
                 }
 
-                if (list.isSynchronized() && (options.compatOutput || target.isStubsFile())) {
+                if (list.isSynchronized() && (compatibility.includeSynchronized || target.isStubsFile())) {
                     writer.write("synchronized ")
                 }
 
-                if (list.isNative() && (target.isStubsFile() || !compatibility.skipNativeModifier)) {
+                if (list.isNative() && target.isStubsFile()) {
                     writer.write("native ")
-                }
-
-                if (!compatibility.skipStrictFpModifier && list.isStrictFp()) {
-                    writer.write("strictfp ")
                 }
             }
         }
@@ -463,7 +449,7 @@ interface ModifierList {
             //  unless runtimeOnly is false, in which case we'd include it too
             // e.g. emit @Deprecated if includeDeprecated && !runtimeOnly
             if (item.deprecated &&
-                (!options.compatOutput || target.isStubsFile()) &&
+                (compatibility.deprecatedAsAnnotation || target.isStubsFile()) &&
                 (runtimeAnnotationsOnly || includeDeprecated)
             ) {
                 writer.write("@Deprecated")

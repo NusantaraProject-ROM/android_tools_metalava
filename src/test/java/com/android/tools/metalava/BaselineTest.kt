@@ -35,6 +35,7 @@ class BaselineTest : DriverTest() {
                 "ReferencesHidden"
             ),
             baseline = """
+                // Baseline format: 1.0
                 BothPackageInfoAndHtml: test/visible/package-info.java:
                     It is illegal to provide both a package-info.java file and a package.html file for the same package
                 IgnoringSymlink: test/pkg/sub1/sub2/sub3:
@@ -148,6 +149,84 @@ class BaselineTest : DriverTest() {
                     method public void method(test.pkg.Hidden1, test.pkg.Hidden2) throws test.pkg.Hidden3;
                     field public test.pkg.Hidden1 hidden1;
                     field public test.pkg.Hidden2 hidden2;
+                  }
+                }
+                """,
+            checkDoclava1 = false
+        )
+    }
+
+    @Test
+    fun `Check baseline with show annotations`() {
+        // When using show annotations we should only reference errors that are present in the delta
+        check(
+            includeSystemApiAnnotations = true,
+            extraArguments = arrayOf(
+                ARG_SHOW_ANNOTATION, "android.annotation.TestApi",
+                ARG_HIDE_PACKAGE, "android.annotation",
+                ARG_HIDE_PACKAGE, "android.support.annotation",
+                ARG_API_LINT
+            ),
+            baseline = """
+                // Baseline format: 1.0
+                PairedRegistration: android.pkg.RegistrationMethods#registerUnpaired2Callback(Runnable):
+                    Found registerUnpaired2Callback but not unregisterUnpaired2Callback in android.pkg.RegistrationMethods
+            """,
+            updateBaseline = true,
+            warnings = "",
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package android.pkg;
+                    import android.annotation.TestApi;
+
+                    public class RegistrationMethods {
+                        // Here we have 3 sets of correct registrations: both register and unregister are
+                        // present from the full API that is part of the Test API.
+                        // There is also 2 incorrect registrations: one in the base API and one in the test
+                        // API.
+                        //
+                        // In the test API, we expect to only see the single missing test API one. The missing
+                        // base one should only be in the base baseline.
+                        //
+                        // Furthermore, this test makes sure that when the set of methods to be consulted spans
+                        // the two APIs (one hidden, one not) the code correctly finds both; e.g. iteration of
+                        // the test API does see the full set of methods even if they're left out of the
+                        // signature files and baselines.
+
+                        public void registerOk1Callback(Runnable r) { }
+                        public void unregisterOk1Callback(Runnable r) { }
+
+                        /** @hide */
+                        @TestApi
+                        public void registerOk2Callback(Runnable r) { }
+                        /** @hide */
+                        @TestApi
+                        public void unregisterOk2Callback(Runnable r) { }
+
+                        // In the Test API, both methods are present
+                        public void registerOk3Callback(Runnable r) { }
+                        /** @hide */
+                        @TestApi
+                        public void unregisterOk3Callback(Runnable r) { }
+
+                        public void registerUnpaired1Callback(Runnable r) { }
+
+                        /** @hide */
+                        @TestApi
+                        public void registerUnpaired2Callback(Runnable r) { }
+                    }
+                    """
+                ),
+                testApiSource
+            ),
+            api = """
+                package android.pkg {
+                  public class RegistrationMethods {
+                    method public void registerOk2Callback(java.lang.Runnable);
+                    method public void registerUnpaired2Callback(java.lang.Runnable);
+                    method public void unregisterOk2Callback(java.lang.Runnable);
+                    method public void unregisterOk3Callback(java.lang.Runnable);
                   }
                 }
                 """,

@@ -231,6 +231,15 @@ JDiff:
 --convert-new-to-jdiff <old> <new> <xml>  Reads in the given old and new api files,
                                           computes the difference, and writes out only the
                                           new parts of the API in the JDiff XML format.
+--convert-to-v1 <sig> <sig>               Reads in the given signature file and writes it
+                                          out as a signature file in the original
+                                          v1/doclava format.
+--convert-to-v2 <sig> <sig>               Reads in the given signature file and writes it
+                                          out as a signature file in the new signature
+                                          format, v2.
+--convert-new-to-v2 <old> <new> <sig>     Reads in the given old and new api files,
+                                          computes the difference, and writes out only the
+                                          new parts of the API in the v2 format.
 
 Statistics:
 --annotation-coverage-stats               Whether metalava should emit coverage statistics

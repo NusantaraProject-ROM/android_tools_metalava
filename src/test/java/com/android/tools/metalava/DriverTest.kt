@@ -57,6 +57,7 @@ import java.net.URL
 import kotlin.text.Charsets.UTF_8
 
 const val CHECK_OLD_DOCLAVA_TOO = false
+const val CHECK_JDIFF = true
 const val CHECK_STUB_COMPILATION = false
 
 abstract class DriverTest {
@@ -180,12 +181,13 @@ abstract class DriverTest {
         return System.getenv("JAVA_HOME")
     }
 
-    /** JDiff file conversion candidates */
+    /** File conversion tasks */
     data class ConvertData(
         val fromApi: String,
-        val toXml: String,
+        val outputFile: String,
         val baseApi: String? = null,
-        val strip: Boolean = true
+        val strip: Boolean = true,
+        val format: FileFormat = FileFormat.JDIFF
     )
 
     protected fun check(
@@ -220,18 +222,18 @@ abstract class DriverTest {
         /** Whether the stubs should be written as documentation stubs instead of plain stubs. Decides
          * whether the stubs include @doconly elements, uses rewritten/migration annotations, etc */
         docStubs: Boolean = false,
+        /** Signature file format */
+        format: FileFormat? = null,
         /** Whether to run in doclava1 compat mode */
-        compatibilityMode: Boolean = true,
+        compatibilityMode: Boolean = format == null || format == FileFormat.V1,
         /** Whether to trim the output (leading/trailing whitespace removal) */
         trim: Boolean = true,
         /** Whether to remove blank lines in the output (the signature file usually contains a lot of these) */
         stripBlankLines: Boolean = true,
         /** Warnings expected to be generated when analyzing these sources */
         warnings: String? = "",
-        /** Signature file format */
-        format: Int? = null,
         /** Whether to run doclava1 on the test output and assert that the output is identical */
-        checkDoclava1: Boolean = compatibilityMode && (format == null || format < 2),
+        checkDoclava1: Boolean = compatibilityMode && (format == null || format == FileFormat.V1),
         checkCompilation: Boolean = false,
         /** Annotations to merge in (in .xml format) */
         @Language("XML") mergeXmlAnnotations: String? = null,
@@ -266,7 +268,7 @@ abstract class DriverTest {
         /** Additional arguments to supply */
         extraArguments: Array<String> = emptyArray(),
         /** Whether we should emit Kotlin-style null signatures */
-        outputKotlinStyleNulls: Boolean = !compatibilityMode,
+        outputKotlinStyleNulls: Boolean = format != null && format.useKotlinStyleNulls(),
         /** Whether we should interpret API files being read as having Kotlin-style nullness types */
         inputKotlinStyleNulls: Boolean = false,
         /** Whether we should omit java.lang. etc from signature files */
@@ -716,31 +718,45 @@ abstract class DriverTest {
             emptyArray()
         }
 
-        val convertToJDiffFiles = mutableListOf<Options.ConvertFile>()
-        val convertToJDiffArgs = if (convertToJDiff.isNotEmpty()) {
+        val convertFiles = mutableListOf<Options.ConvertFile>()
+        val convertArgs = if (convertToJDiff.isNotEmpty()) {
             val args = mutableListOf<String>()
             var index = 1
             for (convert in convertToJDiff) {
                 val signature = convert.fromApi
                 val base = convert.baseApi
-                val convertSig = temporaryFolder.newFile("jdiff-signatures$index.txt")
+                val convertSig = temporaryFolder.newFile("convert-signatures$index.txt")
                 convertSig.writeText(signature.trimIndent(), Charsets.UTF_8)
-                val output = temporaryFolder.newFile("jdiff-output$index.xml")
+                val extension = convert.format.preferredExtension()
+                val output = temporaryFolder.newFile("convert-output$index$extension")
                 val baseFile = if (base != null) {
-                    val baseFile = temporaryFolder.newFile("jdiff-signatures$index-base.txt")
+                    val baseFile = temporaryFolder.newFile("convert-signatures$index-base.txt")
                     baseFile.writeText(base.trimIndent(), Charsets.UTF_8)
                     baseFile
                 } else {
                     null
                 }
-                convertToJDiffFiles += Options.ConvertFile(convertSig, output, baseFile, strip = true)
+                convertFiles += Options.ConvertFile(convertSig, output, baseFile,
+                    strip = true, outputFormat = convert.format)
                 index++
 
                 if (baseFile != null) {
-                    args += if (convert.strip) "-new_api" else ARG_CONVERT_NEW_TO_JDIFF
+                    args +=
+                        when {
+                            convert.format == FileFormat.V1 -> ARG_CONVERT_NEW_TO_V1
+                            convert.format == FileFormat.V2 -> ARG_CONVERT_NEW_TO_V2
+                            convert.strip -> "-new_api"
+                            else -> ARG_CONVERT_NEW_TO_JDIFF
+                        }
                     args += baseFile.path
                 } else {
-                    args += if (convert.strip) "-convert2xml" else ARG_CONVERT_TO_JDIFF
+                    args +=
+                        when {
+                            convert.format == FileFormat.V1 -> ARG_CONVERT_TO_V1
+                            convert.format == FileFormat.V2 -> ARG_CONVERT_TO_V2
+                            convert.strip -> "-convert2xml"
+                            else -> ARG_CONVERT_TO_JDIFF
+                        }
                 }
                 args += convertSig.path
                 args += output.path
@@ -882,7 +898,7 @@ abstract class DriverTest {
         }
 
         val signatureFormatArgs = if (format != null) {
-            arrayOf("$ARG_FORMAT=v$format")
+            arrayOf(format.outputFlag())
         } else {
             emptyArray()
         }
@@ -945,7 +961,7 @@ abstract class DriverTest {
             *checkCompatibilityRemovedReleasedArguments,
             *proguardKeepArguments,
             *manifestFileArgs,
-            *convertToJDiffArgs,
+            *convertArgs,
             *applyApiLevelsXmlArgs,
             *baselineArgs,
             *showAnnotationArguments,
@@ -997,11 +1013,12 @@ abstract class DriverTest {
             assertEquals(stripComments(baseline, stripLineComments = false).trimIndent(), actualText)
         }
 
-        if (convertToJDiffFiles.isNotEmpty()) {
+        if (convertFiles.isNotEmpty()) {
             for (i in 0 until convertToJDiff.size) {
-                val expected = convertToJDiff[i].toXml
-                val converted = convertToJDiffFiles[i].toXmlFile
+                val expected = convertToJDiff[i].outputFile
+                val converted = convertFiles[i].outputFile
                 if (convertToJDiff[i].baseApi != null &&
+                    compatibilityMode &&
                     actualOutput.contains("No API change detected, not generating diff")) {
                     continue
                 }
@@ -1278,11 +1295,18 @@ abstract class DriverTest {
             assertEquals(stripComments(apiXml, stripLineComments = false).trimIndent(), actualText)
         }
 
+        if (CHECK_JDIFF && apiXmlFile != null && convertToJDiff.isNotEmpty()) {
+            // Parse the XML file with jdiff too
+        }
+
         if (CHECK_OLD_DOCLAVA_TOO && checkDoclava1 && convertToJDiff.isNotEmpty()) {
             var index = 1
             for (convert in convertToJDiff) {
+                if (convert.format != FileFormat.JDIFF) {
+                    continue
+                }
                 val signature = convert.fromApi
-                val expectedXml = convert.toXml
+                val expectedXml = convert.outputFile
                 val base = convert.baseApi
                 val strip = convert.strip
                 val convertSig = temporaryFolder.newFile("doclava-jdiff-signatures$index.txt")

@@ -133,7 +133,7 @@ open class Reporter(private val rootFolder: File? = null) {
                 report(severity, item.psi(), message, id)
             }
             is TextItem -> report(severity, (item as? TextItem)?.position.toString(), message, id)
-            else -> report(severity, "<unknown location>", message, id)
+            else -> report(severity, null as String?, message, id)
         }
     }
 
@@ -294,7 +294,9 @@ open class Reporter(private val rootFolder: File? = null) {
         if (color) {
             sb.append(terminalAttributes(bold = true))
             if (!options.omitLocations) {
-                location?.let { sb.append(it).append(": ") }
+                location?.let {
+                    sb.append(it).append(": ")
+                }
             }
             when (effectiveSeverity) {
                 LINT -> sb.append(terminalAttributes(foreground = TerminalColor.CYAN)).append("lint: ")
