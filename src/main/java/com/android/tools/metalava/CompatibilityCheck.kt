@@ -77,7 +77,7 @@ class CompatibilityCheck(
      * so in these cases we want to ignore certain changes such as considering
      * StringBuilder.setLength a newly added method.
      */
-    private val comparingWithPartialSignatures = oldCodebase is TextCodebase && oldCodebase.format == FileFormat.V1
+    private val comparingWithPartialSignatures = oldCodebase is TextCodebase && oldCodebase.format.major < 2
 
     var foundProblems = false
 
@@ -769,7 +769,7 @@ class CompatibilityCheck(
         }
 
         // In old signature files, annotation methods are missing! This will show up as an added method.
-        if (new.containingClass().isAnnotationType() && oldCodebase is TextCodebase && oldCodebase.format == FileFormat.V1) {
+        if (new.containingClass().isAnnotationType() && oldCodebase is TextCodebase && oldCodebase.format.major == 1) {
             return
         }
 
