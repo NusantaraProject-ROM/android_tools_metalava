@@ -142,10 +142,6 @@ open class TextClassItem(
         return typeParameterList!!
     }
 
-    override fun typeParameterListOwnerParent(): TypeParameterListOwner? {
-        return containingClass
-    }
-
     override fun resolveParameter(variable: String): TypeParameterItem? {
         if (hasTypeVariables()) {
             for (t in typeParameterList().typeParameters()) {

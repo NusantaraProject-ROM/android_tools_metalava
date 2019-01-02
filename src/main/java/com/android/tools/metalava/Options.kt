@@ -51,10 +51,6 @@ const val ARG_API = "--api"
 const val ARG_XML_API = "--api-xml"
 const val ARG_CONVERT_TO_JDIFF = "--convert-to-jdiff"
 const val ARG_CONVERT_NEW_TO_JDIFF = "--convert-new-to-jdiff"
-const val ARG_CONVERT_TO_V1 = "--convert-to-v1"
-const val ARG_CONVERT_TO_V2 = "--convert-to-v2"
-const val ARG_CONVERT_NEW_TO_V1 = "--convert-new-to-v1"
-const val ARG_CONVERT_NEW_TO_V2 = "--convert-new-to-v2"
 const val ARG_PRIVATE_API = "--private-api"
 const val ARG_DEX_API = "--dex-api"
 const val ARG_PRIVATE_DEX_API = "--private-dex-api"
@@ -136,6 +132,7 @@ const val ARG_DEX_API_MAPPING = "--dex-api-mapping"
 const val ARG_GENERATE_DOCUMENTATION = "--generate-documentation"
 const val ARG_BASELINE = "--baseline"
 const val ARG_UPDATE_BASELINE = "--update-baseline"
+const val ARG_CONVERT_XML = "--convert-signature-to-xml"
 
 class Options(
     args: Array<String>,
@@ -243,7 +240,7 @@ class Options(
     var compatOutput = useCompatMode(args)
 
     /** Whether nullness annotations should be displayed as ?/!/empty instead of with @NonNull/@Nullable. */
-    var outputKotlinStyleNulls = false // requires v3
+    var outputKotlinStyleNulls = !compatOutput
 
     /** Whether default values should be included in signature files */
     var outputDefaultValues = !compatOutput
@@ -252,7 +249,7 @@ class Options(
     var omitCommonPackages = !compatOutput
 
     /** The output format version being used */
-    var outputFormat: FileFormat = if (compatOutput) FileFormat.V1 else FileFormat.V2
+    var outputFormat: Int = 1
 
     /**
      * Whether reading signature files should assume the input is formatted as Kotlin-style nulls
@@ -500,13 +497,12 @@ class Options(
     /** List of signature files to export as JDiff files */
     val convertToXmlFiles: List<ConvertFile> = mutableConvertToXmlFiles
 
-    /** File conversion tasks */
+    /** JDiff file conversion candidates */
     data class ConvertFile(
         val fromApiFile: File,
-        val outputFile: File,
+        val toXmlFile: File,
         val baseApiFile: File? = null,
-        val strip: Boolean = false,
-        val outputFormat: FileFormat = FileFormat.JDIFF
+        val strip: Boolean
     )
 
     /** Temporary folder to use instead of the JDK default, if any */
@@ -955,45 +951,23 @@ class Options(
                     artifactRegistrations.register(artifactId, descriptor)
                 }
 
-                ARG_CONVERT_TO_JDIFF,
-                ARG_CONVERT_TO_V1,
-                ARG_CONVERT_TO_V2,
-                // doclava compatibility:
-                "-convert2xml",
-                "-convert2xmlnostrip" -> {
-                    val strip = arg == "-convert2xml"
-                    val format = when (arg) {
-                        ARG_CONVERT_TO_V1 -> FileFormat.V1
-                        ARG_CONVERT_TO_V2 -> FileFormat.V2
-                        else -> FileFormat.JDIFF
-                    }
-
+                ARG_CONVERT_TO_JDIFF, "-convert2xml", "-convert2xmlnostrip" -> {
                     val signatureFile = stringToExistingFile(getValue(args, ++index))
-                    val outputFile = stringToNewFile(getValue(args, ++index))
-                    mutableConvertToXmlFiles.add(ConvertFile(signatureFile, outputFile, null, strip, format))
+                    val jDiffFile = stringToNewFile(getValue(args, ++index))
+                    val strip = arg == "-convert2xml"
+                    mutableConvertToXmlFiles.add(ConvertFile(signatureFile, jDiffFile, null, strip))
                 }
 
-                ARG_CONVERT_NEW_TO_JDIFF,
-                ARG_CONVERT_NEW_TO_V1,
-                ARG_CONVERT_NEW_TO_V2,
-                // doclava compatibility:
-                "-new_api",
-                "-new_api_no_strip" -> {
-                    val format = when (arg) {
-                        ARG_CONVERT_NEW_TO_V1 -> FileFormat.V1
-                        ARG_CONVERT_NEW_TO_V2 -> FileFormat.V2
-                        else -> FileFormat.JDIFF
-                    }
+                ARG_CONVERT_NEW_TO_JDIFF, "-new_api", "-new_api_no_strip" -> {
+                    val baseFile = stringToExistingFile(getValue(args, ++index))
+                    val signatureFile = stringToExistingFile(getValue(args, ++index))
+                    val jDiffFile = stringToNewFile(getValue(args, ++index))
                     val strip = arg == "-new_api"
                     if (arg != ARG_CONVERT_NEW_TO_JDIFF) {
                         // Using old doclava flags: Compatibility behavior: don't include fields in the output
                         compatibility.includeFieldsInApiDiff = false
                     }
-
-                    val baseFile = stringToExistingFile(getValue(args, ++index))
-                    val signatureFile = stringToExistingFile(getValue(args, ++index))
-                    val jDiffFile = stringToNewFile(getValue(args, ++index))
-                    mutableConvertToXmlFiles.add(ConvertFile(signatureFile, jDiffFile, baseFile, strip, format))
+                    mutableConvertToXmlFiles.add(ConvertFile(signatureFile, jDiffFile, baseFile, strip))
                 }
 
                 "--write-android-jar-signatures" -> {
@@ -1174,15 +1148,9 @@ class Options(
                         else yesNo(arg.substring(ARG_INCLUDE_SIG_VERSION.length + 1))
                     } else if (arg.startsWith(ARG_FORMAT)) {
                         when (arg) {
-                            "$ARG_FORMAT=v1" -> {
-                                FileFormat.V1.configureOptions(this)
-                            }
-                            "$ARG_FORMAT=v2" -> {
-                                FileFormat.V2.configureOptions(this)
-                            }
-                            "$ARG_FORMAT=v3" -> {
-                                FileFormat.V3.configureOptions(this)
-                            }
+                            "$ARG_FORMAT=v1" -> setFormat(1)
+                            "$ARG_FORMAT=v2" -> setFormat(2)
+                            "$ARG_FORMAT=v3" -> setFormat(3)
                             else -> throw DriverException(stderr = "Unexpected signature format; expected v1, v2 or v3")
                         }
                     } else if (arg.startsWith("-")) {
@@ -1266,6 +1234,15 @@ class Options(
         }
 
         checkFlagConsistency()
+    }
+
+    private fun setFormat(format: Int) {
+        outputFormat = format
+        compatOutput = format == 1
+        outputKotlinStyleNulls = format >= 3
+        outputDefaultValues = format >= 2
+        omitCommonPackages = format >= 2
+        includeSignatureFormatVersion = format >= 2
     }
 
     private fun findCompatibilityFlag(arg: String): KMutableProperty1<Compatibility, Boolean>? {
@@ -1756,12 +1733,6 @@ class Options(
                 "in the JDiff XML format. Can be specified multiple times.",
             "$ARG_CONVERT_NEW_TO_JDIFF <old> <new> <xml>", "Reads in the given old and new api files, " +
                 "computes the difference, and writes out only the new parts of the API in the JDiff XML format.",
-            "$ARG_CONVERT_TO_V1 <sig> <sig>", "Reads in the given signature file and writes it out as a " +
-                "signature file in the original v1/doclava format.",
-            "$ARG_CONVERT_TO_V2 <sig> <sig>", "Reads in the given signature file and writes it out as a " +
-                "signature file in the new signature format, v2.",
-            "$ARG_CONVERT_NEW_TO_V2 <old> <new> <sig>", "Reads in the given old and new api files, " +
-                "computes the difference, and writes out only the new parts of the API in the v2 format.",
 
             "", "\nStatistics:",
             ARG_ANNOTATION_COVERAGE_STATS, "Whether $PROGRAM_NAME should emit coverage statistics for " +
