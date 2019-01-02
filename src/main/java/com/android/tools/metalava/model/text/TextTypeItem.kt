@@ -34,7 +34,6 @@ class TextTypeItem(
     val codebase: TextCodebase,
     val type: String
 ) : TypeItem {
-
     override fun toString(): String = type
 
     override fun toErasedTypeString(context: Item?): String {

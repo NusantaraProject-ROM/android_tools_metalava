@@ -2115,13 +2115,14 @@ CompatibilityCheckTest : DriverTest() {
             compatibilityMode = true,
             inputKotlinStyleNulls = true,
             checkCompatibilityApi = """
+                // Signature format: 2.0
                 package androidx.annotation {
-                  public abstract class RestrictTo implements java.lang.annotation.Annotation {
+                  @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS) @java.lang.annotation.Target({java.lang.annotation.ElementType.ANNOTATION_TYPE, java.lang.annotation.ElementType.TYPE, java.lang.annotation.ElementType.METHOD, java.lang.annotation.ElementType.CONSTRUCTOR, java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.PACKAGE}) public @interface RestrictTo {
                     method public abstract androidx.annotation.RestrictTo.Scope[] value();
                   }
 
-                  public static final class RestrictTo.Scope extends java.lang.Enum {
-                    enum_constant deprecated public static final androidx.annotation.RestrictTo.Scope GROUP_ID;
+                  public static enum RestrictTo.Scope {
+                    enum_constant @Deprecated public static final androidx.annotation.RestrictTo.Scope GROUP_ID;
                     enum_constant public static final androidx.annotation.RestrictTo.Scope LIBRARY;
                     enum_constant public static final androidx.annotation.RestrictTo.Scope LIBRARY_GROUP;
                     enum_constant public static final androidx.annotation.RestrictTo.Scope SUBCLASSES;

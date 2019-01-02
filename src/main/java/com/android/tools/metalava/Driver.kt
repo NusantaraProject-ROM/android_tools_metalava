@@ -478,48 +478,23 @@ fun processNonCodebaseFlags() {
                     kotlinStyleNulls = options.inputKotlinStyleNulls
                 )
 
-                val includeFields =
-                    if (convert.outputFormat == FileFormat.V2) true else compatibility.includeFieldsInApiDiff
-                TextCodebase.computeDelta(baseFile, baseApi, signatureApi, includeFields)
+                TextCodebase.computeDelta(baseFile, baseApi, signatureApi)
             } else {
                 signatureApi
             }
 
-        if (outputApi.isEmpty() && baseFile != null && compatibility.compat) {
+        if (outputApi.isEmpty() && baseFile != null) {
             // doclava compatibility: emits error warning instead of emitting empty <api/> element
             options.stdout.println("No API change detected, not generating diff")
         } else {
-            val output = convert.outputFile
-            if (convert.outputFormat == FileFormat.JDIFF) {
-                createReportFile(outputApi, output, "JDiff File") { printWriter ->
-                    JDiffXmlWriter(printWriter, apiEmit, apiReference, signatureApi.preFiltered && !strip)
+            val output = convert.toXmlFile
+            if (output.path.endsWith(DOT_TXT)) {
+                createReportFile(outputApi, output, "Diff API File") { printWriter ->
+                    SignatureWriter(printWriter, apiEmit, apiReference, signatureApi.preFiltered && !strip)
                 }
             } else {
-                val prevOptions = options
-                val prevCompatibility = compatibility
-                try {
-                    when (convert.outputFormat) {
-                        FileFormat.V1 -> {
-                            compatibility = Compatibility(true)
-                            options = Options(emptyArray(), options.stdout, options.stderr)
-                            FileFormat.V1.configureOptions(options)
-                        }
-                        FileFormat.V2 -> {
-                            compatibility = Compatibility(false)
-                            options = Options(emptyArray(), options.stdout, options.stderr)
-                            FileFormat.V2.configureOptions(options)
-                        }
-                        else -> error("Unsupported format ${convert.outputFormat}")
-                    }
-
-                    createReportFile(outputApi, output, "Diff API File") { printWriter ->
-                        SignatureWriter(
-                            printWriter, apiEmit, apiReference, signatureApi.preFiltered && !strip
-                        )
-                    }
-                } finally {
-                    options = prevOptions
-                    compatibility = prevCompatibility
+                createReportFile(outputApi, output, "JDiff File") { printWriter ->
+                    JDiffXmlWriter(printWriter, apiEmit, apiReference, signatureApi.preFiltered && !strip)
                 }
             }
         }
@@ -546,7 +521,7 @@ fun checkCompatibility(
             )
         }
 
-    if (current is TextCodebase && current.format > FileFormat.V1 && options.outputFormat == FileFormat.V1) {
+    if (current is TextCodebase && current.format.major > 1 && options.outputFormat < 1) {
         throw DriverException("Cannot perform compatibility check of signature file $signatureFile in format ${current.format} without analyzing current codebase with $ARG_FORMAT=${current.format}")
     }
 
