@@ -221,5 +221,22 @@ class Compatibility(
      */
     var xmlSkipEnumFields = compat
 
+    /**
+     * Doclava was missing annotation instance methods in JDiff reports
+     */
+    var xmlSkipAnnotationMethods = compat
+
+    /** Doclava lists character field values as integers instead of chars */
+    var xmlCharAsInt = compat
+
+    /**
+     * Doclava listed the superclass of annotations as
+     * java.lang.Object.
+     */
+    var xmlAnnotationAsObject = compat
+
+    /** Whether to skip synchronized from JDiff reports */
+    var xmlOmitSynchronized = false // Can't turn it on; jdiff.APIHandler.startElement throws NPE if not present
+
     // Other examples: sometimes we sort by qualified name, sometimes by full name
 }
