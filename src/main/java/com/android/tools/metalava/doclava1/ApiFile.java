@@ -16,9 +16,8 @@
 
 package com.android.tools.metalava.doclava1;
 
-import com.android.ide.common.repository.GradleVersion;
 import com.android.tools.lint.checks.infrastructure.ClassNameKt;
-import com.android.tools.metalava.SignatureFormatKt;
+import com.android.tools.metalava.FileFormat;
 import com.android.tools.metalava.model.AnnotationItem;
 import com.android.tools.metalava.model.DefaultModifierList;
 import com.android.tools.metalava.model.TypeParameterList;
@@ -49,7 +48,7 @@ import static com.android.tools.metalava.ConstantsKt.ANDROIDX_NULLABLE;
 import static com.android.tools.metalava.ConstantsKt.JAVA_LANG_ANNOTATION;
 import static com.android.tools.metalava.ConstantsKt.JAVA_LANG_ENUM;
 import static com.android.tools.metalava.ConstantsKt.JAVA_LANG_STRING;
-import static com.android.tools.metalava.SignatureFormatKt.SIGNATURE_FORMAT_PREFIX;
+import static com.android.tools.metalava.FileFormatKt.SIGNATURE_FORMAT_PREFIX;
 import static com.android.tools.metalava.model.FieldItemKt.javaUnescapeString;
 
 //
@@ -74,7 +73,7 @@ public class ApiFile {
     @VisibleForTesting
     public static TextCodebase parseApi(String filename, String apiText,
                                         Boolean kotlinStyleNulls) throws ApiParseException {
-        GradleVersion format = null;
+        FileFormat format = null;
         if (apiText.startsWith(SIGNATURE_FORMAT_PREFIX)) {
             int begin = SIGNATURE_FORMAT_PREFIX.length();
             int end = apiText.indexOf('\n', begin);
@@ -85,9 +84,12 @@ public class ApiFile {
             }
             String formatString = apiText.substring(begin, end).trim();
             if (!formatString.isEmpty()) {
-                format = GradleVersion.tryParse(formatString);
+                format = FileFormat.Companion.parse(formatString);
+                if (format == FileFormat.UNKNOWN) {
+                    throw new ApiParseException("Unknown file format " + formatString);
+                }
                 if (kotlinStyleNulls == null) {
-                    kotlinStyleNulls = SignatureFormatKt.useKotlinStyleNulls(format.getMajor());
+                    kotlinStyleNulls = format.useKotlinStyleNulls();
                 }
             }
         }
@@ -180,6 +182,7 @@ public class ApiFile {
             token = tokenizer.requireToken();
         } else if ("interface".equals(token)) {
             isInterface = true;
+            modifiers.setAbstract(true);
             token = tokenizer.requireToken();
         } else if ("@interface".equals(token)) {
             // Annotation
@@ -242,6 +245,10 @@ public class ApiFile {
         }
         if (JAVA_LANG_ENUM.equals(ext)) {
             cl.setIsEnum(true);
+            // Above we marked all enums as static but for a top level class it's implicit
+            if (!cl.fullName().contains(".")) {
+                cl.getModifiers().setStatic(false);
+            }
         } else if (isAnnotation) {
             api.mapClassToInterface(cl, JAVA_LANG_ANNOTATION);
         } else if (api.implementsInterface(cl, JAVA_LANG_ANNOTATION)) {
@@ -423,6 +430,9 @@ public class ApiFile {
         name = token;
         method = new TextMethodItem(api, name, cl, modifiers, returnType, tokenizer.pos());
         method.setDeprecated(modifiers.isDeprecated());
+        if (cl.isInterface() && !modifiers.isDefault()) {
+            modifiers.setAbstract(true);
+        }
         method.setTypeParameterList(typeParameterList);
         if (typeParameterList instanceof TextTypeParameterList) {
             ((TextTypeParameterList) typeParameterList).setOwner(method);
@@ -754,7 +764,9 @@ public class ApiFile {
             if (typeString.endsWith("...")) {
                 modifiers.setVarArg(true);
             }
-            TextTypeItem typeInfo = api.obtainTypeFromString(typeString);
+            TextTypeItem typeInfo = api.obtainTypeFromString(typeString,
+                (TextClassItem) method.containingClass(),
+                method.typeParameterList());
 
             String name;
             String publicName;
