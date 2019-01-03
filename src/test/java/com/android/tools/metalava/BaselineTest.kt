@@ -35,21 +35,31 @@ class BaselineTest : DriverTest() {
                 "ReferencesHidden"
             ),
             baseline = """
-                BothPackageInfoAndHtml: test/visible/package-info.java: It is illegal to provide both a package-info.java file and a package.html file for the same package
-                IgnoringSymlink: test/pkg/sub1/sub2/sub3: Ignoring symlink during package.html discovery directory traversal
-                ReferencesHidden: test.pkg.Foo#get(T): Class test.pkg.Hidden1 is not public but was referenced (as type parameter) from public method test.pkg.Foo.get(T)
-                ReferencesHidden: test.pkg.Foo#getHidden1(): Class test.pkg.Hidden1 is not public but was referenced (as return type) from public method test.pkg.Foo.getHidden1()
-                //ReferencesHidden: test.pkg.Foo#getHidden2(): Class test.pkg.Hidden2 is hidden but was referenced (as return type) from public method test.pkg.Foo.getHidden2()
-                ReferencesHidden: test.pkg.Foo#hidden1: Class test.pkg.Hidden1 is not public but was referenced (as field type) from public field test.pkg.Foo.hidden1
-                ReferencesHidden: test.pkg.Foo#hidden2: Class test.pkg.Hidden2 is hidden but was referenced (as field type) from public field test.pkg.Foo.hidden2
-                ReferencesHidden: test.pkg.Foo#method(test.pkg.Hidden1, test.pkg.Hidden2): Class test.pkg.Hidden3 is hidden but was referenced (as exception) from public method test.pkg.Foo.method(test.pkg.Hidden1,test.pkg.Hidden2)
-                ReferencesHidden: test.pkg.Foo#method(test.pkg.Hidden1, test.pkg.Hidden2) parameter #0: Class test.pkg.Hidden1 is not public but was referenced (as parameter type) from public parameter hidden1 in test.pkg.Foo.method(test.pkg.Hidden1 hidden1, test.pkg.Hidden2 hidden2)
-                ReferencesHidden: test.pkg.Foo#method(test.pkg.Hidden1, test.pkg.Hidden2) parameter #1: Class test.pkg.Hidden2 is hidden but was referenced (as parameter type) from public parameter hidden2 in test.pkg.Foo.method(test.pkg.Hidden1 hidden1, test.pkg.Hidden2 hidden2)
+                BothPackageInfoAndHtml: test/visible/package-info.java:
+                    It is illegal to provide both a package-info.java file and a package.html file for the same package
+                IgnoringSymlink: test/pkg/sub1/sub2/sub3:
+                    Ignoring symlink during package.html discovery directory traversal
+                ReferencesHidden: test.pkg.Foo#get(T):
+                    Class test.pkg.Hidden2 is hidden but was referenced (as type parameter) from public method test.pkg.Foo.get(T)
+                ReferencesHidden: test.pkg.Foo#getHidden1():
+                    Class test.pkg.Hidden1 is not public but was referenced (as return type) from public method test.pkg.Foo.getHidden1()
+                //ReferencesHidden: test.pkg.Foo#getHidden2():
+                //    Class test.pkg.Hidden2 is hidden but was referenced (as return type) from public method test.pkg.Foo.getHidden2()
+                ReferencesHidden: test.pkg.Foo#hidden1:
+                    Class test.pkg.Hidden1 is not public but was referenced (as field type) from public field test.pkg.Foo.hidden1
+                ReferencesHidden: test.pkg.Foo#hidden2:
+                    Class test.pkg.Hidden2 is hidden but was referenced (as field type) from public field test.pkg.Foo.hidden2
+                ReferencesHidden: test.pkg.Foo#method(test.pkg.Hidden1, test.pkg.Hidden2):
+                    Class test.pkg.Hidden3 is hidden but was referenced (as exception) from public method test.pkg.Foo.method(test.pkg.Hidden1,test.pkg.Hidden2)
+                ReferencesHidden: test.pkg.Foo#method(test.pkg.Hidden1, test.pkg.Hidden2) parameter #0:
+                    Class test.pkg.Hidden1 is not public but was referenced (as parameter type) from public parameter hidden1 in test.pkg.Foo.method(test.pkg.Hidden1 hidden1, test.pkg.Hidden2 hidden2)
+                ReferencesHidden: test.pkg.Foo#method(test.pkg.Hidden1, test.pkg.Hidden2) parameter #1:
+                    Class test.pkg.Hidden2 is hidden but was referenced (as parameter type) from public parameter hidden2 in test.pkg.Foo.method(test.pkg.Hidden1 hidden1, test.pkg.Hidden2 hidden2)
             """,
             updateBaseline = false,
             // Commented out above:
             warnings = """
-                src/test/pkg/Foo.java:9: error: Class test.pkg.Hidden2 is hidden but was referenced (as return type) from public method test.pkg.Foo.getHidden2() [ReferencesHidden:158]
+                src/test/pkg/Foo.java:9: error: Class test.pkg.Hidden2 is hidden but was referenced (as return type) from public method test.pkg.Foo.getHidden2() [ReferencesHidden]
             """,
             sourceFiles = *arrayOf(
                 java(

@@ -1226,10 +1226,10 @@ class Options(
             artifactRegistrations.clear()
         }
 
-        if (baseline == null && sourcePath.isNotEmpty()) {
-            val defaultBaseline = File(sourcePath[0], "metalava-baseline.txt")
-            if (defaultBaseline.isFile) {
-                baseline = Baseline(defaultBaseline)
+        if (baseline == null && sourcePath.isNotEmpty() && !sourcePath[0].path.isBlank()) {
+            val defaultBaseline = File(sourcePath[0], DEFAULT_BASELINE_NAME)
+            if (defaultBaseline.isFile || updateBaseline) {
+                baseline = Baseline(defaultBaseline, !defaultBaseline.isFile || updateBaseline)
             }
         }
 

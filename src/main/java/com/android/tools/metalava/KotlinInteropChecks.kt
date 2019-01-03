@@ -24,6 +24,7 @@ import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.ParameterItem
 import com.android.tools.metalava.model.TypeItem
 import com.android.tools.metalava.model.visitors.ApiVisitor
+import com.intellij.lang.java.lexer.JavaLexer
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.uast.kotlin.KotlinUField
@@ -219,6 +220,7 @@ class KotlinInteropChecks {
         if (!method.isKotlin()) {
             // Rule does not apply for Java, e.g. if you specify @DefaultValue
             // in Java you still don't have the option of adding @JvmOverloads
+            return
         }
         val parameters = method.parameters()
         if (parameters.size <= 1) {
@@ -343,64 +345,6 @@ class KotlinInteropChecks {
 
     /** Returns true if the given string is a reserved Java keyword  */
     private fun isJavaKeyword(keyword: String): Boolean {
-        // TODO when we built on top of IDEA core replace this with
-        //   JavaLexer.isKeyword(candidate, LanguageLevel.JDK_1_5)
-        when (keyword) {
-            "abstract",
-            "assert",
-            "boolean",
-            "break",
-            "byte",
-            "case",
-            "catch",
-            "char",
-            "class",
-            "const",
-            "continue",
-            "default",
-            "do",
-            "double",
-            "else",
-            "enum",
-            "extends",
-            "false",
-            "final",
-            "finally",
-            "float",
-            "for",
-            "goto",
-            "if",
-            "implements",
-            "import",
-            "instanceof",
-            "int",
-            "interface",
-            "long",
-            "native",
-            "new",
-            "null",
-            "package",
-            "private",
-            "protected",
-            "public",
-            "return",
-            "short",
-            "static",
-            "strictfp",
-            "super",
-            "switch",
-            "synchronized",
-            "this",
-            "throw",
-            "throws",
-            "transient",
-            "true",
-            "try",
-            "void",
-            "volatile",
-            "while" -> return true
-        }
-
-        return false
+        return JavaLexer.isKeyword(keyword, options.javaLanguageLevel)
     }
 }

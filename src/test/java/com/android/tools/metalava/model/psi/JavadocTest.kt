@@ -880,8 +880,8 @@ class JavadocTest : DriverTest() {
             warnings =
             if (REPORT_UNRESOLVED_SYMBOLS) {
                 """
-                src/test/pkg1/Test.java:6: lint: Unresolved documentation reference: SomethingMissing [UnresolvedLink:101]
-                src/test/pkg1/Test.java:6: lint: Unresolved documentation reference: OtherMissing [UnresolvedLink:101]
+                src/test/pkg1/Test.java:6: lint: Unresolved documentation reference: SomethingMissing [UnresolvedLink]
+                src/test/pkg1/Test.java:6: lint: Unresolved documentation reference: OtherMissing [UnresolvedLink]
             """
             } else {
                 ""
