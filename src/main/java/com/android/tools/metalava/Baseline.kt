@@ -33,13 +33,16 @@ import com.intellij.psi.PsiPackage
 import com.intellij.psi.PsiParameter
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import java.io.File
+import java.io.PrintWriter
+
+const val DEFAULT_BASELINE_NAME = "baseline.txt"
 
 class Baseline(val file: File, var create: Boolean = !file.isFile) {
     /** Map from issue id to element id to message */
     private val map = HashMap<Errors.Error, MutableMap<String, String>>()
 
     init {
-        if (file.isFile) {
+        if (file.isFile && !create) {
             // We've set a baseline for a nonexistent file: read it
             read()
         }
@@ -65,13 +68,8 @@ class Baseline(val file: File, var create: Boolean = !file.isFile) {
 
     private fun mark(elementId: String, message: String, error: Errors.Error): Boolean {
         val idMap: MutableMap<String, String>? = map[error]
-        val oldMessage: String? = idMap?.get(elementId)
-        if (oldMessage != null) {
-            // for now not matching messages; the id's are unique enough and allows us
-            // to tweak error messages compatibly without recording all the deltas here
-            return true
-        }
-        return if (create) {
+
+        if (create) {
             val newIdMap = idMap ?: run {
                 val new = HashMap<String, String>()
                 map[error] = new
@@ -79,10 +77,16 @@ class Baseline(val file: File, var create: Boolean = !file.isFile) {
             }
             newIdMap[elementId] = message
             // When creating baselines don't report errors
-            true
-        } else {
-            false
+            return true
         }
+
+        val oldMessage: String? = idMap?.get(elementId)
+        if (oldMessage != null) {
+            // for now not matching messages; the id's are unique enough and allows us
+            // to tweak error messages compatibly without recording all the deltas here
+            return true
+        }
+        return false
     }
 
     private fun getBaselineKey(element: Item): String {
@@ -156,7 +160,7 @@ class Baseline(val file: File, var create: Boolean = !file.isFile) {
 
     private fun read() {
         file.readLines(Charsets.UTF_8).forEach { line ->
-            if (!(line.startsWith("//") || line.startsWith("#") || line.isBlank())) {
+            if (!(line.startsWith("//") || line.startsWith("#") || line.isBlank() || line.startsWith(" "))) {
                 val idEnd = line.indexOf(':')
                 val elementEnd = line.indexOf(':', idEnd + 1)
                 if (idEnd == -1 || elementEnd == -1) {
@@ -164,7 +168,12 @@ class Baseline(val file: File, var create: Boolean = !file.isFile) {
                 }
                 val errorId = line.substring(0, idEnd).trim()
                 val elementId = line.substring(idEnd + 2, elementEnd).trim()
-                val message = line.substring(elementEnd + 2).trim()
+
+                // For now we don't need the actual messages since we're only matching by
+                // issue id and API location, so don't bother reading. (These are listed
+                // on separate, indented, lines, so to read them we'd need to alternate
+                // line readers.)
+                val message = ""
 
                 val error = Errors.findErrorById(errorId)
                 if (error == null) {
@@ -189,14 +198,43 @@ class Baseline(val file: File, var create: Boolean = !file.isFile) {
                 idMap?.keys?.sorted()?.forEach { elementId ->
                     val message = idMap[elementId]!!
                     sb.append(error.name ?: error.code.toString()).append(": ")
-                    sb.append(elementId).append(": ")
+                    sb.append(elementId)
+                    sb.append(":\n    ")
                     sb.append(message).append('\n')
                 }
+                sb.append("\n\n")
             }
             file.parentFile?.mkdirs()
             file.writeText(sb.toString(), Charsets.UTF_8)
         } else {
             file.delete()
         }
+    }
+
+    fun dumpStats(writer: PrintWriter) {
+        val counts = mutableMapOf<Errors.Error, Int>()
+        map.keys.asSequence().forEach { error ->
+            val idMap = map[error]
+            val count = idMap?.count() ?: 0
+            counts[error] = count
+        }
+
+        writer.println("Baseline issue type counts:")
+        writer.println("" +
+            "    Count Issue Id                       Severity\n" +
+            "    ---------------------------------------------\n")
+        val list = counts.entries.toMutableList()
+        list.sortWith(compareBy({ -it.value }, { it.key.name ?: it.key.code.toString() }))
+        var total = 0
+        for (entry in list) {
+            val count = entry.value
+            val issue = entry.key
+            writer.println("    ${String.format("%5d", count)} ${String.format("%-30s", issue.name)} ${issue.level}")
+            total += count
+        }
+        writer.println("" +
+            "    ---------------------------------------------\n" +
+            "    ${String.format("%5d", total)}")
+        writer.println()
     }
 }
