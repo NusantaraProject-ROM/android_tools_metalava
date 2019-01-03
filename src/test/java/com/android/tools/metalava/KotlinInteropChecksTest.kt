@@ -24,9 +24,9 @@ class KotlinInteropChecksTest : DriverTest() {
         check(
             extraArguments = arrayOf(ARG_CHECK_KOTLIN_INTEROP),
             warnings = """
-                src/test/pkg/Test.java:5: warning: Avoid method names that are Kotlin hard keywords ("fun"); see https://android.github.io/kotlin-guides/interop.html#no-hard-keywords [KotlinKeyword]
-                src/test/pkg/Test.java:6: warning: Avoid parameter names that are Kotlin hard keywords ("typealias"); see https://android.github.io/kotlin-guides/interop.html#no-hard-keywords [KotlinKeyword]
-                src/test/pkg/Test.java:7: warning: Avoid field names that are Kotlin hard keywords ("object"); see https://android.github.io/kotlin-guides/interop.html#no-hard-keywords [KotlinKeyword]
+                src/test/pkg/Test.java:5: error: Avoid method names that are Kotlin hard keywords ("fun"); see https://android.github.io/kotlin-guides/interop.html#no-hard-keywords [KotlinKeyword]
+                src/test/pkg/Test.java:6: error: Avoid parameter names that are Kotlin hard keywords ("typealias"); see https://android.github.io/kotlin-guides/interop.html#no-hard-keywords [KotlinKeyword]
+                src/test/pkg/Test.java:7: error: Avoid field names that are Kotlin hard keywords ("object"); see https://android.github.io/kotlin-guides/interop.html#no-hard-keywords [KotlinKeyword]
                 """,
             sourceFiles = *arrayOf(
                 java(

@@ -17,6 +17,7 @@
 package com.android.tools.metalava
 
 import com.android.tools.metalava.doclava1.Errors
+import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.FieldItem
 import com.android.tools.metalava.model.Item
@@ -35,34 +36,46 @@ import org.jetbrains.uast.kotlin.KotlinUField
 // Also potentially makes other API suggestions.
 class KotlinInteropChecks {
     fun check(codebase: Codebase) {
+
         codebase.accept(object : ApiVisitor(
             // Sort by source order such that warnings follow source line number order
             methodComparator = MethodItem.sourceOrderComparator,
             fieldComparator = FieldItem.comparator
         ) {
+            private var isKotlin = false
+
+            override fun visitClass(cls: ClassItem) {
+                isKotlin = cls.isKotlin()
+            }
+
             override fun visitMethod(method: MethodItem) {
-                checkMethod(method)
+                checkMethod(method, isKotlin)
             }
 
             override fun visitField(field: FieldItem) {
-                checkField(field)
+                checkField(field, isKotlin)
             }
         })
     }
 
-    fun checkField(field: FieldItem) {
-        ensureCompanionFieldJvmField(field)
+    fun checkField(field: FieldItem, isKotlin: Boolean = field.isKotlin()) {
+        if (isKotlin) {
+            ensureCompanionFieldJvmField(field)
+        }
         ensureFieldNameNotKeyword(field)
     }
 
-    fun checkMethod(method: MethodItem) {
+    fun checkMethod(method: MethodItem, isKotlin: Boolean = method.isKotlin()) {
         if (!method.isConstructor()) {
-            ensureMethodNameNotKeyword(method)
-            ensureParameterNamesNotKeywords(method)
-            ensureDefaultParamsHaveJvmOverloads(method)
-            ensureCompanionJvmStatic(method)
+            if (isKotlin) {
+                ensureDefaultParamsHaveJvmOverloads(method)
+                ensureCompanionJvmStatic(method)
+                ensureExceptionsDocumented(method)
+            } else {
+                ensureMethodNameNotKeyword(method)
+                ensureParameterNamesNotKeywords(method)
+            }
             ensureLambdaLastParameter(method)
-            ensureExceptionsDocumented(method)
         }
     }
 
