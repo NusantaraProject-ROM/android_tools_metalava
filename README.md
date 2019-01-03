@@ -177,6 +177,19 @@ example, you'll see something like this (unless running with --quiet) :
   hooked up to the build it immediately became apparent that it was missing
   important methods that should really be part of the API.)
 
+* API Lint: Metalava can optionally (with --api-lint) run a series of additional
+  checks on the public API in the codebase and flag issues that are discouraged
+  or forbidden by the Android API Council; there are currently around 80 checks.
+
+* Baselines: Metalava can report all of its issues into a "baseline" file, which
+  records the current set of issues. From that point forward, when metalava
+  finds a problem, it will only be reported if it is not already in the
+  baseline.  This lets you enforce new issues going forward without having to
+  fix all existing violations. Periodically, as older issues are fixed, you can
+  regenerate the baseline. For issues with some false positives, such as API
+  Lint, being able to check in the set of accepted or verified false positives
+  is quite important.
+
 * Metalava can generate reports about nullness annotation coverage (which helps
   target efforts since we plan to annotate the entire API). First, it can
   generate a raw count:

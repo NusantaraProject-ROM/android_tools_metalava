@@ -113,6 +113,7 @@ const val ARG_CURRENT_VERSION = "--current-version"
 const val ARG_CURRENT_CODENAME = "--current-codename"
 const val ARG_CURRENT_JAR = "--current-jar"
 const val ARG_CHECK_KOTLIN_INTEROP = "--check-kotlin-interop"
+const val ARG_API_LINT = "--api-lint"
 const val ARG_PUBLIC = "--public"
 const val ARG_PROTECTED = "--protected"
 const val ARG_PACKAGE = "--package"
@@ -290,6 +291,9 @@ class Options(
      * Note: This only applies to signature files, not stub files.
      */
     var showUnannotated = false
+
+    /** Whether to validate the API for best practices */
+    var checkApi = false
 
     /** Whether to validate the API for Kotlin interop */
     var checkKotlinInterop = false
@@ -853,6 +857,7 @@ class Options(
                     // lintsAreErrors = true
                 }
 
+                ARG_API_LINT -> checkApi = true
                 ARG_CHECK_KOTLIN_INTEROP -> checkKotlinInterop = true
 
                 ARG_COLOR -> color = true
@@ -1712,6 +1717,7 @@ class Options(
                 "released API, respectively. Different compatibility checks apply in the two scenarios. " +
                 "For example, to check the code base against the current public API, use " +
                 "$ARG_CHECK_COMPATIBILITY:api:current.",
+            ARG_API_LINT, "Check API for Android API best practices",
             ARG_CHECK_KOTLIN_INTEROP, "Check API intended to be used from both Kotlin and Java for interoperability " +
                 "issues",
             "$ARG_MIGRATE_NULLNESS <api file>", "Compare nullness information with the previous stable API " +

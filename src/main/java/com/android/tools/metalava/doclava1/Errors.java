@@ -147,6 +147,7 @@ public class Errors {
     public enum Category {
         COMPATIBILITY("Compatibility", null),
         DOCUMENTATION("Documentation", null),
+        API_LINT("API Lint", "go/android-api-guidelines"),
         UNKNOWN("Default", null);
 
         public final String description;
@@ -236,11 +237,6 @@ public class Errors {
     public static final Error INFIX_REMOVAL = new Error(138, ERROR, Category.COMPATIBILITY);
     public static final Error VARARG_REMOVAL = new Error(139, ERROR, Category.COMPATIBILITY);
     public static final Error ADD_SEALED = new Error(140, ERROR, Category.COMPATIBILITY);
-    public static final Error KOTLIN_KEYWORD = new Error(141, WARNING);
-    public static final Error SAM_SHOULD_BE_LAST = new Error(142, WARNING);
-    public static final Error MISSING_JVMSTATIC = new Error(143, WARNING);
-    public static final Error DEFAULT_VALUE_CHANGE = new Error(144, ERROR);
-    public static final Error DOCUMENT_EXCEPTIONS = new Error(145, ERROR);
     public static final Error ANNOTATION_EXTRACTION = new Error(146, ERROR);
     public static final Error SUPERFLUOUS_PREFIX = new Error(147, WARNING);
     public static final Error HIDDEN_TYPEDEF_CONSTANT = new Error(148, ERROR);
@@ -260,6 +256,91 @@ public class Errors {
     public static final Error REFERENCES_HIDDEN = new Error(158, ERROR);
     public static final Error IGNORING_SYMLINK = new Error(159, INFO);
     public static final Error INVALID_NULLABILITY_ANNOTATION_WARNING = new Error(160, WARNING);
+
+    // API lint
+    public static final Error START_WITH_LOWER = new Error(300, ERROR, Category.API_LINT, "S1");
+    public static final Error START_WITH_UPPER = new Error(301, ERROR, Category.API_LINT, "S1");
+    public static final Error ALL_UPPER = new Error(302, ERROR, Category.API_LINT, "C2");
+    public static final Error ACRONYM_NAME = new Error(303, WARNING, Category.API_LINT, "S1");
+    public static final Error ENUM = new Error(304, ERROR, Category.API_LINT, "F5");
+    public static final Error ENDS_WITH_IMPL = new Error(305, ERROR, Category.API_LINT);
+    public static final Error MIN_MAX_CONSTANT = new Error(306, WARNING, Category.API_LINT, "C8");
+    public static final Error COMPILE_TIME_CONSTANT = new Error(307, ERROR, Category.API_LINT);
+    public static final Error SINGULAR_CALLBACK = new Error(308, ERROR, Category.API_LINT, "L1");
+    public static final Error CALLBACK_NAME = new Error(309, WARNING, Category.API_LINT, "L1");
+    public static final Error CALLBACK_INTERFACE = new Error(310, ERROR, Category.API_LINT, "CL3");
+    public static final Error CALLBACK_METHOD_NAME = new Error(311, ERROR, Category.API_LINT, "L1");
+    public static final Error LISTENER_INTERFACE = new Error(312, ERROR, Category.API_LINT, "L1");
+    public static final Error SINGLE_METHOD_INTERFACE = new Error(313, ERROR, Category.API_LINT, "L1");
+    public static final Error INTENT_NAME = new Error(314, ERROR, Category.API_LINT, "C3");
+    public static final Error ACTION_VALUE = new Error(315, ERROR, Category.API_LINT, "C4");
+    public static final Error EQUALS_AND_HASH_CODE = new Error(316, ERROR, Category.API_LINT, "M8");
+    public static final Error PARCEL_CREATOR = new Error(317, ERROR, Category.API_LINT, "FW3");
+    public static final Error PARCEL_NOT_FINAL = new Error(318, ERROR, Category.API_LINT, "FW8");
+    public static final Error PARCEL_CONSTRUCTOR = new Error(319, ERROR, Category.API_LINT, "FW3");
+    public static final Error PROTECTED_MEMBER = new Error(320, ERROR, Category.API_LINT, "M7");
+    public static final Error PAIRED_REGISTRATION = new Error(321, ERROR, Category.API_LINT, "L2");
+    public static final Error REGISTRATION_NAME = new Error(322, ERROR, Category.API_LINT, "L3");
+    public static final Error VISIBLY_SYNCHRONIZED = new Error(323, ERROR, Category.API_LINT, "M5");
+    public static final Error INTENT_BUILDER_NAME = new Error(324, WARNING, Category.API_LINT, "FW1");
+    public static final Error CONTEXT_NAME_SUFFIX = new Error(325, ERROR, Category.API_LINT, "C4");
+    public static final Error INTERFACE_CONSTANT = new Error(326, ERROR, Category.API_LINT, "C4");
+    public static final Error ON_NAME_EXPECTED = new Error(327, WARNING, Category.API_LINT);
+    public static final Error TOP_LEVEL_BUILDER = new Error(328, WARNING, Category.API_LINT);
+    public static final Error MISSING_BUILD = new Error(329, WARNING, Category.API_LINT);
+    public static final Error BUILDER_SET_STYLE = new Error(330, WARNING, Category.API_LINT);
+    public static final Error SETTER_RETURNS_THIS = new Error(331, WARNING, Category.API_LINT, "M4");
+    public static final Error RAW_AIDL = new Error(332, ERROR, Category.API_LINT);
+    public static final Error INTERNAL_CLASSES = new Error(333, ERROR, Category.API_LINT);
+    public static final Error PACKAGE_LAYERING = new Error(334, WARNING, Category.API_LINT, "FW6");
+    public static final Error GETTER_SETTER_NAMES = new Error(335, ERROR, Category.API_LINT, "M6");
+    public static final Error CONCRETE_COLLECTION = new Error(336, ERROR, Category.API_LINT, "CL2");
+    public static final Error OVERLAPPING_CONSTANTS = new Error(337, WARNING, Category.API_LINT, "C1");
+    public static final Error GENERIC_EXCEPTION = new Error(338, ERROR, Category.API_LINT, "S1");
+    public static final Error ILLEGAL_STATE_EXCEPTION = new Error(339, WARNING, Category.API_LINT, "S1");
+    public static final Error RETHROW_REMOTE_EXCEPTION = new Error(340, ERROR, Category.API_LINT, "FW9");
+    public static final Error MENTIONS_GOOGLE = new Error(341, ERROR, Category.API_LINT);
+    public static final Error HEAVY_BIT_SET = new Error(342, ERROR, Category.API_LINT);
+    public static final Error MANAGER_CONSTRUCTOR = new Error(343, ERROR, Category.API_LINT);
+    public static final Error MANAGER_LOOKUP = new Error(344, ERROR, Category.API_LINT);
+    public static final Error AUTO_BOXING = new Error(345, ERROR, Category.API_LINT, "M11");
+    public static final Error STATIC_UTILS = new Error(346, ERROR, Category.API_LINT);
+    public static final Error CONTEXT_FIRST = new Error(347, ERROR, Category.API_LINT, "M3");
+    public static final Error LISTENER_LAST = new Error(348, WARNING, Category.API_LINT, "M3");
+    public static final Error EXECUTOR_REGISTRATION = new Error(349, WARNING, Category.API_LINT, "L1");
+    public static final Error CONFIG_FIELD_NAME = new Error(350, ERROR, Category.API_LINT);
+    public static final Error RESOURCE_FIELD_NAME = new Error(351, ERROR, Category.API_LINT);
+    public static final Error RESOURCE_VALUE_FIELD_NAME = new Error(352, ERROR, Category.API_LINT, "C7");
+    public static final Error RESOURCE_STYLE_FIELD_NAME = new Error(353, ERROR, Category.API_LINT, "C7");
+    public static final Error STREAM_FILES = new Error(354, WARNING, Category.API_LINT, "M10");
+    public static final Error PARCELABLE_LIST = new Error(355, WARNING, Category.API_LINT);
+    public static final Error ABSTRACT_INNER = new Error(356, WARNING, Category.API_LINT);
+    public static final Error BANNED_THROW = new Error(358, ERROR, Category.API_LINT);
+    public static final Error EXTENDS_ERROR = new Error(359, ERROR, Category.API_LINT);
+    public static final Error EXCEPTION_NAME = new Error(360, ERROR, Category.API_LINT);
+    public static final Error METHOD_NAME_UNITS = new Error(361, ERROR, Category.API_LINT);
+    public static final Error FRACTION_FLOAT = new Error(362, ERROR, Category.API_LINT);
+    public static final Error PERCENTAGE_INT = new Error(363, ERROR, Category.API_LINT);
+    public static final Error NOT_CLOSEABLE = new Error(364, WARNING, Category.API_LINT);
+    public static final Error KOTLIN_OPERATOR = new Error(365, WARNING, Category.API_LINT);
+    public static final Error ARRAY_RETURN = new Error(366, WARNING, Category.API_LINT);
+    public static final Error USER_HANDLE = new Error(367, WARNING, Category.API_LINT);
+    public static final Error USER_HANDLE_NAME = new Error(368, WARNING, Category.API_LINT);
+    public static final Error SERVICE_NAME = new Error(369, ERROR, Category.API_LINT, "C4");
+    public static final Error METHOD_NAME_TENSE = new Error(370, WARNING, Category.API_LINT);
+    public static final Error NO_CLONE = new Error(371, ERROR, Category.API_LINT);
+    public static final Error USE_ICU = new Error(372, WARNING, Category.API_LINT);
+    public static final Error USE_PARCEL_FILE_DESCRIPTOR = new Error(373, ERROR, Category.API_LINT, "FW11");
+    public static final Error NO_BYTE_OR_SHORT = new Error(374, WARNING, Category.API_LINT, "FW12");
+    public static final Error SINGLETON_CONSTRUCTOR = new Error(375, ERROR, Category.API_LINT);
+    public static final Error COMMON_ARGS_FIRST = new Error(376, WARNING, Category.API_LINT, "M2");
+    public static final Error CONSISTENT_ARGUMENT_ORDER = new Error(377, ERROR, Category.API_LINT, "M2");
+    public static final Error KOTLIN_KEYWORD = new Error(378, ERROR, Category.API_LINT); // Formerly 141
+    public static final Error UNIQUE_KOTLIN_OPERATOR = new Error(379, ERROR, Category.API_LINT);
+    public static final Error SAM_SHOULD_BE_LAST = new Error(380, WARNING, Category.API_LINT); // Formerly 142
+    public static final Error MISSING_JVMSTATIC = new Error(381, WARNING, Category.API_LINT); // Formerly 143
+    public static final Error DEFAULT_VALUE_CHANGE = new Error(382, ERROR, Category.API_LINT); // Formerly 144
+    public static final Error DOCUMENT_EXCEPTIONS = new Error(383, ERROR, Category.API_LINT); // Formerly 145
 
     static {
         // Attempt to initialize error names based on the field names
