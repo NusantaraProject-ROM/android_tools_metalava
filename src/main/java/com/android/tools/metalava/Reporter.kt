@@ -74,6 +74,12 @@ enum class Severity(private val displayName: String) {
 }
 
 open class Reporter(private val rootFolder: File? = null) {
+    var errorCount = 0
+        private set
+    var warningCount = 0
+        private set
+    val totalCount get() = errorCount + warningCount
+
     private var hasErrors = false
 
     fun report(id: Errors.Error, element: PsiElement?, message: String): Boolean {
@@ -278,6 +284,9 @@ open class Reporter(private val rootFolder: File? = null) {
 
         if (severity == ERROR) {
             hasErrors = true
+            errorCount++
+        } else if (severity == WARNING) {
+            warningCount++
         }
 
         val sb = StringBuilder(100)
@@ -327,10 +336,23 @@ open class Reporter(private val rootFolder: File? = null) {
                 id?.let {
                     sb.append(" [")
                     if (it.name != null) {
-                        sb.append(it.name).append(":")
+                        sb.append(it.name)
                     }
-                    sb.append(it.code)
+                    if (compatibility.includeExitCode || it.name == null) {
+                        if (it.name != null) {
+                            sb.append(":")
+                        }
+                        sb.append(it.code)
+                    }
                     sb.append("]")
+                    if (it.rule != null) {
+                        sb.append(" [Rule ").append(it.rule)
+                        val link = it.category.ruleLink
+                        if (link != null) {
+                            sb.append(" in ").append(link)
+                        }
+                        sb.append("]")
+                    }
                 }
             }
         }

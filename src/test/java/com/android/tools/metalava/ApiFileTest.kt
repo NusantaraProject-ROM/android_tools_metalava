@@ -1407,11 +1407,11 @@ class ApiFileTest : DriverTest() {
             ),
 
             warnings = """
-                    src/test/pkg/Foo.java:7: warning: Method test.pkg.Foo.method1(): @Deprecated annotation (present) and @deprecated doc tag (not present) do not match [DeprecationMismatch:113]
-                    src/test/pkg/Foo.java:8: warning: Method test.pkg.Foo.method2(): @Deprecated annotation (present) and @deprecated doc tag (not present) do not match [DeprecationMismatch:113]
-                    src/test/pkg/Foo.java:9: warning: Class test.pkg.Foo.Inner1: @Deprecated annotation (present) and @deprecated doc tag (not present) do not match [DeprecationMismatch:113]
-                    src/test/pkg/Foo.java:10: warning: Class test.pkg.Foo.Inner2: @Deprecated annotation (present) and @deprecated doc tag (not present) do not match [DeprecationMismatch:113]
-                    src/test/pkg/Foo.java:11: warning: Class test.pkg.Foo.Inner3: @Deprecated annotation (present) and @deprecated doc tag (not present) do not match [DeprecationMismatch:113]
+                    src/test/pkg/Foo.java:7: warning: Method test.pkg.Foo.method1(): @Deprecated annotation (present) and @deprecated doc tag (not present) do not match [DeprecationMismatch]
+                    src/test/pkg/Foo.java:8: warning: Method test.pkg.Foo.method2(): @Deprecated annotation (present) and @deprecated doc tag (not present) do not match [DeprecationMismatch]
+                    src/test/pkg/Foo.java:9: warning: Class test.pkg.Foo.Inner1: @Deprecated annotation (present) and @deprecated doc tag (not present) do not match [DeprecationMismatch]
+                    src/test/pkg/Foo.java:10: warning: Class test.pkg.Foo.Inner2: @Deprecated annotation (present) and @deprecated doc tag (not present) do not match [DeprecationMismatch]
+                    src/test/pkg/Foo.java:11: warning: Class test.pkg.Foo.Inner3: @Deprecated annotation (present) and @deprecated doc tag (not present) do not match [DeprecationMismatch]
                         """,
 
             api = """
@@ -1463,7 +1463,7 @@ class ApiFileTest : DriverTest() {
             ),
 
             warnings = """
-                src/test/pkg/Foo.java:6: warning: method test.pkg.Foo.findViewById(int) should not be annotated @Nullable; it should be left unspecified to make it a platform type [ExpectedPlatformType:149]
+                src/test/pkg/Foo.java:6: warning: method test.pkg.Foo.findViewById(int) should not be annotated @Nullable; it should be left unspecified to make it a platform type [ExpectedPlatformType]
                 """,
             extraArguments = arrayOf(ARG_WARNING, "ExpectedPlatformType"),
             api = """
@@ -1906,7 +1906,7 @@ class ApiFileTest : DriverTest() {
             ),
             // Notice how the intermediate methods (method2, method3) have been removed
             includeStrippedSuperclassWarnings = true,
-            warnings = "src/test/pkg/MyClass.java:2: warning: Public class test.pkg.MyClass stripped of unavailable superclass test.pkg.HiddenParent [HiddenSuperclass:111]",
+            warnings = "src/test/pkg/MyClass.java:2: warning: Public class test.pkg.MyClass stripped of unavailable superclass test.pkg.HiddenParent [HiddenSuperclass]",
             api = """
                 package test.pkg {
                   public class MyClass extends test.pkg.PublicParent {

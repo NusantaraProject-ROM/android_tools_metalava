@@ -791,7 +791,7 @@ class StubsTest : DriverTest() {
                 }
                 """,
             warnings = """
-                src/test/pkg/MyClass.java:2: warning: Public class test.pkg.MyClass stripped of unavailable superclass test.pkg.HiddenParent [HiddenSuperclass:111]
+                src/test/pkg/MyClass.java:2: warning: Public class test.pkg.MyClass stripped of unavailable superclass test.pkg.HiddenParent [HiddenSuperclass]
                 """
         )
     }
@@ -1209,7 +1209,7 @@ class StubsTest : DriverTest() {
                 ),
                 requiresPermissionSource
             ),
-            warnings = "src/test/pkg/HiddenPermission.java:7: lint: Permission android.Manifest.permission.INTERACT_ACROSS_USERS required by method test.pkg.HiddenPermission.removeStickyBroadcast(Object) is hidden or removed [MissingPermission:132]",
+            warnings = "src/test/pkg/HiddenPermission.java:7: lint: Permission android.Manifest.permission.INTERACT_ACROSS_USERS required by method test.pkg.HiddenPermission.removeStickyBroadcast(Object) is hidden or removed [MissingPermission]",
             source = """
                     package test.pkg;
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
