@@ -732,6 +732,12 @@ private fun loadFromSources(): Codebase {
     // General API checks for Android APIs
     AndroidApiChecks().check(codebase)
 
+    if (options.checkApi) {
+        val localTimer = Stopwatch.createStarted()
+        ApiLint().check(codebase)
+        progress("\n$PROGRAM_NAME ran api-lint in ${localTimer.elapsed(SECONDS)} seconds")
+    }
+
     val filterEmit = ApiPredicate(ignoreShown = true, ignoreRemoved = false)
     val apiEmit = ApiPredicate(ignoreShown = true)
     val apiReference = ApiPredicate(ignoreShown = true)

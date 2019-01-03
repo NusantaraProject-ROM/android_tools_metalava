@@ -201,6 +201,7 @@ Diffs and Checks:
                                           to check the code base against the current
                                           public API, use
                                           --check-compatibility:api:current.
+--api-lint                                Check API for Android API best practices
 --check-kotlin-interop                    Check API intended to be used from both Kotlin
                                           and Java for interoperability issues
 --migrate-nullness <api file>             Compare nullness information with the previous
