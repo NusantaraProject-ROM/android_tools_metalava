@@ -75,7 +75,7 @@ class ExtractAnnotationsTest : DriverTest() {
                 intDefAnnotationSource,
                 intRangeAnnotationSource
             ),
-            warnings = "src/test/pkg/IntDefTest.java:11: error: This typedef annotation class should have @Retention(RetentionPolicy.SOURCE) [AnnotationExtraction:146]",
+            warnings = "src/test/pkg/IntDefTest.java:11: error: This typedef annotation class should have @Retention(RetentionPolicy.SOURCE) [AnnotationExtraction]",
             extractAnnotations = mapOf(
                 "test.pkg" to """
                 <?xml version="1.0" encoding="UTF-8"?>
@@ -153,7 +153,7 @@ class ExtractAnnotationsTest : DriverTest() {
                 ).indented(),
                 longDefAnnotationSource
             ),
-            warnings = "src/test/pkg/LongDefTest.kt:12: error: Typedef class references hidden field field LongDefTestKt.HIDDEN: removed from typedef metadata [HiddenTypedefConstant:148]",
+            warnings = "src/test/pkg/LongDefTest.kt:12: error: Typedef class references hidden field field LongDefTestKt.HIDDEN: removed from typedef metadata [HiddenTypedefConstant]",
             extractAnnotations = mapOf(
                 "test.pkg" to """
                     <?xml version="1.0" encoding="UTF-8"?>
@@ -246,7 +246,7 @@ class ExtractAnnotationsTest : DriverTest() {
                 ).indented(),
                 longDefAnnotationSource
             ),
-            warnings = "src/test/pkg/LongDefTest.kt:12: error: Typedef class references hidden field field LongDefTestKt.HIDDEN: removed from typedef metadata [HiddenTypedefConstant:148]",
+            warnings = "src/test/pkg/LongDefTest.kt:12: error: Typedef class references hidden field field LongDefTestKt.HIDDEN: removed from typedef metadata [HiddenTypedefConstant]",
             extractAnnotations = mapOf(
                 "test.pkg" to """
                     <?xml version="1.0" encoding="UTF-8"?>
@@ -352,7 +352,7 @@ class ExtractAnnotationsTest : DriverTest() {
             outputKotlinStyleNulls = false,
             includeSystemApiAnnotations = false,
             omitCommonPackages = false,
-            warnings = "error: Unexpected reference to Nonexistent.Field [AnnotationExtraction:146]",
+            warnings = "error: Unexpected reference to Nonexistent.Field [AnnotationExtraction]",
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -430,7 +430,7 @@ class ExtractAnnotationsTest : DriverTest() {
     fun `Check warning about unexpected returns from typedef method`() {
         check(
             includeSourceRetentionAnnotations = false,
-            warnings = "src/test/pkg/IntDefTest.java:36: warning: Returning unexpected constant UNRELATED; is @DialogStyle missing this constant? Expected one of STYLE_NORMAL, STYLE_NO_TITLE, STYLE_NO_FRAME, STYLE_NO_INPUT [ReturningUnexpectedConstant:151]",
+            warnings = "src/test/pkg/IntDefTest.java:36: warning: Returning unexpected constant UNRELATED; is @DialogStyle missing this constant? Expected one of STYLE_NORMAL, STYLE_NO_TITLE, STYLE_NO_FRAME, STYLE_NO_INPUT [ReturningUnexpectedConstant]",
             sourceFiles = *arrayOf(
                 java(
                     """

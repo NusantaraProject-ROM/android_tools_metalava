@@ -26,8 +26,8 @@ CompatibilityCheckTest : DriverTest() {
     fun `Change between class and interface`() {
         check(
             warnings = """
-                TESTROOT/load-api.txt:2: error: Class test.pkg.MyTest1 changed class/interface declaration [ChangedClass:23]
-                TESTROOT/load-api.txt:4: error: Class test.pkg.MyTest2 changed class/interface declaration [ChangedClass:23]
+                TESTROOT/load-api.txt:2: error: Class test.pkg.MyTest1 changed class/interface declaration [ChangedClass]
+                TESTROOT/load-api.txt:4: error: Class test.pkg.MyTest2 changed class/interface declaration [ChangedClass]
                 """,
             compatibilityMode = false,
             checkCompatibilityApi = """
@@ -62,8 +62,8 @@ CompatibilityCheckTest : DriverTest() {
     fun `Interfaces should not be dropped`() {
         check(
             warnings = """
-                TESTROOT/load-api.txt:2: error: Class test.pkg.MyTest1 changed class/interface declaration [ChangedClass:23]
-                TESTROOT/load-api.txt:4: error: Class test.pkg.MyTest2 changed class/interface declaration [ChangedClass:23]
+                TESTROOT/load-api.txt:2: error: Class test.pkg.MyTest1 changed class/interface declaration [ChangedClass]
+                TESTROOT/load-api.txt:4: error: Class test.pkg.MyTest2 changed class/interface declaration [ChangedClass]
                 """,
             compatibilityMode = false,
             checkCompatibilityApi = """
@@ -98,9 +98,9 @@ CompatibilityCheckTest : DriverTest() {
     fun `Ensure warnings for removed APIs`() {
         check(
             warnings = """
-                TESTROOT/current-api.txt:3: error: Removed method test.pkg.MyTest1.method(Float) [RemovedMethod:9]
-                TESTROOT/current-api.txt:4: error: Removed field test.pkg.MyTest1.field [RemovedField:10]
-                TESTROOT/current-api.txt:6: error: Removed class test.pkg.MyTest2 [RemovedClass:8]
+                TESTROOT/current-api.txt:3: error: Removed method test.pkg.MyTest1.method(Float) [RemovedMethod]
+                TESTROOT/current-api.txt:4: error: Removed field test.pkg.MyTest1.field [RemovedField]
+                TESTROOT/current-api.txt:6: error: Removed class test.pkg.MyTest2 [RemovedClass]
                 """,
             compatibilityMode = false,
             checkCompatibilityApi = """
@@ -130,12 +130,12 @@ CompatibilityCheckTest : DriverTest() {
     fun `Flag invalid nullness changes`() {
         check(
             warnings = """
-                TESTROOT/load-api.txt:5: error: Attempted to remove @Nullable annotation from method test.pkg.MyTest.convert3(Float) [InvalidNullConversion:135]
-                TESTROOT/load-api.txt:5: error: Attempted to remove @Nullable annotation from parameter arg1 in test.pkg.MyTest.convert3(Float arg1) [InvalidNullConversion:135]
-                TESTROOT/load-api.txt:6: error: Attempted to remove @NonNull annotation from method test.pkg.MyTest.convert4(Float) [InvalidNullConversion:135]
-                TESTROOT/load-api.txt:6: error: Attempted to remove @NonNull annotation from parameter arg1 in test.pkg.MyTest.convert4(Float arg1) [InvalidNullConversion:135]
-                TESTROOT/load-api.txt:7: error: Attempted to change parameter from @Nullable to @NonNull: incompatible change for parameter arg1 in test.pkg.MyTest.convert5(Float arg1) [InvalidNullConversion:135]
-                TESTROOT/load-api.txt:8: error: Attempted to change method return from @NonNull to @Nullable: incompatible change for method test.pkg.MyTest.convert6(Float) [InvalidNullConversion:135]
+                TESTROOT/load-api.txt:5: error: Attempted to remove @Nullable annotation from method test.pkg.MyTest.convert3(Float) [InvalidNullConversion]
+                TESTROOT/load-api.txt:5: error: Attempted to remove @Nullable annotation from parameter arg1 in test.pkg.MyTest.convert3(Float arg1) [InvalidNullConversion]
+                TESTROOT/load-api.txt:6: error: Attempted to remove @NonNull annotation from method test.pkg.MyTest.convert4(Float) [InvalidNullConversion]
+                TESTROOT/load-api.txt:6: error: Attempted to remove @NonNull annotation from parameter arg1 in test.pkg.MyTest.convert4(Float arg1) [InvalidNullConversion]
+                TESTROOT/load-api.txt:7: error: Attempted to change parameter from @Nullable to @NonNull: incompatible change for parameter arg1 in test.pkg.MyTest.convert5(Float arg1) [InvalidNullConversion]
+                TESTROOT/load-api.txt:8: error: Attempted to change method return from @NonNull to @Nullable: incompatible change for method test.pkg.MyTest.convert6(Float) [InvalidNullConversion]
                 """,
             compatibilityMode = false,
             outputKotlinStyleNulls = false,
@@ -171,12 +171,12 @@ CompatibilityCheckTest : DriverTest() {
     fun `Kotlin Nullness`() {
         check(
             warnings = """
-                src/test/pkg/Outer.kt:5: error: Attempted to change method return from @NonNull to @Nullable: incompatible change for method test.pkg.Outer.method2(String,String) [InvalidNullConversion:135]
-                src/test/pkg/Outer.kt:5: error: Attempted to change parameter from @Nullable to @NonNull: incompatible change for parameter string in test.pkg.Outer.method2(String string, String maybeString) [InvalidNullConversion:135]
-                src/test/pkg/Outer.kt:6: error: Attempted to change parameter from @Nullable to @NonNull: incompatible change for parameter string in test.pkg.Outer.method3(String maybeString, String string) [InvalidNullConversion:135]
-                src/test/pkg/Outer.kt:8: error: Attempted to change method return from @NonNull to @Nullable: incompatible change for method test.pkg.Outer.Inner.method2(String,String) [InvalidNullConversion:135]
-                src/test/pkg/Outer.kt:8: error: Attempted to change parameter from @Nullable to @NonNull: incompatible change for parameter string in test.pkg.Outer.Inner.method2(String string, String maybeString) [InvalidNullConversion:135]
-                src/test/pkg/Outer.kt:9: error: Attempted to change parameter from @Nullable to @NonNull: incompatible change for parameter string in test.pkg.Outer.Inner.method3(String maybeString, String string) [InvalidNullConversion:135]
+                src/test/pkg/Outer.kt:5: error: Attempted to change method return from @NonNull to @Nullable: incompatible change for method test.pkg.Outer.method2(String,String) [InvalidNullConversion]
+                src/test/pkg/Outer.kt:5: error: Attempted to change parameter from @Nullable to @NonNull: incompatible change for parameter string in test.pkg.Outer.method2(String string, String maybeString) [InvalidNullConversion]
+                src/test/pkg/Outer.kt:6: error: Attempted to change parameter from @Nullable to @NonNull: incompatible change for parameter string in test.pkg.Outer.method3(String maybeString, String string) [InvalidNullConversion]
+                src/test/pkg/Outer.kt:8: error: Attempted to change method return from @NonNull to @Nullable: incompatible change for method test.pkg.Outer.Inner.method2(String,String) [InvalidNullConversion]
+                src/test/pkg/Outer.kt:8: error: Attempted to change parameter from @Nullable to @NonNull: incompatible change for parameter string in test.pkg.Outer.Inner.method2(String string, String maybeString) [InvalidNullConversion]
+                src/test/pkg/Outer.kt:9: error: Attempted to change parameter from @Nullable to @NonNull: incompatible change for parameter string in test.pkg.Outer.Inner.method3(String maybeString, String string) [InvalidNullConversion]
                 """,
             compatibilityMode = false,
             inputKotlinStyleNulls = true,
@@ -220,8 +220,8 @@ CompatibilityCheckTest : DriverTest() {
     fun `Java Parameter Name Change`() {
         check(
             warnings = """
-                src/test/pkg/JavaClass.java:6: error: Attempted to remove parameter name from parameter newName in test.pkg.JavaClass.method1 in method test.pkg.JavaClass.method1 [ParameterNameChange:136]
-                src/test/pkg/JavaClass.java:7: error: Attempted to change parameter name from secondParameter to newName in method test.pkg.JavaClass.method2 [ParameterNameChange:136]
+                src/test/pkg/JavaClass.java:6: error: Attempted to remove parameter name from parameter newName in test.pkg.JavaClass.method1 in method test.pkg.JavaClass.method1 [ParameterNameChange]
+                src/test/pkg/JavaClass.java:7: error: Attempted to change parameter name from secondParameter to newName in method test.pkg.JavaClass.method2 [ParameterNameChange]
                 """,
             compatibilityMode = false,
             checkCompatibilityApi = """
@@ -256,7 +256,7 @@ CompatibilityCheckTest : DriverTest() {
     fun `Kotlin Parameter Name Change`() {
         check(
             warnings = """
-                src/test/pkg/KotlinClass.kt:4: error: Attempted to change parameter name from prevName to newName in method test.pkg.KotlinClass.method1 [ParameterNameChange:136]
+                src/test/pkg/KotlinClass.kt:4: error: Attempted to change parameter name from prevName to newName in method test.pkg.KotlinClass.method1 [ParameterNameChange]
                 """,
             compatibilityMode = false,
             inputKotlinStyleNulls = true,
@@ -287,8 +287,8 @@ CompatibilityCheckTest : DriverTest() {
     fun `Add flag new methods but not overrides from platform`() {
         check(
             warnings = """
-                src/test/pkg/MyClass.java:6: error: Added method test.pkg.MyClass.method2(String) [AddedMethod:4]
-                src/test/pkg/MyClass.java:7: error: Added field test.pkg.MyClass.newField [AddedField:5]
+                src/test/pkg/MyClass.java:6: error: Added method test.pkg.MyClass.method2(String) [AddedMethod]
+                src/test/pkg/MyClass.java:7: error: Added field test.pkg.MyClass.newField [AddedField]
                 """,
             compatibilityMode = false,
             checkCompatibilityApi = """
@@ -320,7 +320,7 @@ CompatibilityCheckTest : DriverTest() {
     fun `Remove operator`() {
         check(
             warnings = """
-                src/test/pkg/Foo.kt:4: error: Cannot remove `operator` modifier from method test.pkg.Foo.plus(String): Incompatible change [OperatorRemoval:137]
+                src/test/pkg/Foo.kt:4: error: Cannot remove `operator` modifier from method test.pkg.Foo.plus(String): Incompatible change [OperatorRemoval]
                 """,
             compatibilityMode = false,
             checkCompatibilityApi = """
@@ -349,7 +349,7 @@ CompatibilityCheckTest : DriverTest() {
     fun `Remove vararg`() {
         check(
             warnings = """
-                src/test/pkg/test.kt:3: error: Changing from varargs to array is an incompatible change: parameter x in test.pkg.TestKt.method2(int[] x) [VarargRemoval:139]
+                src/test/pkg/test.kt:3: error: Changing from varargs to array is an incompatible change: parameter x in test.pkg.TestKt.method2(int[] x) [VarargRemoval]
                 """,
             compatibilityMode = false,
             checkCompatibilityApi = """
@@ -379,8 +379,8 @@ CompatibilityCheckTest : DriverTest() {
         // Field is iffy.
         check(
             warnings = """
-                src/test/pkg/Java.java:4: error: Method test.pkg.Java.method has added 'final' qualifier [AddedFinal:13]
-                src/test/pkg/Kotlin.kt:4: error: Method test.pkg.Kotlin.method has added 'final' qualifier [AddedFinal:13]
+                src/test/pkg/Java.java:4: error: Method test.pkg.Java.method has added 'final' qualifier [AddedFinal]
+                src/test/pkg/Kotlin.kt:4: error: Method test.pkg.Kotlin.method has added 'final' qualifier [AddedFinal]
                 """,
             compatibilityMode = false,
             checkCompatibilityApi = """
@@ -598,7 +598,7 @@ CompatibilityCheckTest : DriverTest() {
     fun `Added constructor`() {
         // Regression test for issue 116619591
         check(
-            warnings = "src/test/pkg/AbstractMap.java:2: error: Added constructor test.pkg.AbstractMap() [AddedMethod:4]",
+            warnings = "src/test/pkg/AbstractMap.java:2: error: Added constructor test.pkg.AbstractMap() [AddedMethod]",
             compatibilityMode = false,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -623,7 +623,7 @@ CompatibilityCheckTest : DriverTest() {
     fun `Remove infix`() {
         check(
             warnings = """
-                src/test/pkg/Foo.kt:5: error: Cannot remove `infix` modifier from method test.pkg.Foo.add2(String): Incompatible change [InfixRemoval:138]
+                src/test/pkg/Foo.kt:5: error: Cannot remove `infix` modifier from method test.pkg.Foo.add2(String): Incompatible change [InfixRemoval]
                 """,
             compatibilityMode = false,
             checkCompatibilityApi = """
@@ -656,7 +656,7 @@ CompatibilityCheckTest : DriverTest() {
     fun `Add seal`() {
         check(
             warnings = """
-                src/test/pkg/Foo.kt: error: Cannot add 'sealed' modifier to class test.pkg.Foo: Incompatible change [AddSealed:140]
+                src/test/pkg/Foo.kt: error: Cannot add 'sealed' modifier to class test.pkg.Foo: Incompatible change [AddSealed]
                 """,
             compatibilityMode = false,
             checkCompatibilityApi = """
@@ -680,7 +680,7 @@ CompatibilityCheckTest : DriverTest() {
     fun `Remove default parameter`() {
         check(
             warnings = """
-                src/test/pkg/Foo.kt:7: error: Attempted to remove default value from parameter s1 in test.pkg.Foo.method4 in method test.pkg.Foo.method4 [DefaultValueChange:144]
+                src/test/pkg/Foo.kt:7: error: Attempted to remove default value from parameter s1 in test.pkg.Foo.method4 in method test.pkg.Foo.method4 [DefaultValueChange]
                 """,
             compatibilityMode = false,
             inputKotlinStyleNulls = true,
@@ -765,15 +765,15 @@ CompatibilityCheckTest : DriverTest() {
     fun `Change field constant value, change field type`() {
         check(
             warnings = """
-                src/test/pkg/Parent.java:5: error: Field test.pkg.Parent.field2 has changed value from 2 to 42 [ChangedValue:17]
-                src/test/pkg/Parent.java:6: error: Field test.pkg.Parent.field3 has changed type from int to char [ChangedType:16]
-                src/test/pkg/Parent.java:7: error: Field test.pkg.Parent.field4 has added 'final' qualifier [AddedFinal:13]
-                src/test/pkg/Parent.java:8: error: Field test.pkg.Parent.field5 has changed 'static' qualifier [ChangedStatic:12]
-                src/test/pkg/Parent.java:9: error: Field test.pkg.Parent.field6 has changed 'transient' qualifier [ChangedTransient:14]
-                src/test/pkg/Parent.java:10: error: Field test.pkg.Parent.field7 has changed 'volatile' qualifier [ChangedVolatile:15]
-                src/test/pkg/Parent.java:11: error: Field test.pkg.Parent.field8 has changed deprecation state true --> false [ChangedDeprecated:24]
-                src/test/pkg/Parent.java:12: error: Field test.pkg.Parent.field9 has changed deprecation state false --> true [ChangedDeprecated:24]
-                src/test/pkg/Parent.java:19: error: Field test.pkg.Parent.field94 has changed value from 1 to 42 [ChangedValue:17]
+                src/test/pkg/Parent.java:5: error: Field test.pkg.Parent.field2 has changed value from 2 to 42 [ChangedValue]
+                src/test/pkg/Parent.java:6: error: Field test.pkg.Parent.field3 has changed type from int to char [ChangedType]
+                src/test/pkg/Parent.java:7: error: Field test.pkg.Parent.field4 has added 'final' qualifier [AddedFinal]
+                src/test/pkg/Parent.java:8: error: Field test.pkg.Parent.field5 has changed 'static' qualifier [ChangedStatic]
+                src/test/pkg/Parent.java:9: error: Field test.pkg.Parent.field6 has changed 'transient' qualifier [ChangedTransient]
+                src/test/pkg/Parent.java:10: error: Field test.pkg.Parent.field7 has changed 'volatile' qualifier [ChangedVolatile]
+                src/test/pkg/Parent.java:11: error: Field test.pkg.Parent.field8 has changed deprecation state true --> false [ChangedDeprecated]
+                src/test/pkg/Parent.java:12: error: Field test.pkg.Parent.field9 has changed deprecation state false --> true [ChangedDeprecated]
+                src/test/pkg/Parent.java:19: error: Field test.pkg.Parent.field94 has changed value from 1 to 42 [ChangedValue]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -832,10 +832,10 @@ CompatibilityCheckTest : DriverTest() {
         check(
             inputKotlinStyleNulls = true,
             warnings = """
-                src/test/pkg/ExportedProperty.java:15: error: Method test.pkg.ExportedProperty.category has changed value from "" to nothing [ChangedValue:17]
-                src/test/pkg/ExportedProperty.java:14: error: Method test.pkg.ExportedProperty.floating has changed value from 1.0f to 1.1f [ChangedValue:17]
-                src/test/pkg/ExportedProperty.java:16: error: Method test.pkg.ExportedProperty.formatToHexString has changed value from nothing to false [ChangedValue:17]
-                src/test/pkg/ExportedProperty.java:13: error: Method test.pkg.ExportedProperty.prefix has changed value from "" to "hello" [ChangedValue:17]
+                src/test/pkg/ExportedProperty.java:15: error: Method test.pkg.ExportedProperty.category has changed value from "" to nothing [ChangedValue]
+                src/test/pkg/ExportedProperty.java:14: error: Method test.pkg.ExportedProperty.floating has changed value from 1.0f to 1.1f [ChangedValue]
+                src/test/pkg/ExportedProperty.java:16: error: Method test.pkg.ExportedProperty.formatToHexString has changed value from nothing to false [ChangedValue]
+                src/test/pkg/ExportedProperty.java:13: error: Method test.pkg.ExportedProperty.prefix has changed value from "" to "hello" [ChangedValue]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -878,7 +878,7 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible class change -- class to interface`() {
         check(
             warnings = """
-                src/test/pkg/Parent.java:3: error: Class test.pkg.Parent changed class/interface declaration [ChangedClass:23]
+                src/test/pkg/Parent.java:3: error: Class test.pkg.Parent changed class/interface declaration [ChangedClass]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -903,8 +903,8 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible class change -- change implemented interfaces`() {
         check(
             warnings = """
-                src/test/pkg/Parent.java:3: error: Class test.pkg.Parent no longer implements java.io.Closeable [RemovedInterface:11]
-                src/test/pkg/Parent.java:3: error: Added interface java.util.List to class class test.pkg.Parent [AddedInterface:6]
+                src/test/pkg/Parent.java:3: error: Class test.pkg.Parent no longer implements java.io.Closeable [RemovedInterface]
+                src/test/pkg/Parent.java:3: error: Added interface java.util.List to class class test.pkg.Parent [AddedInterface]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -930,8 +930,8 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible class change -- change qualifiers`() {
         check(
             warnings = """
-                src/test/pkg/Parent.java:3: error: Class test.pkg.Parent changed 'abstract' qualifier [ChangedAbstract:20]
-                src/test/pkg/Parent.java:3: error: Class test.pkg.Parent changed 'static' qualifier [ChangedStatic:12]
+                src/test/pkg/Parent.java:3: error: Class test.pkg.Parent changed 'abstract' qualifier [ChangedAbstract]
+                src/test/pkg/Parent.java:3: error: Class test.pkg.Parent changed 'static' qualifier [ChangedStatic]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -957,10 +957,10 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible class change -- final`() {
         check(
             warnings = """
-                src/test/pkg/Class1.java:3: error: Class test.pkg.Class1 added 'final' qualifier [AddedFinal:13]
-                TESTROOT/current-api.txt:3: error: Removed constructor test.pkg.Class1() [RemovedMethod:9]
-                src/test/pkg/Class2.java:3: error: Class test.pkg.Class2 added 'final' qualifier but was previously uninstantiable and therefore could not be subclassed [AddedFinalUninstantiable:26]
-                src/test/pkg/Class3.java:3: error: Class test.pkg.Class3 removed 'final' qualifier [RemovedFinal:27]
+                src/test/pkg/Class1.java:3: error: Class test.pkg.Class1 added 'final' qualifier [AddedFinal]
+                TESTROOT/current-api.txt:3: error: Removed constructor test.pkg.Class1() [RemovedMethod]
+                src/test/pkg/Class2.java:3: error: Class test.pkg.Class2 added 'final' qualifier but was previously uninstantiable and therefore could not be subclassed [AddedFinalUninstantiable]
+                src/test/pkg/Class3.java:3: error: Class test.pkg.Class3 removed 'final' qualifier [RemovedFinal]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -1009,8 +1009,8 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible class change -- visibility`() {
         check(
             warnings = """
-                src/test/pkg/Class1.java:3: error: Class test.pkg.Class1 changed visibility from protected to public [ChangedScope:19]
-                src/test/pkg/Class2.java:3: error: Class test.pkg.Class2 changed visibility from public to protected [ChangedScope:19]
+                src/test/pkg/Class1.java:3: error: Class test.pkg.Class1 changed visibility from protected to public [ChangedScope]
+                src/test/pkg/Class2.java:3: error: Class test.pkg.Class2 changed visibility from public to protected [ChangedScope]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -1047,7 +1047,7 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible class change -- deprecation`() {
         check(
             warnings = """
-                src/test/pkg/Class1.java:3: error: Class test.pkg.Class1 has changed deprecation state false --> true [ChangedDeprecated:24]
+                src/test/pkg/Class1.java:3: error: Class test.pkg.Class1 has changed deprecation state false --> true [ChangedDeprecated]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -1074,7 +1074,7 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible class change -- superclass`() {
         check(
             warnings = """
-                src/test/pkg/Class3.java:3: error: Class test.pkg.Class3 superclass changed from java.lang.Char to java.lang.Number [ChangedSuperclass:18]
+                src/test/pkg/Class3.java:3: error: Class test.pkg.Class3 superclass changed from java.lang.Char to java.lang.Number [ChangedSuperclass]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -1122,7 +1122,7 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible class change -- type variables`() {
         check(
             warnings = """
-                src/test/pkg/Class1.java:3: error: Class test.pkg.Class1 changed number of type parameters from 1 to 2 [ChangedType:16]
+                src/test/pkg/Class1.java:3: error: Class test.pkg.Class1 changed number of type parameters from 1 to 2 [ChangedType]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -1148,9 +1148,9 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible method change -- modifiers`() {
         check(
             warnings = """
-                src/test/pkg/MyClass.java:5: error: Method test.pkg.MyClass.myMethod2 has changed 'abstract' qualifier [ChangedAbstract:20]
-                src/test/pkg/MyClass.java:6: error: Method test.pkg.MyClass.myMethod3 has changed 'static' qualifier [ChangedStatic:12]
-                src/test/pkg/MyClass.java:7: error: Method test.pkg.MyClass.myMethod4 has changed deprecation state true --> false [ChangedDeprecated:24]
+                src/test/pkg/MyClass.java:5: error: Method test.pkg.MyClass.myMethod2 has changed 'abstract' qualifier [ChangedAbstract]
+                src/test/pkg/MyClass.java:6: error: Method test.pkg.MyClass.myMethod3 has changed 'static' qualifier [ChangedStatic]
+                src/test/pkg/MyClass.java:7: error: Method test.pkg.MyClass.myMethod4 has changed deprecation state true --> false [ChangedDeprecated]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -1182,8 +1182,8 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible method change -- final`() {
         check(
             warnings = """
-                src/test/pkg/Outer.java:7: error: Method test.pkg.Outer.Class1.method1 has added 'final' qualifier [AddedFinal:13]
-                src/test/pkg/Outer.java:19: error: Method test.pkg.Outer.Class4.method4 has removed 'final' qualifier [RemovedFinal:27]
+                src/test/pkg/Outer.java:7: error: Method test.pkg.Outer.Class1.method1 has added 'final' qualifier [AddedFinal]
+                src/test/pkg/Outer.java:19: error: Method test.pkg.Outer.Class4.method4 has removed 'final' qualifier [RemovedFinal]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -1237,8 +1237,8 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible method change -- visibility`() {
         check(
             warnings = """
-                src/test/pkg/MyClass.java:5: error: Method test.pkg.MyClass.myMethod1 changed visibility from protected to public [ChangedScope:19]
-                src/test/pkg/MyClass.java:6: error: Method test.pkg.MyClass.myMethod2 changed visibility from public to protected [ChangedScope:19]
+                src/test/pkg/MyClass.java:5: error: Method test.pkg.MyClass.myMethod1 changed visibility from protected to public [ChangedScope]
+                src/test/pkg/MyClass.java:6: error: Method test.pkg.MyClass.myMethod2 changed visibility from public to protected [ChangedScope]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -1268,11 +1268,11 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible method change -- throws list`() {
         check(
             warnings = """
-                src/test/pkg/MyClass.java:7: error: Method test.pkg.MyClass.method1 added thrown exception java.io.IOException [ChangedThrows:21]
-                src/test/pkg/MyClass.java:8: error: Method test.pkg.MyClass.method2 no longer throws exception java.io.IOException [ChangedThrows:21]
-                src/test/pkg/MyClass.java:9: error: Method test.pkg.MyClass.method3 no longer throws exception java.io.IOException [ChangedThrows:21]
-                src/test/pkg/MyClass.java:9: error: Method test.pkg.MyClass.method3 no longer throws exception java.lang.NumberFormatException [ChangedThrows:21]
-                src/test/pkg/MyClass.java:9: error: Method test.pkg.MyClass.method3 added thrown exception java.lang.UnsupportedOperationException [ChangedThrows:21]
+                src/test/pkg/MyClass.java:7: error: Method test.pkg.MyClass.method1 added thrown exception java.io.IOException [ChangedThrows]
+                src/test/pkg/MyClass.java:8: error: Method test.pkg.MyClass.method2 no longer throws exception java.io.IOException [ChangedThrows]
+                src/test/pkg/MyClass.java:9: error: Method test.pkg.MyClass.method3 no longer throws exception java.io.IOException [ChangedThrows]
+                src/test/pkg/MyClass.java:9: error: Method test.pkg.MyClass.method3 no longer throws exception java.lang.NumberFormatException [ChangedThrows]
+                src/test/pkg/MyClass.java:9: error: Method test.pkg.MyClass.method3 added thrown exception java.lang.UnsupportedOperationException [ChangedThrows]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -1307,14 +1307,14 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible method change -- return types`() {
         check(
             warnings = """
-                src/test/pkg/MyClass.java:5: error: Method test.pkg.MyClass.method1 has changed return type from float to int [ChangedType:16]
-                src/test/pkg/MyClass.java:6: error: Method test.pkg.MyClass.method2 has changed return type from java.util.List<Number> to java.util.List<java.lang.Integer> [ChangedType:16]
-                src/test/pkg/MyClass.java:7: error: Method test.pkg.MyClass.method3 has changed return type from java.util.List<Integer> to java.util.List<java.lang.Number> [ChangedType:16]
-                src/test/pkg/MyClass.java:8: error: Method test.pkg.MyClass.method4 has changed return type from String to String[] [ChangedType:16]
-                src/test/pkg/MyClass.java:9: error: Method test.pkg.MyClass.method5 has changed return type from String[] to String[][] [ChangedType:16]
-                src/test/pkg/MyClass.java:10: error: Method test.pkg.MyClass.method6 has changed return type from T (extends java.lang.Object) to U (extends java.lang.Number) [ChangedType:16]
-                src/test/pkg/MyClass.java:11: error: Method test.pkg.MyClass.method7 has changed return type from T to Number [ChangedType:16]
-                src/test/pkg/MyClass.java:13: error: Method test.pkg.MyClass.method9 has changed return type from X (extends java.lang.Throwable) to U (extends java.lang.Number) [ChangedType:16]
+                src/test/pkg/MyClass.java:5: error: Method test.pkg.MyClass.method1 has changed return type from float to int [ChangedType]
+                src/test/pkg/MyClass.java:6: error: Method test.pkg.MyClass.method2 has changed return type from java.util.List<Number> to java.util.List<java.lang.Integer> [ChangedType]
+                src/test/pkg/MyClass.java:7: error: Method test.pkg.MyClass.method3 has changed return type from java.util.List<Integer> to java.util.List<java.lang.Number> [ChangedType]
+                src/test/pkg/MyClass.java:8: error: Method test.pkg.MyClass.method4 has changed return type from String to String[] [ChangedType]
+                src/test/pkg/MyClass.java:9: error: Method test.pkg.MyClass.method5 has changed return type from String[] to String[][] [ChangedType]
+                src/test/pkg/MyClass.java:10: error: Method test.pkg.MyClass.method6 has changed return type from T (extends java.lang.Object) to U (extends java.lang.Number) [ChangedType]
+                src/test/pkg/MyClass.java:11: error: Method test.pkg.MyClass.method7 has changed return type from T to Number [ChangedType]
+                src/test/pkg/MyClass.java:13: error: Method test.pkg.MyClass.method9 has changed return type from X (extends java.lang.Throwable) to U (extends java.lang.Number) [ChangedType]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -1358,9 +1358,9 @@ CompatibilityCheckTest : DriverTest() {
     fun `Incompatible field change -- visibility and removing final`() {
         check(
             warnings = """
-                src/test/pkg/MyClass.java:5: error: Field test.pkg.MyClass.myField1 changed visibility from protected to public [ChangedScope:19]
-                src/test/pkg/MyClass.java:6: error: Field test.pkg.MyClass.myField2 changed visibility from public to protected [ChangedScope:19]
-                src/test/pkg/MyClass.java:7: error: Field test.pkg.MyClass.myField3 has removed 'final' qualifier [RemovedFinal:27]
+                src/test/pkg/MyClass.java:5: error: Field test.pkg.MyClass.myField1 changed visibility from protected to public [ChangedScope]
+                src/test/pkg/MyClass.java:6: error: Field test.pkg.MyClass.myField2 changed visibility from public to protected [ChangedScope]
+                src/test/pkg/MyClass.java:7: error: Field test.pkg.MyClass.myField3 has removed 'final' qualifier [RemovedFinal]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -1392,11 +1392,11 @@ CompatibilityCheckTest : DriverTest() {
     fun `Adding classes, interfaces and packages, and removing these`() {
         check(
             warnings = """
-                src/test/pkg/MyClass.java:3: error: Added class test.pkg.MyClass [AddedClass:3]
-                src/test/pkg/MyInterface.java:3: error: Added class test.pkg.MyInterface [AddedInterface:6]
-                TESTROOT/current-api.txt:2: error: Removed class test.pkg.MyOldClass [RemovedClass:8]
-                error: Added package test.pkg2 [AddedPackage:2]
-                TESTROOT/current-api.txt:5: error: Removed package test.pkg3 [RemovedPackage:7]
+                src/test/pkg/MyClass.java:3: error: Added class test.pkg.MyClass [AddedClass]
+                src/test/pkg/MyInterface.java:3: error: Added class test.pkg.MyInterface [AddedInterface]
+                TESTROOT/current-api.txt:2: error: Removed class test.pkg.MyOldClass [RemovedClass]
+                error: Added package test.pkg2 [AddedPackage]
+                TESTROOT/current-api.txt:5: error: Removed package test.pkg3 [RemovedPackage]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -1443,7 +1443,7 @@ CompatibilityCheckTest : DriverTest() {
     fun `Test removing public constructor`() {
         check(
             warnings = """
-                TESTROOT/current-api.txt:3: error: Removed constructor test.pkg.MyClass() [RemovedMethod:9]
+                TESTROOT/current-api.txt:3: error: Removed constructor test.pkg.MyClass() [RemovedMethod]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -1470,7 +1470,7 @@ CompatibilityCheckTest : DriverTest() {
     fun `Test type variables from text signature files`() {
         check(
             warnings = """
-                src/test/pkg/MyClass.java:8: error: Method test.pkg.MyClass.myMethod4 has changed return type from S (extends java.lang.Object) to S (extends java.lang.Float) [ChangedType:16]
+                src/test/pkg/MyClass.java:8: error: Method test.pkg.MyClass.myMethod4 has changed return type from S (extends java.lang.Object) to S (extends java.lang.Float) [ChangedType]
                 """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -1708,8 +1708,8 @@ CompatibilityCheckTest : DriverTest() {
         check(
             includeSystemApiAnnotations = true,
             warnings = """
-                src/test/pkg/Bar.java:17: error: Added method test.pkg.Bar.Inner1.Inner2.addedMethod() to the system API [AddedMethod:4]
-                TESTROOT/current-api.txt:4: error: Removed method test.pkg.Bar.Inner1.Inner2.removedMethod() [RemovedMethod:9]
+                src/test/pkg/Bar.java:17: error: Added method test.pkg.Bar.Inner1.Inner2.addedMethod() to the system API [AddedMethod]
+                TESTROOT/current-api.txt:4: error: Removed method test.pkg.Bar.Inner1.Inner2.removedMethod() [RemovedMethod]
                 """,
             sourceFiles = *arrayOf(
                 java(
@@ -1780,8 +1780,8 @@ CompatibilityCheckTest : DriverTest() {
         check(
             includeSystemApiAnnotations = true,
             warnings = """
-                TESTROOT/current-api.txt:4: error: Removed method android.rolecontrollerservice.RoleControllerService.onClearRoleHolders() [RemovedMethod:9]
-                src/android/rolecontrollerservice/RoleControllerService.java:7: warning: Added method android.rolecontrollerservice.RoleControllerService.onGrantDefaultRoles() to the system API [AddedAbstractMethod:31]
+                TESTROOT/current-api.txt:4: error: Removed method android.rolecontrollerservice.RoleControllerService.onClearRoleHolders() [RemovedMethod]
+                src/android/rolecontrollerservice/RoleControllerService.java:7: warning: Added method android.rolecontrollerservice.RoleControllerService.onGrantDefaultRoles() to the system API [AddedAbstractMethod]
                 """,
             sourceFiles = *arrayOf(
                 java(
@@ -1829,7 +1829,7 @@ CompatibilityCheckTest : DriverTest() {
     fun `Test verifying simple removed API`() {
         check(
             warnings = """
-                src/test/pkg/Bar.java:8: error: Added method test.pkg.Bar.newlyRemoved() to the removed API [AddedMethod:4]
+                src/test/pkg/Bar.java:8: error: Added method test.pkg.Bar.newlyRemoved() to the removed API [AddedMethod]
                 """,
             checkCompatibilityRemovedApiCurrent = """
                 package test.pkg {
@@ -1937,7 +1937,7 @@ CompatibilityCheckTest : DriverTest() {
         // 120847535: check-api doesn't fail on method that is in current.txt, but marked @hide @TestApi
         check(
             warnings = """
-                TESTROOT/current-api.txt:6: error: Removed method test.view.ViewTreeObserver.registerFrameCommitCallback(Runnable) [RemovedMethod:9]
+                TESTROOT/current-api.txt:6: error: Removed method test.view.ViewTreeObserver.registerFrameCommitCallback(Runnable) [RemovedMethod]
                 """,
             sourceFiles = *arrayOf(
                 java(
@@ -1998,12 +1998,12 @@ CompatibilityCheckTest : DriverTest() {
         // we don't flag AddedClasses etc. Removed classes *are* enforced.
         check(
             warnings = """
-                src/test/pkg/Class1.java:3: error: Class test.pkg.Class1 added 'final' qualifier [AddedFinal:13]
-                TESTROOT/released-api.txt:3: error: Removed constructor test.pkg.Class1() [RemovedMethod:9]
-                src/test/pkg/MyClass.java:5: warning: Method test.pkg.MyClass.myMethod2 has changed 'abstract' qualifier [ChangedAbstract:20]
-                src/test/pkg/MyClass.java:6: error: Method test.pkg.MyClass.myMethod3 has changed 'static' qualifier [ChangedStatic:12]
-                TESTROOT/released-api.txt:14: error: Removed class test.pkg.MyOldClass [RemovedClass:8]
-                TESTROOT/released-api.txt:17: error: Removed package test.pkg3 [RemovedPackage:7]
+                src/test/pkg/Class1.java:3: error: Class test.pkg.Class1 added 'final' qualifier [AddedFinal]
+                TESTROOT/released-api.txt:3: error: Removed constructor test.pkg.Class1() [RemovedMethod]
+                src/test/pkg/MyClass.java:5: warning: Method test.pkg.MyClass.myMethod2 has changed 'abstract' qualifier [ChangedAbstract]
+                src/test/pkg/MyClass.java:6: error: Method test.pkg.MyClass.myMethod3 has changed 'static' qualifier [ChangedStatic]
+                TESTROOT/released-api.txt:14: error: Removed class test.pkg.MyOldClass [RemovedClass]
+                TESTROOT/released-api.txt:17: error: Removed package test.pkg3 [RemovedPackage]
                 """,
             checkCompatibilityApiReleased = """
                 package test.pkg {
@@ -2255,8 +2255,8 @@ CompatibilityCheckTest : DriverTest() {
             compatibilityMode = false,
             inputKotlinStyleNulls = true,
             warnings = """
-            src/test/pkg/test.kt:5: error: Method test.pkg.TestKt.add made type variable T reified: incompatible change [ChangedThrows:21]
-            src/test/pkg/test.kt:8: error: Method test.pkg.TestKt.two made type variable S reified: incompatible change [ChangedThrows:21]
+            src/test/pkg/test.kt:5: error: Method test.pkg.TestKt.add made type variable T reified: incompatible change [ChangedThrows]
+            src/test/pkg/test.kt:8: error: Method test.pkg.TestKt.two made type variable S reified: incompatible change [ChangedThrows]
             """,
             checkCompatibilityApi = """
                 package test.pkg {
@@ -2295,74 +2295,74 @@ CompatibilityCheckTest : DriverTest() {
 
         // Expected migration warnings (the map value) when migrating to the target key level from the previous level
         val expected = mapOf(
-            5 to "warning: Method android.view.Surface.lockCanvas added thrown exception java.lang.IllegalArgumentException [ChangedThrows:21]",
+            5 to "warning: Method android.view.Surface.lockCanvas added thrown exception java.lang.IllegalArgumentException [ChangedThrows]",
             6 to """
-                warning: Method android.accounts.AbstractAccountAuthenticator.confirmCredentials added thrown exception android.accounts.NetworkErrorException [ChangedThrows:21]
-                warning: Method android.accounts.AbstractAccountAuthenticator.updateCredentials added thrown exception android.accounts.NetworkErrorException [ChangedThrows:21]
-                warning: Field android.view.WindowManager.LayoutParams.TYPE_STATUS_BAR_PANEL has changed value from 2008 to 2014 [ChangedValue:17]
+                warning: Method android.accounts.AbstractAccountAuthenticator.confirmCredentials added thrown exception android.accounts.NetworkErrorException [ChangedThrows]
+                warning: Method android.accounts.AbstractAccountAuthenticator.updateCredentials added thrown exception android.accounts.NetworkErrorException [ChangedThrows]
+                warning: Field android.view.WindowManager.LayoutParams.TYPE_STATUS_BAR_PANEL has changed value from 2008 to 2014 [ChangedValue]
                 """,
             7 to """
-                error: Removed field android.view.ViewGroup.FLAG_USE_CHILD_DRAWING_ORDER [RemovedField:10]
+                error: Removed field android.view.ViewGroup.FLAG_USE_CHILD_DRAWING_ORDER [RemovedField]
                 """,
 
             // setOption getting removed here is wrong! Seems to be a PSI loading bug.
             8 to """
-                warning: Constructor android.net.SSLCertificateSocketFactory no longer throws exception java.security.KeyManagementException [ChangedThrows:21]
-                warning: Constructor android.net.SSLCertificateSocketFactory no longer throws exception java.security.NoSuchAlgorithmException [ChangedThrows:21]
-                error: Removed method java.net.DatagramSocketImpl.getOption(int) [RemovedMethod:9]
-                error: Removed method java.net.DatagramSocketImpl.setOption(int,Object) [RemovedMethod:9]
-                warning: Constructor java.nio.charset.Charset no longer throws exception java.nio.charset.IllegalCharsetNameException [ChangedThrows:21]
-                warning: Method java.nio.charset.Charset.forName no longer throws exception java.nio.charset.IllegalCharsetNameException [ChangedThrows:21]
-                warning: Method java.nio.charset.Charset.forName no longer throws exception java.nio.charset.UnsupportedCharsetException [ChangedThrows:21]
-                warning: Method java.nio.charset.Charset.isSupported no longer throws exception java.nio.charset.IllegalCharsetNameException [ChangedThrows:21]
-                warning: Method java.util.regex.Matcher.appendReplacement no longer throws exception java.lang.IllegalStateException [ChangedThrows:21]
-                warning: Method java.util.regex.Matcher.start no longer throws exception java.lang.IllegalStateException [ChangedThrows:21]
-                warning: Method java.util.regex.Pattern.compile no longer throws exception java.util.regex.PatternSyntaxException [ChangedThrows:21]
-                warning: Class javax.xml.XMLConstants added final qualifier [AddedFinal:13]
-                error: Removed constructor javax.xml.XMLConstants() [RemovedMethod:9]
-                warning: Method javax.xml.parsers.DocumentBuilder.isXIncludeAware no longer throws exception java.lang.UnsupportedOperationException [ChangedThrows:21]
-                warning: Method javax.xml.parsers.DocumentBuilderFactory.newInstance no longer throws exception javax.xml.parsers.FactoryConfigurationError [ChangedThrows:21]
-                warning: Method javax.xml.parsers.SAXParser.isXIncludeAware no longer throws exception java.lang.UnsupportedOperationException [ChangedThrows:21]
-                warning: Method javax.xml.parsers.SAXParserFactory.newInstance no longer throws exception javax.xml.parsers.FactoryConfigurationError [ChangedThrows:21]
-                warning: Method org.w3c.dom.Element.getAttributeNS added thrown exception org.w3c.dom.DOMException [ChangedThrows:21]
-                warning: Method org.w3c.dom.Element.getAttributeNodeNS added thrown exception org.w3c.dom.DOMException [ChangedThrows:21]
-                warning: Method org.w3c.dom.Element.getElementsByTagNameNS added thrown exception org.w3c.dom.DOMException [ChangedThrows:21]
-                warning: Method org.w3c.dom.Element.hasAttributeNS added thrown exception org.w3c.dom.DOMException [ChangedThrows:21]
-                warning: Method org.w3c.dom.NamedNodeMap.getNamedItemNS added thrown exception org.w3c.dom.DOMException [ChangedThrows:21]
+                warning: Constructor android.net.SSLCertificateSocketFactory no longer throws exception java.security.KeyManagementException [ChangedThrows]
+                warning: Constructor android.net.SSLCertificateSocketFactory no longer throws exception java.security.NoSuchAlgorithmException [ChangedThrows]
+                error: Removed method java.net.DatagramSocketImpl.getOption(int) [RemovedMethod]
+                error: Removed method java.net.DatagramSocketImpl.setOption(int,Object) [RemovedMethod]
+                warning: Constructor java.nio.charset.Charset no longer throws exception java.nio.charset.IllegalCharsetNameException [ChangedThrows]
+                warning: Method java.nio.charset.Charset.forName no longer throws exception java.nio.charset.IllegalCharsetNameException [ChangedThrows]
+                warning: Method java.nio.charset.Charset.forName no longer throws exception java.nio.charset.UnsupportedCharsetException [ChangedThrows]
+                warning: Method java.nio.charset.Charset.isSupported no longer throws exception java.nio.charset.IllegalCharsetNameException [ChangedThrows]
+                warning: Method java.util.regex.Matcher.appendReplacement no longer throws exception java.lang.IllegalStateException [ChangedThrows]
+                warning: Method java.util.regex.Matcher.start no longer throws exception java.lang.IllegalStateException [ChangedThrows]
+                warning: Method java.util.regex.Pattern.compile no longer throws exception java.util.regex.PatternSyntaxException [ChangedThrows]
+                warning: Class javax.xml.XMLConstants added final qualifier [AddedFinal]
+                error: Removed constructor javax.xml.XMLConstants() [RemovedMethod]
+                warning: Method javax.xml.parsers.DocumentBuilder.isXIncludeAware no longer throws exception java.lang.UnsupportedOperationException [ChangedThrows]
+                warning: Method javax.xml.parsers.DocumentBuilderFactory.newInstance no longer throws exception javax.xml.parsers.FactoryConfigurationError [ChangedThrows]
+                warning: Method javax.xml.parsers.SAXParser.isXIncludeAware no longer throws exception java.lang.UnsupportedOperationException [ChangedThrows]
+                warning: Method javax.xml.parsers.SAXParserFactory.newInstance no longer throws exception javax.xml.parsers.FactoryConfigurationError [ChangedThrows]
+                warning: Method org.w3c.dom.Element.getAttributeNS added thrown exception org.w3c.dom.DOMException [ChangedThrows]
+                warning: Method org.w3c.dom.Element.getAttributeNodeNS added thrown exception org.w3c.dom.DOMException [ChangedThrows]
+                warning: Method org.w3c.dom.Element.getElementsByTagNameNS added thrown exception org.w3c.dom.DOMException [ChangedThrows]
+                warning: Method org.w3c.dom.Element.hasAttributeNS added thrown exception org.w3c.dom.DOMException [ChangedThrows]
+                warning: Method org.w3c.dom.NamedNodeMap.getNamedItemNS added thrown exception org.w3c.dom.DOMException [ChangedThrows]
                 """,
 
             18 to """
-                warning: Class android.os.Looper added final qualifier but was previously uninstantiable and therefore could not be subclassed [AddedFinalUninstantiable:26]
-                warning: Class android.os.MessageQueue added final qualifier but was previously uninstantiable and therefore could not be subclassed [AddedFinalUninstantiable:26]
-                error: Removed field android.os.Process.BLUETOOTH_GID [RemovedField:10]
-                error: Removed class android.renderscript.Program [RemovedClass:8]
-                error: Removed class android.renderscript.ProgramStore [RemovedClass:8]
+                warning: Class android.os.Looper added final qualifier but was previously uninstantiable and therefore could not be subclassed [AddedFinalUninstantiable]
+                warning: Class android.os.MessageQueue added final qualifier but was previously uninstantiable and therefore could not be subclassed [AddedFinalUninstantiable]
+                error: Removed field android.os.Process.BLUETOOTH_GID [RemovedField]
+                error: Removed class android.renderscript.Program [RemovedClass]
+                error: Removed class android.renderscript.ProgramStore [RemovedClass]
                 """,
             19 to """
-                warning: Method android.app.Notification.Style.build has changed 'abstract' qualifier [ChangedAbstract:20]
-                error: Removed method android.os.Debug.MemoryInfo.getOtherLabel(int) [RemovedMethod:9]
-                error: Removed method android.os.Debug.MemoryInfo.getOtherPrivateDirty(int) [RemovedMethod:9]
-                error: Removed method android.os.Debug.MemoryInfo.getOtherPss(int) [RemovedMethod:9]
-                error: Removed method android.os.Debug.MemoryInfo.getOtherSharedDirty(int) [RemovedMethod:9]
-                warning: Field android.view.animation.Transformation.TYPE_ALPHA has changed value from nothing/not constant to 1 [ChangedValue:17]
-                warning: Field android.view.animation.Transformation.TYPE_ALPHA has added 'final' qualifier [AddedFinal:13]
-                warning: Field android.view.animation.Transformation.TYPE_BOTH has changed value from nothing/not constant to 3 [ChangedValue:17]
-                warning: Field android.view.animation.Transformation.TYPE_BOTH has added 'final' qualifier [AddedFinal:13]
-                warning: Field android.view.animation.Transformation.TYPE_IDENTITY has changed value from nothing/not constant to 0 [ChangedValue:17]
-                warning: Field android.view.animation.Transformation.TYPE_IDENTITY has added 'final' qualifier [AddedFinal:13]
-                warning: Field android.view.animation.Transformation.TYPE_MATRIX has changed value from nothing/not constant to 2 [ChangedValue:17]
-                warning: Field android.view.animation.Transformation.TYPE_MATRIX has added 'final' qualifier [AddedFinal:13]
-                warning: Method java.nio.CharBuffer.subSequence has changed return type from CharSequence to java.nio.CharBuffer [ChangedType:16]
+                warning: Method android.app.Notification.Style.build has changed 'abstract' qualifier [ChangedAbstract]
+                error: Removed method android.os.Debug.MemoryInfo.getOtherLabel(int) [RemovedMethod]
+                error: Removed method android.os.Debug.MemoryInfo.getOtherPrivateDirty(int) [RemovedMethod]
+                error: Removed method android.os.Debug.MemoryInfo.getOtherPss(int) [RemovedMethod]
+                error: Removed method android.os.Debug.MemoryInfo.getOtherSharedDirty(int) [RemovedMethod]
+                warning: Field android.view.animation.Transformation.TYPE_ALPHA has changed value from nothing/not constant to 1 [ChangedValue]
+                warning: Field android.view.animation.Transformation.TYPE_ALPHA has added 'final' qualifier [AddedFinal]
+                warning: Field android.view.animation.Transformation.TYPE_BOTH has changed value from nothing/not constant to 3 [ChangedValue]
+                warning: Field android.view.animation.Transformation.TYPE_BOTH has added 'final' qualifier [AddedFinal]
+                warning: Field android.view.animation.Transformation.TYPE_IDENTITY has changed value from nothing/not constant to 0 [ChangedValue]
+                warning: Field android.view.animation.Transformation.TYPE_IDENTITY has added 'final' qualifier [AddedFinal]
+                warning: Field android.view.animation.Transformation.TYPE_MATRIX has changed value from nothing/not constant to 2 [ChangedValue]
+                warning: Field android.view.animation.Transformation.TYPE_MATRIX has added 'final' qualifier [AddedFinal]
+                warning: Method java.nio.CharBuffer.subSequence has changed return type from CharSequence to java.nio.CharBuffer [ChangedType]
                 """, // The last warning above is not right; seems to be a PSI jar loading bug. It returns the wrong return type!
 
             20 to """
-                error: Removed method android.util.TypedValue.complexToDimensionNoisy(int,android.util.DisplayMetrics) [RemovedMethod:9]
-                warning: Method org.json.JSONObject.keys has changed return type from java.util.Iterator to java.util.Iterator<java.lang.String> [ChangedType:16]
-                warning: Field org.xmlpull.v1.XmlPullParserFactory.features has changed type from java.util.HashMap to java.util.HashMap<java.lang.String, java.lang.Boolean> [ChangedType:16]
+                error: Removed method android.util.TypedValue.complexToDimensionNoisy(int,android.util.DisplayMetrics) [RemovedMethod]
+                warning: Method org.json.JSONObject.keys has changed return type from java.util.Iterator to java.util.Iterator<java.lang.String> [ChangedType]
+                warning: Field org.xmlpull.v1.XmlPullParserFactory.features has changed type from java.util.HashMap to java.util.HashMap<java.lang.String, java.lang.Boolean> [ChangedType]
                 """,
             26 to """
-                warning: Field android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE has changed value from 130 to 230 [ChangedValue:17]
-                warning: Field android.content.pm.PermissionInfo.PROTECTION_MASK_FLAGS has changed value from 4080 to 65520 [ChangedValue:17]
+                warning: Field android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE has changed value from 130 to 230 [ChangedValue]
+                warning: Field android.content.pm.PermissionInfo.PROTECTION_MASK_FLAGS has changed value from 4080 to 65520 [ChangedValue]
                 """,
             27 to ""
         )

@@ -155,6 +155,9 @@ class PsiTypeItem private constructor(private val codebase: PsiBasedCodebase, pr
     }
 
     override fun asClass(): PsiClassItem? {
+        if (primitive) {
+            return null
+        }
         if (asClass == null) {
             asClass = codebase.findClass(psiType)
         }

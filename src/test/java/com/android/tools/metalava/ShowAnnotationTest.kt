@@ -10,7 +10,7 @@ class ShowAnnotationTest : DriverTest() {
         check(
             includeSystemApiAnnotations = true,
             checkDoclava1 = true,
-            warnings = "src/test/pkg/Foo.java:17: error: @SystemApi APIs must also be marked @hide: method test.pkg.Foo.method4() [UnhiddenSystemApi:155]",
+            warnings = "src/test/pkg/Foo.java:17: error: @SystemApi APIs must also be marked @hide: method test.pkg.Foo.method4() [UnhiddenSystemApi]",
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -69,7 +69,7 @@ class ShowAnnotationTest : DriverTest() {
             includeSystemApiAnnotations = true,
             showUnannotated = true,
             checkDoclava1 = true,
-            warnings = "src/test/pkg/Foo.java:17: error: @SystemApi APIs must also be marked @hide: method test.pkg.Foo.method4() [UnhiddenSystemApi:155]",
+            warnings = "src/test/pkg/Foo.java:17: error: @SystemApi APIs must also be marked @hide: method test.pkg.Foo.method4() [UnhiddenSystemApi]",
             sourceFiles = *arrayOf(
                 java(
                     """

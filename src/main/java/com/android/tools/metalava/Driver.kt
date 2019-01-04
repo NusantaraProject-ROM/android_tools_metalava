@@ -140,7 +140,7 @@ fun run(
         options = Options(modifiedArgs, stdout, stderr)
         processFlags()
 
-        if (reporter.hasErrors()) {
+        if (reporter.hasErrors() && !options.updateBaseline) {
             exitCode = -1
         }
         exitValue = true
@@ -154,10 +154,14 @@ fun run(
         exitCode = e.exitCode
         exitValue = false
     }
+
+    if (options.verbose && options.updateBaseline) {
+        options.baseline?.dumpStats(options.stdout)
+    }
+    options.baseline?.close()
+
     stdout.flush()
     stderr.flush()
-
-    options.baseline?.close()
 
     if (setExitCode && reporter.hasErrors()) {
         exit(exitCode)

@@ -59,19 +59,40 @@ public class Errors {
          */
         private final Error parent;
 
-        Error(int code, Severity level) {
+        /** Related rule, if any */
+        public final String rule;
+
+        /** Related explanation, if any */
+        public final String explanation;
+
+        /** Applicable category */
+        public final Category category;
+
+        private Error(int code, Severity level) {
+            this(code, level, Category.UNKNOWN);
+        }
+
+        private Error(int code, Severity level, Category category) {
+            this(code, level, null, category, null, null);
+        }
+
+        private Error(int code, Severity level, Category category, String rule) {
+            this(code, level, null, category, rule, null);
+        }
+
+        private Error(int code, Error parent, Category category) {
+            this(code, INHERIT, parent, category, null, null);
+        }
+
+        private Error(int code, Severity level, Error parent, Category category,
+                      String rule, String explanation) {
             this.code = code;
             this.level = level;
             this.defaultLevel = level;
-            this.parent = null;
-            errors.add(this);
-        }
-
-        Error(int code, Error parent) {
-            this.code = code;
-            this.level = Severity.INHERIT;
-            this.defaultLevel = Severity.INHERIT;
             this.parent = parent;
+            this.category = category;
+            this.rule = rule;
+            this.explanation = explanation;
             errors.add(this);
         }
 
@@ -123,84 +144,98 @@ public class Errors {
     private static final Map<String, Error> nameToError = new HashMap<>(100);
     private static final Map<Integer, Error> idToError = new HashMap<>(100);
 
+    public enum Category {
+        COMPATIBILITY("Compatibility", null),
+        DOCUMENTATION("Documentation", null),
+        UNKNOWN("Default", null);
+
+        public final String description;
+        public final String ruleLink;
+
+        Category(String description, String ruleLink) {
+            this.description = description;
+            this.ruleLink = ruleLink;
+        }
+    }
+
     // Errors for API verification
     public static final Error PARSE_ERROR = new Error(1, ERROR);
-    public static final Error ADDED_PACKAGE = new Error(2, WARNING);
-    public static final Error ADDED_CLASS = new Error(3, WARNING);
-    public static final Error ADDED_METHOD = new Error(4, WARNING);
-    public static final Error ADDED_FIELD = new Error(5, WARNING);
-    public static final Error ADDED_INTERFACE = new Error(6, WARNING);
-    public static final Error REMOVED_PACKAGE = new Error(7, WARNING);
-    public static final Error REMOVED_CLASS = new Error(8, WARNING);
-    public static final Error REMOVED_METHOD = new Error(9, WARNING);
-    public static final Error REMOVED_FIELD = new Error(10, WARNING);
-    public static final Error REMOVED_INTERFACE = new Error(11, WARNING);
-    public static final Error CHANGED_STATIC = new Error(12, WARNING);
-    public static final Error ADDED_FINAL = new Error(13, WARNING);
-    public static final Error CHANGED_TRANSIENT = new Error(14, WARNING);
-    public static final Error CHANGED_VOLATILE = new Error(15, WARNING);
-    public static final Error CHANGED_TYPE = new Error(16, WARNING);
-    public static final Error CHANGED_VALUE = new Error(17, WARNING);
-    public static final Error CHANGED_SUPERCLASS = new Error(18, WARNING);
-    public static final Error CHANGED_SCOPE = new Error(19, WARNING);
-    public static final Error CHANGED_ABSTRACT = new Error(20, WARNING);
-    public static final Error CHANGED_THROWS = new Error(21, WARNING);
-    public static final Error CHANGED_NATIVE = new Error(22, HIDDEN);
-    public static final Error CHANGED_CLASS = new Error(23, WARNING);
-    public static final Error CHANGED_DEPRECATED = new Error(24, WARNING);
-    public static final Error CHANGED_SYNCHRONIZED = new Error(25, WARNING);
-    public static final Error ADDED_FINAL_UNINSTANTIABLE = new Error(26, WARNING);
-    public static final Error REMOVED_FINAL = new Error(27, WARNING);
-    public static final Error REMOVED_DEPRECATED_CLASS = new Error(28, REMOVED_CLASS);
-    public static final Error REMOVED_DEPRECATED_METHOD = new Error(29, REMOVED_METHOD);
-    public static final Error REMOVED_DEPRECATED_FIELD = new Error(30, REMOVED_FIELD);
-    public static final Error ADDED_ABSTRACT_METHOD = new Error(31, ADDED_METHOD);
-    public static final Error ADDED_REIFIED = new Error(32, WARNING);
+    public static final Error ADDED_PACKAGE = new Error(2, WARNING, Category.COMPATIBILITY);
+    public static final Error ADDED_CLASS = new Error(3, WARNING, Category.COMPATIBILITY);
+    public static final Error ADDED_METHOD = new Error(4, WARNING, Category.COMPATIBILITY);
+    public static final Error ADDED_FIELD = new Error(5, WARNING, Category.COMPATIBILITY);
+    public static final Error ADDED_INTERFACE = new Error(6, WARNING, Category.COMPATIBILITY);
+    public static final Error REMOVED_PACKAGE = new Error(7, WARNING, Category.COMPATIBILITY);
+    public static final Error REMOVED_CLASS = new Error(8, WARNING, Category.COMPATIBILITY);
+    public static final Error REMOVED_METHOD = new Error(9, WARNING, Category.COMPATIBILITY);
+    public static final Error REMOVED_FIELD = new Error(10, WARNING, Category.COMPATIBILITY);
+    public static final Error REMOVED_INTERFACE = new Error(11, WARNING, Category.COMPATIBILITY);
+    public static final Error CHANGED_STATIC = new Error(12, WARNING, Category.COMPATIBILITY);
+    public static final Error ADDED_FINAL = new Error(13, WARNING, Category.COMPATIBILITY);
+    public static final Error CHANGED_TRANSIENT = new Error(14, WARNING, Category.COMPATIBILITY);
+    public static final Error CHANGED_VOLATILE = new Error(15, WARNING, Category.COMPATIBILITY);
+    public static final Error CHANGED_TYPE = new Error(16, WARNING, Category.COMPATIBILITY);
+    public static final Error CHANGED_VALUE = new Error(17, WARNING, Category.COMPATIBILITY);
+    public static final Error CHANGED_SUPERCLASS = new Error(18, WARNING, Category.COMPATIBILITY);
+    public static final Error CHANGED_SCOPE = new Error(19, WARNING, Category.COMPATIBILITY);
+    public static final Error CHANGED_ABSTRACT = new Error(20, WARNING, Category.COMPATIBILITY);
+    public static final Error CHANGED_THROWS = new Error(21, WARNING, Category.COMPATIBILITY);
+    public static final Error CHANGED_NATIVE = new Error(22, HIDDEN, Category.COMPATIBILITY);
+    public static final Error CHANGED_CLASS = new Error(23, WARNING, Category.COMPATIBILITY);
+    public static final Error CHANGED_DEPRECATED = new Error(24, WARNING, Category.COMPATIBILITY);
+    public static final Error CHANGED_SYNCHRONIZED = new Error(25, WARNING, Category.COMPATIBILITY);
+    public static final Error ADDED_FINAL_UNINSTANTIABLE = new Error(26, WARNING, Category.COMPATIBILITY);
+    public static final Error REMOVED_FINAL = new Error(27, WARNING, Category.COMPATIBILITY);
+    public static final Error REMOVED_DEPRECATED_CLASS = new Error(28, REMOVED_CLASS, Category.COMPATIBILITY);
+    public static final Error REMOVED_DEPRECATED_METHOD = new Error(29, REMOVED_METHOD, Category.COMPATIBILITY);
+    public static final Error REMOVED_DEPRECATED_FIELD = new Error(30, REMOVED_FIELD, Category.COMPATIBILITY);
+    public static final Error ADDED_ABSTRACT_METHOD = new Error(31, ADDED_METHOD, Category.COMPATIBILITY);
+    public static final Error ADDED_REIFIED = new Error(32, WARNING, Category.COMPATIBILITY);
 
     // Errors in javadoc generation
-    public static final Error UNRESOLVED_LINK = new Error(101, LINT);
-    public static final Error BAD_INCLUDE_TAG = new Error(102, LINT);
-    public static final Error UNKNOWN_TAG = new Error(103, LINT);
-    public static final Error UNKNOWN_PARAM_TAG_NAME = new Error(104, LINT);
-    public static final Error UNDOCUMENTED_PARAMETER = new Error(105, HIDDEN); // LINT
-    public static final Error BAD_ATTR_TAG = new Error(106, LINT);
-    public static final Error BAD_INHERITDOC = new Error(107, HIDDEN); // LINT
-    public static final Error HIDDEN_LINK = new Error(108, LINT);
-    public static final Error HIDDEN_CONSTRUCTOR = new Error(109, WARNING);
-    public static final Error UNAVAILABLE_SYMBOL = new Error(110, WARNING);
-    public static final Error HIDDEN_SUPERCLASS = new Error(111, WARNING);
-    public static final Error DEPRECATED = new Error(112, HIDDEN);
-    public static final Error DEPRECATION_MISMATCH = new Error(113, WARNING);
-    public static final Error MISSING_COMMENT = new Error(114, LINT);
+    public static final Error UNRESOLVED_LINK = new Error(101, LINT, Category.DOCUMENTATION);
+    public static final Error BAD_INCLUDE_TAG = new Error(102, LINT, Category.DOCUMENTATION);
+    public static final Error UNKNOWN_TAG = new Error(103, LINT, Category.DOCUMENTATION);
+    public static final Error UNKNOWN_PARAM_TAG_NAME = new Error(104, LINT, Category.DOCUMENTATION);
+    public static final Error UNDOCUMENTED_PARAMETER = new Error(105, HIDDEN, Category.DOCUMENTATION);
+    public static final Error BAD_ATTR_TAG = new Error(106, LINT, Category.DOCUMENTATION);
+    public static final Error BAD_INHERITDOC = new Error(107, HIDDEN, Category.DOCUMENTATION);
+    public static final Error HIDDEN_LINK = new Error(108, LINT, Category.DOCUMENTATION);
+    public static final Error HIDDEN_CONSTRUCTOR = new Error(109, WARNING, Category.DOCUMENTATION);
+    public static final Error UNAVAILABLE_SYMBOL = new Error(110, WARNING, Category.DOCUMENTATION);
+    public static final Error HIDDEN_SUPERCLASS = new Error(111, WARNING, Category.DOCUMENTATION);
+    public static final Error DEPRECATED = new Error(112, HIDDEN, Category.DOCUMENTATION);
+    public static final Error DEPRECATION_MISMATCH = new Error(113, WARNING, Category.DOCUMENTATION);
+    public static final Error MISSING_COMMENT = new Error(114, LINT, Category.DOCUMENTATION);
     public static final Error IO_ERROR = new Error(115, ERROR);
-    public static final Error NO_SINCE_DATA = new Error(116, HIDDEN);
-    public static final Error NO_FEDERATION_DATA = new Error(117, WARNING);
-    public static final Error BROKEN_SINCE_FILE = new Error(118, ERROR);
-    public static final Error INVALID_CONTENT_TYPE = new Error(119, ERROR);
-    public static final Error INVALID_SAMPLE_INDEX = new Error(120, ERROR);
-    public static final Error HIDDEN_TYPE_PARAMETER = new Error(121, WARNING);
-    public static final Error PRIVATE_SUPERCLASS = new Error(122, WARNING);
-    public static final Error NULLABLE = new Error(123, HIDDEN); // LINT
-    public static final Error INT_DEF = new Error(124, HIDDEN); // LINT
-    public static final Error REQUIRES_PERMISSION = new Error(125, LINT);
-    public static final Error BROADCAST_BEHAVIOR = new Error(126, LINT);
-    public static final Error SDK_CONSTANT = new Error(127, LINT);
-    public static final Error TODO = new Error(128, LINT);
-    public static final Error NO_ARTIFACT_DATA = new Error(129, HIDDEN);
-    public static final Error BROKEN_ARTIFACT_FILE = new Error(130, ERROR);
+    public static final Error NO_SINCE_DATA = new Error(116, HIDDEN, Category.DOCUMENTATION);
+    public static final Error NO_FEDERATION_DATA = new Error(117, WARNING, Category.DOCUMENTATION);
+    public static final Error BROKEN_SINCE_FILE = new Error(118, ERROR, Category.DOCUMENTATION);
+    public static final Error INVALID_CONTENT_TYPE = new Error(119, ERROR, Category.DOCUMENTATION);
+    public static final Error INVALID_SAMPLE_INDEX = new Error(120, ERROR, Category.DOCUMENTATION);
+    public static final Error HIDDEN_TYPE_PARAMETER = new Error(121, WARNING, Category.DOCUMENTATION);
+    public static final Error PRIVATE_SUPERCLASS = new Error(122, WARNING, Category.DOCUMENTATION);
+    public static final Error NULLABLE = new Error(123, HIDDEN, Category.DOCUMENTATION);
+    public static final Error INT_DEF = new Error(124, HIDDEN, Category.DOCUMENTATION);
+    public static final Error REQUIRES_PERMISSION = new Error(125, LINT, Category.DOCUMENTATION);
+    public static final Error BROADCAST_BEHAVIOR = new Error(126, LINT, Category.DOCUMENTATION);
+    public static final Error SDK_CONSTANT = new Error(127, LINT, Category.DOCUMENTATION);
+    public static final Error TODO = new Error(128, LINT, Category.DOCUMENTATION);
+    public static final Error NO_ARTIFACT_DATA = new Error(129, HIDDEN, Category.DOCUMENTATION);
+    public static final Error BROKEN_ARTIFACT_FILE = new Error(130, ERROR, Category.DOCUMENTATION);
 
     // Metalava new warnings (not from doclava)
 
-    public static final Error TYPO = new Error(131, WARNING);
-    public static final Error MISSING_PERMISSION = new Error(132, LINT);
-    public static final Error MULTIPLE_THREAD_ANNOTATIONS = new Error(133, LINT);
-    public static final Error UNRESOLVED_CLASS = new Error(134, LINT);
-    public static final Error INVALID_NULL_CONVERSION = new Error(135, ERROR);
-    public static final Error PARAMETER_NAME_CHANGE = new Error(136, ERROR);
-    public static final Error OPERATOR_REMOVAL = new Error(137, ERROR);
-    public static final Error INFIX_REMOVAL = new Error(138, ERROR);
-    public static final Error VARARG_REMOVAL = new Error(139, ERROR);
-    public static final Error ADD_SEALED = new Error(140, ERROR);
+    public static final Error TYPO = new Error(131, WARNING, Category.DOCUMENTATION);
+    public static final Error MISSING_PERMISSION = new Error(132, LINT, Category.DOCUMENTATION);
+    public static final Error MULTIPLE_THREAD_ANNOTATIONS = new Error(133, LINT, Category.DOCUMENTATION);
+    public static final Error UNRESOLVED_CLASS = new Error(134, LINT, Category.DOCUMENTATION);
+    public static final Error INVALID_NULL_CONVERSION = new Error(135, ERROR, Category.COMPATIBILITY);
+    public static final Error PARAMETER_NAME_CHANGE = new Error(136, ERROR, Category.COMPATIBILITY);
+    public static final Error OPERATOR_REMOVAL = new Error(137, ERROR, Category.COMPATIBILITY);
+    public static final Error INFIX_REMOVAL = new Error(138, ERROR, Category.COMPATIBILITY);
+    public static final Error VARARG_REMOVAL = new Error(139, ERROR, Category.COMPATIBILITY);
+    public static final Error ADD_SEALED = new Error(140, ERROR, Category.COMPATIBILITY);
     public static final Error KOTLIN_KEYWORD = new Error(141, WARNING);
     public static final Error SAM_SHOULD_BE_LAST = new Error(142, WARNING);
     public static final Error MISSING_JVMSTATIC = new Error(143, WARNING);
@@ -213,7 +248,7 @@ public class Errors {
     public static final Error INTERNAL_ERROR = new Error(150, ERROR);
     public static final Error RETURNING_UNEXPECTED_CONSTANT = new Error(151, WARNING);
     public static final Error DEPRECATED_OPTION = new Error(152, WARNING);
-    public static final Error BOTH_PACKAGE_INFO_AND_HTML = new Error(153, WARNING);
+    public static final Error BOTH_PACKAGE_INFO_AND_HTML = new Error(153, WARNING, Category.DOCUMENTATION);
     // The plan is for this to be set as an error once (1) existing code is marked as @deprecated
     // and (2) the principle is adopted by the API council
     public static final Error REFERENCES_DEPRECATED = new Error(154, HIDDEN);
