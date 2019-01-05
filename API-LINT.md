@@ -66,6 +66,22 @@ diff to make sure you're really only marking the issues you intended to include.
 
           baseline.txt
 
+## Copying File Manually
+
+In the near future the build system will not allow source files to be modified
+by the build. At that point you'll need to manually copy in the file instead.
+During the build, before failing, metalava will emit a message like this:
+
+    ...
+    metalava wrote updated baseline to out/something/baseline.txt
+    ...
+
+At that point you can copy the file to where you need:
+
+```sh
+$ cp out/something/baseline.txt frameworks/base/api/baseline.txt
+```
+
 ## Existing Issues
 
 You can view the exact set of existing issues (current APIs that get flagged by

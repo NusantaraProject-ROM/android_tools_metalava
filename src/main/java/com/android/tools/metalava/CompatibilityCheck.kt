@@ -77,7 +77,7 @@ class CompatibilityCheck(
      * so in these cases we want to ignore certain changes such as considering
      * StringBuilder.setLength a newly added method.
      */
-    private val comparingWithPartialSignatures = oldCodebase is TextCodebase && oldCodebase.format.major < 2
+    private val comparingWithPartialSignatures = oldCodebase is TextCodebase && oldCodebase.format == FileFormat.V1
 
     var foundProblems = false
 
@@ -710,19 +710,6 @@ class CompatibilityCheck(
         val error = if (new.isInterface()) {
             Errors.ADDED_INTERFACE
         } else {
-            if (options.compatOutput &&
-                new.qualifiedName() == "android.telephony.ims.feature.ImsFeature.Capabilities"
-            ) {
-                // Special case: Doclava and metalava signature files for the system api
-                // differ in only one way: Metalava believes ImsFeature.Capabilities should
-                // be in the signature file for @SystemApi, and doclava does not. However,
-                // this API is referenced from other system APIs that doclava does include
-                // (MmTelFeature.MmTelCapabilities's constructor) so it is clearly part of the
-                // API even if it's not listed in the signature file and we should not list
-                // this as an incompatible, added API.
-                return
-            }
-
             Errors.ADDED_CLASS
         }
         handleAdded(error, new)
@@ -769,7 +756,7 @@ class CompatibilityCheck(
         }
 
         // In old signature files, annotation methods are missing! This will show up as an added method.
-        if (new.containingClass().isAnnotationType() && oldCodebase is TextCodebase && oldCodebase.format.major == 1) {
+        if (new.containingClass().isAnnotationType() && oldCodebase is TextCodebase && oldCodebase.format == FileFormat.V1) {
             return
         }
 

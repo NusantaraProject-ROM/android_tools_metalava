@@ -84,6 +84,7 @@ class ApiFileTest : DriverTest() {
     fun `Parameter Names in Java`() {
         // Java code which explicitly specifies parameter names
         check(
+            compatibilityMode = false, // parameter names only in v2
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -115,7 +116,7 @@ class ApiFileTest : DriverTest() {
     fun `Default Values Names in Java`() {
         // Java code which explicitly specifies parameter names
         check(
-            compatibilityMode = false,
+            format = FileFormat.V3,
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -134,6 +135,7 @@ class ApiFileTest : DriverTest() {
                 supportDefaultValue
             ),
             api = """
+                // Signature format: 3.0
                 package test.pkg {
                   public class Foo {
                     ctor public Foo();
@@ -150,6 +152,7 @@ class ApiFileTest : DriverTest() {
     fun `Default Values and Names in Kotlin`() {
         // Kotlin code which explicitly specifies parameter names
         check(
+            format = FileFormat.V3,
             compatibilityMode = false,
             sourceFiles = *arrayOf(
                 kotlin(
@@ -193,7 +196,7 @@ class ApiFileTest : DriverTest() {
                 )
             ),
             api = """
-                // Signature format: $CURRENT_SIGNATURE_FORMAT
+                // Signature format: 3.0
                 package test.pkg {
                   public final class Foo {
                     ctor public Foo();
@@ -221,7 +224,7 @@ class ApiFileTest : DriverTest() {
         // Testing trickier default values; regression test for problem
         // observed in androidx.core.util with LruCache
         check(
-            compatibilityMode = false,
+            format = FileFormat.V3,
             sourceFiles = *arrayOf(
                 kotlin(
                     """
@@ -278,7 +281,7 @@ class ApiFileTest : DriverTest() {
                 androidxNonNullSource
             ),
             api = """
-                // Signature format: $CURRENT_SIGNATURE_FORMAT
+                // Signature format: 3.0
                 package androidx.core.util {
                   public final class TestKt {
                     ctor public TestKt();
@@ -295,6 +298,8 @@ class ApiFileTest : DriverTest() {
     @Test
     fun `Basic Kotlin class`() {
         check(
+            format = FileFormat.V1,
+            extraArguments = arrayOf("--parameter-names=true"),
             sourceFiles = *arrayOf(
                 kotlin(
                     """
@@ -431,6 +436,7 @@ class ApiFileTest : DriverTest() {
     @Test
     fun `Kotlin Reified Methods 2`() {
         check(
+            compatibilityMode = false,
             sourceFiles = *arrayOf(
                 kotlin(
                     """
@@ -465,6 +471,7 @@ class ApiFileTest : DriverTest() {
     @Test
     fun `Suspend functions`() {
         check(
+            compatibilityMode = false,
             sourceFiles = *arrayOf(
                 kotlin(
                     """
@@ -477,7 +484,7 @@ class ApiFileTest : DriverTest() {
                 package test.pkg {
                   public final class TestKt {
                     ctor public TestKt();
-                    method public static suspend inline java.lang.Object hello(kotlin.coroutines.experimental.Continuation<? super kotlin.Unit> p);
+                    method public static suspend inline Object hello(kotlin.coroutines.experimental.Continuation<? super kotlin.Unit> p);
                   }
                 }
                 """,
@@ -488,6 +495,7 @@ class ApiFileTest : DriverTest() {
     @Test
     fun `Kotlin Generics`() {
         check(
+            format = FileFormat.V3,
             sourceFiles = *arrayOf(
                 kotlin(
                     """
@@ -500,7 +508,9 @@ class ApiFileTest : DriverTest() {
                     """
                 )
             ),
+            compatibilityMode = false,
             api = """
+                // Signature format: 3.0
                 package test.pkg {
                   public final class Bar {
                     ctor public Bar();
@@ -731,6 +741,7 @@ class ApiFileTest : DriverTest() {
     fun `JvmOverloads`() {
         // Regression test for https://github.com/android/android-ktx/issues/366
         check(
+            format = FileFormat.V3,
             compatibilityMode = false,
             sourceFiles = *arrayOf(
                 kotlin(
@@ -762,6 +773,7 @@ class ApiFileTest : DriverTest() {
                 )
             ),
             api = """
+                // Signature format: 3.0
                 package androidx.content {
                   public final class TestKt {
                     ctor public TestKt();
@@ -2715,26 +2727,26 @@ class ApiFileTest : DriverTest() {
             privateApi = """
                 package test.pkg {
                   public class Class1 implements test.pkg.MyInterface {
-                    ctor  Class1(int);
+                    ctor Class1(int);
                     method public void method1();
-                    method  void method2();
+                    method void method2();
                     method private void method3();
-                    method  void myVarargsMethod(int, java.lang.String...);
-                    field  int field3;
-                    field  float[][] field4;
-                    field  long[] field5;
+                    method void myVarargsMethod(int, java.lang.String...);
+                    field int field3;
+                    field float[][] field4;
+                    field long[] field5;
                     field private int field6;
                   }
-                   class Class2 {
-                    ctor  Class2();
+                  class Class2 {
+                    ctor Class2();
                     method public void method4();
                   }
                   private class Class2.Class3 {
                     ctor private Class2.Class3();
                     method public void method5();
                   }
-                   class Class4 {
-                    ctor  Class4();
+                  class Class4 {
+                    ctor Class4();
                     method public void method5();
                   }
                   public abstract interface MyInterface {
@@ -2835,7 +2847,7 @@ class ApiFileTest : DriverTest() {
             privateApi = """
                 package test.pkg {
                   public class Class1 extends test.pkg.PrivateParent implements test.pkg.MyInterface {
-                    ctor  Class1(int);
+                    ctor Class1(int);
                   }
                   private abstract class Class1.AmsTask extends java.util.concurrent.FutureTask {
                   }
@@ -2847,9 +2859,9 @@ class ApiFileTest : DriverTest() {
                     enum_constant public static final test.pkg.MyEnum BAR;
                     enum_constant public static final test.pkg.MyEnum FOO;
                   }
-                   class PrivateParent {
-                    ctor  PrivateParent();
-                    method  final java.lang.String getValue();
+                  class PrivateParent {
+                    ctor PrivateParent();
+                    method final java.lang.String getValue();
                   }
                 }
                 """,
@@ -2977,6 +2989,131 @@ class ApiFileTest : DriverTest() {
                     }
                 """,
             checkDoclava1 = false // doclava is unaware of @suppress
+        )
+    }
+
+    @Test
+    fun `Check skipping implicit final or deprecated override`() {
+        // Regression test for 122358225
+        check(
+            compatibilityMode = false,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+
+                    public class Parent {
+                        public void foo1() { }
+                        public void foo2() { }
+                        public void foo3() { }
+                        public void foo4() { }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+
+                    public final class Child1 extends Parent {
+                        private Child1() { }
+                        public final void foo1() { }
+                        public void foo2() { }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+
+                    /** @deprecated */
+                    @Deprecated
+                    public final class Child2 extends Parent {
+                        private Child2() { }
+                        /** @deprecated */
+                        @Deprecated
+                        public void foo3() { }
+                        public void foo4() { }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+
+                    /** @deprecated */
+                    @Deprecated
+                    public final class Child3 extends Parent {
+                        private Child3() { }
+                        public final void foo1() { }
+                        public void foo2() { }
+                        /** @deprecated */
+                        @Deprecated
+                        public void foo3() { }
+                        /** @deprecated */
+                        @Deprecated
+                        public final void foo4() { }
+                    }
+                    """
+                )
+            ),
+            api = """
+                package test.pkg {
+                  public final class Child1 extends test.pkg.Parent {
+                  }
+                  @Deprecated public final class Child2 extends test.pkg.Parent {
+                  }
+                  @Deprecated public final class Child3 extends test.pkg.Parent {
+                  }
+                  public class Parent {
+                    ctor public Parent();
+                    method public void foo1();
+                    method public void foo2();
+                    method public void foo3();
+                    method public void foo4();
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
+    fun `Ignore synchronized differences`() {
+        check(
+            compatibilityMode = false,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg2;
+
+                    public class Parent {
+                        public void foo1() { }
+                        public synchronized void foo2() { }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg2;
+
+                    public class Child1 extends Parent {
+                        private Child1() { }
+                        public synchronized void foo1() { }
+                        public void foo2() { }
+                    }
+                    """
+                )
+            ),
+            api = """
+                package test.pkg2 {
+                  public class Child1 extends test.pkg2.Parent {
+                  }
+                  public class Parent {
+                    ctor public Parent();
+                    method public void foo1();
+                    method public void foo2();
+                  }
+                }
+                """
         )
     }
 }

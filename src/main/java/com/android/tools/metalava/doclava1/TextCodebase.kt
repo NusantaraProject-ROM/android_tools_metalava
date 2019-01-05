@@ -16,10 +16,10 @@
 
 package com.android.tools.metalava.doclava1
 
-import com.android.ide.common.repository.GradleVersion
 import com.android.tools.metalava.ApiType
 import com.android.tools.metalava.CodebaseComparator
 import com.android.tools.metalava.ComparisonVisitor
+import com.android.tools.metalava.FileFormat
 import com.android.tools.metalava.JAVA_LANG_ANNOTATION
 import com.android.tools.metalava.JAVA_LANG_ENUM
 import com.android.tools.metalava.JAVA_LANG_OBJECT
@@ -77,7 +77,7 @@ class TextCodebase(location: File) : DefaultCodebase(location) {
      * Signature file format version, if found. Type "GradleVersion" is misleading; it's just a convenient
      * version class.
      */
-    var format: GradleVersion = GradleVersion.parse("1.0") // not specifying format: assumed to be doclava, 1.0
+    var format: FileFormat = FileFormat.V1 // not specifying format: assumed to be doclava, 1.0
 
     override fun getPackages(): PackageList {
         val list = ArrayList<PackageItem>(mPackages.values)
@@ -340,7 +340,8 @@ class TextCodebase(location: File) : DefaultCodebase(location) {
         fun computeDelta(
             baseFile: File,
             baseApi: Codebase,
-            signatureApi: Codebase
+            signatureApi: Codebase,
+            includeFieldsInApiDiff: Boolean = compatibility.includeFieldsInApiDiff
         ): TextCodebase {
             // Compute just the delta
             val delta = TextCodebase(baseFile)
@@ -367,7 +368,7 @@ class TextCodebase(location: File) : DefaultCodebase(location) {
                 }
 
                 override fun added(new: FieldItem) {
-                    if (!compatibility.includeFieldsInApiDiff) {
+                    if (!includeFieldsInApiDiff) {
                         return
                     }
                     val cls = getOrAddClass(new.containingClass())

@@ -17,14 +17,14 @@
 package com.android.tools.metalava.model
 
 import com.android.tools.metalava.JAVA_LANG_STRING
-import com.android.tools.metalava.options
+import com.android.tools.metalava.compatibility
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 
 class TypeItemTest {
     @Test
     fun test() {
-        options.omitCommonPackages = true
+        compatibility.omitCommonPackages = true
         assertThat(TypeItem.shortenTypes("@android.support.annotation.Nullable")).isEqualTo("@Nullable")
         assertThat(TypeItem.shortenTypes(JAVA_LANG_STRING)).isEqualTo("String")
         assertThat(TypeItem.shortenTypes("java.lang.reflect.Method")).isEqualTo("java.lang.reflect.Method")
