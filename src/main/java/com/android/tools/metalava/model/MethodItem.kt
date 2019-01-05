@@ -16,6 +16,7 @@
 
 package com.android.tools.metalava.model
 
+import com.android.tools.metalava.compatibility
 import com.android.tools.metalava.doclava1.TextCodebase
 import com.android.tools.metalava.model.visitors.ItemVisitor
 import com.android.tools.metalava.model.visitors.TypeVisitor
@@ -111,7 +112,7 @@ interface MethodItem : MemberItem {
     ): LinkedHashSet<ClassItem> {
 
         for (cls in throwsTypes()) {
-            if (predicate.test(cls)) {
+            if (predicate.test(cls) || cls.isTypeParameter && !compatibility.useErasureInThrows) {
                 classes.add(cls)
             } else {
                 // Excluded, but it may have super class throwables that are included; if so, include those
@@ -276,8 +277,8 @@ interface MethodItem : MemberItem {
                 return false
             }
 
-            // IntentService#onStart - is it here because they vary in deprecation status?
-            if (method.deprecated != superMethod.deprecated) {
+            if (method.deprecated != superMethod.deprecated &&
+                (!compatibility.hideDifferenceImplicit || !method.deprecated)) {
                 return false
             }
 

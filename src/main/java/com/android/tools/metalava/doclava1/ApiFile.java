@@ -16,9 +16,8 @@
 
 package com.android.tools.metalava.doclava1;
 
-import com.android.ide.common.repository.GradleVersion;
 import com.android.tools.lint.checks.infrastructure.ClassNameKt;
-import com.android.tools.metalava.SignatureFormatKt;
+import com.android.tools.metalava.FileFormat;
 import com.android.tools.metalava.model.AnnotationItem;
 import com.android.tools.metalava.model.DefaultModifierList;
 import com.android.tools.metalava.model.TypeParameterList;
@@ -37,6 +36,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import kotlin.Pair;
+import kotlin.text.StringsKt;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -49,7 +49,6 @@ import static com.android.tools.metalava.ConstantsKt.ANDROIDX_NULLABLE;
 import static com.android.tools.metalava.ConstantsKt.JAVA_LANG_ANNOTATION;
 import static com.android.tools.metalava.ConstantsKt.JAVA_LANG_ENUM;
 import static com.android.tools.metalava.ConstantsKt.JAVA_LANG_STRING;
-import static com.android.tools.metalava.SignatureFormatKt.SIGNATURE_FORMAT_PREFIX;
 import static com.android.tools.metalava.model.FieldItemKt.javaUnescapeString;
 
 //
@@ -71,25 +70,20 @@ public class ApiFile {
         }
     }
 
+    @SuppressWarnings("StatementWithEmptyBody")
     @VisibleForTesting
     public static TextCodebase parseApi(String filename, String apiText,
                                         Boolean kotlinStyleNulls) throws ApiParseException {
-        GradleVersion format = null;
-        if (apiText.startsWith(SIGNATURE_FORMAT_PREFIX)) {
-            int begin = SIGNATURE_FORMAT_PREFIX.length();
-            int end = apiText.indexOf('\n', begin);
-            if (end == -1) {
-                end = apiText.length();
-            } else if (end > 0 && apiText.charAt(end - 1) == '\r') {
-                end--;
+        FileFormat format = FileFormat.Companion.parseHeader(apiText);
+        if (format.isSignatureFormat()) {
+            if (kotlinStyleNulls == null || !kotlinStyleNulls) {
+                kotlinStyleNulls = format.useKotlinStyleNulls();
             }
-            String formatString = apiText.substring(begin, end).trim();
-            if (!formatString.isEmpty()) {
-                format = GradleVersion.tryParse(formatString);
-                if (kotlinStyleNulls == null) {
-                    kotlinStyleNulls = SignatureFormatKt.useKotlinStyleNulls(format.getMajor());
-                }
-            }
+        } else if (StringsKt.isBlank(apiText)) {
+            // Signature files are sometimes blank, particularly with show annotations
+            kotlinStyleNulls = false;
+        } else {
+            throw new ApiParseException("Unknown file format of " + filename);
         }
 
         if (apiText.contains("/*")) {
@@ -99,12 +93,8 @@ public class ApiFile {
         final Tokenizer tokenizer = new Tokenizer(filename, apiText.toCharArray());
         final TextCodebase api = new TextCodebase(new File(filename));
         api.setDescription("Codebase loaded from " + filename);
-        if (format != null) {
-            api.setFormat(format);
-        }
-        if (kotlinStyleNulls != null) {
-            api.setKotlinStyleNulls(kotlinStyleNulls);
-        }
+        api.setFormat(format);
+        api.setKotlinStyleNulls(kotlinStyleNulls);
 
         while (true) {
             String token = tokenizer.getToken();
@@ -180,6 +170,7 @@ public class ApiFile {
             token = tokenizer.requireToken();
         } else if ("interface".equals(token)) {
             isInterface = true;
+            modifiers.setAbstract(true);
             token = tokenizer.requireToken();
         } else if ("@interface".equals(token)) {
             // Annotation
@@ -242,6 +233,10 @@ public class ApiFile {
         }
         if (JAVA_LANG_ENUM.equals(ext)) {
             cl.setIsEnum(true);
+            // Above we marked all enums as static but for a top level class it's implicit
+            if (!cl.fullName().contains(".")) {
+                cl.getModifiers().setStatic(false);
+            }
         } else if (isAnnotation) {
             api.mapClassToInterface(cl, JAVA_LANG_ANNOTATION);
         } else if (api.implementsInterface(cl, JAVA_LANG_ANNOTATION)) {
@@ -423,6 +418,9 @@ public class ApiFile {
         name = token;
         method = new TextMethodItem(api, name, cl, modifiers, returnType, tokenizer.pos());
         method.setDeprecated(modifiers.isDeprecated());
+        if (cl.isInterface() && !modifiers.isDefault()) {
+            modifiers.setAbstract(true);
+        }
         method.setTypeParameterList(typeParameterList);
         if (typeParameterList instanceof TextTypeParameterList) {
             ((TextTypeParameterList) typeParameterList).setOwner(method);
@@ -754,7 +752,9 @@ public class ApiFile {
             if (typeString.endsWith("...")) {
                 modifiers.setVarArg(true);
             }
-            TextTypeItem typeInfo = api.obtainTypeFromString(typeString);
+            TextTypeItem typeInfo = api.obtainTypeFromString(typeString,
+                (TextClassItem) method.containingClass(),
+                method.typeParameterList());
 
             String name;
             String publicName;

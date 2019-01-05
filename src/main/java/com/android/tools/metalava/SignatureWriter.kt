@@ -50,8 +50,7 @@ class SignatureWriter(
 ) {
     init {
         if (options.includeSignatureFormatVersion) {
-            writer.print(SIGNATURE_FORMAT_PREFIX)
-            writer.println(CURRENT_SIGNATURE_FORMAT)
+            writer.print(options.outputFormat.header())
         }
     }
 
@@ -139,10 +138,6 @@ class SignatureWriter(
     override fun visitClass(cls: ClassItem) {
         writer.print("  ")
 
-        if (compatibility.extraSpaceForEmptyModifiers && cls.isPackagePrivate && cls.isPackagePrivate) {
-            writer.print(" ")
-        }
-
         writeModifiers(cls)
 
         if (cls.isAnnotationType()) {
@@ -185,7 +180,7 @@ class SignatureWriter(
             includeDeprecated = true,
             includeAnnotations = compatibility.annotationsInSignatures,
             skipNullnessAnnotations = options.outputKotlinStyleNulls,
-            omitCommonPackages = options.omitCommonPackages
+            omitCommonPackages = compatibility.omitCommonPackages
         )
     }
 
@@ -317,7 +312,7 @@ class SignatureWriter(
         )
 
         // Strip java.lang. prefix?
-        if (options.omitCommonPackages) {
+        if (compatibility.omitCommonPackages) {
             typeString = TypeItem.shortenTypes(typeString)
         }
 

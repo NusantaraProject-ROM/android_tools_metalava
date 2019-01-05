@@ -155,8 +155,11 @@ fun run(
         exitValue = false
     }
 
-    if (options.verbose && options.updateBaseline) {
-        options.baseline?.dumpStats(options.stdout)
+    if (options.updateBaseline) {
+        if (options.verbose) {
+            options.baseline?.dumpStats(options.stdout)
+        }
+        stdout.println("$PROGRAM_NAME wrote updated baseline to ${options.baseline?.file}")
     }
     options.baseline?.close()
 
@@ -482,23 +485,50 @@ fun processNonCodebaseFlags() {
                     kotlinStyleNulls = options.inputKotlinStyleNulls
                 )
 
-                TextCodebase.computeDelta(baseFile, baseApi, signatureApi)
+                val includeFields =
+                    if (convert.outputFormat == FileFormat.V2) true else compatibility.includeFieldsInApiDiff
+                TextCodebase.computeDelta(baseFile, baseApi, signatureApi, includeFields)
             } else {
                 signatureApi
             }
 
-        if (outputApi.isEmpty() && baseFile != null) {
+        if (outputApi.isEmpty() && baseFile != null && compatibility.compat) {
             // doclava compatibility: emits error warning instead of emitting empty <api/> element
             options.stdout.println("No API change detected, not generating diff")
         } else {
-            val output = convert.toXmlFile
-            if (output.path.endsWith(DOT_TXT)) {
-                createReportFile(outputApi, output, "Diff API File") { printWriter ->
-                    SignatureWriter(printWriter, apiEmit, apiReference, signatureApi.preFiltered && !strip)
+            val output = convert.outputFile
+            if (convert.outputFormat == FileFormat.JDIFF) {
+                // See JDiff's XMLToAPI#nameAPI
+                val apiName = convert.outputFile.nameWithoutExtension.replace(' ', '_')
+                createReportFile(outputApi, output, "JDiff File") { printWriter ->
+                    JDiffXmlWriter(printWriter, apiEmit, apiReference, signatureApi.preFiltered && !strip, apiName)
                 }
             } else {
-                createReportFile(outputApi, output, "JDiff File") { printWriter ->
-                    JDiffXmlWriter(printWriter, apiEmit, apiReference, signatureApi.preFiltered && !strip)
+                val prevOptions = options
+                val prevCompatibility = compatibility
+                try {
+                    when (convert.outputFormat) {
+                        FileFormat.V1 -> {
+                            compatibility = Compatibility(true)
+                            options = Options(emptyArray(), options.stdout, options.stderr)
+                            FileFormat.V1.configureOptions(options, compatibility)
+                        }
+                        FileFormat.V2 -> {
+                            compatibility = Compatibility(false)
+                            options = Options(emptyArray(), options.stdout, options.stderr)
+                            FileFormat.V2.configureOptions(options, compatibility)
+                        }
+                        else -> error("Unsupported format ${convert.outputFormat}")
+                    }
+
+                    createReportFile(outputApi, output, "Diff API File") { printWriter ->
+                        SignatureWriter(
+                            printWriter, apiEmit, apiReference, signatureApi.preFiltered && !strip
+                        )
+                    }
+                } finally {
+                    options = prevOptions
+                    compatibility = prevCompatibility
                 }
             }
         }
@@ -525,7 +555,7 @@ fun checkCompatibility(
             )
         }
 
-    if (current is TextCodebase && current.format.major > 1 && options.outputFormat < 1) {
+    if (current is TextCodebase && current.format > FileFormat.V1 && options.outputFormat == FileFormat.V1) {
         throw DriverException("Cannot perform compatibility check of signature file $signatureFile in format ${current.format} without analyzing current codebase with $ARG_FORMAT=${current.format}")
     }
 
@@ -734,7 +764,7 @@ private fun loadFromSources(): Codebase {
 
     if (options.checkApi) {
         val localTimer = Stopwatch.createStarted()
-        ApiLint().check(codebase)
+        ApiLint.check(codebase)
         progress("\n$PROGRAM_NAME ran api-lint in ${localTimer.elapsed(SECONDS)} seconds")
     }
 
@@ -881,9 +911,6 @@ private fun createStubFiles(stubDir: File, codebase: Codebase, docStubs: Boolean
     val localTimer = Stopwatch.createStarted()
     val prevCompatibility = compatibility
     if (compatibility.compat) {
-        // if (!options.quiet) {
-        //    options.stderr.println("Warning: Turning off compat mode when generating stubs")
-        // }
         compatibility = Compatibility(false)
         // But preserve the setting for whether we want to erase throws signatures (to ensure the API
         // stays compatible)

@@ -120,6 +120,10 @@ open class TextMethodItem(
 
     override fun typeParameterList(): TypeParameterList = typeParameterList
 
+    override fun typeParameterListOwnerParent(): TypeParameterListOwner? {
+        return containingClass() as TextClassItem?
+    }
+
     override fun resolveParameter(variable: String): TypeParameterItem? {
         for (t in typeParameterList.typeParameters()) {
             if (t.simpleName() == variable) {

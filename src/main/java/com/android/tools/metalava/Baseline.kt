@@ -37,7 +37,13 @@ import java.io.PrintWriter
 
 const val DEFAULT_BASELINE_NAME = "baseline.txt"
 
-class Baseline(val file: File, var create: Boolean = !file.isFile) {
+class Baseline(
+    val file: File,
+    var create: Boolean = !file.isFile,
+    private var format: FileFormat = FileFormat.BASELINE,
+    private var headerComment: String = ""
+) {
+
     /** Map from issue id to element id to message */
     private val map = HashMap<Errors.Error, MutableMap<String, String>>()
 
@@ -193,6 +199,9 @@ class Baseline(val file: File, var create: Boolean = !file.isFile) {
     private fun write() {
         if (!map.isEmpty()) {
             val sb = StringBuilder()
+            sb.append(format.header())
+            sb.append(headerComment)
+
             map.keys.asSequence().sortedBy { it.name ?: it.code.toString() }.forEach { error ->
                 val idMap = map[error]
                 idMap?.keys?.sorted()?.forEach { elementId ->

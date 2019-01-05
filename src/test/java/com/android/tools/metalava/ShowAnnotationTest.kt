@@ -246,7 +246,7 @@ class ShowAnnotationTest : DriverTest() {
             ),
             // Empty API: showUnannotated=false
             api = """
-                """,
+                """.trimIndent(),
             includeSystemApiAnnotations = true,
             extraArguments = arrayOf(
                 ARG_SHOW_ANNOTATION, "android.annotation.TestApi",

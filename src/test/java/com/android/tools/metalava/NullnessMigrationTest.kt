@@ -23,7 +23,7 @@ class NullnessMigrationTest : DriverTest() {
     @Test
     fun `Test Kotlin-style null signatures`() {
         check(
-            compatibilityMode = false,
+            format = FileFormat.V3,
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -42,6 +42,7 @@ class NullnessMigrationTest : DriverTest() {
                 androidxNullableSource
             ),
             api = """
+                // Signature format: 3.0
                 package test.pkg {
                   public class MyTest {
                     ctor public MyTest();
@@ -327,7 +328,7 @@ class NullnessMigrationTest : DriverTest() {
     @Test
     fun `Check type use annotations`() {
         check(
-            format = 2, // compat=false, kotlin-style-nulls=false
+            format = FileFormat.V2, // compat=false, kotlin-style-nulls=false
             sourceFiles = *arrayOf(
                 java(
                     """
