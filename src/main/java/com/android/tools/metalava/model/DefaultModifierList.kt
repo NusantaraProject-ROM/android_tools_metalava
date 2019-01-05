@@ -16,6 +16,7 @@
 
 package com.android.tools.metalava.model
 
+import com.android.tools.metalava.compatibility
 import com.android.tools.metalava.model.psi.PsiModifierItem
 
 open class DefaultModifierList(
@@ -245,13 +246,24 @@ open class DefaultModifierList(
     override fun equivalentTo(other: ModifierList): Boolean {
         if (other is PsiModifierItem) {
             val flags2 = other.flags
-            val mask = EQUIVALENCE_MASK
+            val mask = if (compatibility.includeSynchronized) COMPAT_EQUIVALENCE_MASK else EQUIVALENCE_MASK
 
-            // Skipping the "default" flag
-            // TODO: Compatibility: skipNativeModifier and skipStrictFpModifier modifier flags!
-            // if (!compatibility.skipNativeModifier && isNative() != other.isNative()) return false
-            // if (!compatibility.skipStrictFpModifier && isStrictFp() != other.isStrictFp()) return false
-            return flags and mask == flags2 and mask
+            val masked1 = flags and mask
+            val masked2 = flags2 and mask
+            val same = masked1 xor masked2
+            if (same == 0) {
+                return true
+            } else if (compatibility.hideDifferenceImplicit) {
+                if (same == FINAL &&
+                    // Only differ in final: not significant if implied by containing class
+                    isFinal() && (owner as? MethodItem)?.containingClass()?.modifiers?.isFinal() == true) {
+                    return true
+                } else if (same == DEPRECATED &&
+                    // Only differ in deprecated: not significant if implied by containing class
+                    isDeprecated() && (owner as? MethodItem)?.containingClass()?.deprecated == true) {
+                    return true
+                }
+            }
         }
         return false
     }
@@ -309,7 +321,9 @@ open class DefaultModifierList(
          * to consider whether an override of a method is different from its super implementation
          */
         private const val EQUIVALENCE_MASK = PUBLIC or PROTECTED or PRIVATE or STATIC or ABSTRACT or
-            FINAL or TRANSIENT or VOLATILE or SYNCHRONIZED or DEPRECATED or VARARG or
+            FINAL or TRANSIENT or VOLATILE or DEPRECATED or VARARG or
             SEALED or INTERNAL or INFIX or OPERATOR or SUSPEND
+
+        private const val COMPAT_EQUIVALENCE_MASK = EQUIVALENCE_MASK or SYNCHRONIZED
     }
 }

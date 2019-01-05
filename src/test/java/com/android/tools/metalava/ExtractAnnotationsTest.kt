@@ -16,7 +16,6 @@
 
 package com.android.tools.metalava
 
-import org.junit.Ignore
 import org.junit.Test
 
 @SuppressWarnings("ALL") // Sample code
@@ -343,7 +342,6 @@ class ExtractAnnotationsTest : DriverTest() {
         )
     }
 
-    @Ignore("Not working reliably -- fails when run and passes when debugged...")
     @Test
     fun `Include merged annotations in exported source annotations`() {
         check(
@@ -352,7 +350,7 @@ class ExtractAnnotationsTest : DriverTest() {
             outputKotlinStyleNulls = false,
             includeSystemApiAnnotations = false,
             omitCommonPackages = false,
-            warnings = "error: Unexpected reference to Nonexistent.Field [AnnotationExtraction]",
+            warnings = "error: Unexpected reference to Nonexistent.Field [InternalError]",
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -361,6 +359,17 @@ class ExtractAnnotationsTest : DriverTest() {
                     public class MyTest {
                         public void test(int arg) { }
                     }"""
+                ),
+                java(
+                    """
+                        package java.util;
+                        public class Calendar {
+                            public static final int ERA = 1;
+                            public static final int YEAR = 2;
+                            public static final int MONTH = 3;
+                            public static final int WEEK_OF_YEAR = 4;
+                        }
+                    """
                 )
             ),
             mergeXmlAnnotations = """<?xml version="1.0" encoding="UTF-8"?>

@@ -29,6 +29,7 @@ import com.intellij.psi.PsiAnnotationMemberValue
 import com.intellij.psi.PsiArrayInitializerMemberValue
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassObjectAccessExpression
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiLiteral
 import com.intellij.psi.PsiReference
@@ -40,6 +41,7 @@ import org.jetbrains.uast.UBinaryExpression
 import org.jetbrains.uast.UBinaryExpressionWithType
 import org.jetbrains.uast.UBlockExpression
 import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.ULambdaExpression
 import org.jetbrains.uast.ULiteralExpression
@@ -62,8 +64,12 @@ open class CodePrinter(
     /** An optional filter to use to determine if we should emit a reference to an item */
     private val filterReference: Predicate<Item>? = null
 ) {
-    open fun warning(message: String) {
-        reporter.report(Errors.INTERNAL_ERROR, null as Item?, message)
+    open fun warning(message: String, psiElement: PsiElement? = null) {
+        reporter.report(Errors.INTERNAL_ERROR, psiElement, message)
+    }
+
+    open fun warning(message: String, uElement: UElement) {
+        warning(message, uElement.sourcePsi ?: uElement.javaPsi)
     }
 
     /** Given an annotation member value, returns the corresponding Java source expression */
@@ -186,7 +192,7 @@ open class CodePrinter(
 
                     val declaringClass = field.containingClass
                     if (declaringClass == null) {
-                        warning("No containing class found for " + field.name)
+                        warning("No containing class found for " + field.name, field)
                         return false
                     }
                     val qualifiedName = declaringClass.qualifiedName
@@ -225,7 +231,7 @@ open class CodePrinter(
                 }
                 else -> {
                     if (skipUnknown) {
-                        warning("Unexpected reference to $expression")
+                        warning("Unexpected reference to $expression", expression)
                         return false
                     }
                     sb.append(expression.asSourceString())
@@ -361,7 +367,7 @@ open class CodePrinter(
             }
         }
 
-        warning("Unexpected annotation expression of type ${expression.javaClass} and is $expression")
+        warning("Unexpected annotation expression of type ${expression.javaClass} and is $expression", expression)
 
         return false
     }

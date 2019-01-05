@@ -77,7 +77,7 @@ class TextTypeItemTest {
                 method public D build();
               }
             }
-        """, false
+        """.trimIndent(), false
         )
         val cls = codebase.findClass("androidx.navigation.NavDestinationBuilder")
         val method = cls?.findMethod("build", "") as TextMethodItem
@@ -113,7 +113,7 @@ class TextTypeItemTest {
                 method public D build();
               }
             }
-        """, false
+        """.trimIndent(), false
         )
         val cls = codebase.findClass("test.pkg.TestClass")
         val method = cls?.findMethod("build", "") as TextMethodItem
@@ -145,7 +145,7 @@ class TextTypeItemTest {
                 method public java.util.Set<java.util.Map.Entry<K, V>> entrySet();
               }
             }
-        """, false
+        """.trimIndent(), false
         )
         val cls = codebase.findClass("test.pkg.EnumMap")
         val method = cls?.findMethod("clone", "") as TextMethodItem

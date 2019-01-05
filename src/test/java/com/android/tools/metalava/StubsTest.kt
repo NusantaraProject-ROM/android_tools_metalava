@@ -1441,7 +1441,7 @@ class StubsTest : DriverTest() {
                 package test.pkg {
                   public class Foo {
                     ctor public Foo();
-                    method public void foo(int, java.util.Map<java.lang.String, java.lang.String>!);
+                    method public void foo(int, java.util.Map<java.lang.String, java.lang.String>);
                   }
                 }
                 """
@@ -1450,7 +1450,7 @@ class StubsTest : DriverTest() {
                 package test.pkg {
                   public class Foo {
                     ctor public Foo();
-                    method public void foo(int, java.util.Map<java.lang.String,java.lang.String>!);
+                    method public void foo(int, java.util.Map<java.lang.String,java.lang.String>);
                   }
                 }
                 """
@@ -2242,18 +2242,18 @@ class StubsTest : DriverTest() {
                   }
                   public class Generics.MyClass<X, Y extends java.lang.Number> extends test.pkg.Generics.PublicParent<X,Y> implements test.pkg.Generics.PublicInterface<X,Y> {
                     ctor public Generics.MyClass();
-                    method public java.util.Map<X,java.util.Map<Y,java.lang.String>>! createMap(java.util.List<X>!) throws java.io.IOException;
-                    method public java.util.List<X>! foo();
+                    method public java.util.Map<X,java.util.Map<Y,java.lang.String>> createMap(java.util.List<X>) throws java.io.IOException;
+                    method public java.util.List<X> foo();
                   }
                   public static interface Generics.PublicInterface<A, B> {
-                    method public java.util.Map<A,java.util.Map<B,java.lang.String>>! createMap(java.util.List<A>!) throws java.io.IOException;
+                    method public java.util.Map<A,java.util.Map<B,java.lang.String>> createMap(java.util.List<A>) throws java.io.IOException;
                   }
                   public abstract class Generics.PublicParent<A, B extends java.lang.Number> {
                     ctor public Generics.PublicParent();
-                    method protected abstract java.util.List<A>! foo();
+                    method protected abstract java.util.List<A> foo();
                   }
                 }
-                    """,
+                """,
             source = """
                     package test.pkg;
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
@@ -3635,7 +3635,7 @@ class StubsTest : DriverTest() {
             package test.pkg {
               public class Foo {
                 ctor public Foo();
-                method @Deprecated protected boolean inClass(String!);
+                method @Deprecated protected boolean inClass(String);
               }
             }
             """,

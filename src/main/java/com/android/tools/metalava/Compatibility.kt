@@ -31,9 +31,6 @@ class Compatibility(
     val compat: Boolean = COMPAT_MODE_BY_DEFAULT
 ) {
 
-    /** Whether to inline fields from implemented interfaces into concrete classes */
-    var inlineInterfaceFields: Boolean = compat
-
     /** In signature files, use "implements" instead of "extends" for the super class of
      * an interface */
     var extendsForInterfaceSuperClass: Boolean = compat
@@ -56,12 +53,6 @@ class Compatibility(
      * ("deprecated" isn't a real modifier, so in "standard" mode it's listed first, as if it was the
      * `@Deprecated` annotation before the modifier list */
     var nonstandardModifierOrder: Boolean = compat
-
-    /** In signature files, skip the native modifier from the modifier lists */
-    var skipNativeModifier: Boolean = true
-
-    /** In signature files, skip the strictfp modifier from the modifier lists */
-    var skipStrictFpModifier: Boolean = true
 
     /** Whether to include instance methods in annotation classes for the annotation properties */
     var skipAnnotationInstanceMethods: Boolean = compat
@@ -96,46 +87,13 @@ class Compatibility(
      */
     var filterThrowsClasses: Boolean = !compat
 
-    /**
-     * Include a single space in front of package private classes with no other modifiers
-     * (this doesn't align well, but is supported to make the output 100% identical to the
-     * doclava1 format
-     */
-    var extraSpaceForEmptyModifiers: Boolean = compat
-
     /** Format `Map<K,V>` as `Map<K, V>` */
     var spaceAfterCommaInTypes: Boolean = compat
-
-    /**
-     * Doclava1 sorts classes/interfaces by class name instead of qualified name
-     */
-    var sortClassesBySimpleName: Boolean = compat
 
     /**
      * Doclava1 omits type parameters in interfaces (in signature files, not in stubs)
      */
     var omitTypeParametersInInterfaces: Boolean = compat
-
-    /**
-     * Doclava1 sorted the methods like this:
-     *
-     *      public final class RoundingMode extends java.lang.Enum {
-     *          method public static java.math.RoundingMode valueOf(java.lang.String);
-     *          method public static java.math.RoundingMode valueOf(int);
-     *          ...
-     *
-     * Note how the two valueOf methods are out of order. With this compatibility mode,
-     * we try to perform the same sorting.
-     */
-    var sortEnumValueOfMethodFirst: Boolean = compat
-
-    /**
-     * Whether packages should be treated as recursive for documentation. In other words,
-     * if a directory has a `packages.html` file containing a `@hide` comment, then
-     * all "sub" packages (directories below this one) will also inherit the same comment.
-     * Java packages aren't supposed to work that way, but doclava does.
-     */
-    var inheritPackageDocs: Boolean = compat
 
     /** Force methods named "values" in enums to be marked final. This was done by
      * doclava1 with this comment:
@@ -175,7 +133,7 @@ class Compatibility(
     /**
      * Whether to include parameter names in the signature file
      */
-    var parameterNames: Boolean = true
+    var parameterNames: Boolean = !compat
 
     /**
      * *Some* signatures for doclava1 wrote "<?>" as "<? extends java.lang.Object>",
@@ -183,6 +141,21 @@ class Compatibility(
      * signature files look like the old ones for the specific methods which did this.
      */
     var includeExtendsObjectInWildcard = compat
+
+    /**
+     * Whether deprecation should be shown in signature files as an annotation
+     * instead of a pseudo-modifier
+     */
+    var deprecatedAsAnnotation = !compat
+
+    /** Whether synchronized should be part of the output */
+    var includeSynchronized = compat
+
+    /** Whether we should omit common packages such as java.lang.* and kotlin.* from signature output */
+    var omitCommonPackages = !compat
+
+    /** Whether we should explicitly include retention when class even if not explicitly defined */
+    var explicitlyListClassRetention = !compat
 
     /**
      * If true, a @Deprecated class will automatically deprecate all its inner classes
@@ -195,6 +168,12 @@ class Compatibility(
      * including inner classes; for that see [propagateDeprecatedInnerClasses]) as well.
      */
     var propagateDeprecatedMembers = !compat
+
+    /**
+     * If an overriding method differs from its super method only by final or deprecated
+     * and the containing class is final or deprecated, skip it in the signature file
+     */
+    var hideDifferenceImplicit = !compat
 
     /** Whether inner enums should be listed as static in the signature file. */
     var staticEnums = compat
@@ -223,6 +202,20 @@ class Compatibility(
      * Doclava was missing enum fields in JDiff reports
      */
     var xmlSkipEnumFields = compat
+
+    /**
+     * Doclava was missing annotation instance methods in JDiff reports
+     */
+    var xmlSkipAnnotationMethods = compat
+
+    /** Doclava lists character field values as integers instead of chars */
+    var xmlCharAsInt = compat
+
+    /**
+     * Doclava listed the superclass of annotations as
+     * java.lang.Object.
+     */
+    var xmlAnnotationAsObject = compat
 
     // Other examples: sometimes we sort by qualified name, sometimes by full name
 }

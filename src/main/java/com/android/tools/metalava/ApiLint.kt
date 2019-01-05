@@ -143,67 +143,12 @@ import java.util.function.Predicate
  * The [ApiLint] analyzer checks the API against a known set of preferred API practices
  * by the Android API council.
  */
-class ApiLint {
-    fun check(codebase: Codebase) {
-        val prevCount = reporter.totalCount
-
-        // The previous Kotlin interop tests are also part of API lint now (though they can be
-        // run independently as well; therefore, only run them here if not running separately)
-        val kotlinInterop = if (!options.checkKotlinInterop) KotlinInteropChecks() else null
-
-        codebase.accept(object : ApiVisitor(
-            // Sort by source order such that warnings follow source line number order
-            methodComparator = MethodItem.sourceOrderComparator,
-            fieldComparator = FieldItem.comparator
-        ) {
-            override fun skip(item: Item): Boolean {
-                return super.skip(item) || item is ClassItem && !isInteresting(item)
-            }
-
-            private var isKotlin = false
-
-            override fun visitClass(cls: ClassItem) {
-                val methods = cls.filteredMethods(filterEmit).asSequence()
-                val fields = cls.filteredFields(filterEmit, showUnannotated).asSequence()
-                val constructors = cls.filteredConstructors(filterEmit)
-                val superClass = cls.filteredSuperclass(filterReference)
-                val interfaces = cls.filteredInterfaceTypes(filterReference).asSequence()
-                val allMethods = methods.asSequence() + constructors.asSequence()
-                checkClass(
-                    cls, methods, constructors, allMethods, fields, superClass, interfaces,
-                    filterReference
-                )
-
-                isKotlin = cls.isKotlin()
-            }
-
-            override fun visitMethod(method: MethodItem) {
-                checkMethod(method, filterReference)
-                val returnType = method.returnType()
-                if (returnType != null) {
-                    checkType(returnType, method)
-                }
-                for (parameter in method.parameters()) {
-                    checkType(parameter.type(), parameter)
-                }
-                kotlinInterop?.checkMethod(method, isKotlin)
-            }
-
-            override fun visitField(field: FieldItem) {
-                checkField(field)
-                checkType(field.type(), field)
-                kotlinInterop?.checkField(field, isKotlin)
-            }
-        })
-
-        val apiLintIssues = reporter.totalCount - prevCount
-        if (apiLintIssues > 0) {
-            // We've reported API lint violations; emit some verbiage to explain
-            // how to suppress the error rules.
-            options.stdout.println("$apiLintIssues new API lint issues were found. See tools/metalava/API-LINT.md for how to handle these.")
-        }
-    }
-
+class ApiLint(private var codebase: Codebase) : ApiVisitor(
+    // Sort by source order such that warnings follow source line number order
+    methodComparator = MethodItem.sourceOrderComparator,
+    fieldComparator = FieldItem.comparator,
+    ignoreShown = options.showUnannotated
+) {
     private fun report(id: Error, item: Item, message: String) {
         // Don't flag api warnings on deprecated APIs; these are obviously already known to
         // be problematic.
@@ -211,7 +156,69 @@ class ApiLint {
             return
         }
 
+        // With show annotations we might be flagging API that is filtered out: hide these here
+        val testItem = if (item is ParameterItem) item.containingMethod() else item
+        if (!filterEmit.test(testItem)) {
+            return
+        }
+
         reporter.report(id, item, message)
+    }
+
+    private fun check() {
+        val prevCount = reporter.totalCount
+
+        codebase.accept(this)
+
+        val apiLintIssues = reporter.totalCount - prevCount
+        if (apiLintIssues > 0) {
+            // We've reported API lint violations; emit some verbiage to explain
+            // how to suppress the error rules.
+            options.stdout.println("\n$apiLintIssues new API lint issues were found. See tools/metalava/API-LINT.md for how to handle these.")
+        }
+    }
+
+    override fun skip(item: Item): Boolean {
+        return super.skip(item) || item is ClassItem && !isInteresting(item)
+    }
+
+    // The previous Kotlin interop tests are also part of API lint now (though they can be
+    // run independently as well; therefore, only run them here if not running separately)
+    private val kotlinInterop = if (!options.checkKotlinInterop) KotlinInteropChecks() else null
+
+    private var isKotlin = false
+
+    override fun visitClass(cls: ClassItem) {
+        val methods = cls.filteredMethods(filterReference).asSequence()
+        val fields = cls.filteredFields(filterReference, showUnannotated).asSequence()
+        val constructors = cls.filteredConstructors(filterReference)
+        val superClass = cls.filteredSuperclass(filterReference)
+        val interfaces = cls.filteredInterfaceTypes(filterReference).asSequence()
+        val allMethods = methods.asSequence() + constructors.asSequence()
+        checkClass(
+            cls, methods, constructors, allMethods, fields, superClass, interfaces,
+            filterReference
+        )
+
+        isKotlin = cls.isKotlin()
+    }
+
+    override fun visitMethod(method: MethodItem) {
+        checkMethod(method, filterReference)
+        val returnType = method.returnType()
+        if (returnType != null) {
+            checkType(returnType, method)
+        }
+        for (parameter in method.parameters()) {
+            checkType(parameter.type(), parameter)
+        }
+        kotlinInterop?.checkMethod(method, isKotlin)
+    }
+
+    override fun visitField(field: FieldItem) {
+        checkField(field)
+        checkType(field.type(), field)
+        kotlinInterop?.checkField(field, isKotlin)
     }
 
     private fun checkType(type: TypeItem, item: Item) {
@@ -3287,6 +3294,10 @@ class ApiLint {
                     s.replace(acronym, replacement)
                 }
             }
+        }
+
+        fun check(codebase: Codebase) {
+            ApiLint(codebase).check()
         }
     }
 }

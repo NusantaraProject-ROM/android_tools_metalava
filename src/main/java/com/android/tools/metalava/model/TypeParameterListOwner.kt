@@ -20,4 +20,7 @@ interface TypeParameterListOwner {
     fun typeParameterList(): TypeParameterList
     /** Given a variable in this owner, resolves to a type parameter item */
     fun resolveParameter(variable: String): TypeParameterItem?
+
+    /** Parent type parameter list owner */
+    fun typeParameterListOwnerParent(): TypeParameterListOwner?
 }
