@@ -296,6 +296,9 @@ class Options(
     /** Whether to validate the API for best practices */
     var checkApi = false
 
+    /** If non null, an API file to use to hide for controlling what parts of the API are new */
+    var checkApiBaselineApiFile: File? = null
+
     /** Whether to validate the API for Kotlin interop */
     var checkKotlinInterop = false
 
@@ -540,6 +543,8 @@ class Options(
         var androidJarPatterns: MutableList<String>? = null
         var currentCodeName: String? = null
         var currentJar: File? = null
+        var updateBaselineFile: File? = null
+        var baselineFile: File? = null
 
         var index = 0
         while (index < args.size) {
@@ -704,18 +709,20 @@ class Options(
 
                 ARG_BASELINE -> {
                     val relative = getValue(args, ++index)
-                    val file = stringToNewOrExistingFile(relative)
-                    assert(baseline == null) { "Only one baseline is allowed; found both ${baseline!!.file} and $file" }
-                    val headerComment = if (relative.contains("frameworks/base/"))
-                        "// See tools/metalava/API-LINT.md for how to update this file.\n\n"
-                    else
-                        ""
-                    baseline = Baseline(file, updateBaseline || !file.isFile, FileFormat.BASELINE, headerComment)
+                    assert(baselineFile == null) { "Only one baseline is allowed; found both $baselineFile and $relative" }
+                    baselineFile = stringToExistingFile(relative)
                 }
 
                 ARG_UPDATE_BASELINE -> {
                     updateBaseline = true
-                    baseline?.create = true
+                    if (index < args.size - 1) {
+                        val nextArg = args[index + 1]
+                        if (!nextArg.startsWith("-")) {
+                            val file = stringToNewOrExistingFile(nextArg)
+                            index++
+                            updateBaselineFile = file
+                        }
+                    }
                 }
 
                 ARG_PUBLIC, "-public" -> docLevel = DocLevel.PUBLIC
@@ -864,7 +871,20 @@ class Options(
                     // lintsAreErrors = true
                 }
 
-                ARG_API_LINT -> checkApi = true
+                ARG_API_LINT -> {
+                    checkApi = true
+                    if (index < args.size - 1) {
+                        val nextArg = args[index + 1]
+                        if (!nextArg.startsWith("-")) {
+                            val file = stringToExistingFile(nextArg)
+                            if (file.isFile) {
+                                index++
+                                checkApiBaselineApiFile = file
+                            }
+                        }
+                    }
+                }
+
                 ARG_CHECK_KOTLIN_INTEROP -> checkKotlinInterop = true
 
                 ARG_COLOR -> color = true
@@ -1266,11 +1286,19 @@ class Options(
             artifactRegistrations.clear()
         }
 
-        if (baseline == null) {
+        if (baselineFile == null) {
             val defaultBaseline = getDefaultBaselineFile()
-            if (defaultBaseline != null && (defaultBaseline.isFile || updateBaseline)) {
-                baseline = Baseline(defaultBaseline, !defaultBaseline.isFile || updateBaseline)
+            if (defaultBaseline != null && defaultBaseline.isFile) {
+                baseline = Baseline(defaultBaseline, updateBaselineFile)
+            } else if (updateBaselineFile != null) {
+                baseline = Baseline(null, updateBaselineFile)
             }
+        } else {
+            val headerComment = if (baselineFile.path.contains("frameworks/base/"))
+                "// See tools/metalava/API-LINT.md for how to update this file.\n\n"
+            else
+                ""
+            baseline = Baseline(baselineFile, updateBaselineFile, headerComment)
         }
 
         checkFlagConsistency()
@@ -1764,7 +1792,8 @@ class Options(
                 "released API, respectively. Different compatibility checks apply in the two scenarios. " +
                 "For example, to check the code base against the current public API, use " +
                 "$ARG_CHECK_COMPATIBILITY:api:current.",
-            ARG_API_LINT, "Check API for Android API best practices",
+            "$ARG_API_LINT [api file]", "Check API for Android API best practices. If a signature file is " +
+                "provided, only the APIs that are new since the API will be checked.",
             ARG_CHECK_KOTLIN_INTEROP, "Check API intended to be used from both Kotlin and Java for interoperability " +
                 "issues",
             "$ARG_MIGRATE_NULLNESS <api file>", "Compare nullness information with the previous stable API " +
@@ -1777,8 +1806,10 @@ class Options(
             "$ARG_HIDE <id>", "Hide/skip issues of the given id",
             "$ARG_BASELINE <file>", "Filter out any errors already reported in the given baseline file, or " +
                 "create if it does not already exist",
-            ARG_UPDATE_BASELINE, "Rewrite all existing baselines with the current set of warnings. If some " +
-                "warnings have been fixed, this will delete them from the baseline files.",
+            "$ARG_UPDATE_BASELINE [file]", "Rewrite the existing baseline file with the current set of warnings. " +
+                "If some warnings have been fixed, this will delete them from the baseline files. If a file " +
+                "is provided, the updated baseline is written to the given file; otherwise the original source " +
+                "baseline file is updated.",
 
             "", "\nJDiff:",
             "$ARG_XML_API <file>", "Like $ARG_API, but emits the API in the JDiff XML format instead",

@@ -764,7 +764,18 @@ private fun loadFromSources(): Codebase {
 
     if (options.checkApi) {
         val localTimer = Stopwatch.createStarted()
-        ApiLint.check(codebase)
+        // See if we should provide a previous codebase to provide a delta from?
+        val previousApiFile = options.checkApiBaselineApiFile
+        val previous =
+            when {
+                previousApiFile == null -> null
+                previousApiFile.path.endsWith(SdkConstants.DOT_JAR) -> loadFromJarFile(previousApiFile)
+                else -> SignatureFileLoader.load(
+                    file = previousApiFile,
+                    kotlinStyleNulls = options.inputKotlinStyleNulls
+                )
+            }
+        ApiLint.check(codebase, previous)
         progress("\n$PROGRAM_NAME ran api-lint in ${localTimer.elapsed(SECONDS)} seconds")
     }
 

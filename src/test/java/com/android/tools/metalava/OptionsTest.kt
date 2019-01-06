@@ -201,7 +201,9 @@ Diffs and Checks:
                                           to check the code base against the current
                                           public API, use
                                           --check-compatibility:api:current.
---api-lint                                Check API for Android API best practices
+--api-lint [api file]                     Check API for Android API best practices. If a
+                                          signature file is provided, only the APIs that
+                                          are new since the API will be checked.
 --check-kotlin-interop                    Check API intended to be used from both Kotlin
                                           and Java for interoperability issues
 --migrate-nullness <api file>             Compare nullness information with the previous
@@ -217,10 +219,13 @@ Diffs and Checks:
 --baseline <file>                         Filter out any errors already reported in the
                                           given baseline file, or create if it does not
                                           already exist
---update-baseline                         Rewrite all existing baselines with the current
-                                          set of warnings. If some warnings have been
-                                          fixed, this will delete them from the baseline
-                                          files.
+--update-baseline [file]                  Rewrite the existing baseline file with the
+                                          current set of warnings. If some warnings have
+                                          been fixed, this will delete them from the
+                                          baseline files. If a file is provided, the
+                                          updated baseline is written to the given file;
+                                          otherwise the original source baseline file is
+                                          updated.
 
 JDiff:
 --api-xml <file>                          Like --api, but emits the API in the JDiff XML
