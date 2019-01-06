@@ -336,7 +336,12 @@ abstract class DriverTest {
         /** Baseline file to use, if any */
         baseline: String? = null,
         /** Whether to create the baseline if it does not exist. Requires [baseline] to be set. */
-        updateBaseline: Boolean = false
+        updateBaseline: Boolean = false,
+        /**
+         * If non null, enable API lint. If non-blank, a codebase where only new APIs not in the codebase
+         * are linted.
+         */
+        @Language("TEXT") apiLint: String? = null
     ) {
         // Ensure different API clients don't interfere with each other
         try {
@@ -466,6 +471,18 @@ abstract class DriverTest {
             arrayOf(ARG_MERGE_INCLUSION_ANNOTATIONS, merged.path)
         } else {
             emptyArray()
+        }
+
+        val apiLintArgs = if (apiLint != null) {
+            if (apiLint.isBlank()) {
+                arrayOf(ARG_API_LINT)
+            } else {
+                val file = File(project, "prev-api-lint.txt")
+                file.writeText(apiLint.trimIndent())
+                arrayOf(ARG_API_LINT, file.path)
+            }
+        } else {
+            emptyArray<String>()
         }
 
         val checkCompatibilityApiFile = if (checkCompatibilityApi != null) {
@@ -799,12 +816,11 @@ abstract class DriverTest {
         var baselineFile: File? = null
         val baselineArgs = if (baseline != null) {
             baselineFile = temporaryFolder.newFile("baseline.txt")
+            baselineFile?.writeText(baseline.trimIndent())
             if (!updateBaseline) {
-                baselineFile?.writeText(baseline.trimIndent())
                 arrayOf(ARG_BASELINE, baselineFile.path)
             } else {
-                baselineFile.delete()
-                arrayOf(ARG_BASELINE, baselineFile.path, ARG_UPDATE_BASELINE)
+                arrayOf(ARG_BASELINE, baselineFile.path, ARG_UPDATE_BASELINE, baselineFile.path)
             }
         } else {
             emptyArray()
@@ -968,6 +984,7 @@ abstract class DriverTest {
             *hideAnnotationArguments,
             *showUnannotatedArgs,
             *includeSourceRetentionAnnotationArgs,
+            *apiLintArgs,
             *sdkFilesArgs,
             *importedPackageArgs.toTypedArray(),
             *skipEmitPackagesArgs.toTypedArray(),

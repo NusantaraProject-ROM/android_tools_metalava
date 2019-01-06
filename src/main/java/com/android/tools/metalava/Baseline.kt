@@ -38,17 +38,22 @@ import java.io.PrintWriter
 const val DEFAULT_BASELINE_NAME = "baseline.txt"
 
 class Baseline(
-    val file: File,
-    var create: Boolean = !file.isFile,
-    private var format: FileFormat = FileFormat.BASELINE,
-    private var headerComment: String = ""
+    val file: File?,
+    var updateFile: File?,
+    private var headerComment: String = "",
+    /**
+     * Whether, when updating the baseline, we should fail the build if the main baseline does not
+     * contain all errors.
+     */
+    var silentUpdate: Boolean = updateFile != null && updateFile.path == file?.path,
+    private var format: FileFormat = FileFormat.BASELINE
 ) {
 
     /** Map from issue id to element id to message */
     private val map = HashMap<Errors.Error, MutableMap<String, String>>()
 
     init {
-        if (file.isFile && !create) {
+        if (file?.isFile == true && !silentUpdate) {
             // We've set a baseline for a nonexistent file: read it
             read()
         }
@@ -72,18 +77,15 @@ class Baseline(
         return mark(elementId, message, error)
     }
 
-    private fun mark(elementId: String, message: String, error: Errors.Error): Boolean {
-        val idMap: MutableMap<String, String>? = map[error]
-
-        if (create) {
-            val newIdMap = idMap ?: run {
+    private fun mark(elementId: String, @Suppress("UNUSED_PARAMETER") message: String, error: Errors.Error): Boolean {
+        val idMap: MutableMap<String, String>? = map[error] ?: run {
+            if (updateFile != null) {
                 val new = HashMap<String, String>()
                 map[error] = new
                 new
+            } else {
+                null
             }
-            newIdMap[elementId] = message
-            // When creating baselines don't report errors
-            return true
         }
 
         val oldMessage: String? = idMap?.get(elementId)
@@ -92,6 +94,16 @@ class Baseline(
             // to tweak error messages compatibly without recording all the deltas here
             return true
         }
+
+        if (updateFile != null) {
+            idMap?.set(elementId, message)
+
+            // When creating baselines don't report errors
+            if (silentUpdate) {
+                return true
+            }
+        }
+
         return false
     }
 
@@ -159,12 +171,11 @@ class Baseline(
     }
 
     fun close() {
-        if (create) {
-            write()
-        }
+        write()
     }
 
     private fun read() {
+        val file = this.file ?: return
         file.readLines(Charsets.UTF_8).forEach { line ->
             if (!(line.startsWith("//") || line.startsWith("#") || line.isBlank() || line.startsWith(" "))) {
                 val idEnd = line.indexOf(':')
@@ -197,6 +208,7 @@ class Baseline(
     }
 
     private fun write() {
+        val updateFile = this.updateFile ?: return
         if (!map.isEmpty()) {
             val sb = StringBuilder()
             sb.append(format.header())
@@ -213,10 +225,10 @@ class Baseline(
                 }
                 sb.append("\n\n")
             }
-            file.parentFile?.mkdirs()
-            file.writeText(sb.toString(), Charsets.UTF_8)
+            updateFile.parentFile?.mkdirs()
+            updateFile.writeText(sb.toString(), Charsets.UTF_8)
         } else {
-            file.delete()
+            updateFile.delete()
         }
     }
 
