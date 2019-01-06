@@ -143,7 +143,7 @@ import java.util.function.Predicate
  * The [ApiLint] analyzer checks the API against a known set of preferred API practices
  * by the Android API council.
  */
-class ApiLint(private var codebase: Codebase) : ApiVisitor(
+class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?) : ApiVisitor(
     // Sort by source order such that warnings follow source line number order
     methodComparator = MethodItem.sourceOrderComparator,
     fieldComparator = FieldItem.comparator,
@@ -168,13 +168,39 @@ class ApiLint(private var codebase: Codebase) : ApiVisitor(
     private fun check() {
         val prevCount = reporter.totalCount
 
-        codebase.accept(this)
+        if (oldCodebase != null) {
+            // Only check the new APIs
+            CodebaseComparator().compare(object : ComparisonVisitor() {
+                override fun added(new: Item) {
+                    new.accept(this@ApiLint)
+                }
+            }, oldCodebase, codebase, filterReference)
+        } else {
+            // No previous codebase to compare with: visit the whole thing
+            codebase.accept(this)
+        }
 
         val apiLintIssues = reporter.totalCount - prevCount
         if (apiLintIssues > 0) {
             // We've reported API lint violations; emit some verbiage to explain
             // how to suppress the error rules.
             options.stdout.println("\n$apiLintIssues new API lint issues were found. See tools/metalava/API-LINT.md for how to handle these.")
+            val baseline = options.baseline
+            if (baseline?.updateFile != null && baseline.file != null && !baseline.silentUpdate) {
+                options.stdout.println("""
+                ******************************
+                Your API changes are triggering API Lint warnings or errors.
+                To make these errors go away, you have two choices:
+                   1. You can suppress the errors with @SuppressLint("<id>")
+                   2. You can update the baseline by executing the following command:
+                         cp \
+                         ${baseline.updateFile} \
+                         ${baseline.file}
+                      To submit the revised baseline.txt to the main Android repository,
+                      you will need approval.
+                ******************************
+                """.trimIndent())
+            }
         }
     }
 
@@ -3296,8 +3322,8 @@ class ApiLint(private var codebase: Codebase) : ApiVisitor(
             }
         }
 
-        fun check(codebase: Codebase) {
-            ApiLint(codebase).check()
+        fun check(codebase: Codebase, oldCodebase: Codebase?) {
+            ApiLint(codebase, oldCodebase).check()
         }
     }
 }

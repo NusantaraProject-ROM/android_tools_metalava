@@ -22,8 +22,9 @@ class ApiLintTest : DriverTest() {
 
     @Test
     fun `Test names`() {
+        // Make sure we only flag isses in new API
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/ALL_CAPS.java:3: warning: Acronyms should not be capitalized in class names: was `ALL_CAPS`, should this be `AllCaps`? [AcronymName] [Rule S1 in go/android-api-guidelines]
@@ -114,9 +115,58 @@ class ApiLintTest : DriverTest() {
     }
 
     @Test
+    fun `Test names against previous API`() {
+        check(
+            apiLint = """
+                package android.pkg {
+                  public class badlyNamedClass {
+                    ctor public badlyNamedClass();
+                    method public void BadlyNamedMethod1();
+                    method public void fromHTMLToHTML();
+                    method public String getID();
+                    method public void toXML();
+                    field public static final int BadlyNamedField = 1; // 0x1
+                  }
+                }
+            """.trimIndent(),
+            compatibilityMode = false,
+            warnings = """
+                src/android/pkg/badlyNamedClass.java:8: warning: Acronyms should not be capitalized in method names: was `toXML2`, should this be `toXmL2`? [AcronymName] [Rule S1 in go/android-api-guidelines]
+                src/android/pkg2/HTMLWriter.java:3: warning: Acronyms should not be capitalized in class names: was `HTMLWriter`, should this be `HtmlWriter`? [AcronymName] [Rule S1 in go/android-api-guidelines]
+                src/android/pkg2/HTMLWriter.java:4: warning: Acronyms should not be capitalized in method names: was `fromHTMLToHTML`, should this be `fromHtmlToHtml`? [AcronymName] [Rule S1 in go/android-api-guidelines]
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package android.pkg;
+
+                    public class badlyNamedClass {
+                        public static final int BadlyNamedField = 1;
+
+                        public void fromHTMLToHTML() { }
+                        public void toXML() { }
+                        public void toXML2() { }
+                        public String getID() { return null; }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package android.pkg2;
+
+                    public class HTMLWriter {
+                        public void fromHTMLToHTML() { }
+                    }
+                    """
+                )
+            )
+        )
+    }
+
+    @Test
     fun `Test constants`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/Constants.java:9: error: All constants must be defined at compile time: android.pkg.Constants#FOO [CompileTimeConstant]
@@ -147,7 +197,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `No enums`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MyEnum.java:3: error: Enums are discouraged in Android APIs [Enum] [Rule F5 in go/android-api-guidelines]
@@ -169,7 +219,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Test callbacks`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MyCallback.java:3: error: Callback method names must follow the on<Something> style: bar [CallbackMethodName] [Rule L1 in go/android-api-guidelines]
@@ -223,7 +273,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Test listeners`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MyCallback.java:3: error: Callback method names must follow the on<Something> style: bar [CallbackMethodName] [Rule L1 in go/android-api-guidelines]
@@ -283,7 +333,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Test actions`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/accounts/Actions.java:7: error: Intent action constant name must be ACTION_FOO: ACCOUNT_ADDED [IntentName] [Rule C3 in go/android-api-guidelines]
@@ -311,7 +361,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Test extras`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/accounts/Extras.java:5: error: Inconsistent extra value; expected `android.accounts.extra.AUTOMATIC_RULE_ID`, was `android.app.extra.AUTOMATIC_RULE_ID` [ActionValue] [Rule C4 in go/android-api-guidelines]
@@ -338,7 +388,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Test equals and hashCode`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MissingEquals.java:4: error: Must override both equals and hashCode; missing one in android.pkg.MissingEquals [EqualsAndHashCode] [Rule M8 in go/android-api-guidelines]
@@ -394,7 +444,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Test Parcelable`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MissingCreator.java:3: error: Parcelable requires a `CREATOR` field; missing in android.pkg.MissingCreator [ParcelCreator] [Rule FW3 in go/android-api-guidelines]
@@ -468,7 +518,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `No protected methods or fields are allowed`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MyClass.java:6: error: Protected methods not allowed; must be public: method android.pkg.MyClass.wrong()} [ProtectedMember] [Rule M7 in go/android-api-guidelines]
@@ -496,7 +546,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Ensure registration methods are matched`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/RegistrationMethods.java:6: error: Found registerUnpairedCallback but not unregisterUnpairedCallback in android.pkg.RegistrationMethods [PairedRegistration] [Rule L2 in go/android-api-guidelines]
@@ -534,7 +584,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Api methods should not be synchronized in their signature`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/CheckSynchronization.java:5: error: Internal locks must not be exposed: method android.pkg.CheckSynchronization.method2(Runnable) [VisiblySynchronized] [Rule M5 in go/android-api-guidelines]
@@ -557,7 +607,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check intent builder names`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/IntentBuilderNames.java:6: warning: Methods creating an Intent should be named `create<Foo>Intent()`, was `makeMyIntent` [IntentBuilderName] [Rule FW1 in go/android-api-guidelines]
@@ -583,7 +633,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check helper classes`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MyClass1.java:3: error: Inconsistent class name; should be `<Foo>Activity`, was `MyClass1` [ContextNameSuffix] [Rule C4 in go/android-api-guidelines]
@@ -645,7 +695,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check builders`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MyClass.java:4: warning: Methods must return the builder object (return type Builder instead of void): method android.pkg.MyClass.Builder.setSomething(int) [SetterReturnsThis] [Rule M4 in go/android-api-guidelines]
@@ -696,7 +746,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Raw AIDL`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MyClass1.java:3: error: Raw AIDL interfaces must not be exposed: MyClass1 extends Binder [RawAidl]
@@ -734,7 +784,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Internal packages`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/com/android/pkg/MyClass.java:3: error: Internal classes must not be exposed [InternalClasses]
@@ -755,7 +805,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check package layering`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/content/MyClass1.java:7: warning: Field type `android.view.View` violates package layering: nothing in `package android.content` should depend on `package android.view` [PackageLayering] [Rule FW6 in go/android-api-guidelines]
@@ -788,7 +838,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check boolean getter and setter naming patterns`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MyClass.java:8: error: Symmetric method for `setProp4` must be named `getProp4`; was `isProp4` [GetterSetterNames] [Rule M6 in go/android-api-guidelines]
@@ -833,7 +883,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check banned collections`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MyClass.java:4: error: Parameter type is concrete collection (`java.util.HashMap`); must be higher-level interface [ConcreteCollection] [Rule CL2 in go/android-api-guidelines]
@@ -858,7 +908,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check non-overlapping flags`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/accounts/OverlappingFlags.java:19: warning: Found overlapping flag constant values: `TEST1_FLAG_SECOND` with value 3 (0x3) and overlapping flag value 1 (0x1) from `TEST1_FLAG_FIRST` [OverlappingConstants] [Rule C1 in go/android-api-guidelines]
@@ -933,7 +983,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check no mentions of Google in APIs`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MyClass.java:4: error: Must never reference Google (`MyGoogleService`) [MentionsGoogle]
@@ -958,7 +1008,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check no usages of heavy BitSet`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MyClass.java:6: error: Type must not be heavy BitSet (method android.pkg.MyClass.reverse(java.util.BitSet)) [HeavyBitSet]
@@ -984,7 +1034,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check Manager related issues`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MyFirstManager.java:4: error: Managers must always be obtained from Context; no direct constructors [ManagerConstructor]
@@ -1020,7 +1070,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check boxed types`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MyClass.java:6: error: Must avoid boxed primitives (`java.lang.Long`) [AutoBoxing] [Rule M11 in go/android-api-guidelines]
@@ -1049,7 +1099,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check static utilities`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MyUtils1.java:3: error: Fully-static utility classes must not have constructor [StaticUtils]
@@ -1114,7 +1164,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check context first`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MyClass.java:10: error: Context is distinct, so it must be the first argument (method `wrong`) [ContextFirst] [Rule M3 in go/android-api-guidelines]
@@ -1182,7 +1232,7 @@ class ApiLintTest : DriverTest() {
     fun `Check overloaded arguments`() {
         // TODO: This check is not yet hooked up
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 """,
@@ -1224,7 +1274,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check Callback Handlers`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MyClass.java:12: warning: Registration methods should have overload that accepts delivery Executor: `registerWrongCallback` [ExecutorRegistration] [Rule L1 in go/android-api-guidelines]
@@ -1278,7 +1328,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check resource names`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/R.java:11: error: Expected resource name in `android.R.id` to be in the `fooBarBaz` style, was `wrong_style` [ResourceValueFieldName] [Rule C7 in go/android-api-guidelines]
@@ -1331,7 +1381,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check files`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/CheckFiles.java:12: warning: Methods accepting `File` should also accept `FileDescriptor` or streams: method android.pkg.CheckFiles.error(int,java.io.File) [StreamFiles] [Rule M10 in go/android-api-guidelines]
@@ -1362,7 +1412,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check parcelable lists`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/CheckFiles.java:12: warning: Methods accepting `File` should also accept `FileDescriptor` or streams: method android.pkg.CheckFiles.error(int,java.io.File) [StreamFiles] [Rule M10 in go/android-api-guidelines]
@@ -1393,7 +1443,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check abstract inner`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MyManager.java:9: warning: Abstract inner classes should be static to improve testability: class android.pkg.MyManager.MyInnerManager [AbstractInner]
@@ -1425,7 +1475,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check for banned runtime exceptions`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MyClass.java:7: error: Methods must not mention RuntimeException subclasses in throws clauses (was `java.lang.SecurityException`) [BannedThrow]
@@ -1451,7 +1501,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check for extending errors`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MyClass.java:3: error: Trouble must be reported through an `Exception`, not an `Error` (`MyClass` extends `Error`) [ExtendsError]
@@ -1534,7 +1584,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check closeable`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MyErrorClass1.java:3: warning: Classes that release resources should implement AutoClosable and CloseGuard: class android.pkg.MyErrorClass1 [NotCloseable]
@@ -1594,7 +1644,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check Kotlin keywords`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/KotlinKeywordTest.java:7: error: Avoid method names that are Kotlin hard keywords ("fun"); see https://android.github.io/kotlin-guides/interop.html#no-hard-keywords [KotlinKeyword]
@@ -1621,7 +1671,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check Kotlin operators`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/KotlinOperatorTest.java:4: warning: Method can be invoked with an indexing operator from Kotlin: `get` [KotlinOperator]
@@ -1680,7 +1730,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check user handle names`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MyManager.java:6: warning: When a method overload is needed to target a specific UserHandle, callers should be directed to use Context.createPackageContextAsUser() and re-obtain the relevant Manager, and no new API should be added [UserHandle]
@@ -1717,7 +1767,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check parameters`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/FooOptions.java:3: warning: Classes holding a set of parameters should be called `FooParams`, was `FooOptions` [UserHandleName]
@@ -1746,7 +1796,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check service names`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/ServiceNameTest.java:6: error: Inconsistent service value; expected `OTHER`, was `something` [ServiceName] [Rule C4 in go/android-api-guidelines]
@@ -1771,7 +1821,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check method name tense`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MethodNameTest.java:6: warning: Unexpected tense; probably meant `enabled`, was `fooEnable` [MethodNameTense]
@@ -1798,7 +1848,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check no clone`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/CloneTest.java:5: error: Provide an explicit copy constructor instead of implementing `clone()` [NoClone]
@@ -1821,7 +1871,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check ICU types`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/IcuTest.java:4: warning: Type `java.util.TimeZone` should be replaced with richer ICU type `android.icu.util.TimeZone` [UseIcu]
@@ -1846,7 +1896,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check using parcel file descriptors`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/PdfTest.java:4: error: Must use ParcelFileDescriptor instead of FileDescriptor in parameter fd in android.pkg.PdfTest.error1(java.io.FileDescriptor fd) [NoClone]
@@ -1871,7 +1921,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check using bytes and shorts`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/ByteTest.java:4: warning: Should avoid odd sized primitives; use `int` instead of `byte` in parameter b in android.pkg.ByteTest.error1(byte b) [NoByteOrShort] [Rule FW12 in go/android-api-guidelines]
@@ -1895,7 +1945,7 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check singleton constructors`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT),
+            apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MySingleton.java:5: error: Singleton classes should use `getInstance()` methods: `MySingleton` [SingletonConstructor]
