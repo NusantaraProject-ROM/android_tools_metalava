@@ -57,7 +57,7 @@ import java.net.URL
 import kotlin.text.Charsets.UTF_8
 
 const val CHECK_OLD_DOCLAVA_TOO = false
-const val CHECK_JDIFF = true
+const val CHECK_JDIFF = false
 const val CHECK_STUB_COMPILATION = false
 
 abstract class DriverTest {
@@ -1313,7 +1313,7 @@ abstract class DriverTest {
         }
 
         if (CHECK_JDIFF && apiXmlFile != null && convertToJDiff.isNotEmpty()) {
-            // Parse the XML file with jdiff too
+            // TODO: Parse the XML file with jdiff too
         }
 
         if (CHECK_OLD_DOCLAVA_TOO && checkDoclava1 && convertToJDiff.isNotEmpty()) {

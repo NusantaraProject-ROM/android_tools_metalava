@@ -55,6 +55,8 @@ class TextPackageItem(
 
     override fun qualifiedName(): String = name
 
+    override fun containingClass(strict: Boolean): ClassItem? = null
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is PackageItem) return false
