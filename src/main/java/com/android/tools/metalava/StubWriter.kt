@@ -62,14 +62,6 @@ class StubWriter(
 
     private val sourceList = StringBuilder(20000)
 
-    override fun include(cls: ClassItem): Boolean {
-        val filter = options.stubPackages
-        if (filter != null && !filter.matches(cls.containingPackage())) {
-            return false
-        }
-        return super.include(cls)
-    }
-
     /** Writes a source file list of the generated stubs */
     fun writeSourceList(target: File, root: File?) {
         target.parentFile?.mkdirs()

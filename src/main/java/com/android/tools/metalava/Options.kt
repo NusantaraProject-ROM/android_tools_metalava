@@ -138,6 +138,8 @@ const val ARG_DEX_API_MAPPING = "--dex-api-mapping"
 const val ARG_GENERATE_DOCUMENTATION = "--generate-documentation"
 const val ARG_BASELINE = "--baseline"
 const val ARG_UPDATE_BASELINE = "--update-baseline"
+const val ARG_STUB_PACKAGES = "--stub-packages"
+const val ARG_STUB_IMPORT_PACKAGES = "--stub-import-packages"
 
 class Options(
     args: Array<String>,
@@ -484,6 +486,9 @@ class Options(
     /** Whether all baseline files need to be updated */
     var updateBaseline = false
 
+    /** Whether the baseline should only contain errors */
+    var baselineErrorsOnly = false
+
     /**
      * Whether to omit locations for warnings and errors. This is not a flag exposed to users
      * or listed in help; this is intended for the unit test suite, used for example for the
@@ -570,8 +575,10 @@ class Options(
                 ARG_COMPAT_OUTPUT -> compatOutput = true
 
                 // For now we don't distinguish between bootclasspath and classpath
-                ARG_CLASS_PATH, "-classpath", "-bootclasspath" ->
-                    mutableClassPath.addAll(stringToExistingDirsOrJars(getValue(args, ++index)))
+                ARG_CLASS_PATH, "-classpath", "-bootclasspath" -> {
+                    val path = getValue(args, ++index)
+                    mutableClassPath.addAll(stringToExistingDirsOrJars(path))
+                }
 
                 ARG_SOURCE_PATH, "--sources", "--sourcepath", "-sourcepath" -> {
                     val path = getValue(args, ++index)
@@ -684,17 +691,17 @@ class Options(
 
                 ARG_HIDE_PACKAGE, "-hidePackage" -> mutableHidePackages.add(getValue(args, ++index))
 
-                "--stub-packages", "-stubpackages" -> {
+                ARG_STUB_PACKAGES, "-stubpackages" -> {
                     val packages = getValue(args, ++index)
                     val filter = stubPackages ?: run {
                         val newFilter = PackageFilter()
                         stubPackages = newFilter
                         newFilter
                     }
-                    filter.packagePrefixes += packages.split(File.pathSeparatorChar)
+                    filter.addPackages(packages)
                 }
 
-                "--stub-import-packages", "-stubimportpackages" -> {
+                ARG_STUB_IMPORT_PACKAGES, "-stubimportpackages" -> {
                     val packages = getValue(args, ++index)
                     for (pkg in packages.split(File.pathSeparatorChar)) {
                         mutableStubImportPackages.add(pkg)
@@ -1324,16 +1331,22 @@ class Options(
      * etc.
      */
     private fun getDefaultBaselineFile(): File? {
-        if (sourcePath.isNotEmpty() && !sourcePath[0].path.isBlank()) {
+        if (sourcePath.isNotEmpty() && sourcePath[0].path.isNotBlank()) {
             fun annotationToPrefix(qualifiedName: String): String {
                 val name = qualifiedName.substring(qualifiedName.lastIndexOf('.') + 1)
                 return name.toLowerCase(Locale.US).removeSuffix("api") + "-"
             }
             val sb = StringBuilder()
-            showAnnotations.forEach { sb.append(annotationToPrefix(it)).append('-') }
-            showSingleAnnotations.forEach { sb.append(annotationToPrefix(it)).append('-') }
+            showAnnotations.forEach { sb.append(annotationToPrefix(it)) }
             sb.append(DEFAULT_BASELINE_NAME)
-            return File(sourcePath[0], sb.toString())
+            var base = sourcePath[0]
+            // Convention: in AOSP, signature files are often in sourcepath/api: let's place baseline
+            // files there too
+            val api = File(base, "api")
+            if (api.isDirectory) {
+                base = api
+            }
+            return File(base, sb.toString())
         } else {
             return null
         }
@@ -1726,6 +1739,11 @@ class Options(
                 "as hidden",
             ARG_SHOW_UNANNOTATED, "Include un-annotated public APIs in the signature file as well",
             "$ARG_JAVA_SOURCE <level>", "Sets the source level for Java source files; default is 1.8.",
+            "$ARG_STUB_PACKAGES <path>", "List of packages (separated by ${File.pathSeparator} which will be " +
+                "used to filter out irrelevant code. If specified, only code in these packages will be " +
+                "included in signature files, stubs, etc. (This is not limited to just the stubs; the name " +
+                "is historical.) You can also use \".*\" at the end to match subpackages, so `foo.*` will " +
+                "match both `foo` and `foo.bar`.",
 
             "", "\nDocumentation:",
             ARG_PUBLIC, "Only include elements that are public",
