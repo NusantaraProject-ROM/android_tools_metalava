@@ -3116,4 +3116,87 @@ class ApiFileTest : DriverTest() {
                 """
         )
     }
+
+    @Test
+    fun `Skip incorrect inherit`() {
+        check(
+            // Simulate test-mock scenario for getIContentProvider
+            extraArguments = arrayOf("--stub-packages", "android.test.mock"),
+            compatibilityMode = false,
+            warnings = "src/android/test/mock/MockContentProvider.java:6: warning: Public class android.test.mock.MockContentProvider stripped of unavailable superclass android.content.ContentProvider [HiddenSuperclass]",
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package android.test.mock;
+
+                    import android.content.ContentProvider;
+                    import android.content.IContentProvider;
+
+                    public abstract class MockContentProvider extends ContentProvider {
+                        /**
+                         * Returns IContentProvider which calls back same methods in this class.
+                         * By overriding this class, we avoid the mechanism hidden behind ContentProvider
+                         * (IPC, etc.)
+                         *
+                         * @hide
+                         */
+                        @Override
+                        public final IContentProvider getIContentProvider() {
+                            return mIContentProvider;
+                        }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package android.content;
+
+                    /** @hide */
+                    public abstract class ContentProvider {
+                        protected boolean isTemporary() {
+                            return false;
+                        }
+
+                        // This is supposed to be @hide, but in turbine-combined/framework.jar included
+                        // by java_sdk_library like test-mock, it's not; this is what the special
+                        // flag is used to test
+                        public IContentProvider getIContentProvider() {
+                            return null;
+                        }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package android.content;
+                    import android.os.IInterface;
+
+                    /**
+                     * The ipc interface to talk to a content provider.
+                     * @hide
+                     */
+                    public interface IContentProvider extends IInterface {
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package android.content;
+
+                    // Not hidden. Here to make sure that we respect stub-packages
+                    // and exclude it from everything, including signatures.
+                    public class ClipData {
+                    }
+                    """
+                )
+            ),
+            api = """
+                package android.test.mock {
+                  public abstract class MockContentProvider {
+                    ctor public MockContentProvider();
+                  }
+                }
+                """
+        )
+    }
 }

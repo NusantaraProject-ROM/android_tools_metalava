@@ -23,6 +23,7 @@ import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.PackageItem
 import com.android.tools.metalava.model.ParameterItem
+import com.android.tools.metalava.model.configuration
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
@@ -80,6 +81,9 @@ class Baseline(
     private fun mark(elementId: String, @Suppress("UNUSED_PARAMETER") message: String, error: Errors.Error): Boolean {
         val idMap: MutableMap<String, String>? = map[error] ?: run {
             if (updateFile != null) {
+                if (options.baselineErrorsOnly && configuration.getSeverity(error) != Severity.ERROR) {
+                    return true
+                }
                 val new = HashMap<String, String>()
                 map[error] = new
                 new

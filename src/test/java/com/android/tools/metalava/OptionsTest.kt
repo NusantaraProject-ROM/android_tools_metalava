@@ -104,6 +104,14 @@ API sources:
                                           signature file as well
 --java-source <level>                     Sets the source level for Java source files;
                                           default is 1.8.
+--stub-packages <path>                    List of packages (separated by : which will be
+                                          used to filter out irrelevant code. If
+                                          specified, only code in these packages will be
+                                          included in signature files, stubs, etc. (This
+                                          is not limited to just the stubs; the name is
+                                          historical.) You can also use ".*" at the end to
+                                          match subpackages, so `foo.*` will match both
+                                          `foo` and `foo.bar`.
 
 Documentation:
 --public                                  Only include elements that are public

@@ -123,6 +123,18 @@ open class Reporter(private val rootFolder: File? = null) {
             return false
         }
 
+        // If we are only emitting some packages (--stub-packages), don't report
+        // issues from other packages
+        if (item != null) {
+            val packageFilter = options.stubPackages
+            if (packageFilter != null) {
+                val pkg = item.containingPackage(false)
+                if (pkg != null && !packageFilter.matches(pkg)) {
+                    return false
+                }
+            }
+        }
+
         val baseline = options.baseline
         if (item != null && baseline != null && baseline.mark(item, message, id)) {
             return false
