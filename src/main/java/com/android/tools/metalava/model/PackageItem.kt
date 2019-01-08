@@ -37,7 +37,10 @@ interface PackageItem : Item {
 
     override fun parent(): PackageItem? = if (qualifiedName().isEmpty()) null else containingPackage()
 
-    fun containingPackage(): PackageItem? {
+    override fun containingPackage(strict: Boolean): PackageItem? {
+        if (!strict) {
+            return this
+        }
         val name = qualifiedName()
         val lastDot = name.lastIndexOf('.')
         return if (lastDot != -1) {

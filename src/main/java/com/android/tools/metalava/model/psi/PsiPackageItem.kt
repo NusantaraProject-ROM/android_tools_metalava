@@ -40,7 +40,12 @@ class PsiPackageItem(
 
     lateinit var containingPackageField: PsiPackageItem
 
-    override fun containingPackage(): PackageItem? {
+    override fun containingClass(strict: Boolean): ClassItem? = null
+
+    override fun containingPackage(strict: Boolean): PackageItem? {
+        if (!strict) {
+            return this
+        }
         return if (qualifiedName.isEmpty()) null else {
             if (!::containingPackageField.isInitialized) {
                 var parentPackage = qualifiedName

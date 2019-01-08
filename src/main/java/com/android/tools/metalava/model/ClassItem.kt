@@ -189,6 +189,12 @@ interface ClassItem : Item {
     /** The containing package */
     fun containingPackage(): PackageItem
 
+    override fun containingPackage(strict: Boolean): PackageItem = containingPackage()
+
+    override fun containingClass(strict: Boolean): ClassItem? {
+        return if (strict) containingClass() else this
+    }
+
     /** Gets the type for this class */
     fun toType(): TypeItem
 

@@ -196,6 +196,20 @@ interface Item {
     /** Produces a user visible description of this item, including a label such as "class" or "field" */
     fun describe(capitalize: Boolean = false) = describe(this, capitalize)
 
+    /**
+     * Returns the package that contains this item. If [strict] is false, this will return self
+     * if called on a package, otherwise it will return the containing package (e.g. "foo" for "foo.bar").
+     * The parameter is ignored on other item types.
+     */
+    fun containingPackage(strict: Boolean = true): PackageItem?
+
+    /**
+     * Returns the class that contains this item. If [strict] is false, this will return self
+     * if called on a class, otherwise it will return the outer class, if any. The parameter is
+     * ignored on other item types.
+     */
+    fun containingClass(strict: Boolean = true): ClassItem?
+
     companion object {
         fun describe(item: Item, capitalize: Boolean = false): String {
             return when (item) {
