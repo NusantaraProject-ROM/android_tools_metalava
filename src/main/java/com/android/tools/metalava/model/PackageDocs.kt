@@ -21,6 +21,5 @@ data class PackageDocs(
     val overviewDocs: MutableMap<String, String>,
     val hiddenPackages: MutableSet<String>
 ) {
-    fun getPackageDocumentation(pkg: PackageItem): String? = packageDocs[pkg.qualifiedName()]
     fun getOverviewDocumentation(pkg: PackageItem): String? = overviewDocs[pkg.qualifiedName()]
 }
