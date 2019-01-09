@@ -320,7 +320,7 @@ public class Errors {
     public static final Error FRACTION_FLOAT = new Error(362, ERROR, Category.API_LINT);
     public static final Error PERCENTAGE_INT = new Error(363, ERROR, Category.API_LINT);
     public static final Error NOT_CLOSEABLE = new Error(364, WARNING, Category.API_LINT);
-    public static final Error KOTLIN_OPERATOR = new Error(365, WARNING, Category.API_LINT);
+    public static final Error KOTLIN_OPERATOR = new Error(365, INFO, Category.API_LINT);
     public static final Error ARRAY_RETURN = new Error(366, WARNING, Category.API_LINT);
     public static final Error USER_HANDLE = new Error(367, WARNING, Category.API_LINT);
     public static final Error USER_HANDLE_NAME = new Error(368, WARNING, Category.API_LINT);
