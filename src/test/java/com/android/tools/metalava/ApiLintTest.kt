@@ -587,7 +587,14 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/CheckSynchronization.java:5: error: Internal locks must not be exposed: method android.pkg.CheckSynchronization.method2(Runnable) [VisiblySynchronized] [Rule M5 in go/android-api-guidelines]
+                src/android/pkg/CheckSynchronization.java:10: error: Internal locks must not be exposed: method android.pkg.CheckSynchronization.errorMethod1(Runnable) [VisiblySynchronized] [Rule M5 in go/android-api-guidelines]
+                src/android/pkg/CheckSynchronization.java:12: error: Internal locks must not be exposed (synchronizing on this or class is still externally observable): method android.pkg.CheckSynchronization.errorMethod2() [VisiblySynchronized] [Rule M5 in go/android-api-guidelines]
+                src/android/pkg/CheckSynchronization.java:16: error: Internal locks must not be exposed (synchronizing on this or class is still externally observable): method android.pkg.CheckSynchronization.errorMethod2() [VisiblySynchronized] [Rule M5 in go/android-api-guidelines]
+                src/android/pkg/CheckSynchronization.java:21: error: Internal locks must not be exposed (synchronizing on this or class is still externally observable): method android.pkg.CheckSynchronization.errorMethod3() [VisiblySynchronized] [Rule M5 in go/android-api-guidelines]
+                src/android/pkg/CheckSynchronization2.kt:5: error: Internal locks must not be exposed (synchronizing on this or class is still externally observable): method android.pkg.CheckSynchronization2.errorMethod1() [VisiblySynchronized] [Rule M5 in go/android-api-guidelines]
+                src/android/pkg/CheckSynchronization2.kt:8: error: Internal locks must not be exposed (synchronizing on this or class is still externally observable): method android.pkg.CheckSynchronization2.errorMethod2() [VisiblySynchronized] [Rule M5 in go/android-api-guidelines]
+                src/android/pkg/CheckSynchronization2.kt:16: error: Internal locks must not be exposed (synchronizing on this or class is still externally observable): method android.pkg.CheckSynchronization2.errorMethod4() [VisiblySynchronized] [Rule M5 in go/android-api-guidelines]
+                src/android/pkg/CheckSynchronization2.kt:18: error: Internal locks must not be exposed (synchronizing on this or class is still externally observable): method android.pkg.CheckSynchronization2.errorMethod5() [VisiblySynchronized] [Rule M5 in go/android-api-guidelines]
                 """,
             sourceFiles = *arrayOf(
                 java(
@@ -595,8 +602,55 @@ class ApiLintTest : DriverTest() {
                     package android.pkg;
 
                     public class CheckSynchronization {
-                        public void method1(Runnable r) { } // OK
-                        public synchronized void method2(Runnable r) { } // ERROR
+                        public void okMethod1(Runnable r) { }
+                        private static final Object LOCK = new Object();
+                        public void okMethod2() {
+                            synchronized(LOCK) {
+                            }
+                        }
+                        public synchronized void errorMethod1(Runnable r) { } // ERROR
+                        public void errorMethod2() {
+                            synchronized(this) {
+                            }
+                        }
+                        public void errorMethod2() {
+                            synchronized(CheckSynchronization.class) {
+                            }
+                        }
+                        public void errorMethod3() {
+                            if (true) {
+                                synchronized(CheckSynchronization.class) {
+                                }
+                            }
+                        }
+                    }
+                    """
+                ),
+                kotlin(
+                    """
+                    package android.pkg;
+
+                    class CheckSynchronization2 {
+                        fun errorMethod1() {
+                            synchronized(this) { println("hello") }
+                        }
+                        fun errorMethod2() {
+                            synchronized(CheckSynchronization2::class.java) { println("hello") }
+                        }
+                        fun errorMethod3() {
+                            @Suppress("ConstantConditionIf")
+                            if (true) {
+                                synchronized(CheckSynchronization2::class.java) { println("hello") }
+                            }
+                        }
+                        fun errorMethod4() = synchronized(this) { println("hello") }
+                        fun errorMethod5() {
+                            synchronized(CheckSynchronization2::class) { println("hello") }
+                        }
+                        fun okMethod() {
+                            val lock = Object()
+                            synchronized(lock) { println("hello") }
+                        }
                     }
                     """
                 )
