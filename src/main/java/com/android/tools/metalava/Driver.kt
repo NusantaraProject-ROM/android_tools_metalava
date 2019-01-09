@@ -938,6 +938,29 @@ private fun createStubFiles(stubDir: File, codebase: Codebase, docStubs: Boolean
         )
     codebase.accept(stubWriter)
 
+    // Visit any package private classes that were forced visible by references from public API
+    // to make sure we emit the class needed to compile the stubs
+    codebase.getPackages().allTopLevelClasses().forEach { cls ->
+        if (cls.notStrippable &&
+            options.stubPackages?.matches(cls.containingPackage()) != false) {
+
+            // Here we only visit the class itself; not its methods and fields; this class
+            // is package private and should not be usable in the regular way; it's just passed
+            // around as a type
+
+            stubWriter.visitClass(cls)
+
+            val clsDefaultConstructor = cls.defaultConstructor
+            if (clsDefaultConstructor != null) {
+                clsDefaultConstructor.mutableModifiers().setPackagePrivate(true)
+                stubWriter.visitConstructor(clsDefaultConstructor)
+                stubWriter.afterVisitConstructor(clsDefaultConstructor)
+            }
+
+            stubWriter.afterVisitClass(cls)
+        }
+    }
+
     if (docStubs) {
         // Overview docs? These are generally in the empty package.
         codebase.findPackage("")?.let { empty ->

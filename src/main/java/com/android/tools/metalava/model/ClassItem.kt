@@ -224,6 +224,9 @@ interface ClassItem : Item {
 
     var hasPrivateConstructor: Boolean
 
+    /** If true, this is an invisible element that was referenced by a public API. */
+    var notStrippable: Boolean
+
     /**
      * Maven artifact of this class, if any. (Not used for the Android SDK, but used in
      * for example support libraries.
