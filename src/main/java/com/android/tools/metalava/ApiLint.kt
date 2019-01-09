@@ -135,7 +135,19 @@ import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.PackageItem
 import com.android.tools.metalava.model.ParameterItem
 import com.android.tools.metalava.model.TypeItem
+import com.android.tools.metalava.model.psi.PsiMethodItem
 import com.android.tools.metalava.model.visitors.ApiVisitor
+import com.intellij.psi.JavaRecursiveElementVisitor
+import com.intellij.psi.PsiClassObjectAccessExpression
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiSynchronizedStatement
+import com.intellij.psi.PsiThisExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UClassLiteralExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UThisExpression
+import org.jetbrains.uast.visitor.AbstractUastVisitor
 import java.util.Locale
 import java.util.function.Predicate
 
@@ -149,7 +161,7 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
     fieldComparator = FieldItem.comparator,
     ignoreShown = options.showUnannotated
 ) {
-    private fun report(id: Error, item: Item, message: String) {
+    private fun report(id: Error, item: Item, message: String, element: PsiElement? = null) {
         // Don't flag api warnings on deprecated APIs; these are obviously already known to
         // be problematic.
         if (item.deprecated) {
@@ -162,7 +174,7 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
             return
         }
 
-        reporter.report(id, item, message)
+        reporter.report(id, item, message, element)
     }
 
     private fun check() {
@@ -976,11 +988,52 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
                     if "synchronized" in m.split:
                         error(clazz, m, "M5", "Internal locks must not be exposed")
          */
+
+        fun reportError(method: MethodItem, psi: PsiElement? = null) {
+            val message = StringBuilder("Internal locks must not be exposed")
+            if (psi != null) {
+                message.append(" (synchronizing on this or class is still externally observable)")
+            }
+            message.append(": ")
+            message.append(method.describe())
+            report(VISIBLY_SYNCHRONIZED, method, message.toString(), psi)
+        }
+
         if (method.modifiers.isSynchronized()) {
-            report(
-                VISIBLY_SYNCHRONIZED, method,
-                "Internal locks must not be exposed: ${method.describe()}"
-            )
+            reportError(method)
+        } else if (method is PsiMethodItem) {
+            val psiMethod = method.psiMethod
+            if (psiMethod is UMethod) {
+                psiMethod.accept(object : AbstractUastVisitor() {
+                    override fun afterVisitCallExpression(node: UCallExpression) {
+                        super.afterVisitCallExpression(node)
+
+                        if (node.methodName == "synchronized" && node.receiver == null) {
+                            val arg = node.valueArguments.firstOrNull()
+                            if (arg is UThisExpression ||
+                                arg is UClassLiteralExpression ||
+                                arg is UQualifiedReferenceExpression && arg.receiver is UClassLiteralExpression
+                            ) {
+                                reportError(method, arg.sourcePsi ?: node.sourcePsi ?: node.javaPsi)
+                            }
+                        }
+                    }
+                })
+            } else {
+                psiMethod.body?.accept(object : JavaRecursiveElementVisitor() {
+                    override fun visitSynchronizedStatement(statement: PsiSynchronizedStatement) {
+                        super.visitSynchronizedStatement(statement)
+
+                        val lock = statement.lockExpression
+                        if (lock == null || lock is PsiThisExpression ||
+                            // locking on any class is visible
+                            lock is PsiClassObjectAccessExpression
+                        ) {
+                            reportError(method, lock ?: statement)
+                        }
+                    }
+                })
+            }
         }
     }
 
@@ -3230,6 +3283,7 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
     }
 
     companion object {
+
         private val badParameterClassNames = listOf(
             "Param", "Parameter", "Parameters", "Args", "Arg", "Argument", "Arguments", "Options", "Bundle"
         )
