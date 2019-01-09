@@ -3647,10 +3647,140 @@ class StubsTest : DriverTest() {
         )
     }
 
-// TODO: Add in some type variables in method signatures and constructors!
-// TODO: Test what happens when a class extends a hidden extends a public in separate packages,
-// and the hidden has a @hide constructor so the stub in the leaf class doesn't compile -- I should
-// check for this and fail build.
+    @Test
+    fun `Include package private classes referenced from public API`() {
+        check(
+            compatibilityMode = false,
+            warnings = """
+                src/test/pkg/PublicApi.java:4: error: Class test.pkg.HiddenType is not public but was referenced (as return type) from public method test.pkg.PublicApi.getHiddenType() [ReferencesHidden]
+                src/test/pkg/PublicApi.java:4: warning: Method test.pkg.PublicApi.getHiddenType() references hidden type test.pkg.HiddenType. [HiddenTypeParameter]
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
 
-// TODO: Test -stubPackages
+                    public class PublicApi {
+                        public HiddenType getHiddenType() { return null; }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+
+                    // Class exposed via public api above
+                    class HiddenType {
+                        HiddenType(int i1, int i2) { }
+                        public HiddenType2 getHiddenType2() { return null; }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+
+                    // Class not exposed; only referenced from hidden
+                    class HiddenType2 {
+                        HiddenType2(float f) { }
+                    }
+                    """
+                )
+            ),
+            api = """
+                package test.pkg {
+                  public class PublicApi {
+                    ctor public PublicApi();
+                    method public test.pkg.HiddenType getHiddenType();
+                  }
+                }
+                """,
+            stubs = arrayOf(
+                """
+                package test.pkg;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class PublicApi {
+                public PublicApi() { throw new RuntimeException("Stub!"); }
+                public test.pkg.HiddenType getHiddenType() { throw new RuntimeException("Stub!"); }
+                }
+                """,
+                """
+                package test.pkg;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                class HiddenType {
+                }
+                """)
+        )
+    }
+
+    @Test
+    fun `Use type argument in constructor cast`() {
+        check(
+            compatibilityMode = false,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    /** @deprecated */
+                    @Deprecated
+                    public class BasicPoolEntryRef extends WeakRef<BasicPoolEntry> {
+                        public BasicPoolEntryRef(BasicPoolEntry entry) {
+                            super(entry);
+                        }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+
+                    public class WeakRef<T> {
+                        public WeakRef(T foo) {
+                        }
+                        // need to have more than one constructor to trigger casts in stubs
+                        public WeakRef(T foo, int size) {
+                        }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+
+                    public class BasicPoolEntry {
+                    }
+                    """
+                )
+            ),
+            api = """
+                package test.pkg {
+                  public class BasicPoolEntry {
+                    ctor public BasicPoolEntry();
+                  }
+                  @Deprecated public class BasicPoolEntryRef extends test.pkg.WeakRef<test.pkg.BasicPoolEntry> {
+                    ctor @Deprecated public BasicPoolEntryRef(test.pkg.BasicPoolEntry);
+                  }
+                  public class WeakRef<T> {
+                    ctor public WeakRef(T);
+                    ctor public WeakRef(T, int);
+                  }
+                }
+                """,
+            stubs = arrayOf(
+                """
+                package test.pkg;
+                /** @deprecated */
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                @Deprecated
+                public class BasicPoolEntryRef extends test.pkg.WeakRef<test.pkg.BasicPoolEntry> {
+                @Deprecated
+                public BasicPoolEntryRef(test.pkg.BasicPoolEntry entry) { super((test.pkg.BasicPoolEntry)null); throw new RuntimeException("Stub!"); }
+                }
+                """)
+        )
+    }
+
+    // TODO: Test what happens when a class extends a hidden extends a public in separate packages,
+    // and the hidden has a @hide constructor so the stub in the leaf class doesn't compile -- I should
+    // check for this and fail build.
 }

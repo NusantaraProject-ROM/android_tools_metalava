@@ -449,14 +449,17 @@ class StubWriter(
                         writer.write(", ")
                     }
                     val type = parameter.type()
-                    val typeString = type.toErasedTypeString(it)
                     if (!type.primitive) {
                         if (includeCasts) {
-                            writer.write("(")
-
                             // Types with varargs can't appear as varargs when used as an argument
-                            if (typeString.contains("...")) {
-                                writer.write(typeString.replace("...", "[]"))
+                            val typeString = type.toErasedTypeString(it).replace("...", "[]")
+                            writer.write("(")
+                            if (type.asTypeParameter(superConstructor) != null) {
+                                // It's a type parameter: see if we should map the type back to the concrete
+                                // type in this class
+                                val map = constructor?.containingClass()?.mapTypeVariables(it.containingClass())
+                                val cast = map?.get(type.toTypeString(context = it)) ?: typeString
+                                writer.write(cast)
                             } else {
                                 writer.write(typeString)
                             }
@@ -464,6 +467,8 @@ class StubWriter(
                         }
                         writer.write("null")
                     } else {
+                        // Add cast for things like shorts and bytes
+                        val typeString = type.toTypeString(context = it)
                         if (typeString != "boolean" && typeString != "int" && typeString != "long") {
                             writer.write("(")
                             writer.write(typeString)

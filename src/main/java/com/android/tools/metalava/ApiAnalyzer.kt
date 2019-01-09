@@ -1050,6 +1050,7 @@ class ApiAnalyzer(
                     false
                 )}"
             )
+            cl.notStrippable = true
         }
 
         if (!notStrippable.add(cl)) {
