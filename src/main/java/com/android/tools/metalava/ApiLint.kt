@@ -1620,7 +1620,7 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
                         else -> {
                             report(
                                 RETHROW_REMOTE_EXCEPTION, method,
-                                "Methods calling into system server should rethrow `RemoteException` as `RuntimeException`"
+                                "Methods calling into system server should rethrow `RemoteException` as `RuntimeException` (but do not list it in the throws clause)"
                             )
                         }
                     }
@@ -2703,6 +2703,13 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
 
          */
 
+        fun flagKotlinOperator(method: MethodItem, message: String) {
+            report(
+                KOTLIN_OPERATOR, method,
+                "$message (this is usually desirable; just make sure it makes sense for this type of object)"
+            )
+        }
+
         for (method in methods) {
             if (method.modifiers.isStatic()) {
                 continue
@@ -2712,27 +2719,24 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
                 // https://kotlinlang.org/docs/reference/operator-overloading.html#unary-prefix-operators
                 "unaryPlus", "unaryMinus", "not" -> {
                     if (method.parameters().isEmpty()) {
-                        report(
-                            KOTLIN_OPERATOR, method,
-                            "Method can be invoked as a unary operator from Kotlin: `$name`"
+                        flagKotlinOperator(
+                            method, "Method can be invoked as a unary operator from Kotlin: `$name`"
                         )
                     }
                 }
                 // https://kotlinlang.org/docs/reference/operator-overloading.html#increments-and-decrements
                 "inc", "dec" -> {
                     if (method.parameters().isEmpty() && method.returnType()?.toTypeString() != "void") {
-                        report(
-                            KOTLIN_OPERATOR, method,
-                            "Method can be invoked as a pre/postfix inc/decrement operator from Kotlin: `$name`"
+                        flagKotlinOperator(
+                            method, "Method can be invoked as a pre/postfix inc/decrement operator from Kotlin: `$name`"
                         )
                     }
                 }
                 // https://kotlinlang.org/docs/reference/operator-overloading.html#arithmetic
                 "plus", "minus", "times", "div", "rem", "mod", "rangeTo" -> {
                     if (method.parameters().size == 1) {
-                        report(
-                            KOTLIN_OPERATOR, method,
-                            "Method can be invoked as a binary operator from Kotlin: `$name`"
+                        flagKotlinOperator(
+                            method, "Method can be invoked as a binary operator from Kotlin: `$name`"
                         )
                     }
                     val assignName = name + "Assign"
@@ -2751,45 +2755,40 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
                 // https://kotlinlang.org/docs/reference/operator-overloading.html#in
                 "contains" -> {
                     if (method.parameters().size == 1 && method.returnType()?.toTypeString() == "boolean") {
-                        report(
-                            KOTLIN_OPERATOR, method,
-                            "Method can be invoked as a \"in\" operator from Kotlin: `$name`"
+                        flagKotlinOperator(
+                            method, "Method can be invoked as a \"in\" operator from Kotlin: `$name`"
                         )
                     }
                 }
                 // https://kotlinlang.org/docs/reference/operator-overloading.html#indexed
                 "get" -> {
                     if (method.parameters().isNotEmpty()) {
-                        report(
-                            KOTLIN_OPERATOR, method,
-                            "Method can be invoked with an indexing operator from Kotlin: `$name`"
+                        flagKotlinOperator(
+                            method, "Method can be invoked with an indexing operator from Kotlin: `$name`"
                         )
                     }
                 }
                 // https://kotlinlang.org/docs/reference/operator-overloading.html#indexed
                 "set" -> {
                     if (method.parameters().size > 1) {
-                        report(
-                            KOTLIN_OPERATOR, method,
-                            "Method can be invoked with an indexing operator from Kotlin: `$name`"
+                        flagKotlinOperator(
+                            method, "Method can be invoked with an indexing operator from Kotlin: `$name`"
                         )
                     }
                 }
                 // https://kotlinlang.org/docs/reference/operator-overloading.html#invoke
                 "invoke" -> {
                     if (method.parameters().size > 1) {
-                        report(
-                            KOTLIN_OPERATOR, method,
-                            "Method can be invoked with function call syntax from Kotlin: `$name`"
+                        flagKotlinOperator(
+                            method, "Method can be invoked with function call syntax from Kotlin: `$name`"
                         )
                     }
                 }
                 // https://kotlinlang.org/docs/reference/operator-overloading.html#assignments
                 "plusAssign", "minusAssign", "timesAssign", "divAssign", "remAssign", "modAssign" -> {
                     if (method.parameters().size == 1 && method.returnType()?.toTypeString() == "void") {
-                        report(
-                            KOTLIN_OPERATOR, method,
-                            "Method can be invoked as a compound assignment operator from Kotlin: `$name`"
+                        flagKotlinOperator(
+                            method, "Method can be invoked as a compound assignment operator from Kotlin: `$name`"
                         )
                     }
                 }

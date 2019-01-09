@@ -22,7 +22,7 @@ class ApiLintTest : DriverTest() {
 
     @Test
     fun `Test names`() {
-        // Make sure we only flag isses in new API
+        // Make sure we only flag issues in new API
         check(
             apiLint = "", // enabled
             compatibilityMode = false,
@@ -956,7 +956,7 @@ class ApiLintTest : DriverTest() {
                 src/android/pkg/MyClass.java:8: error: Methods must not throw generic exceptions (`java.lang.Error`) [GenericException] [Rule S1 in go/android-api-guidelines]
                 src/android/pkg/MyClass.java:9: warning: Methods taking no arguments should throw `IllegalStateException` instead of `java.lang.IllegalArgumentException` [IllegalStateException] [Rule S1 in go/android-api-guidelines]
                 src/android/pkg/MyClass.java:10: warning: Methods taking no arguments should throw `IllegalStateException` instead of `java.lang.NullPointerException` [IllegalStateException] [Rule S1 in go/android-api-guidelines]
-                src/android/pkg/MyClass.java:11: error: Methods calling into system server should rethrow `RemoteException` as `RuntimeException` [RethrowRemoteException] [Rule FW9 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:11: error: Methods calling into system server should rethrow `RemoteException` as `RuntimeException` (but do not list it in the throws clause) [RethrowRemoteException] [Rule FW9 in go/android-api-guidelines]
                 """,
             sourceFiles = *arrayOf(
                 java(
@@ -1674,12 +1674,12 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/KotlinOperatorTest.java:4: warning: Method can be invoked with an indexing operator from Kotlin: `get` [KotlinOperator]
-                src/android/pkg/KotlinOperatorTest.java:5: warning: Method can be invoked with an indexing operator from Kotlin: `set` [KotlinOperator]
-                src/android/pkg/KotlinOperatorTest.java:6: warning: Method can be invoked with function call syntax from Kotlin: `invoke` [KotlinOperator]
-                src/android/pkg/KotlinOperatorTest.java:7: warning: Method can be invoked as a binary operator from Kotlin: `plus` [KotlinOperator]
+                src/android/pkg/KotlinOperatorTest.java:4: info: Method can be invoked with an indexing operator from Kotlin: `get` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
+                src/android/pkg/KotlinOperatorTest.java:5: info: Method can be invoked with an indexing operator from Kotlin: `set` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
+                src/android/pkg/KotlinOperatorTest.java:6: info: Method can be invoked with function call syntax from Kotlin: `invoke` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
+                src/android/pkg/KotlinOperatorTest.java:7: info: Method can be invoked as a binary operator from Kotlin: `plus` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
                 src/android/pkg/KotlinOperatorTest.java:7: error: Only one of `plus` and `plusAssign` methods should be present for Kotlin [UniqueKotlinOperator]
-                src/android/pkg/KotlinOperatorTest.java:8: warning: Method can be invoked as a compound assignment operator from Kotlin: `plusAssign` [KotlinOperator]
+                src/android/pkg/KotlinOperatorTest.java:8: info: Method can be invoked as a compound assignment operator from Kotlin: `plusAssign` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
                 """,
             sourceFiles = *arrayOf(
                 java(
