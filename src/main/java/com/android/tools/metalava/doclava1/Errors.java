@@ -248,9 +248,7 @@ public class Errors {
     // The plan is for this to be set as an error once (1) existing code is marked as @deprecated
     // and (2) the principle is adopted by the API council
     public static final Error REFERENCES_DEPRECATED = new Error(154, HIDDEN);
-    // Hidden until (1) API council agrees this should be an error, and (2) existing
-    // violations are annotated as @hide
-    public static final Error UNHIDDEN_SYSTEM_API = new Error(155, HIDDEN);
+    public static final Error UNHIDDEN_SYSTEM_API = new Error(155, ERROR);
     public static final Error SHOWING_MEMBER_IN_HIDDEN_CLASS = new Error(156, ERROR);
     public static final Error INVALID_NULLABILITY_ANNOTATION = new Error(157, ERROR);
     public static final Error REFERENCES_HIDDEN = new Error(158, ERROR);

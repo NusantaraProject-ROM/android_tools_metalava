@@ -793,7 +793,8 @@ class ApiAnalyzer(
 
                 if (checkHiddenShowAnnotations &&
                     item.hasShowAnnotation() &&
-                    !item.documentation.contains("@hide")
+                    !item.documentation.contains("@hide") &&
+                    !item.modifiers.hasShowSingleAnnotation()
                 ) {
                     val annotationName = (item.modifiers.annotations().firstOrNull {
                         options.showAnnotations.contains(it.qualifiedName())
