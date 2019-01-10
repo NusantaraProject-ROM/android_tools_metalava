@@ -948,16 +948,35 @@ private fun createStubFiles(stubDir: File, codebase: Codebase, docStubs: Boolean
             // is package private and should not be usable in the regular way; it's just passed
             // around as a type
 
-            stubWriter.visitClass(cls)
+            val modifiers = cls.mutableModifiers()
+            val oldAbstract = modifiers.isAbstract()
+            val oldFinal = modifiers.isFinal()
+            val oldInterfaceTypes = cls.interfaceTypes()
 
-            val clsDefaultConstructor = cls.defaultConstructor
-            if (clsDefaultConstructor != null) {
-                clsDefaultConstructor.mutableModifiers().setPackagePrivate(true)
-                stubWriter.visitConstructor(clsDefaultConstructor)
-                stubWriter.afterVisitConstructor(clsDefaultConstructor)
+            try {
+                if (cls.isClass()) {
+                    // Make sure we spit it out as abstract such that we don't get stub compilation failures
+                    // due to missing methods from interfaces etc
+                    modifiers.setAbstract(true)
+                    modifiers.setFinal(false)
+                }
+                cls.setInterfaceTypes(emptyList())
+
+                stubWriter.visitClass(cls)
+
+                val clsDefaultConstructor = cls.defaultConstructor
+                if (clsDefaultConstructor != null) {
+                    clsDefaultConstructor.mutableModifiers().setPackagePrivate(true)
+                    stubWriter.visitConstructor(clsDefaultConstructor)
+                    stubWriter.afterVisitConstructor(clsDefaultConstructor)
+                }
+
+                stubWriter.afterVisitClass(cls)
+            } finally {
+                cls.setInterfaceTypes(oldInterfaceTypes)
+                modifiers.setAbstract(oldAbstract)
+                modifiers.setFinal(oldFinal)
             }
-
-            stubWriter.afterVisitClass(cls)
         }
     }
 

@@ -3669,8 +3669,16 @@ class StubsTest : DriverTest() {
                     """
                     package test.pkg;
 
+                    public class PublicInterface {
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+
                     // Class exposed via public api above
-                    class HiddenType {
+                    final class HiddenType extends HiddenType2 implements HiddenType3, PublicInterface {
                         HiddenType(int i1, int i2) { }
                         public HiddenType2 getHiddenType2() { return null; }
                     }
@@ -3680,9 +3688,18 @@ class StubsTest : DriverTest() {
                     """
                     package test.pkg;
 
-                    // Class not exposed; only referenced from hidden
+                    // Class not exposed; only referenced from HiddenType
                     class HiddenType2 {
                         HiddenType2(float f) { }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+
+                    // Class not exposed; only referenced from HiddenType
+                    interface HiddenType3 {
                     }
                     """
                 )
@@ -3692,6 +3709,9 @@ class StubsTest : DriverTest() {
                   public class PublicApi {
                     ctor public PublicApi();
                     method public test.pkg.HiddenType getHiddenType();
+                  }
+                  public class PublicInterface {
+                    ctor public PublicInterface();
                   }
                 }
                 """,
@@ -3707,7 +3727,14 @@ class StubsTest : DriverTest() {
                 """
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
-                class HiddenType {
+                public class PublicInterface {
+                public PublicInterface() { throw new RuntimeException("Stub!"); }
+                }
+                """,
+                """
+                package test.pkg;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                abstract class HiddenType {
                 }
                 """)
         )
