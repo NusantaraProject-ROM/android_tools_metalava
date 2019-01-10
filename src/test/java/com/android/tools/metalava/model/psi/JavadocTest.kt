@@ -922,4 +922,92 @@ class JavadocTest : DriverTest() {
                 """
         )
     }
+
+    @Test
+    fun `Javadoc link to innerclass constructor`() {
+        // Regression test for
+        //  119190588: Javadoc link tag to constructor of static inner class not working
+        // See also https://bugs.openjdk.java.net/browse/JDK-8031625
+        check(
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package android.view;
+                    import android.graphics.Insets;
+
+
+                    public final class WindowInsets {
+                        /**
+                         * Returns a copy of this WindowInsets with selected system window insets replaced
+                         * with new values.
+                         *
+                         * @param left New left inset in pixels
+                         * @param top New top inset in pixels
+                         * @param right New right inset in pixels
+                         * @param bottom New bottom inset in pixels
+                         * @return A modified copy of this WindowInsets
+                         * @deprecated use {@link Builder#Builder(WindowInsets)} with
+                         *             {@link Builder#setSystemWindowInsets(Insets)} instead.
+                         */
+                        @Deprecated
+                        public WindowInsets replaceSystemWindowInsets(int left, int top, int right, int bottom) {
+
+                        }
+
+                        public static class Builder {
+                            public Builder() {
+                            }
+
+                            public Builder(WindowInsets insets) {
+                            }
+
+                            public Builder setSystemWindowInsets(Insets systemWindowInsets) {
+                                return this;
+                            }
+                        }
+                    }
+                    """
+                )
+            ),
+            checkDoclava1 = false,
+            docStubs = true,
+            // You would *think* the right link to the constructor inner class would be
+            //   {@link android.view.WindowInsets.Builder#Builder(android.view.WindowInsets)
+            // but that does not work; per https://bugs.openjdk.java.net/browse/JDK-8031625
+            // we instead have to use
+            //   {@link android.view.WindowInsets.Builder#android.view.WindowInsets.Builder(android.view.WindowInsets)
+            // to get javadoc to turn it into a valid link. (In the platform builds there's
+            // also doclava's LinkReference class which does some validation; it's unclear
+            // whether it works.)
+            stubs = arrayOf(
+                """
+                package android.view;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public final class WindowInsets {
+                public WindowInsets() { throw new RuntimeException("Stub!"); }
+                /**
+                 * Returns a copy of this WindowInsets with selected system window insets replaced
+                 * with new values.
+                 *
+                 * @param left New left inset in pixels
+                 * @param top New top inset in pixels
+                 * @param right New right inset in pixels
+                 * @param bottom New bottom inset in pixels
+                 * @return A modified copy of this WindowInsets
+                 * @deprecated use {@link android.view.WindowInsets.Builder#WindowInsets.Builder(android.view.WindowInsets) Builder#Builder(WindowInsets)} with
+                 *             {@link android.view.WindowInsets.Builder#setSystemWindowInsets(Insets) Builder#setSystemWindowInsets(Insets)} instead.
+                 */
+                @Deprecated
+                public android.view.WindowInsets replaceSystemWindowInsets(int left, int top, int right, int bottom) { throw new RuntimeException("Stub!"); }
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public static class Builder {
+                public Builder() { throw new RuntimeException("Stub!"); }
+                public Builder(android.view.WindowInsets insets) { throw new RuntimeException("Stub!"); }
+                public android.view.WindowInsets.Builder setSystemWindowInsets(Insets systemWindowInsets) { throw new RuntimeException("Stub!"); }
+                }
+                }
+                """
+            )
+        )
+    }
 }
