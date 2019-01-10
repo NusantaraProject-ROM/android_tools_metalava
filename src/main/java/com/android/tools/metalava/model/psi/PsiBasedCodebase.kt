@@ -58,8 +58,8 @@ import java.util.ArrayList
 import java.util.HashMap
 import java.util.zip.ZipFile
 
-const val PACKAGE_ESTIMATE = 400
-const val CLASS_ESTIMATE = 12000
+const val PACKAGE_ESTIMATE = 500
+const val CLASS_ESTIMATE = 15000
 const val METHOD_ESTIMATE = 1000
 
 open class PsiBasedCodebase(location: File, override var description: String = "Unknown") : DefaultCodebase(location) {
