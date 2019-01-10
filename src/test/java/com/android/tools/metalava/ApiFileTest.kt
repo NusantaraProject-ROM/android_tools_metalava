@@ -3199,4 +3199,86 @@ class ApiFileTest : DriverTest() {
                 """
         )
     }
+
+    @Test
+    fun `Test Visible For Testing`() {
+        // Use the otherwise= visibility in signatures
+        // Regression test for issue 118763806
+        check(
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    import androidx.annotation.VisibleForTesting;
+
+                    @SuppressWarnings({"ClassNameDiffersFromFileName", "WeakerAccess"})
+                    public class ProductionCode {
+                        private ProductionCode() { }
+
+                        @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
+                        public void shouldBeProtected() {
+                        }
+
+                        @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+                        protected void shouldBePrivate1() {
+                        }
+
+                        @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+                        public void shouldBePrivate2() {
+                        }
+
+                        @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
+                        public void shouldBePackagePrivate() {
+                        }
+
+                        @VisibleForTesting(otherwise = VisibleForTesting.NONE)
+                        public void shouldBeHidden() {
+                        }
+                    }
+                    """
+                ).indented(),
+                kotlin(
+                    """
+                    package test.pkg
+                    import androidx.annotation.VisibleForTesting
+
+                    open class ProductionCode2 private constructor() {
+
+                        @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
+                        fun shouldBeProtected() {
+                        }
+
+                        @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+                        protected fun shouldBePrivate1() {
+                        }
+
+                        @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+                        fun shouldBePrivate2() {
+                        }
+
+                        @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
+                        fun shouldBePackagePrivate() {
+                        }
+
+                        @VisibleForTesting(otherwise = VisibleForTesting.NONE)
+                        fun shouldBeHidden() {
+                        }
+                    }
+                    """
+                ).indented(),
+                visibleForTestingSource
+            ),
+            api = """
+                package test.pkg {
+                  public class ProductionCode {
+                    method protected void shouldBeProtected();
+                  }
+                  public class ProductionCode2 {
+                    method protected final void shouldBeProtected();
+                  }
+                }
+                """,
+            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation")
+        )
+    }
 }

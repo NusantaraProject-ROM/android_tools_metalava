@@ -25,6 +25,7 @@ import com.intellij.psi.PsiDocCommentOwner
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiReferenceExpression
 import org.jetbrains.kotlin.asJava.elements.KtLightModifierList
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -143,7 +144,28 @@ class PsiModifierItem(
                 PsiModifierItem(codebase, flags)
             } else {
                 val annotations: MutableList<AnnotationItem> =
-                    psiAnnotations.map { PsiAnnotationItem.create(codebase, it) }.toMutableList()
+                    psiAnnotations.map {
+                        val qualifiedName = it.qualifiedName
+                        // TODO: com.android.internal.annotations.VisibleForTesting?
+                        if (qualifiedName == "androidx.annotation.VisibleForTesting" ||
+                            qualifiedName == "android.support.annotation.VisibleForTesting") {
+                            val otherwise = it.findAttributeValue("otherwise")
+                            val ref = when {
+                                otherwise is PsiReferenceExpression -> otherwise.referenceName ?: ""
+                                otherwise != null -> otherwise.text
+                                else -> ""
+                            }
+                            if (ref.endsWith("PROTECTED")) {
+                                flags = (flags and PUBLIC.inv() and PRIVATE.inv() and INTERNAL.inv()) or PROTECTED
+                            } else if (ref.endsWith("PACKAGE_PRIVATE")) {
+                                flags = (flags and PUBLIC.inv() and PRIVATE.inv() and INTERNAL.inv() and PROTECTED.inv())
+                            } else if (ref.endsWith("PRIVATE") || ref.endsWith("NONE")) {
+                                flags = (flags and PUBLIC.inv() and PROTECTED.inv() and INTERNAL.inv()) or PRIVATE
+                            }
+                        }
+
+                        PsiAnnotationItem.create(codebase, it, qualifiedName)
+                    }.toMutableList()
                 PsiModifierItem(codebase, flags, annotations)
             }
         }
