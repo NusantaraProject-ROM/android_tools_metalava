@@ -28,8 +28,8 @@ import com.android.tools.metalava.ANDROIDX_ANNOTATION_PREFIX
 import com.android.tools.metalava.ANDROIDX_NONNULL
 import com.android.tools.metalava.ANDROIDX_NULLABLE
 import com.android.tools.metalava.ANDROID_SUPPORT_ANNOTATION_PREFIX
+import com.android.tools.metalava.Compatibility
 import com.android.tools.metalava.JAVA_LANG_PREFIX
-import com.android.tools.metalava.Options
 import com.android.tools.metalava.RECENTLY_NONNULL
 import com.android.tools.metalava.RECENTLY_NULLABLE
 import com.android.tools.metalava.doclava1.ApiPredicate
@@ -456,7 +456,7 @@ interface AnnotationItem {
 
         /**
          * Given a "full" annotation name, shortens it by removing redundant package names.
-         * This is intended to be used by the [Options.omitCommonPackages] flag
+         * This is intended to be used by the [Compatibility.omitCommonPackages] flag
          * to reduce clutter in signature files.
          *
          * For example, this method will convert `@androidx.annotation.Nullable` to just
