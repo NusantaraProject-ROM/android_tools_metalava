@@ -3780,6 +3780,86 @@ class StubsTest : DriverTest() {
         )
     }
 
+    @Test
+    fun `Regression test for 116777737`() {
+        // Regression test for 116777737: Stub generation broken for Bouncycastle
+        // """
+        //    It appears as though metalava does not handle the case where:
+        //    1) class Alpha extends Beta<Orange>.
+        //    2) class Beta<T> extends Charlie<T>.
+        //    3) class Beta is hidden.
+        //
+        //    It should result in a stub where Alpha extends Charlie<Orange> but
+        //    instead results in a stub where Alpha extends Charlie<T>, so the
+        //    type substitution of Orange for T is lost.
+        // """
+        check(
+            compatibilityMode = false,
+            warnings = "src/test/pkg/Alpha.java:2: warning: Public class test.pkg.Alpha stripped of unavailable superclass test.pkg.Beta [HiddenSuperclass]",
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    public class Orange {
+                        private Orange() { }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    public class Alpha extends Beta<Orange> {
+                        private Alpha() { }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    /** @hide */
+                    public class Beta<T> extends Charlie<T> {
+                        private Beta() { }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    public class Charlie<T> {
+                        private Charlie() { }
+                    }
+                    """
+                )
+            ),
+            api = """
+                package test.pkg {
+                  public class Alpha extends test.pkg.Charlie<test.pkg.Orange> {
+                  }
+                  public class Charlie<T> {
+                  }
+                  public class Orange {
+                  }
+                }
+                """,
+            stubs = arrayOf(
+                """
+                package test.pkg;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class Orange {
+                Orange() { throw new RuntimeException("Stub!"); }
+                }
+                """,
+                """
+                package test.pkg;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class Alpha extends test.pkg.Charlie<test.pkg.Orange> {
+                Alpha() { throw new RuntimeException("Stub!"); }
+                }
+                """
+            )
+        )
+    }
+
     // TODO: Test what happens when a class extends a hidden extends a public in separate packages,
     // and the hidden has a @hide constructor so the stub in the leaf class doesn't compile -- I should
     // check for this and fail build.
