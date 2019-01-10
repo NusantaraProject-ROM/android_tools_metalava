@@ -25,6 +25,9 @@ java_binary_host {
         "metalava-gradle-plugin-deps",
     ],
     manifest: "manifest.txt",
+    dist: {
+        targets: ["sdk"],
+    },
 }
 
 java_library {
@@ -34,6 +37,13 @@ java_library {
         "stub-annotations/src/main/java/**/*.java",
     ],
     sdk_version: "core_current",
+    target: {
+        host: {
+            dist: {
+                targets: ["sdk"],
+            },
+        },
+    },
 }
 
 genrule {
@@ -46,7 +56,7 @@ genrule {
         "stub-annotations/src/main/java/**/*.java",
     ],
     cmd: "($(location metalava) --no-banner --copy-annotations tools/metalava/stub-annotations " +
-         "$(genDir)/private-stub-annotations) && ($(location soong_zip) -o $(out) -C $(genDir) -D $(genDir))",
+        "$(genDir)/private-stub-annotations) && ($(location soong_zip) -o $(out) -C $(genDir) -D $(genDir))",
     out: [
         "private-stub-annotations.srcjar",
     ],
