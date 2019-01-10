@@ -138,6 +138,7 @@ const val ARG_DEX_API_MAPPING = "--dex-api-mapping"
 const val ARG_GENERATE_DOCUMENTATION = "--generate-documentation"
 const val ARG_BASELINE = "--baseline"
 const val ARG_UPDATE_BASELINE = "--update-baseline"
+const val ARG_MERGE_BASELINE = "--merge-baseline"
 const val ARG_STUB_PACKAGES = "--stub-packages"
 const val ARG_STUB_IMPORT_PACKAGES = "--stub-import-packages"
 
@@ -550,6 +551,7 @@ class Options(
         var currentJar: File? = null
         var updateBaselineFile: File? = null
         var baselineFile: File? = null
+        var mergeBaseline = false
 
         var index = 0
         while (index < args.size) {
@@ -720,8 +722,9 @@ class Options(
                     baselineFile = stringToExistingFile(relative)
                 }
 
-                ARG_UPDATE_BASELINE -> {
+                ARG_UPDATE_BASELINE, ARG_MERGE_BASELINE -> {
                     updateBaseline = true
+                    mergeBaseline = arg == ARG_MERGE_BASELINE
                     if (index < args.size - 1) {
                         val nextArg = args[index + 1]
                         if (!nextArg.startsWith("-")) {
@@ -1294,18 +1297,19 @@ class Options(
         }
 
         if (baselineFile == null) {
-            val defaultBaseline = getDefaultBaselineFile()
-            if (defaultBaseline != null && defaultBaseline.isFile) {
-                baseline = Baseline(defaultBaseline, updateBaselineFile)
+            val defaultBaselineFile = getDefaultBaselineFile()
+            if (defaultBaselineFile != null && defaultBaselineFile.isFile) {
+                baseline = Baseline(defaultBaselineFile, updateBaselineFile, mergeBaseline)
             } else if (updateBaselineFile != null) {
-                baseline = Baseline(null, updateBaselineFile)
+                baseline = Baseline(null, updateBaselineFile, mergeBaseline)
             }
         } else {
-            val headerComment = if (baselineFile.path.contains("frameworks/base/"))
+            // Add helpful doc in AOSP baseline files?
+            val headerComment = if (System.getenv("ANDROID_BUILD_TOP") != null)
                 "// See tools/metalava/API-LINT.md for how to update this file.\n\n"
             else
                 ""
-            baseline = Baseline(baselineFile, updateBaselineFile, headerComment)
+            baseline = Baseline(baselineFile, updateBaselineFile, mergeBaseline, headerComment)
         }
 
         checkFlagConsistency()
@@ -1828,6 +1832,10 @@ class Options(
                 "If some warnings have been fixed, this will delete them from the baseline files. If a file " +
                 "is provided, the updated baseline is written to the given file; otherwise the original source " +
                 "baseline file is updated.",
+            "$ARG_MERGE_BASELINE [file]", "Like $ARG_UPDATE_BASELINE, but instead of always replacing entries " +
+                "in the baseline, it will merge the existing baseline with the new baseline. This is useful " +
+                "if $PROGRAM_NAME runs multiple times on the same source tree with different flags at different " +
+                "times, such as occasionally with $ARG_API_LINT.",
 
             "", "\nJDiff:",
             "$ARG_XML_API <file>", "Like $ARG_API, but emits the API in the JDiff XML format instead",
