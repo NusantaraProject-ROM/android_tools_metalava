@@ -3649,6 +3649,7 @@ class StubsTest : DriverTest() {
 
     @Test
     fun `Include package private classes referenced from public API`() {
+        // Real world example: android.net.http.Connection in apache-http referenced from RequestHandle
         check(
             compatibilityMode = false,
             warnings = """
@@ -3681,6 +3682,8 @@ class StubsTest : DriverTest() {
                     final class HiddenType extends HiddenType2 implements HiddenType3, PublicInterface {
                         HiddenType(int i1, int i2) { }
                         public HiddenType2 getHiddenType2() { return null; }
+                        public int field;
+                        @Override public String toString() { return "hello"; }
                     }
                     """
                 ),
@@ -3734,9 +3737,58 @@ class StubsTest : DriverTest() {
                 """
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
-                abstract class HiddenType {
+                final class HiddenType {
                 }
-                """)
+                """
+            )
+        )
+    }
+
+    @Test
+    fun `Include hidden inner classes referenced from public API`() {
+        // Real world example: hidden android.car.vms.VmsOperationRecorder.Writer in android.car-system-stubs
+        // referenced from outer class constructor
+        check(
+            compatibilityMode = false,
+            warnings = """
+                src/test/pkg/PublicApi.java:4: error: Class test.pkg.PublicApi.HiddenInner is hidden but was referenced (as parameter type) from public parameter inner in test.pkg.PublicApi(test.pkg.PublicApi.HiddenInner inner) [ReferencesHidden]
+                src/test/pkg/PublicApi.java:4: warning: Parameter inner references hidden type test.pkg.PublicApi.HiddenInner. [HiddenTypeParameter]
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+
+                    public class PublicApi {
+                        public PublicApi(HiddenInner inner) { }
+                        /** @hide */
+                        public static class HiddenInner {
+                           public void someHiddenMethod(); // should not be in stub
+                        }
+                    }
+                    """
+                )
+            ),
+            api = """
+                package test.pkg {
+                  public class PublicApi {
+                    ctor public PublicApi(test.pkg.PublicApi.HiddenInner);
+                  }
+                }
+                """,
+            stubs = arrayOf(
+                """
+                package test.pkg;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class PublicApi {
+                public PublicApi(test.pkg.PublicApi.HiddenInner inner) { throw new RuntimeException("Stub!"); }
+                /** @hide */
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public static class HiddenInner {
+                }
+                }
+                """
+            )
         )
     }
 
@@ -3803,7 +3855,8 @@ class StubsTest : DriverTest() {
                 @Deprecated
                 public BasicPoolEntryRef(test.pkg.BasicPoolEntry entry) { super((test.pkg.BasicPoolEntry)null); throw new RuntimeException("Stub!"); }
                 }
-                """)
+                """
+            )
         )
     }
 
