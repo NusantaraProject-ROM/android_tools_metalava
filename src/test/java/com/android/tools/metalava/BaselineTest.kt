@@ -233,4 +233,72 @@ class BaselineTest : DriverTest() {
             checkDoclava1 = false
         )
     }
+
+    @Test
+    fun `Check merging`() {
+        // Checks merging existing baseline with new baseline: here we have 2 issues that are no longer
+        // in the code base, one issue that is in the code base before and after, and one new issue, and
+        // all 4 end up in the merged baseline.
+        check(
+            extraArguments = arrayOf(
+                ARG_HIDE,
+                "HiddenSuperclass",
+                ARG_HIDE,
+                "UnavailableSymbol",
+                ARG_HIDE,
+                "HiddenTypeParameter",
+                ARG_ERROR,
+                "ReferencesHidden"
+            ),
+            baseline = """
+                // Baseline format: 1.0
+                BothPackageInfoAndHtml: test/visible/package-info.java:
+                    It is illegal to provide both a package-info.java file and a package.html file for the same package
+                IgnoringSymlink: test/pkg/sub1/sub2/sub3:
+                    Ignoring symlink during package.html discovery directory traversal
+                ReferencesHidden: test.pkg.Foo#hidden2:
+                    Class test.pkg.Hidden2 is hidden but was referenced (as field type) from public field test.pkg.Foo.hidden2
+            """,
+            updateBaseline = false,
+            mergeBaseline = """
+                // Baseline format: 1.0
+                BothPackageInfoAndHtml: test/visible/package-info.java:
+                    It is illegal to provide both a package-info.java file and a package.html file for the same package
+                IgnoringSymlink: test/pkg/sub1/sub2/sub3:
+                    Ignoring symlink during package.html discovery directory traversal
+                ReferencesHidden: test.pkg.Foo#hidden1:
+                    Class test.pkg.Hidden1 is not public but was referenced (as field type) from public field test.pkg.Foo.hidden1
+                ReferencesHidden: test.pkg.Foo#hidden2:
+                    Class test.pkg.Hidden2 is hidden but was referenced (as field type) from public field test.pkg.Foo.hidden2
+            """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    public class Foo extends Hidden2 {
+                        public Hidden1 hidden1;
+                        public Hidden2 hidden2;
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    // Implicitly not part of the API by being package private
+                    class Hidden1 {
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    /** @hide */
+                    public class Hidden2 {
+                    }
+                    """
+                )
+            ),
+            checkDoclava1 = false
+        )
+    }
 }

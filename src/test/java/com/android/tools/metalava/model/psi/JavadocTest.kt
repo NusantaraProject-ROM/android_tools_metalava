@@ -37,7 +37,7 @@ class JavadocTest : DriverTest() {
         vararg sourceFiles: TestFile
     ) {
         check(
-            *sourceFiles,
+            sourceFiles = *sourceFiles,
             showAnnotations = showAnnotations,
             stubs = arrayOf(source),
             compatibilityMode = compatibilityMode,
