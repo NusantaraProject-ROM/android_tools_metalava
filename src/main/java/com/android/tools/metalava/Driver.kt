@@ -913,6 +913,11 @@ private fun createStubFiles(stubDir: File, codebase: Codebase, docStubs: Boolean
     // Generating stubs from a sig-file-based codebase is problematic
     assert(codebase.supportsDocumentation())
 
+    // Temporary bug workaround for org.chromium.arc
+    if (options.sourcePath.firstOrNull()?.path?.endsWith("org.chromium.arc") == true) {
+        codebase.findClass("org.chromium.mojo.bindings.Callbacks")?.hidden = true
+    }
+
     if (docStubs) {
         progress("\nGenerating documentation stub files: ")
     } else {
