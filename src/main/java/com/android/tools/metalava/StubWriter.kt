@@ -54,7 +54,11 @@ class StubWriter(
     // Methods are by default sorted in source order in stubs, to encourage methods
     // that are near each other in the source to show up near each other in the documentation
     methodComparator = MethodItem.sourceOrderComparator,
-    filterEmit = FilterPredicate(ApiPredicate(ignoreShown = true, includeDocOnly = docStubs)),
+    filterEmit = FilterPredicate(ApiPredicate(ignoreShown = true, includeDocOnly = docStubs))
+        // In stubs we have to include non-strippable things too. This is an error in the API,
+        // and we've removed all of it from the framework, but there are libraries which still
+        // have reference errors.
+        .or { it is ClassItem && it.notStrippable },
     filterReference = ApiPredicate(ignoreShown = true, includeDocOnly = docStubs),
     includeEmptyOuterClasses = true
 ) {
@@ -238,8 +242,9 @@ class StubWriter(
 
         generateTypeParameterList(typeList = cls.typeParameterList(), addSpace = false)
         generateSuperClassStatement(cls)
-        generateInterfaceList(cls)
-
+        if (!cls.notStrippable) {
+            generateInterfaceList(cls)
+        }
         writer.print(" {\n")
 
         if (cls.isEnum()) {
@@ -406,6 +411,9 @@ class StubWriter(
     }
 
     override fun visitConstructor(constructor: ConstructorItem) {
+        if (constructor.containingClass().notStrippable) {
+            return
+        }
         writeConstructor(constructor, constructor.superConstructor)
     }
 
@@ -495,6 +503,9 @@ class StubWriter(
     }
 
     override fun visitMethod(method: MethodItem) {
+        if (method.containingClass().notStrippable) {
+            return
+        }
         writeMethod(method.containingClass(), method, false)
     }
 
@@ -556,6 +567,10 @@ class StubWriter(
     override fun visitField(field: FieldItem) {
         // Handled earlier in visitClass
         if (field.isEnumConstant()) {
+            return
+        }
+
+        if (field.containingClass().notStrippable) {
             return
         }
 
