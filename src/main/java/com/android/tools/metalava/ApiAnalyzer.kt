@@ -1014,6 +1014,33 @@ class ApiAnalyzer(
                             }
                         }
                     }
+
+                    val t = m.returnType()
+                    if (t != null && !t.primitive && !m.deprecated && !cl.deprecated && t.asClass()?.deprecated == true) {
+                        reporter.report(
+                            Errors.REFERENCES_DEPRECATED, m,
+                            "Returning deprecated type $t from ${cl.qualifiedName()}.${m.name()}(): this method should also be deprecated"
+                        )
+                    }
+                }
+
+                if (!cl.deprecated) {
+                    val s = cl.superClass()
+                    if (s?.deprecated == true) {
+                        reporter.report(
+                            Errors.EXTENDS_DEPRECATED, cl,
+                            "Extending deprecated super class $s from ${cl.qualifiedName()}: this class should also be deprecated"
+                        )
+                    }
+
+                    for (t in cl.interfaceTypes()) {
+                        if (t.asClass()?.deprecated == true) {
+                            reporter.report(
+                                Errors.EXTENDS_DEPRECATED, cl,
+                                "Implementing interface of deprecated type $t in ${cl.qualifiedName()}: this class should also be deprecated"
+                            )
+                        }
+                    }
                 }
             } else if (cl.deprecated) {
                 // not hidden, but deprecated

@@ -254,6 +254,9 @@ public class Errors {
     public static final Error REFERENCES_HIDDEN = new Error(158, ERROR);
     public static final Error IGNORING_SYMLINK = new Error(159, INFO);
     public static final Error INVALID_NULLABILITY_ANNOTATION_WARNING = new Error(160, WARNING);
+    // The plan is for this to be set as an error once (1) existing code is marked as @deprecated
+    // and (2) the principle is adopted by the API council
+    public static final Error EXTENDS_DEPRECATED = new Error(161, HIDDEN);
 
     // API lint
     public static final Error START_WITH_LOWER = new Error(300, ERROR, Category.API_LINT, "S1");
