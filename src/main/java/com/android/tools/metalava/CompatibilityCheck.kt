@@ -631,6 +631,13 @@ class CompatibilityCheck(
     }
 
     private fun handleAdded(error: Error, item: Item) {
+        if (item.originallyHidden) {
+            // This is an element which is hidden but is referenced from
+            // some public API. This is an error, but some existing code
+            // is doing this. This is not an API addition.
+            return
+        }
+
         var message = "Added ${describe(item)}"
 
         // Clarify error message for removed API to make it less ambiguous
