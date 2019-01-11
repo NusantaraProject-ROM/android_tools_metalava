@@ -234,6 +234,13 @@ Diffs and Checks:
                                           updated baseline is written to the given file;
                                           otherwise the original source baseline file is
                                           updated.
+--merge-baseline [file]                   Like --update-baseline, but instead of always
+                                          replacing entries in the baseline, it will merge
+                                          the existing baseline with the new baseline.
+                                          This is useful if metalava runs multiple times
+                                          on the same source tree with different flags at
+                                          different times, such as occasionally with
+                                          --api-lint.
 
 JDiff:
 --api-xml <file>                          Like --api, but emits the API in the JDiff XML
