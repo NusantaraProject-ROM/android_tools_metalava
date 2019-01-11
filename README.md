@@ -180,6 +180,10 @@ example, you'll see something like this (unless running with --quiet) :
 * API Lint: Metalava can optionally (with --api-lint) run a series of additional
   checks on the public API in the codebase and flag issues that are discouraged
   or forbidden by the Android API Council; there are currently around 80 checks.
+  Some of these take advantage of looking at the source code which wasn't
+  possible with the signature-file based Python version; for example, it looks
+  inside method bodies to see if you're synchronizing on this or the current
+  class, which is forbidden.
 
 * Baselines: Metalava can report all of its issues into a "baseline" file, which
   records the current set of issues. From that point forward, when metalava
@@ -287,6 +291,12 @@ Top referenced un-annotated members:
   doclava, which sometimes generated incorrect results. Metalava uses the
   android.jar files themselves to ensure that it computes the exact available
   SDK data for each API level.)
+
+* Misc other features. For example, if you use the @VisibleForTesting annotation
+  from the support library, where you can express the intended visibility if the
+  method had not required visibility for testing, then metalava will treat that
+  method using the intended visibility instead when generating signature files
+  and stubs.
 
 ## Architecture & Implementation
 
