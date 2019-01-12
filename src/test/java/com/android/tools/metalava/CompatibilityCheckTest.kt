@@ -2439,6 +2439,47 @@ CompatibilityCheckTest : DriverTest() {
         }
     }
 
+    @Test
+    fun `Ignore hidden references`() {
+        check(
+            warnings = """
+                """,
+            compatibilityMode = false,
+            checkCompatibilityApi = """
+                package test.pkg {
+                  public class MyClass {
+                    ctor public MyClass();
+                    method public void method1(test.pkg.Hidden);
+                  }
+                }
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+
+                    public class MyClass {
+                        public void method1(Hidden hidden) { }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    /** @hide */
+                    public class Hidden {
+                    }
+                    """
+                )
+            ),
+            extraArguments = arrayOf(
+                ARG_HIDE, "ReferencesHidden",
+                ARG_HIDE, "UnavailableSymbol",
+                ARG_HIDE, "HiddenTypeParameter"
+            )
+        )
+    }
+
     // TODO: Check method signatures changing incompatibly (look especially out for adding new overloaded
     // methods and comparator getting confused!)
     //   ..equals on the method items should actually be very useful!
