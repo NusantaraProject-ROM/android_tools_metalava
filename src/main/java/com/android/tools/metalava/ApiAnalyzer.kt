@@ -1050,6 +1050,7 @@ class ApiAnalyzer(
                 // Bring this class back
                 cl.hidden = false
                 cl.removed = false
+                cl.notStrippable = true
             }
         }
     }
