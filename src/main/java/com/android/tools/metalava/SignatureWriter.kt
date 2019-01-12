@@ -48,6 +48,10 @@ class SignatureWriter(
     filterReference = filterReference,
     showUnannotated = options.showUnannotated
 ) {
+    override fun skip(item: Item): Boolean {
+        return super.skip(item) || item is ClassItem && item.notStrippable
+    }
+
     init {
         if (options.includeSignatureFormatVersion) {
             writer.print(options.outputFormat.header())

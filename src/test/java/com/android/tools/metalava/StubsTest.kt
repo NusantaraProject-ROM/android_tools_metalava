@@ -3654,7 +3654,10 @@ class StubsTest : DriverTest() {
             compatibilityMode = false,
             warnings = """
                 src/test/pkg/PublicApi.java:4: error: Class test.pkg.HiddenType is not public but was referenced (as return type) from public method test.pkg.PublicApi.getHiddenType() [ReferencesHidden]
+                src/test/pkg/PublicApi.java:5: error: Class test.pkg.HiddenType4 is hidden but was referenced (as return type) from public method test.pkg.PublicApi.getHiddenType4() [ReferencesHidden]
+                src/test/pkg/PublicApi.java:5: warning: Method test.pkg.PublicApi.getHiddenType4 returns unavailable type HiddenType4 [UnavailableSymbol]
                 src/test/pkg/PublicApi.java:4: warning: Method test.pkg.PublicApi.getHiddenType() references hidden type test.pkg.HiddenType. [HiddenTypeParameter]
+                src/test/pkg/PublicApi.java:5: warning: Method test.pkg.PublicApi.getHiddenType4() references hidden type test.pkg.HiddenType4. [HiddenTypeParameter]
                 """,
             sourceFiles = *arrayOf(
                 java(
@@ -3663,6 +3666,7 @@ class StubsTest : DriverTest() {
 
                     public class PublicApi {
                         public HiddenType getHiddenType() { return null; }
+                        public HiddenType4 getHiddenType4() { return null; }
                     }
                     """
                 ),
@@ -3691,6 +3695,16 @@ class StubsTest : DriverTest() {
                     """
                     package test.pkg;
 
+                    /** @hide */
+                    public class HiddenType4 {
+                        void foo();
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+
                     // Class not exposed; only referenced from HiddenType
                     class HiddenType2 {
                         HiddenType2(float f) { }
@@ -3712,6 +3726,7 @@ class StubsTest : DriverTest() {
                   public class PublicApi {
                     ctor public PublicApi();
                     method public test.pkg.HiddenType getHiddenType();
+                    method public test.pkg.HiddenType4 getHiddenType4();
                   }
                   public class PublicInterface {
                     ctor public PublicInterface();
@@ -3725,6 +3740,7 @@ class StubsTest : DriverTest() {
                 public class PublicApi {
                 public PublicApi() { throw new RuntimeException("Stub!"); }
                 public test.pkg.HiddenType getHiddenType() { throw new RuntimeException("Stub!"); }
+                public test.pkg.HiddenType4 getHiddenType4() { throw new RuntimeException("Stub!"); }
                 }
                 """,
                 """
@@ -3738,6 +3754,13 @@ class StubsTest : DriverTest() {
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 final class HiddenType {
+                }
+                """,
+                """
+                package test.pkg;
+                /** @hide */
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class HiddenType4 {
                 }
                 """
             )
