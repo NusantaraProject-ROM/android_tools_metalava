@@ -418,7 +418,7 @@ public class ApiFile {
         name = token;
         method = new TextMethodItem(api, name, cl, modifiers, returnType, tokenizer.pos());
         method.setDeprecated(modifiers.isDeprecated());
-        if (cl.isInterface() && !modifiers.isDefault()) {
+        if (cl.isInterface() && !modifiers.isDefault() && !modifiers.isStatic()) {
             modifiers.setAbstract(true);
         }
         method.setTypeParameterList(typeParameterList);

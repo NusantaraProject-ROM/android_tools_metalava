@@ -910,4 +910,49 @@ class JDiffXmlTest : DriverTest() {
             """
         )
     }
-}
+
+    @Test
+    fun `Test default methods from signature files`() {
+        // Ensure that we treat not just static but default methods in interfaces as non-abstract
+        check(
+            compatibilityMode = true,
+            checkDoclava1 = true,
+            format = FileFormat.V1,
+            signatureSource = """
+                package test.pkg {
+                  public abstract interface MethodHandleInfo {
+                    method public static boolean refKindIsField(int);
+                  }
+                }
+            """,
+            apiXml =
+            """
+            <api>
+            <package name="test.pkg"
+            >
+            <interface name="MethodHandleInfo"
+             abstract="true"
+             static="false"
+             final="false"
+             deprecated="not deprecated"
+             visibility="public"
+            >
+            <method name="refKindIsField"
+             return="boolean"
+             abstract="false"
+             native="false"
+             synchronized="false"
+             static="true"
+             final="false"
+             deprecated="not deprecated"
+             visibility="public"
+            >
+            <parameter name="null" type="int">
+            </parameter>
+            </method>
+            </interface>
+            </package>
+            </api>
+            """
+        )
+    } }
