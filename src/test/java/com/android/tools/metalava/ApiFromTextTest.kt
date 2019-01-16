@@ -533,6 +533,10 @@ class ApiFromTextTest : DriverTest() {
                         method public abstract boolean isCancelled();
                         method public abstract boolean isDone();
                       }
+                      public class AuthenticatorException extends java.lang.Throwable {
+                      }
+                      public class OperationCanceledException extends java.lang.Throwable {
+                      }
                     }
                     """,
             api = """
@@ -543,6 +547,10 @@ class ApiFromTextTest : DriverTest() {
                         method public abstract V getResult(long, java.util.concurrent.TimeUnit) throws android.accounts.AuthenticatorException, java.io.IOException, android.accounts.OperationCanceledException;
                         method public abstract boolean isCancelled();
                         method public abstract boolean isDone();
+                      }
+                      public class AuthenticatorException extends java.lang.Throwable {
+                      }
+                      public class OperationCanceledException extends java.lang.Throwable {
                       }
                     }
                     """

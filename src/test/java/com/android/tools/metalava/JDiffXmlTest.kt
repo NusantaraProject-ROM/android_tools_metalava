@@ -955,4 +955,90 @@ class JDiffXmlTest : DriverTest() {
             </api>
             """
         )
-    } }
+    }
+
+    @Test
+    fun `Test partial signature files`() {
+        // Partial signature files, such as the system and test files which contain only the
+        // *diffs* relative to the base API, are tricky: They may for example list just an
+        // inner class. See 122926140 for a scenario where this happens.
+        check(
+            compatibilityMode = true,
+            checkDoclava1 = true,
+            format = FileFormat.V1,
+            signatureSource = """
+            // Signature format: 2.0
+            package android {
+
+              public static final class Manifest.permission {
+                field public static final String ACCESS_AMBIENT_LIGHT_STATS = "android.permission.ACCESS_AMBIENT_LIGHT_STATS";
+                field public static final String ACCESS_BROADCAST_RADIO = "android.permission.ACCESS_BROADCAST_RADIO";
+                field public static final String ACCESS_CACHE_FILESYSTEM = "android.permission.ACCESS_CACHE_FILESYSTEM";
+                field public static final String ACCESS_DRM_CERTIFICATES = "android.permission.ACCESS_DRM_CERTIFICATES";
+              }
+            }
+            """,
+            apiXml =
+            """
+            <api>
+            <package name="android"
+            >
+            <class name="Manifest.permission"
+             extends="java.lang.Object"
+             abstract="false"
+             static="true"
+             final="true"
+             deprecated="not deprecated"
+             visibility="public"
+            >
+            <field name="ACCESS_AMBIENT_LIGHT_STATS"
+             type="java.lang.String"
+             transient="false"
+             volatile="false"
+             value="&quot;android.permission.ACCESS_AMBIENT_LIGHT_STATS&quot;"
+             static="true"
+             final="true"
+             deprecated="not deprecated"
+             visibility="public"
+            >
+            </field>
+            <field name="ACCESS_BROADCAST_RADIO"
+             type="java.lang.String"
+             transient="false"
+             volatile="false"
+             value="&quot;android.permission.ACCESS_BROADCAST_RADIO&quot;"
+             static="true"
+             final="true"
+             deprecated="not deprecated"
+             visibility="public"
+            >
+            </field>
+            <field name="ACCESS_CACHE_FILESYSTEM"
+             type="java.lang.String"
+             transient="false"
+             volatile="false"
+             value="&quot;android.permission.ACCESS_CACHE_FILESYSTEM&quot;"
+             static="true"
+             final="true"
+             deprecated="not deprecated"
+             visibility="public"
+            >
+            </field>
+            <field name="ACCESS_DRM_CERTIFICATES"
+             type="java.lang.String"
+             transient="false"
+             volatile="false"
+             value="&quot;android.permission.ACCESS_DRM_CERTIFICATES&quot;"
+             static="true"
+             final="true"
+             deprecated="not deprecated"
+             visibility="public"
+            >
+            </field>
+            </class>
+            </package>
+            </api>
+            """
+        )
+    }
+}

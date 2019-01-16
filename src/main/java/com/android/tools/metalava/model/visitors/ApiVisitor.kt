@@ -115,6 +115,6 @@ open class ApiVisitor(
             return false
         }
 
-        return cls.emit
+        return cls.emit || cls.codebase.preFiltered
     }
 }
