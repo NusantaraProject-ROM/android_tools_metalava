@@ -86,6 +86,7 @@ const val ARG_CHECK_COMPATIBILITY_API_CURRENT = "--check-compatibility:api:curre
 const val ARG_CHECK_COMPATIBILITY_API_RELEASED = "--check-compatibility:api:released"
 const val ARG_CHECK_COMPATIBILITY_REMOVED_CURRENT = "--check-compatibility:removed:current"
 const val ARG_CHECK_COMPATIBILITY_REMOVED_RELEASED = "--check-compatibility:removed:released"
+const val ARG_ALLOW_COMPATIBLE_DIFFERENCES = "--allow-compatible-differences"
 const val ARG_INPUT_KOTLIN_NULLS = "--input-kotlin-nulls"
 const val ARG_OUTPUT_KOTLIN_NULLS = "--output-kotlin-nulls"
 const val ARG_OUTPUT_DEFAULT_VALUES = "--output-default-values"
@@ -419,6 +420,16 @@ class Options(
 
     /** The list of compatibility checks to run */
     val compatibilityChecks: List<CheckRequest> = mutableCompatibilityChecks
+
+    /**
+     * When checking signature files, whether compatible differences in signature
+     * files are allowed. This is normally not allowed (since it means the next
+     * engineer adding an incompatible change will suddenly see the cumulative
+     * differences show up in their diffs when checking in signature files),
+     * but is useful from the test suite etc. Controlled by
+     * [ARG_ALLOW_COMPATIBLE_DIFFERENCES].
+     */
+    var allowCompatibleDifferences = false
 
     /** Existing external annotation files to merge in */
     var mergeQualifierAnnotations: List<File> = mutableMergeQualifierAnnotations
@@ -825,6 +836,8 @@ class Options(
                     val file = stringToExistingFile(getValue(args, ++index))
                     mutableCompatibilityChecks.add(CheckRequest(file, ApiType.REMOVED, ReleaseType.RELEASED))
                 }
+
+                ARG_ALLOW_COMPATIBLE_DIFFERENCES -> allowCompatibleDifferences = true
 
                 // Compat flag for the old API check command, invoked from build/make/core/definitions.mk:
                 "--check-api-files" -> {

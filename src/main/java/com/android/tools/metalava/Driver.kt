@@ -578,18 +578,7 @@ fun checkCompatibility(
                 kotlinStyleNulls = options.inputKotlinStyleNulls
             )
         } else if (options.showAnnotations.isNotEmpty() || apiType != ApiType.PUBLIC_API) {
-            val apiFile = apiType.getOptionFile() ?: run {
-                val tempFile = createTempFile("compat-check-signatures-$apiType", DOT_TXT)
-                tempFile.deleteOnExit()
-                val apiEmit = apiType.getEmitFilter()
-                val apiReference = apiType.getReferenceFilter()
-
-                createReportFile(codebase, tempFile, null) { printWriter ->
-                    SignatureWriter(printWriter, apiEmit, apiReference, codebase.preFiltered)
-                }
-
-                tempFile
-            }
+            val apiFile = apiType.getSignatureFile(codebase, "compat-check-signatures-$apiType")
 
             // Fast path: if the signature files are identical, we're already good!
             if (apiFile.readText(UTF_8) == signatureFile.readText(UTF_8)) {
@@ -615,6 +604,37 @@ fun checkCompatibility(
     // If configured, compares the new API with the previous API and reports
     // any incompatibilities.
     CompatibilityCheck.checkCompatibility(new, current, releaseType, apiType, base)
+
+    // Make sure the text files are identical too? (only applies for *current.txt;
+    // last-released is expected to differ)
+    if (releaseType == ReleaseType.DEV && !options.allowCompatibleDifferences) {
+        val apiFile = if (new.location.isFile)
+            new.location
+        else
+            apiType.getSignatureFile(codebase, "compat-diff-signatures-$apiType")
+
+        fun getCanonicalSignatures(file: File): String {
+            // Get rid of trailing newlines and Windows line endings
+            val text = file.readText(UTF_8)
+            return text.replace("\r\n", "\n").trim()
+        }
+        val currentTxt = getCanonicalSignatures(signatureFile)
+        val newTxt = getCanonicalSignatures(apiFile)
+        if (newTxt != currentTxt) {
+            val diff = getDiff(currentTxt, newTxt, 1)
+            val message =
+                """
+                    Aborting: Your changes have resulted in differences in
+                    the signature file for the ${apiType.displayName} API.
+                    The changes are compatible, but the signature file needs
+                    to be updated.
+
+                    Diffs:
+                """.trimIndent() + "\n" + diff
+
+            throw DriverException(exitCode = -1, stderr = message)
+        }
+    }
 }
 
 fun createTempFile(namePrefix: String, nameSuffix: String): File {
