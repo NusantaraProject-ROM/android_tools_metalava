@@ -71,6 +71,7 @@ import com.android.tools.metalava.doclava1.Errors.EXCEPTION_NAME
 import com.android.tools.metalava.doclava1.Errors.EXECUTOR_REGISTRATION
 import com.android.tools.metalava.doclava1.Errors.EXTENDS_ERROR
 import com.android.tools.metalava.doclava1.Errors.Error
+import com.android.tools.metalava.doclava1.Errors.FORBIDDEN_SUPER_CLASS
 import com.android.tools.metalava.doclava1.Errors.FRACTION_FLOAT
 import com.android.tools.metalava.doclava1.Errors.GENERIC_EXCEPTION
 import com.android.tools.metalava.doclava1.Errors.GETTER_SETTER_NAMES
@@ -309,6 +310,7 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
         checkUserHandle(cls, methods)
         checkParams(cls)
         checkSingleton(cls, methods, constructors)
+        checkExtends(cls)
 
         // TODO: Not yet working
         // checkOverloadArgs(cls, methods)
@@ -3229,6 +3231,23 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
                     "Singleton classes should use `getInstance()` methods: `${cls.simpleName()}`"
                 )
             }
+        }
+    }
+
+    private fun checkExtends(cls: ClassItem) {
+        // Call cls.superClass().extends() instead of cls.extends() since extends returns true for self
+        val superCls = cls.superClass() ?: return
+        if (superCls.extends("android.os.AsyncTask")) {
+            report(
+                FORBIDDEN_SUPER_CLASS, cls,
+                "${cls.simpleName()} should not extend `AsyncTask`. AsyncTask is an implementation detail. Expose a listener or, in androidx, a `ListenableFuture` API instead"
+            )
+        }
+        if (superCls.extends("android.app.Activity")) {
+            report(
+                FORBIDDEN_SUPER_CLASS, cls,
+                "${cls.simpleName()} should not extend `Activity`. Activity subclasses are impossible to compose. Expose a composable API instead."
+            )
         }
     }
 
