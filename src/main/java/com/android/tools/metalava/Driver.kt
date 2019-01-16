@@ -20,7 +20,6 @@ package com.android.tools.metalava
 import com.android.SdkConstants
 import com.android.SdkConstants.DOT_JAVA
 import com.android.SdkConstants.DOT_KT
-import com.android.SdkConstants.DOT_TXT
 import com.android.ide.common.process.CachedProcessOutputHandler
 import com.android.ide.common.process.DefaultProcessExecutor
 import com.android.ide.common.process.ProcessInfoBuilder
@@ -92,8 +91,7 @@ fun run(
     setExitCode: Boolean = false
 ): Boolean {
 
-    if (System.getenv(ENV_VAR_METALAVA_DUMP_ARGV) != null &&
-        !java.lang.Boolean.getBoolean(ENV_VAR_METALAVA_TESTS_RUNNING)
+    if (System.getenv(ENV_VAR_METALAVA_DUMP_ARGV) != null && !isUnderTest()
     ) {
         stdout.println("---Running $PROGRAM_NAME----")
         stdout.println("pwd=${File("").absolutePath}")
@@ -131,6 +129,7 @@ fun run(
                             stdout.println("\"$arg\",")
                         }
                         stdout.println("----------------------------")
+                        stdout.flush()
                     }
                     newArgs
                 }
@@ -145,6 +144,8 @@ fun run(
         }
         exitValue = true
     } catch (e: DriverException) {
+        stdout.flush()
+        stderr.flush()
         if (e.stderr.isNotBlank()) {
             stderr.println("\n${e.stderr}")
         }
@@ -166,7 +167,7 @@ fun run(
     stdout.flush()
     stderr.flush()
 
-    if (setExitCode && reporter.hasErrors()) {
+    if (setExitCode) {
         exit(exitCode)
     }
 
@@ -621,14 +622,18 @@ fun checkCompatibility(
         val currentTxt = getCanonicalSignatures(signatureFile)
         val newTxt = getCanonicalSignatures(apiFile)
         if (newTxt != currentTxt) {
-            val diff = getDiff(currentTxt, newTxt, 1)
+            val diff = getNativeDiff(signatureFile, apiFile) ?: getDiff(currentTxt, newTxt, 1)
+            val updateApi = if (isBuildingAndroid())
+                "Run make update-api to update.\n"
+            else
+                ""
             val message =
                 """
-                    Aborting: Your changes have resulted in differences in
-                    the signature file for the ${apiType.displayName} API.
-                    The changes are compatible, but the signature file needs
-                    to be updated.
+                    Aborting: Your changes have resulted in differences in the signature file
+                    for the ${apiType.displayName} API.
 
+                    The changes may be compatible, but the signature file needs to be updated.
+                    $updateApi
                     Diffs:
                 """.trimIndent() + "\n" + diff
 
@@ -897,7 +902,7 @@ private fun createProjectEnvironment(): LintCoreProjectEnvironment {
 
     if (!assertionsEnabled() &&
         System.getenv(ENV_VAR_METALAVA_DUMP_ARGV) == null &&
-        !java.lang.Boolean.getBoolean(ENV_VAR_METALAVA_TESTS_RUNNING)
+        !isUnderTest()
     ) {
         DefaultLogger.disableStderrDumping(parentDisposable)
     }
@@ -1229,3 +1234,9 @@ fun findPackage(file: File): String? {
 fun findPackage(source: String): String? {
     return ClassName(source).packageName
 }
+
+/** Whether metalava is running unit tests */
+fun isUnderTest() = java.lang.Boolean.getBoolean(ENV_VAR_METALAVA_TESTS_RUNNING)
+
+/** Whether metalava is being invoked as part of an Android platform build */
+fun isBuildingAndroid() = System.getenv("ANDROID_BUILD_TOP") != null && !isUnderTest()

@@ -624,7 +624,7 @@ class DocAnalyzer(
             }
 
             override fun getCacheDir(name: String?, create: Boolean): File? {
-                if (create && java.lang.Boolean.getBoolean(ENV_VAR_METALAVA_TESTS_RUNNING)) {
+                if (create && isUnderTest()) {
                     // Pick unique directory during unit tests
                     return Files.createTempDir()
                 }
