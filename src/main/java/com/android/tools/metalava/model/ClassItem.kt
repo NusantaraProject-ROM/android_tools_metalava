@@ -858,7 +858,7 @@ class VisitCandidate(private val cls: ClassItem, private val visitor: ApiVisitor
             return
         }
 
-        val emitThis = if (visitor.includeEmptyOuterClasses) emit else emitClass
+        val emitThis = cls.emit && if (visitor.includeEmptyOuterClasses) emit else emitClass
         if (emitThis) {
             if (!visitor.visitingPackage) {
                 visitor.visitingPackage = true
