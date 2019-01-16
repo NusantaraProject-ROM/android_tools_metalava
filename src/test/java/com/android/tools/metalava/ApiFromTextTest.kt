@@ -43,7 +43,7 @@ class ApiFromTextTest : DriverTest() {
     }
 
     @Test
-    fun `Handle lambas as default values`() {
+    fun `Handle lambdas as default values`() {
         val source = """
             // Signature format: 3.0
             package androidx.collection {

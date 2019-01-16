@@ -2480,6 +2480,59 @@ CompatibilityCheckTest : DriverTest() {
         )
     }
 
+    @Test
+    fun `Fail on compatible changes that affect signature file contents`() {
+        // Regression test for 122916999
+        check(
+            allowCompatibleDifferences = false,
+            expectedFail = """
+                Aborting: Your changes have resulted in differences in
+                the signature file for the public API.
+                The changes are compatible, but the signature file needs
+                to be updated.
+
+                Diffs:
+                @@ -5 +5
+                      ctor public MyClass();
+                -     method public void method2();
+                      method public void method1();
+                @@ -7 +6
+                      method public void method1();
+                +     method public void method2();
+                      method public void method3();
+            """.trimIndent(),
+            compatibilityMode = false,
+            // Methods in order
+            checkCompatibilityApi = """
+                package test.pkg {
+
+                  public class MyClass {
+                    ctor public MyClass();
+                    method public void method2();
+                    method public void method1();
+                    method public void method3();
+                    method public void method4();
+                  }
+
+                }
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+
+                    public class MyClass {
+                        public void method1() { }
+                        public void method2() { }
+                        public void method3() { }
+                        public native void method4();
+                    }
+                    """
+                )
+            )
+        )
+    }
+
     // TODO: Check method signatures changing incompatibly (look especially out for adding new overloaded
     // methods and comparator getting confused!)
     //   ..equals on the method items should actually be very useful!
