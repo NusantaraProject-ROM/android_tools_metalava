@@ -16,9 +16,11 @@
 
 package com.android.tools.metalava
 
+import com.android.SdkConstants.DOT_TXT
 import com.android.tools.metalava.doclava1.ApiPredicate
 import com.android.tools.metalava.doclava1.ElidingPredicate
 import com.android.tools.metalava.doclava1.FilterPredicate
+import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.Item
 import java.io.File
 import java.util.function.Predicate
@@ -99,4 +101,24 @@ enum class ApiType(val flagName: String, val displayName: String = flagName) {
     abstract fun getReferenceFilter(): Predicate<Item>
 
     override fun toString(): String = displayName
+
+    /**
+     * Gets the signature file for the given API type. Will create it if not already
+     * created.
+     */
+    fun getSignatureFile(codebase: Codebase, defaultName: String): File {
+        val apiType = this
+        return apiType.getOptionFile() ?: run {
+            val tempFile = createTempFile(defaultName, DOT_TXT)
+            tempFile.deleteOnExit()
+            val apiEmit = apiType.getEmitFilter()
+            val apiReference = apiType.getReferenceFilter()
+
+            createReportFile(codebase, tempFile, null) { printWriter ->
+                SignatureWriter(printWriter, apiEmit, apiReference, codebase.preFiltered)
+            }
+
+            tempFile
+        }
+    }
 }
