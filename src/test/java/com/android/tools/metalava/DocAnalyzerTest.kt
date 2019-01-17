@@ -1472,6 +1472,13 @@ class DocAnalyzerTest : DriverTest() {
             println("Ignoring external doc test: JDK not found")
             return
         }
+
+        val version = System.getProperty("java.version")
+        if (!version.startsWith("1.8.")) {
+            println("Javadoc invocation test does not work on Java 1.9 and later; bootclasspath not supported")
+            return
+        }
+
         val javadoc = File(jdkPath, "bin/javadoc")
         if (!javadoc.isFile) {
             println("Ignoring external doc test: javadoc not found *or* not running on Linux/OSX")
