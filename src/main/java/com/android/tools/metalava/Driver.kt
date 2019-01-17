@@ -139,7 +139,7 @@ fun run(
         options = Options(modifiedArgs, stdout, stderr)
         processFlags()
 
-        if (reporter.hasErrors() && !options.updateBaseline) {
+        if (reporter.hasErrors() && !options.passBaselineUpdates) {
             exitCode = -1
         }
         exitValue = true
@@ -160,7 +160,9 @@ fun run(
         if (options.verbose) {
             options.baseline?.dumpStats(options.stdout)
         }
-        stdout.println("$PROGRAM_NAME wrote updated baseline to ${options.baseline?.file}")
+        if (!options.quiet) {
+            stdout.println("$PROGRAM_NAME wrote updated baseline to ${options.baseline?.updateFile}")
+        }
     }
     options.baseline?.close()
 
@@ -731,7 +733,7 @@ fun invokeDocumentationTool() {
 class PrintWriterOutputStream(private val writer: PrintWriter) : OutputStream() {
 
     override fun write(b: ByteArray) {
-        writer.write(String(b, Charsets.UTF_8))
+        writer.write(String(b, UTF_8))
     }
 
     override fun write(b: Int) {
@@ -739,7 +741,7 @@ class PrintWriterOutputStream(private val writer: PrintWriter) : OutputStream() 
     }
 
     override fun write(b: ByteArray, off: Int, len: Int) {
-        writer.write(String(b, off, len, Charsets.UTF_8))
+        writer.write(String(b, off, len, UTF_8))
     }
 
     override fun flush() {
@@ -1018,7 +1020,7 @@ fun createReportFile(
     }
     val localTimer = Stopwatch.createStarted()
     try {
-        val writer = PrintWriter(Files.asCharSink(apiFile, Charsets.UTF_8).openBufferedStream())
+        val writer = PrintWriter(Files.asCharSink(apiFile, UTF_8).openBufferedStream())
         writer.use { printWriter ->
             val apiWriter = createVisitor(printWriter)
             codebase.accept(apiWriter)
@@ -1139,7 +1141,7 @@ private fun addHiddenPackages(
             }
             else -> return
         }
-        var contents = Files.asCharSource(file, Charsets.UTF_8).read()
+        var contents = Files.asCharSource(file, UTF_8).read()
         if (javadoc) {
             contents = packageHtmlToJavadoc(contents)
         }
@@ -1226,7 +1228,7 @@ private fun findRoot(file: File): File? {
 
 /** Finds the package of the given Java/Kotlin source file, if possible */
 fun findPackage(file: File): String? {
-    val source = Files.asCharSource(file, Charsets.UTF_8).read()
+    val source = Files.asCharSource(file, UTF_8).read()
     return findPackage(source)
 }
 

@@ -197,22 +197,26 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
         if (apiLintIssues > 0) {
             // We've reported API lint violations; emit some verbiage to explain
             // how to suppress the error rules.
-            options.stdout.println("\n$apiLintIssues new API lint issues were found. See tools/metalava/API-LINT.md for how to handle these.")
+            options.stdout.println("\n$apiLintIssues new API lint issues were found.")
             val baseline = options.baseline
             if (baseline?.updateFile != null && baseline.file != null && !baseline.silentUpdate) {
                 options.stdout.println("""
-                ******************************
+                ************************************************************
                 Your API changes are triggering API Lint warnings or errors.
                 To make these errors go away, you have two choices:
-                   1. You can suppress the errors with @SuppressLint("<id>")
-                   2. You can update the baseline by executing the following command:
-                         cp \
-                         ${baseline.updateFile} \
-                         ${baseline.file}
-                      To submit the revised baseline.txt to the main Android repository,
-                      you will need approval.
-                ******************************
+
+                1. You can suppress the errors with @SuppressLint("<id>")
+                2. You can update the baseline by executing the following
+                   command:
+                       cp \
+                       ${baseline.updateFile} \
+                       ${baseline.file}
+                   To submit the revised baseline.txt to the main Android
+                   repository, you will need approval.
+                ************************************************************
                 """.trimIndent())
+            } else {
+                options.stdout.println("See tools/metalava/API-LINT.md for how to handle these.")
             }
         }
     }

@@ -241,6 +241,11 @@ Diffs and Checks:
                                           on the same source tree with different flags at
                                           different times, such as occasionally with
                                           --api-lint.
+--pass-baseline-updates                   Normally, encountering error will fail the
+                                          build, even when updating baselines. This flag
+                                          allows you to tell metalava to continue without
+                                          errors, such that all the baselines in the
+                                          source tree can be updated in one go.
 
 JDiff:
 --api-xml <file>                          Like --api, but emits the API in the JDiff XML
