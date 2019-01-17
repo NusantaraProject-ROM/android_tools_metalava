@@ -108,6 +108,7 @@ abstract class DriverTest {
                         // the signature was passed at the same time
                         // ignore
                     } else {
+                        assertEquals(expectedFail, actualFail)
                         fail(actualFail)
                     }
                 }
@@ -384,7 +385,7 @@ abstract class DriverTest {
         }
         Errors.resetLevels()
 
-        /** Expected output if exiting with an error code */
+        @Suppress("NAME_SHADOWING")
         val expectedFail = expectedFail ?: if (checkCompatibilityApi != null ||
             checkCompatibilityApiReleased != null ||
             checkCompatibilityRemovedApiCurrent != null ||

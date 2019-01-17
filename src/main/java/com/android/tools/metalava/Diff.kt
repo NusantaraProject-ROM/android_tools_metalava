@@ -16,10 +16,44 @@
 
 package com.android.tools.metalava
 
-// Copied from lint's test suite: TestUtils.diff in tools/base
+import com.android.ide.common.process.CachedProcessOutputHandler
+import com.android.ide.common.process.DefaultProcessExecutor
+import com.android.ide.common.process.ProcessInfoBuilder
+import com.android.utils.LineCollector
+import com.android.utils.StdLogger
+import java.io.File
 
-fun getDiff(before: String, after: String): String {
-    return getDiff(before, after, 0)
+// Copied from lint's test suite: TestUtils.diff in tools/base with
+// some changes to allow running native diff.
+
+/** Returns the universal diff for the two given files, or null if not supported or working */
+fun getNativeDiff(before: File, after: File): String? {
+    if (options.noNativeDiff) {
+        return null
+    }
+
+    // A lot faster for big files:
+    val native = File("/usr/bin/diff")
+    if (native.isFile) {
+        try {
+            val builder = ProcessInfoBuilder()
+            builder.setExecutable(native)
+            builder.addArgs("-u", before.path, after.path)
+            val processOutputHandler = CachedProcessOutputHandler()
+            DefaultProcessExecutor(StdLogger(StdLogger.Level.ERROR))
+                .execute(builder.createProcess(), processOutputHandler)
+                .rethrowFailure()
+
+            val output = processOutputHandler.processOutput
+            val lineCollector = LineCollector()
+            output.processStandardOutputLines(lineCollector)
+
+            return lineCollector.result.joinToString(separator = "\n")
+        } catch (ignore: Throwable) {
+        }
+    }
+
+    return null
 }
 
 fun getDiff(before: String, after: String, windowSize: Int): String {
@@ -30,15 +64,10 @@ fun getDiff(before: String, after: String, windowSize: Int): String {
     )
 }
 
-fun getDiff(before: Array<String>, after: Array<String>): String {
-    return getDiff(before, after, 0)
-}
-
 fun getDiff(
     before: Array<String>,
     after: Array<String>,
-    windowSize: Int,
-    max: Int = 7
+    windowSize: Int
 ): String {
     // Based on the LCS section in http://introcs.cs.princeton.edu/java/96optimization/
     val sb = StringBuilder()
