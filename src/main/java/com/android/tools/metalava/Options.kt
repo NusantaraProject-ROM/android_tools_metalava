@@ -87,6 +87,7 @@ const val ARG_CHECK_COMPATIBILITY_API_RELEASED = "--check-compatibility:api:rele
 const val ARG_CHECK_COMPATIBILITY_REMOVED_CURRENT = "--check-compatibility:removed:current"
 const val ARG_CHECK_COMPATIBILITY_REMOVED_RELEASED = "--check-compatibility:removed:released"
 const val ARG_ALLOW_COMPATIBLE_DIFFERENCES = "--allow-compatible-differences"
+const val ARG_NO_NATIVE_DIFF = "--no-native-diff"
 const val ARG_INPUT_KOTLIN_NULLS = "--input-kotlin-nulls"
 const val ARG_OUTPUT_KOTLIN_NULLS = "--output-kotlin-nulls"
 const val ARG_OUTPUT_DEFAULT_VALUES = "--output-default-values"
@@ -431,6 +432,9 @@ class Options(
      */
     var allowCompatibleDifferences = false
 
+    /** If false, attempt to use the native diff utility on the system */
+    var noNativeDiff = false
+
     /** Existing external annotation files to merge in */
     var mergeQualifierAnnotations: List<File> = mutableMergeQualifierAnnotations
     var mergeInclusionAnnotations: List<File> = mutableMergeInclusionAnnotations
@@ -563,6 +567,7 @@ class Options(
         var updateBaselineFile: File? = null
         var baselineFile: File? = null
         var mergeBaseline = false
+        var delayedCheckApiFiles = false
 
         var index = 0
         while (index < args.size) {
@@ -838,29 +843,37 @@ class Options(
                 }
 
                 ARG_ALLOW_COMPATIBLE_DIFFERENCES -> allowCompatibleDifferences = true
+                ARG_NO_NATIVE_DIFF -> noNativeDiff = true
 
                 // Compat flag for the old API check command, invoked from build/make/core/definitions.mk:
                 "--check-api-files" -> {
-                    val stableApiFile = stringToExistingFile(getValue(args, ++index))
-                    val apiFileToBeTested = stringToExistingFile(getValue(args, ++index))
-                    val stableRemovedApiFile = stringToExistingFile(getValue(args, ++index))
-                    val removedApiFileToBeTested = stringToExistingFile(getValue(args, ++index))
-                    mutableCompatibilityChecks.add(
-                        CheckRequest(
-                            stableApiFile,
-                            ApiType.PUBLIC_API,
-                            ReleaseType.RELEASED,
-                            apiFileToBeTested
+                    if (index < args.size - 1 && args[index + 1].startsWith("-")) {
+                        // Work around bug where --check-api-files is invoked with all
+                        // the other metalava args before the 4 files; this will be
+                        // fixed by https://android-review.googlesource.com/c/platform/build/+/874473
+                        delayedCheckApiFiles = true
+                    } else {
+                        val stableApiFile = stringToExistingFile(getValue(args, ++index))
+                        val apiFileToBeTested = stringToExistingFile(getValue(args, ++index))
+                        val stableRemovedApiFile = stringToExistingFile(getValue(args, ++index))
+                        val removedApiFileToBeTested = stringToExistingFile(getValue(args, ++index))
+                        mutableCompatibilityChecks.add(
+                            CheckRequest(
+                                stableApiFile,
+                                ApiType.PUBLIC_API,
+                                ReleaseType.RELEASED,
+                                apiFileToBeTested
+                            )
                         )
-                    )
-                    mutableCompatibilityChecks.add(
-                        CheckRequest(
-                            stableRemovedApiFile,
-                            ApiType.REMOVED,
-                            ReleaseType.RELEASED,
-                            removedApiFileToBeTested
+                        mutableCompatibilityChecks.add(
+                            CheckRequest(
+                                stableRemovedApiFile,
+                                ApiType.REMOVED,
+                                ReleaseType.RELEASED,
+                                removedApiFileToBeTested
+                            )
                         )
-                    )
+                    }
                 }
 
                 ARG_ANNOTATION_COVERAGE_STATS -> dumpAnnotationStatistics = true
@@ -1255,8 +1268,32 @@ class Options(
                             throw DriverException(stderr = "Invalid argument $arg\n\n$usage")
                         }
                     } else {
-                        // All args that don't start with "-" are taken to be filenames
-                        mutableSources.addAll(stringToExistingFiles(arg))
+                        if (delayedCheckApiFiles) {
+                            delayedCheckApiFiles = false
+                            val stableApiFile = stringToExistingFile(arg)
+                            val apiFileToBeTested = stringToExistingFile(getValue(args, ++index))
+                            val stableRemovedApiFile = stringToExistingFile(getValue(args, ++index))
+                            val removedApiFileToBeTested = stringToExistingFile(getValue(args, ++index))
+                            mutableCompatibilityChecks.add(
+                                CheckRequest(
+                                    stableApiFile,
+                                    ApiType.PUBLIC_API,
+                                    ReleaseType.RELEASED,
+                                    apiFileToBeTested
+                                )
+                            )
+                            mutableCompatibilityChecks.add(
+                                CheckRequest(
+                                    stableRemovedApiFile,
+                                    ApiType.REMOVED,
+                                    ReleaseType.RELEASED,
+                                    removedApiFileToBeTested
+                                )
+                            )
+                        } else {
+                            // All args that don't start with "-" are taken to be filenames
+                            mutableSources.addAll(stringToExistingFiles(arg))
+                        }
                     }
                 }
             }
@@ -1318,7 +1355,7 @@ class Options(
             }
         } else {
             // Add helpful doc in AOSP baseline files?
-            val headerComment = if (System.getenv("ANDROID_BUILD_TOP") != null)
+            val headerComment = if (isBuildingAndroid())
                 "// See tools/metalava/API-LINT.md for how to update this file.\n\n"
             else
                 ""

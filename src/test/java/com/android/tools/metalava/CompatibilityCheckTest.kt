@@ -2484,12 +2484,13 @@ CompatibilityCheckTest : DriverTest() {
     fun `Fail on compatible changes that affect signature file contents`() {
         // Regression test for 122916999
         check(
+            extraArguments = arrayOf(ARG_NO_NATIVE_DIFF),
             allowCompatibleDifferences = false,
             expectedFail = """
-                Aborting: Your changes have resulted in differences in
-                the signature file for the public API.
-                The changes are compatible, but the signature file needs
-                to be updated.
+                Aborting: Your changes have resulted in differences in the signature file
+                for the public API.
+
+                The changes may be compatible, but the signature file needs to be updated.
 
                 Diffs:
                 @@ -5 +5
