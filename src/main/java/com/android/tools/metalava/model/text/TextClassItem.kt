@@ -254,6 +254,10 @@ open class TextClassItem(
     override fun qualifiedName(): String = qualifiedName
     override fun toString(): String = qualifiedName()
 
+    override fun mapTypeVariables(target: ClassItem): Map<String, String> {
+        return emptyMap()
+    }
+
     companion object {
         fun createClassStub(codebase: TextCodebase, name: String): TextClassItem =
             createStub(codebase, name, isInterface = false)
