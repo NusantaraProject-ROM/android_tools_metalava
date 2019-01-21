@@ -711,7 +711,7 @@ class JDiffXmlTest : DriverTest() {
             <package name="test.pkg"
             >
             <interface name="AbstractList"
-             extends="test.pkg.List&lt;A,B,C>"
+             extends="test.pkg.List&lt;A, B, C>"
              abstract="true"
              static="false"
              final="false"
@@ -720,7 +720,7 @@ class JDiffXmlTest : DriverTest() {
             >
             </interface>
             <interface name="ConcreteList"
-             extends="test.pkg.AbstractList&lt;D,E,F>"
+             extends="test.pkg.AbstractList&lt;D, E, F>"
              abstract="true"
              static="false"
              final="false"
@@ -1031,6 +1031,92 @@ class JDiffXmlTest : DriverTest() {
              value="&quot;android.permission.ACCESS_DRM_CERTIFICATES&quot;"
              static="true"
              final="true"
+             deprecated="not deprecated"
+             visibility="public"
+            >
+            </field>
+            </class>
+            </package>
+            </api>
+            """
+        )
+    }
+
+    @Test
+    fun `Spaces in type argument lists`() {
+        // JDiff expects spaces in type argument lists
+        // Regression test for 123140708
+        check(
+            compatibilityMode = false,
+            checkDoclava1 = true,
+            format = FileFormat.V2,
+            signatureSource = """
+            // Signature format: 2.0
+            package org.apache.http.impl.conn.tsccm {
+              @Deprecated public class ConnPoolByRoute extends org.apache.http.impl.conn.tsccm.AbstractConnPool {
+                field @Deprecated protected final java.util.Map<org.apache.http.conn.routing.HttpRoute,org.apache.http.impl.conn.tsccm.RouteSpecificPool> routeToPool;
+                field @Deprecated protected java.util.Queue<org.apache.http.impl.conn.tsccm.WaitingThread> waitingThreads;
+              }
+            }
+            package test.pkg {
+              public abstract class MyClass extends HashMap<String,String> implements Map<String,String>  {
+                field public Map<String,String> map;
+              }
+            }
+            """,
+            apiXml =
+            """
+            <api>
+            <package name="org.apache.http.impl.conn.tsccm"
+            >
+            <class name="ConnPoolByRoute"
+             extends="org.apache.http.impl.conn.tsccm.AbstractConnPool"
+             abstract="false"
+             static="false"
+             final="false"
+             deprecated="deprecated"
+             visibility="public"
+            >
+            <field name="routeToPool"
+             type="java.util.Map&lt;org.apache.http.conn.routing.HttpRoute, org.apache.http.impl.conn.tsccm.RouteSpecificPool>"
+             transient="false"
+             volatile="false"
+             static="false"
+             final="true"
+             deprecated="deprecated"
+             visibility="protected"
+            >
+            </field>
+            <field name="waitingThreads"
+             type="java.util.Queue&lt;org.apache.http.impl.conn.tsccm.WaitingThread>"
+             transient="false"
+             volatile="false"
+             static="false"
+             final="false"
+             deprecated="deprecated"
+             visibility="protected"
+            >
+            </field>
+            </class>
+            </package>
+            <package name="test.pkg"
+            >
+            <class name="MyClass"
+             extends="java.lang.HashMap&lt;String, String>"
+             abstract="true"
+             static="false"
+             final="false"
+             deprecated="not deprecated"
+             visibility="public"
+            >
+            <implements name="java.lang.Map&lt;String, String>">
+            </implements>
+            <field name="map"
+             type="java.lang.Map&lt;String, String>"
+             transient="false"
+             volatile="false"
+             static="false"
+             final="false"
              deprecated="not deprecated"
              visibility="public"
             >
