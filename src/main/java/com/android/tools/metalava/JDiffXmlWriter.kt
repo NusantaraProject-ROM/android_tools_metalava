@@ -201,12 +201,10 @@ class JDiffXmlWriter(
             }
         } else null
 
-        val fullTypeName = escapeAttributeValue(field.type().toTypeString())
-
         writer.print("<field name=\"")
         writer.print(field.name())
         writer.print("\"\n type=\"")
-        writer.print(fullTypeName)
+        writer.print(escapeAttributeValue(formatType(field.type())))
         writer.print("\"\n transient=\"")
         writer.print(modifiers.isTransient())
         writer.print("\"\n volatile=\"")
@@ -295,9 +293,11 @@ class JDiffXmlWriter(
                         return
                     }
                     escapeAttributeValue(
-                        superClass.toTypeString(
-                            erased = compatibility.omitTypeParametersInInterfaces,
-                            context = superClass.asClass()
+                        formatType(
+                            superClass.toTypeString(
+                                erased = compatibility.omitTypeParametersInInterfaces,
+                                context = superClass.asClass()
+                            )
                         )
                     )
                 }
@@ -325,8 +325,7 @@ class JDiffXmlWriter(
             interfaces.sortedWith(TypeItem.comparator).forEach { item ->
                 writer.print("<implements name=\"")
                 val type = item.toTypeString(erased = compatibility.omitTypeParametersInInterfaces, context = cls)
-                val escapedType = escapeAttributeValue(type)
-                writer.print(escapedType)
+                writer.print(escapeAttributeValue(formatType(type)))
                 writer.println("\">\n</implements>")
             }
         }
@@ -343,13 +342,12 @@ class JDiffXmlWriter(
         }
     }
 
-    private fun formatType(type: TypeItem): String {
-        val typeString = type.toTypeString()
-        return if (compatibility.spaceAfterCommaInTypes) {
-            typeString.replace(",", ", ").replace(",  ", ", ")
-        } else {
-            typeString
-        }
+    private fun formatType(type: TypeItem): String = formatType(type.toTypeString())
+
+    private fun formatType(typeString: String): String {
+        // In JDiff we always want to include spaces after commas; the API signature tests depend
+        // on this.
+        return typeString.replace(",", ", ").replace(",  ", ", ")
     }
 
     private fun writeThrowsList(method: MethodItem) {
