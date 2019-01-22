@@ -510,7 +510,7 @@ class CompatibilityCheck(
             }
         }
 
-        if (new.modifiers.isInline() && new.isKotlin()) {
+        if (new.modifiers.isInline()) {
             val oldTypes = old.typeParameterList().typeParameters()
             val newTypes = new.typeParameterList().typeParameters()
             for (i in 0 until oldTypes.size) {

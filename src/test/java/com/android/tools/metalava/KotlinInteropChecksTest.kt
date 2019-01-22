@@ -91,6 +91,7 @@ class KotlinInteropChecksTest : DriverTest() {
             extraArguments = arrayOf(ARG_CHECK_KOTLIN_INTEROP),
             warnings = """
                 src/test/pkg/Foo.kt:7: warning: Companion object constants like INTEGER_ONE should be marked @JvmField for Java interoperability; see https://android.github.io/kotlin-guides/interop.html#companion-constants [MissingJvmstatic]
+                src/test/pkg/Foo.kt:10: warning: Companion object constants like WRONG2 should be using @JvmField, not @JvmStatic; see https://android.github.io/kotlin-guides/interop.html#companion-constants [MissingJvmstatic]
                 src/test/pkg/Foo.kt:13: warning: Companion object methods like missing should be marked @JvmStatic for Java interoperability; see https://android.github.io/kotlin-guides/interop.html#companion-functions [MissingJvmstatic]
                 """,
             sourceFiles = *arrayOf(
@@ -105,7 +106,7 @@ class KotlinInteropChecksTest : DriverTest() {
                             const val INTEGER_ONE = 1
                             var BIG_INTEGER_ONE = BigInteger.ONE
                             @JvmStatic val WRONG = 2 // not yet flagged
-                            @JvmStatic @JvmField val WRONG2 = 2 // not yet flagged
+                            @JvmStatic @JvmField val WRONG2 = 2
                             @JvmField val ok3 = 3
 
                             fun missing() { }
