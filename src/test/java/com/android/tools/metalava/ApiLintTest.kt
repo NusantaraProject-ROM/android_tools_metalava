@@ -110,7 +110,10 @@ class ApiLintTest : DriverTest() {
                     """
                 )
             ),
-            expectedOutput = "9 new API lint issues were found. See tools/metalava/API-LINT.md for how to handle these."
+            expectedOutput = """
+                9 new API lint issues were found.
+                See tools/metalava/API-LINT.md for how to handle these.
+            """
         )
     }
 

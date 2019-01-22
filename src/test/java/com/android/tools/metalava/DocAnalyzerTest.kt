@@ -7,6 +7,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
+import kotlin.text.Charsets.UTF_8
 
 /** Tests for the [DocAnalyzer] which enhances the docs */
 class DocAnalyzerTest : DriverTest() {
@@ -1552,7 +1553,7 @@ class DocAnalyzerTest : DriverTest() {
             )
         )
 
-        val doc = File(html, "test/pkg/LocationManager.html").readText(Charsets.UTF_8)
+        val doc = File(html, "test/pkg/LocationManager.html").readText(UTF_8)
         assertTrue(
             "Did not find matching javadoc fragment in LocationManager.html: actual content is\n$doc",
             doc.contains(
