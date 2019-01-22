@@ -26,6 +26,7 @@ import java.io.IOException
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.util.function.Predicate
+import kotlin.text.Charsets.UTF_8
 
 /**
  * The [AnnotationsDiffer] can take a codebase with annotations, and subtract
@@ -135,7 +136,7 @@ class AnnotationsDiffer(
                 }
             }
 
-            apiFile.writeText(cleanedUp, Charsets.UTF_8)
+            apiFile.writeText(cleanedUp, UTF_8)
         } catch (e: IOException) {
             reporter.report(Errors.IO_ERROR, apiFile, "Cannot open file for write.")
         }

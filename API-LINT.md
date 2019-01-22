@@ -44,17 +44,39 @@ it is silently ignored.
 
 You can pass a flag to metalava ("--update-baseline") to tell it to update the
 baseline files with any new errors it comes across instead of reporting
-them. With soong, you'd do something like this:
+them. With soong, if you specify the baseline explicitly, like this:
 
     --- a/Android.bp
     +++ b/Android.bp
     @@ -1678,6 +1678,7 @@ droidstubs {
          },
          api_lint: true,
-         baseline_filename: "baseline.txt",
-    +    update_baseline: true,
+    ==>  baseline_filename: "api/baseline.txt", <==
          jdiff_enabled: true,
      }
+
+then the build system will automatically supply `--update-baseline` on your
+behalf to a generated file in the out/ folder, and if there's a failure metalava
+will tell you where to find the updated baseline which you can then copy into
+place:
+
+    ...
+    93 new API lint issues were found. See tools/metalava/API-LINT.md for how to handle these.
+    ************************************************************
+    Your API changes are triggering API Lint warnings or errors.
+    To make these errors go away, you have two choices:
+
+    1. You can suppress the errors with @SuppressLint("<id>")
+    2. You can update the baseline by executing the following
+       command:
+           cp \
+           out/soong/.intermediates/frameworks/base/system-api-stubs-docs/android_common/api/system-baseline.txt \
+           frameworks/base/api/system-baseline.txt
+       To submit the revised baseline.txt to the main Android
+       repository, you will need approval.
+    ************************************************************
+
+
 
 Then re-run the build and you should now see diffs to the baseline file; git
 diff to make sure you're really only marking the issues you intended to include.
