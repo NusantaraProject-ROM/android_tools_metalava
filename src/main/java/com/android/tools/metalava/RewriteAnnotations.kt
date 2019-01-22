@@ -37,6 +37,7 @@ import java.nio.file.attribute.FileTime
 import java.util.jar.JarEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
+import kotlin.text.Charsets.UTF_8
 
 /**
  * Converts public stub annotation sources into package private annotation sources.
@@ -61,7 +62,7 @@ class RewriteAnnotations {
             // Copy and convert
             target.parentFile.mkdirs()
             target.writeText(
-                source.readText(Charsets.UTF_8).replace(
+                source.readText(UTF_8).replace(
                     "\npublic @interface",
                     "\n@interface"
                 )

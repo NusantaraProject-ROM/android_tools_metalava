@@ -62,7 +62,6 @@ import com.android.tools.metalava.model.parseDocument
 import com.android.tools.metalava.model.psi.PsiAnnotationItem
 import com.android.tools.metalava.model.psi.PsiBasedCodebase
 import com.android.tools.metalava.model.visitors.ApiVisitor
-import com.google.common.base.Charsets
 import com.google.common.io.ByteStreams
 import com.google.common.io.Closeables
 import com.google.common.io.Files
@@ -76,6 +75,7 @@ import java.lang.reflect.Field
 import java.util.jar.JarInputStream
 import java.util.regex.Pattern
 import java.util.zip.ZipEntry
+import kotlin.text.Charsets.UTF_8
 
 /** Merges annotations into classes already registered in the given [Codebase] */
 class AnnotationsMerger(
@@ -152,7 +152,7 @@ class AnnotationsMerger(
             mergeFromJar(file)
         } else if (file.path.endsWith(DOT_XML)) {
             try {
-                val xml = Files.asCharSource(file, Charsets.UTF_8).read()
+                val xml = Files.asCharSource(file, UTF_8).read()
                 mergeAnnotationsXml(file.path, xml)
             } catch (e: IOException) {
                 error("Aborting: I/O problem during transform: " + e.toString())
@@ -182,7 +182,7 @@ class AnnotationsMerger(
             while (entry != null) {
                 if (entry.name.endsWith(".xml")) {
                     val bytes = ByteStreams.toByteArray(zis)
-                    val xml = String(bytes, Charsets.UTF_8)
+                    val xml = String(bytes, UTF_8)
                     mergeAnnotationsXml(jar.path + ": " + entry, xml)
                 }
                 entry = zis.nextEntry

@@ -35,7 +35,6 @@ import com.android.tools.metalava.model.psi.PsiAnnotationItem
 import com.android.tools.metalava.model.psi.PsiClassItem
 import com.android.tools.metalava.model.psi.PsiMethodItem
 import com.android.tools.metalava.model.visitors.ApiVisitor
-import com.google.common.base.Charsets
 import com.google.common.xml.XmlEscapers
 import com.intellij.psi.JavaRecursiveElementVisitor
 import com.intellij.psi.PsiAnnotation
@@ -63,6 +62,7 @@ import java.io.StringWriter
 import java.util.ArrayList
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
+import kotlin.text.Charsets.UTF_8
 
 // Like the tools/base Extractor class, but limited to our own (mapped) AnnotationItems,
 // and only those with source retention (and in particular right now that just means the
@@ -148,7 +148,7 @@ class ExtractAnnotations(
                         }
                         writer.println("</root>\n")
                         writer.close()
-                        val bytes = writer.contents.toByteArray(Charsets.UTF_8)
+                        val bytes = writer.contents.toByteArray(UTF_8)
                         zos.write(bytes)
                         zos.closeEntry()
                     }

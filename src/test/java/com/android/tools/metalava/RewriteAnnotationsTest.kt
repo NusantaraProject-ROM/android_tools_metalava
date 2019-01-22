@@ -26,6 +26,7 @@ import org.junit.Test
 import java.io.File
 import java.lang.reflect.Modifier
 import java.net.URLClassLoader
+import kotlin.text.Charsets.UTF_8
 
 class RewriteAnnotationsTest : DriverTest() {
     @Test
@@ -82,7 +83,7 @@ class RewriteAnnotationsTest : DriverTest() {
             @Retention(CLASS)
             @Target({METHOD, PARAMETER, FIELD})
             @interface RecentlyNullable {}
-        """.trimIndent().trim(), recentlyNull.readText(Charsets.UTF_8).trim().replace("\r\n", "\n")
+        """.trimIndent().trim(), recentlyNull.readText(UTF_8).trim().replace("\r\n", "\n")
         )
     }
 

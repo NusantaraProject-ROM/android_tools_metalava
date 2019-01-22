@@ -33,6 +33,7 @@ import java.io.StringWriter
 import java.util.Locale
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.memberProperties
+import kotlin.text.Charsets.UTF_8
 
 /** Global options for the metadata extraction tool */
 var options = Options(emptyArray())
@@ -136,6 +137,7 @@ const val ARG_REWRITE_ANNOTATIONS = "--rewrite-annotations"
 const val ARG_INCLUDE_SOURCE_RETENTION = "--include-source-retention"
 const val ARG_INCLUDE_SIG_VERSION = "--include-signature-version"
 const val ARG_UPDATE_API = "--update-api"
+const val ARG_PASS_BASELINE_UPDATES = "--pass-baseline-updates"
 const val ARG_DEX_API_MAPPING = "--dex-api-mapping"
 const val ARG_GENERATE_DOCUMENTATION = "--generate-documentation"
 const val ARG_BASELINE = "--baseline"
@@ -502,6 +504,9 @@ class Options(
     /** Whether all baseline files need to be updated */
     var updateBaseline = false
 
+    /** If updating baselines, don't fail the build */
+    var passBaselineUpdates = false
+
     /** Whether the baseline should only contain errors */
     var baselineErrorsOnly = false
 
@@ -750,6 +755,7 @@ class Options(
                         }
                     }
                 }
+                ARG_PASS_BASELINE_UPDATES -> passBaselineUpdates = true
 
                 ARG_PUBLIC, "-public" -> docLevel = DocLevel.PUBLIC
                 ARG_PROTECTED, "-protected" -> docLevel = DocLevel.PROTECTED
@@ -1349,6 +1355,9 @@ class Options(
         if (baselineFile == null) {
             val defaultBaselineFile = getDefaultBaselineFile()
             if (defaultBaselineFile != null && defaultBaselineFile.isFile) {
+                if (updateBaseline && updateBaselineFile == null) {
+                    updateBaselineFile = defaultBaselineFile
+                }
                 baseline = Baseline(defaultBaselineFile, updateBaselineFile, mergeBaseline)
             } else if (updateBaselineFile != null) {
                 baseline = Baseline(null, updateBaselineFile, mergeBaseline)
@@ -1359,6 +1368,9 @@ class Options(
                 "// See tools/metalava/API-LINT.md for how to update this file.\n\n"
             else
                 ""
+            if (updateBaseline && updateBaselineFile == null) {
+                updateBaselineFile = baselineFile
+            }
             baseline = Baseline(baselineFile, updateBaselineFile, mergeBaseline, headerComment)
         }
 
@@ -1609,7 +1621,7 @@ class Options(
                     if (!listFile.isFile) {
                         throw DriverException("$listFile is not a file")
                     }
-                    val contents = Files.asCharSource(listFile, Charsets.UTF_8).read()
+                    val contents = Files.asCharSource(listFile, UTF_8).read()
                     val pathList = Splitter.on(CharMatcher.whitespace()).trimResults().omitEmptyStrings().split(
                         contents
                     )
@@ -1886,6 +1898,9 @@ class Options(
                 "in the baseline, it will merge the existing baseline with the new baseline. This is useful " +
                 "if $PROGRAM_NAME runs multiple times on the same source tree with different flags at different " +
                 "times, such as occasionally with $ARG_API_LINT.",
+            ARG_PASS_BASELINE_UPDATES, "Normally, encountering error will fail the build, even when updating " +
+                "baselines. This flag allows you to tell $PROGRAM_NAME to continue without errors, such that " +
+                "all the baselines in the source tree can be updated in one go.",
 
             "", "\nJDiff:",
             "$ARG_XML_API <file>", "Like $ARG_API, but emits the API in the JDiff XML format instead",
