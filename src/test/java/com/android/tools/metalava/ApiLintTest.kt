@@ -1456,7 +1456,7 @@ class ApiLintTest : DriverTest() {
                     import java.io.InputStream;
 
                     public class CheckFiles {
-                        public MyClass(Context context, File file) {
+                        public CheckFiles(Context context, File file) {
                         }
                         public void ok(int i, File file) { }
                         public void ok(int i, InputStream stream) { }
@@ -1487,7 +1487,7 @@ class ApiLintTest : DriverTest() {
                     import java.io.InputStream;
 
                     public class CheckFiles {
-                        public MyClass(Context context, File file) {
+                        public CheckFiles(Context context, File file) {
                         }
                         public void ok(int i, File file) { }
                         public void ok(int i, InputStream stream) { }

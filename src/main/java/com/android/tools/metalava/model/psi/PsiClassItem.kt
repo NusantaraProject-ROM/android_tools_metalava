@@ -420,6 +420,8 @@ open class PsiClassItem(
                 )
             }
 
+            val isKotlin = isKotlin(psiClass)
+
             val constructors: MutableList<PsiConstructorItem> = ArrayList(5)
             for (psiMethod in psiMethods) {
                 if (psiMethod.isPrivate() || psiMethod.isPackagePrivate()) {
@@ -468,7 +470,7 @@ open class PsiClassItem(
             item.fields = fields
 
             item.properties = emptyList()
-            if (isKotlin(psiClass)) {
+            if (isKotlin) {
                 // Try to initialize the Kotlin properties
                 val properties = mutableListOf<PsiPropertyItem>()
                 for (method in psiMethods) {

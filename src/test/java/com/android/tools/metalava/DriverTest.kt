@@ -131,6 +131,9 @@ abstract class DriverTest {
         }
     }
 
+    // This is here to make sure we don't have any unexpected random println's
+    // in the source that are left behind after debugging and ends up polluting
+    // the production output
     class OutputForbiddenWriter(private val stream: String) : ByteArrayOutputStream() {
         override fun write(b: ByteArray?, off: Int, len: Int) {
             fail("Unexpected write directly to $stream")
