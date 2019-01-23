@@ -145,6 +145,7 @@ const val ARG_UPDATE_BASELINE = "--update-baseline"
 const val ARG_MERGE_BASELINE = "--merge-baseline"
 const val ARG_STUB_PACKAGES = "--stub-packages"
 const val ARG_STUB_IMPORT_PACKAGES = "--stub-import-packages"
+const val ARG_DELETE_EMPTY_BASELINES = "--delete-empty-baselines"
 
 class Options(
     args: Array<String>,
@@ -507,6 +508,9 @@ class Options(
     /** If updating baselines, don't fail the build */
     var passBaselineUpdates = false
 
+    /** If updating baselines and the baseline is empty, delete the file */
+    var deleteEmptyBaselines = false
+
     /** Whether the baseline should only contain errors */
     var baselineErrorsOnly = false
 
@@ -756,6 +760,7 @@ class Options(
                     }
                 }
                 ARG_PASS_BASELINE_UPDATES -> passBaselineUpdates = true
+                ARG_DELETE_EMPTY_BASELINES -> deleteEmptyBaselines = true
 
                 ARG_PUBLIC, "-public" -> docLevel = DocLevel.PUBLIC
                 ARG_PROTECTED, "-protected" -> docLevel = DocLevel.PROTECTED
@@ -1901,6 +1906,8 @@ class Options(
             ARG_PASS_BASELINE_UPDATES, "Normally, encountering error will fail the build, even when updating " +
                 "baselines. This flag allows you to tell $PROGRAM_NAME to continue without errors, such that " +
                 "all the baselines in the source tree can be updated in one go.",
+            ARG_DELETE_EMPTY_BASELINES, "Whether to delete baseline files if they are updated and there is nothing " +
+                "to include.",
 
             "", "\nJDiff:",
             "$ARG_XML_API <file>", "Like $ARG_API, but emits the API in the JDiff XML format instead",

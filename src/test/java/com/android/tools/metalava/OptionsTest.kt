@@ -246,6 +246,8 @@ Diffs and Checks:
                                           allows you to tell metalava to continue without
                                           errors, such that all the baselines in the
                                           source tree can be updated in one go.
+--delete-empty-baselines                  Whether to delete baseline files if they are
+                                          updated and there is nothing to include.
 
 JDiff:
 --api-xml <file>                          Like --api, but emits the API in the JDiff XML
