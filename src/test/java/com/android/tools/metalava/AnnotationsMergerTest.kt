@@ -211,24 +211,70 @@ class AnnotationsMergerTest : DriverTest() {
     }
 
     @Test
-    fun `Merge inclusion annotations from Java stub files`() {
+    fun `Merge type use qualifier annotations from Java stub files`() {
+        // See b/123223339
         check(
-            warnings = "src/test/pkg/Example.java:6: error: @test.annotation.Show APIs must also be marked @hide: method test.pkg.Example.cShown() [UnhiddenSystemApi]",
             sourceFiles = *arrayOf(
                 java(
                     """
                 package test.pkg;
 
-                public interface Example {
-                    void aNotAnnotated();
-                    void bHidden();
-                    void cShown();
-                }
-
-                public interface HiddenExample {
-                    void method();
+                public class Test {
+                    private Test() { }
+                    public void foo(Object... args) { }
                 }
                 """
+                ),
+                libcoreNonNullSource,
+                libcoreNullableSource
+            ),
+            compatibilityMode = false,
+            outputKotlinStyleNulls = false,
+            omitCommonPackages = false,
+            mergeJavaStubAnnotations = """
+                package test.pkg;
+
+                public class Test {
+                    public void foo(java.lang.@libcore.util.Nullable Object @libcore.util.NonNull ... args) { throw new RuntimeException("Stub!"); }
+                }
+                """,
+            api = """
+                package test.pkg {
+                  public class Test {
+                    method public void foo(@androidx.annotation.NonNull java.lang.Object...);
+                  }
+                }
+                """,
+            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "libcore.util")
+        )
+    }
+
+    @Test
+    fun `Merge inclusion annotations from Java stub files`() {
+        check(
+            warnings = "src/test/pkg/Example.annotated.java:6: error: @test.annotation.Show APIs must also be marked @hide: method test.pkg.Example.cShown() [UnhiddenSystemApi]",
+            sourceFiles = *arrayOf(
+                java(
+                    "src/test/pkg/Example.annotated.java",
+                    """
+                    package test.pkg;
+
+                    public interface Example {
+                        void aNotAnnotated();
+                        void bHidden();
+                        void cShown();
+                    }
+                    """
+                ),
+                java(
+                    "src/test/pkg/HiddenExample.annotated.java",
+                    """
+                    package test.pkg;
+
+                    public interface HiddenExample {
+                        void method();
+                    }
+                    """
                 )
             ),
             compatibilityMode = false,
@@ -267,14 +313,15 @@ class AnnotationsMergerTest : DriverTest() {
         check(
             sourceFiles = *arrayOf(
                 java(
+                    "src/test/pkg/Example.annotated.java",
                     """
-                package test.pkg;
+                    package test.pkg;
 
-                public interface Example {
-                    void aNotAnnotated();
-                    void bShown();
-                }
-                """
+                    public interface Example {
+                        void aNotAnnotated();
+                        void bShown();
+                    }
+                    """
                 )
             ),
             compatibilityMode = false,
