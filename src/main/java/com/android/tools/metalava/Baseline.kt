@@ -219,7 +219,7 @@ class Baseline(
 
     private fun write() {
         val updateFile = this.updateFile ?: return
-        if (!map.isEmpty()) {
+        if (!map.isEmpty() || !options.deleteEmptyBaselines) {
             val sb = StringBuilder()
             sb.append(format.header())
             sb.append(headerComment)
@@ -235,6 +235,11 @@ class Baseline(
                 }
                 sb.append("\n\n")
             }
+
+            if (sb.endsWith("\n\n")) {
+                sb.setLength(sb.length - 2)
+            }
+
             updateFile.parentFile?.mkdirs()
             updateFile.writeText(sb.toString(), UTF_8)
         } else {
