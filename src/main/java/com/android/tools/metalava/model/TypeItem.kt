@@ -297,5 +297,46 @@ interface TypeItem {
 
             return dimension + base
         }
+
+        /** Compares two strings, ignoring space diffs (spaces, not whitespace in general) */
+        fun equalsWithoutSpace(s1: String, s2: String): Boolean {
+            if (s1 == s2) {
+                return true
+            }
+            val sp1 = s1.indexOf(' ') // first space
+            val sp2 = s2.indexOf(' ')
+            if (sp1 == -1 && sp2 == -1) {
+                // no spaces in strings and aren't equal
+                return false
+            }
+
+            val l1 = s1.length
+            val l2 = s2.length
+            var i1 = 0
+            var i2 = 0
+
+            while (i1 < l1 && i2 < l2) {
+                var c1 = s1[i1++]
+                var c2 = s2[i2++]
+
+                while (c1 == ' ' && i1 < l1) {
+                    c1 = s1[i1++]
+                }
+                while (c2 == ' ' && i2 < l2) {
+                    c2 = s2[i2++]
+                }
+                if (c1 != c2) {
+                    return false
+                }
+            }
+            // Skip trailing spaces
+            while (i1 < l1 && s1[i1] == ' ') {
+                i1++
+            }
+            while (i2 < l2 && s2[i2] == ' ') {
+                i2++
+            }
+            return i1 == l1 && i2 == l2
+        }
     }
 }
