@@ -33,4 +33,22 @@ class TypeItemTest {
             "java.util.List<@NonNull java.lang.String>"
         )
     }
+
+    @Test
+    fun testEqualsWithoutSpace() {
+        assertThat(TypeItem.equalsWithoutSpace("", "")).isTrue()
+        assertThat(TypeItem.equalsWithoutSpace(" ", "")).isTrue()
+        assertThat(TypeItem.equalsWithoutSpace("", " ")).isTrue()
+        assertThat(TypeItem.equalsWithoutSpace(" ", " ")).isTrue()
+        assertThat(TypeItem.equalsWithoutSpace("true", "tr ue")).isTrue()
+        assertThat(TypeItem.equalsWithoutSpace("tr ue", "true")).isTrue()
+        assertThat(TypeItem.equalsWithoutSpace("true", "true ")).isTrue()
+        assertThat(TypeItem.equalsWithoutSpace("true ", "true")).isTrue()
+        assertThat(TypeItem.equalsWithoutSpace("true ", "true")).isTrue()
+        assertThat(TypeItem.equalsWithoutSpace("true", " true")).isTrue()
+
+        assertThat(TypeItem.equalsWithoutSpace("true", "false")).isFalse()
+        assertThat(TypeItem.equalsWithoutSpace("true", " true  false")).isFalse()
+        assertThat(TypeItem.equalsWithoutSpace("false ", "falser")).isFalse()
+    }
 }
