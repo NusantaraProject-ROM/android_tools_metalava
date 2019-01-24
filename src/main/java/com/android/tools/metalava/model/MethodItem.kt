@@ -39,6 +39,8 @@ interface MethodItem : MemberItem {
     /** Returns the super methods that this method is overriding */
     fun superMethods(): List<MethodItem>
 
+    override fun type(): TypeItem? = returnType()
+
     /**
      * Like [internalName] but is the desc-portion of the internal signature,
      * e.g. for the method "void create(int x, int y)" the internal name of

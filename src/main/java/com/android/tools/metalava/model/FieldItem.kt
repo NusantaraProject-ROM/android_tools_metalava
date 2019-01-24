@@ -23,7 +23,7 @@ import java.io.PrintWriter
 
 interface FieldItem : MemberItem {
     /** The type of this field */
-    fun type(): TypeItem
+    override fun type(): TypeItem
 
     /**
      * The initial/constant value, if any. If [requireConstant] the initial value will

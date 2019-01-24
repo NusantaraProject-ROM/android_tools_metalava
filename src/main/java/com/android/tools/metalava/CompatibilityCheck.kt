@@ -114,6 +114,9 @@ class CompatibilityCheck(
                     return
                 }
                 val name = AnnotationItem.simpleName(oldNullnessAnnotation)
+                if (old.type()?.primitive == true) {
+                    return
+                }
                 report(
                     Errors.INVALID_NULL_CONVERSION, new,
                     "Attempted to remove $name annotation from ${describe(new)}"

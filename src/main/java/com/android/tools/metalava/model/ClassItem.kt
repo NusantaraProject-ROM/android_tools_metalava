@@ -198,6 +198,8 @@ interface ClassItem : Item {
     /** Gets the type for this class */
     fun toType(): TypeItem
 
+    override fun type(): TypeItem? = null
+
     /** Returns true if this class has type parameters */
     fun hasTypeVariables(): Boolean
 
