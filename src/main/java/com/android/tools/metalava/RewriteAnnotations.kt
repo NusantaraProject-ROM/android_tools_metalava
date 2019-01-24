@@ -103,9 +103,13 @@ class RewriteAnnotations {
         for (file in files) {
             // Jump directly into androidx/annotation if it appears we were invoked at the top level
             if (file.isDirectory) {
-                val annotations = File(file, "androidx${File.separator}annotation/")
-                if (annotations.isDirectory) {
-                    rewriteAnnotations(annotations)
+                val android = File(file, "android${File.separator}annotation/")
+                if (android.isDirectory) {
+                    rewriteAnnotations(android)
+                    val androidx = File(file, "androidx${File.separator}annotation/")
+                    if (androidx.isDirectory) {
+                        rewriteAnnotations(androidx)
+                    }
                     continue
                 }
             }
@@ -120,7 +124,9 @@ class RewriteAnnotations {
     private fun hasSourceRetention(codebase: Codebase?, qualifiedName: String): Boolean {
         when {
             qualifiedName == "androidx.annotation.RecentlyNullable" ||
-                qualifiedName == "androidx.annotation.RecentlyNonNull" -> return false
+                qualifiedName == "androidx.annotation.RecentlyNonNull" ||
+                qualifiedName == "android.annotation.Nullable" ||
+                qualifiedName == "android.annotation.NonNull" -> return false
             qualifiedName.startsWith("androidx.annotation.") -> return true
         }
 
@@ -172,10 +178,10 @@ class RewriteAnnotations {
                 superName: String?,
                 interfaces: Array<out String>?
             ) {
-                // Only process public annotations in androidx.annotation
+                // Only process public annotations in android.annotation and androidx.annotation
                 if (access and Opcodes.ACC_PUBLIC != 0 &&
                     access and Opcodes.ACC_ANNOTATION != 0 &&
-                    name.startsWith("androidx/annotation/")
+                    (name.startsWith("android/annotation/") || name.startsWith("androidx/annotation/"))
                 ) {
                     skip = false
                     val flagsWithoutPublic = access and Opcodes.ACC_PUBLIC.inv()
@@ -237,7 +243,7 @@ class RewriteAnnotations {
 
                 // read the content of the entry from the input stream, and write it into the archive.
                 if (name.endsWith(DOT_CLASS) &&
-                    name.startsWith("androidx/annotation/") &&
+                    (name.startsWith("android/annotation/") || name.startsWith("androidx/annotation/")) &&
                     name.indexOf("$") == -1 &&
                     !entry.isDirectory
                 ) {
