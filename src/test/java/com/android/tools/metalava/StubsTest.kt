@@ -3246,9 +3246,9 @@ class StubsTest : DriverTest() {
                     ctor public Test();
                   }
                 }
-            """, // WRONG: I should include package annotations!
+            """, // WRONG: I should include package annotations in the signature file!
             source = """
-                @androidx.annotation.Nullable
+                @android.annotation.Nullable
                 package test.pkg;
                 """,
             extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation")
@@ -3602,6 +3602,70 @@ class StubsTest : DriverTest() {
                 protected static void onCreate(java.lang.String parameter1) { throw new RuntimeException("Stub!"); }
                 /** My field doc */
                 protected static final java.lang.String field = "a\nb\n\"test\"";
+                }
+                """
+        )
+    }
+
+    @Test
+    fun `Annotation nested rewriting`() {
+        checkStubs(
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+
+                    import android.view.Gravity;
+
+                    public class ActionBar {
+                        @ViewDebug.ExportedProperty(category = "layout", mapping = {
+                                @ViewDebug.IntToString(from =  -1,                       to = "NONE"),
+                                @ViewDebug.IntToString(from = Gravity.NO_GRAVITY,        to = "NONE"),
+                                @ViewDebug.IntToString(from = Gravity.TOP,               to = "TOP"),
+                                @ViewDebug.IntToString(from = Gravity.BOTTOM,            to = "BOTTOM"),
+                        })
+                        public int gravity = Gravity.NO_GRAVITY;
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+
+                    import java.lang.annotation.ElementType;
+                    import java.lang.annotation.Retention;
+                    import java.lang.annotation.RetentionPolicy;
+                    import java.lang.annotation.Target;
+
+                    public class ViewDebug {
+                        @Target({ElementType.FIELD, ElementType.METHOD})
+                        @Retention(RetentionPolicy.RUNTIME)
+                        public @interface ExportedProperty {
+                            boolean resolveId() default false;
+                            IntToString[] mapping() default {};
+                            IntToString[] indexMapping() default {};
+                            boolean deepExport() default false;
+                            String prefix() default "";
+                            String category() default "";
+                            boolean formatToHexString() default false;
+                            boolean hasAdjacentMapping() default false;
+                        }
+                        @Target({ElementType.TYPE})
+                        @Retention(RetentionPolicy.RUNTIME)
+                        public @interface IntToString {
+                            int from();
+                            String to();
+                        }
+                    }
+                    """
+                )
+            ),
+            source = """
+                package test.pkg;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class ActionBar {
+                public ActionBar() { throw new RuntimeException("Stub!"); }
+                @test.pkg.ViewDebug.ExportedProperty(category="layout", mapping={@test.pkg.ViewDebug.IntToString(from=0xffffffff, to="NONE"), @test.pkg.ViewDebug.IntToString(from=android.view.Gravity.NO_GRAVITY, to="NONE"), @test.pkg.ViewDebug.IntToString(from=android.view.Gravity.TOP, to="TOP"), @test.pkg.ViewDebug.IntToString(from=android.view.Gravity.BOTTOM, to="BOTTOM")}) public int gravity = 0; // 0x0
                 }
                 """
         )

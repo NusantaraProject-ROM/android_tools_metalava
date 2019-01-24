@@ -157,9 +157,6 @@ class ExtractAnnotationsTest : DriverTest() {
                 "test.pkg" to """
                     <?xml version="1.0" encoding="UTF-8"?>
                     <root>
-                      <item name="test.pkg.LongDefTest void setFlags(java.lang.Object, int) 0">
-                        <annotation name="androidx.annotation.NonNull"/>
-                      </item>
                       <item name="test.pkg.LongDefTest void setFlags(java.lang.Object, int) 1">
                         <annotation name="androidx.annotation.LongDef">
                           <val name="flag" val="true" />
@@ -171,23 +168,11 @@ class ExtractAnnotationsTest : DriverTest() {
                           <val name="value" val="{test.pkg.LongDefTestKt.STYLE_NORMAL, test.pkg.LongDefTestKt.STYLE_NO_TITLE, test.pkg.LongDefTestKt.STYLE_NO_FRAME, test.pkg.LongDefTestKt.STYLE_NO_INPUT}" />
                         </annotation>
                       </item>
-                      <item name="test.pkg.LongDefTest.Inner boolean isNull(java.lang.String) 0">
-                        <annotation name="androidx.annotation.Nullable"/>
-                      </item>
                       <item name="test.pkg.LongDefTest.Inner void setInner(int) 0">
                         <annotation name="androidx.annotation.LongDef">
                           <val name="flag" val="true" />
                           <val name="value" val="{test.pkg.LongDefTestKt.STYLE_NORMAL, test.pkg.LongDefTestKt.STYLE_NO_TITLE, test.pkg.LongDefTestKt.STYLE_NO_FRAME, test.pkg.LongDefTestKt.STYLE_NO_INPUT, 3, 4L}" />
                         </annotation>
-                      </item>
-                      <item name="test.pkg.LongDefTestKt TYPE_1">
-                        <annotation name="androidx.annotation.NonNull"/>
-                      </item>
-                      <item name="test.pkg.LongDefTestKt TYPE_2">
-                        <annotation name="androidx.annotation.NonNull"/>
-                      </item>
-                      <item name="test.pkg.LongDefTestKt UNRELATED_TYPE">
-                        <annotation name="androidx.annotation.NonNull"/>
                       </item>
                     </root>
                 """
@@ -419,6 +404,20 @@ class ExtractAnnotationsTest : DriverTest() {
                 ),
                 intRangeAnnotationSource,
                 recentlyNullableSource
+            ),
+            stubs = arrayOf(
+                """
+                package test.pkg;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class Test {
+                public Test() { throw new RuntimeException("Stub!"); }
+                /**
+                 * @param value Value is 10 or greater
+                 */
+                @androidx.annotation.RecentlyNullable
+                public static java.lang.String sayHello(int value) { throw new RuntimeException("Stub!"); }
+                }
+                """
             ),
             extractAnnotations = mapOf(
                 "test.pkg" to """
