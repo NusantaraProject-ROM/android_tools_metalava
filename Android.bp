@@ -18,7 +18,7 @@ java_binary_host {
         "src/main/java/**/*.java",
         "src/main/java/**/*.kt",
     ],
-    java_resources: ["src/main/resources/**/*"],
+    java_resource_dirs: ["src/main/resources/"],
     static_libs: [
         "kotlin-reflect",
         "metalava-tools-common-m2-deps",
