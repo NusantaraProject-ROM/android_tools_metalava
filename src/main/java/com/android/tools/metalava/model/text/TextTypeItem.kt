@@ -73,19 +73,14 @@ class TextTypeItem(
         if (this === other) return true
 
         return when (other) {
-            is TextTypeItem -> toString() == other.toString()
+            // Note: when we support type-use annotations, this is not safe: there could be a string
+            // literal inside which is significant
+            is TextTypeItem -> TypeItem.equalsWithoutSpace(toString(), other.toString())
             is TypeItem -> {
                 val thisString = toTypeString()
                 val otherString = other.toTypeString()
-                if (thisString == otherString) {
+                if (TypeItem.equalsWithoutSpace(thisString, otherString)) {
                     return true
-                }
-                if (thisString[0] == otherString[0]) {
-                    val thisCondensed = thisString.replace(" ", "")
-                    val otherCondensed = otherString.replace(" ", "")
-                    if (thisCondensed == otherCondensed) {
-                        return true
-                    }
                 }
                 if (thisString.startsWith(JAVA_LANG_PREFIX) && thisString.endsWith(otherString) &&
                     thisString.length == otherString.length + JAVA_LANG_PREFIX.length

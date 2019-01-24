@@ -149,7 +149,7 @@ class PsiTypeItem private constructor(private val codebase: PsiBasedCodebase, pr
         if (this === other) return true
 
         return when (other) {
-            is TypeItem -> toTypeString().replace(" ", "") == other.toTypeString().replace(" ", "")
+            is TypeItem -> TypeItem.equalsWithoutSpace(toTypeString(), other.toTypeString())
             else -> false
         }
     }

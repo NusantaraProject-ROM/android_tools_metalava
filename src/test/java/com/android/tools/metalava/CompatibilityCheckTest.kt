@@ -2276,6 +2276,30 @@ CompatibilityCheckTest : DriverTest() {
     }
 
     @Test
+    fun `Insignificant type formatting differences`() {
+        check(
+            checkCompatibilityApi = """
+                package test.pkg {
+                  public final class UsageStatsManager {
+                    method public java.util.Map<java.lang.String, java.lang.Integer> getAppStandbyBuckets();
+                    method public void setAppStandbyBuckets(java.util.Map<java.lang.String, java.lang.Integer>);
+                    field public java.util.Map<java.lang.String, java.lang.Integer> map;
+                  }
+                }
+                """,
+            signatureSource = """
+                package test.pkg {
+                  public final class UsageStatsManager {
+                    method public java.util.Map<java.lang.String,java.lang.Integer> getAppStandbyBuckets();
+                    method public void setAppStandbyBuckets(java.util.Map<java.lang.String,java.lang.Integer>);
+                    field public java.util.Map<java.lang.String,java.lang.Integer> map;
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
     fun `Adding and removing reified`() {
         check(
             compatibilityMode = false,
