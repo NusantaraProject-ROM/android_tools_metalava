@@ -21,7 +21,7 @@ import com.android.tools.metalava.model.visitors.TypeVisitor
 
 interface PropertyItem : MemberItem {
     /** The type of this property */
-    fun type(): TypeItem
+    override fun type(): TypeItem
 
     override fun accept(visitor: ItemVisitor) {
         if (visitor.skip(this)) {
