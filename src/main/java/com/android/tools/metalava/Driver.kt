@@ -154,6 +154,8 @@ fun run(
         }
         exitCode = e.exitCode
         exitValue = false
+    } finally {
+        Disposer.dispose(LintCoreApplicationEnvironment.get().parentDisposable)
     }
 
     if (options.updateBaseline) {
@@ -433,8 +435,6 @@ private fun processFlags() {
         progress("\nMeasuring annotation coverage: ")
         AnnotationStatistics(codebase).measureCoverageOf(options.annotationCoverageOf)
     }
-
-    Disposer.dispose(LintCoreApplicationEnvironment.get().parentDisposable)
 
     if (options.verbose) {
         val packageCount = codebase.size()
@@ -900,7 +900,7 @@ fun loadFromJarFile(apiJar: File, manifest: File? = null, preFiltered: Boolean =
 private fun createProjectEnvironment(): LintCoreProjectEnvironment {
     ensurePsiFileCapacity()
     val appEnv = LintCoreApplicationEnvironment.get()
-    val parentDisposable = Disposer.newDisposable()
+    val parentDisposable = appEnv.parentDisposable
 
     if (!assertionsEnabled() &&
         System.getenv(ENV_VAR_METALAVA_DUMP_ARGV) == null &&
