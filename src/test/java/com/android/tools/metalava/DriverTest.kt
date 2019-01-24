@@ -38,6 +38,7 @@ import com.android.utils.StdLogger
 import com.google.common.io.ByteStreams
 import com.google.common.io.Closeables
 import com.google.common.io.Files
+import com.intellij.openapi.util.Disposer
 import org.intellij.lang.annotations.Language
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -94,6 +95,9 @@ abstract class DriverTest {
 
             val sw = StringWriter()
             val writer = PrintWriter(sw)
+
+            Disposer.setDebugMode(true)
+
             if (!com.android.tools.metalava.run(arrayOf(*args), writer, writer)) {
                 val actualFail = cleanupString(sw.toString(), null)
                 if (cleanupString(expectedFail, null).replace(".", "").trim() !=
@@ -123,6 +127,8 @@ abstract class DriverTest {
             if (printedOutput.isNotEmpty() && printedOutput.trim().isEmpty()) {
                 fail("Printed newlines with nothing else")
             }
+
+            Disposer.assertIsEmpty(true)
 
             return printedOutput
         } finally {
