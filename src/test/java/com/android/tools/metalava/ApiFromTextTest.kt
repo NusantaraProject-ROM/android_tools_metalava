@@ -653,6 +653,7 @@ class ApiFromTextTest : DriverTest() {
     @Test
     fun `Deprecated enum constant`() {
         val source = """
+                // Signature format: 3.0
                 package androidx.annotation {
                   @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS) @java.lang.annotation.Target({java.lang.annotation.ElementType.ANNOTATION_TYPE, java.lang.annotation.ElementType.TYPE, java.lang.annotation.ElementType.METHOD, java.lang.annotation.ElementType.CONSTRUCTOR, java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.PACKAGE}) public @interface RestrictTo {
                     method public abstract androidx.annotation.RestrictTo.Scope[] value();
@@ -677,8 +678,9 @@ class ApiFromTextTest : DriverTest() {
     }
 
     @Test
-    fun `Type parameters in v2 format`() {
+    fun `Type parameters in v3 format`() {
         val source = """
+                // Signature format: 3.0
                 package androidx.collection {
                   public class Constants {
                     field public static final String GOOD_IRI_CHAR = "a-zA-Z0-9\u00a0-\ud7ff\uf900-\ufdcf\ufdf0-\uffef";
