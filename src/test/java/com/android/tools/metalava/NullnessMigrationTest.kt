@@ -259,6 +259,7 @@ class NullnessMigrationTest : DriverTest() {
                 }
                 """,
             api = """
+                // Signature format: 3.0
                 package test.pkg {
                   public class MyTest {
                     ctor public MyTest();
