@@ -210,6 +210,13 @@ interface Item {
      */
     fun containingClass(strict: Boolean = true): ClassItem?
 
+    /**
+     * Returns the associated type if any. For example, for a field, property or parameter,
+     * this is the type of the variable; for a method, it's the return type.
+     * For packages, classes and compilation units, it's null.
+     */
+    fun type(): TypeItem?
+
     companion object {
         fun describe(item: Item, capitalize: Boolean = false): String {
             return when (item) {

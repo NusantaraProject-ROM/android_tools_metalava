@@ -33,6 +33,8 @@ interface PackageItem : Item {
         return topLevelClasses().asSequence().flatMap { it.allClasses() }
     }
 
+    override fun type(): TypeItem? = null
+
     val isDefault get() = qualifiedName().isEmpty()
 
     override fun parent(): PackageItem? = if (qualifiedName().isEmpty()) null else containingPackage()

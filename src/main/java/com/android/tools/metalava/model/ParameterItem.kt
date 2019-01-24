@@ -24,7 +24,7 @@ interface ParameterItem : Item {
     fun name(): String
 
     /** The type of this field */
-    fun type(): TypeItem
+    override fun type(): TypeItem
 
     /** The containing method */
     fun containingMethod(): MethodItem
