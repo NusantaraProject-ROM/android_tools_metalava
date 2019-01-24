@@ -613,6 +613,7 @@ class ApiFileTest : DriverTest() {
                 androidxNullableSource
             ),
             api = """
+                // Signature format: 3.0
                 package androidx.util {
                   public class NonNullableJavaPair<F, S> {
                     ctor public NonNullableJavaPair(F, S);
@@ -712,6 +713,7 @@ class ApiFileTest : DriverTest() {
                 androidxNullableSource
             ),
             api = """
+                // Signature format: 3.0
                 package test {
                   public class MyClass {
                     ctor public MyClass();
