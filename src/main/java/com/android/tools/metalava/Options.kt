@@ -148,7 +148,7 @@ const val ARG_STUB_IMPORT_PACKAGES = "--stub-import-packages"
 const val ARG_DELETE_EMPTY_BASELINES = "--delete-empty-baselines"
 
 class Options(
-    args: Array<String>,
+    private val args: Array<String>,
     /** Writer to direct output to */
     var stdout: PrintWriter = PrintWriter(OutputStreamWriter(System.out)),
     /** Writer to direct error messages to */
@@ -1321,13 +1321,13 @@ class Options(
         }
 
         if (generateApiLevelXml != null) {
-            if (androidJarPatterns == null) {
-                androidJarPatterns = mutableListOf(
-                    "prebuilts/tools/common/api-versions/android-%/android.jar",
-                    "prebuilts/sdk/%/public/android.jar"
-                )
+            val patterns = androidJarPatterns ?: run {
+                mutableListOf<String>()
             }
-            apiLevelJars = findAndroidJars(androidJarPatterns!!, currentApiLevel, currentCodeName, currentJar)
+            // Fallbacks
+            patterns.add("prebuilts/tools/common/api-versions/android-%/android.jar")
+            patterns.add("prebuilts/sdk/%/public/android.jar")
+            apiLevelJars = findAndroidJars(patterns, currentApiLevel, currentCodeName, currentJar)
         }
 
         // outputKotlinStyleNulls implies format=v3
@@ -1475,6 +1475,19 @@ class Options(
                     if (verbose) {
                         stdout.println("Last API level found: ${apiLevel - 1}")
                     }
+
+                    if (apiLevel < 28) {
+                        // Clearly something is wrong with the patterns; this should result in a build error
+                        val argList = mutableListOf<String>()
+                        args.forEachIndexed { index, arg ->
+                            if (arg == ARG_ANDROID_JAR_PATTERN) {
+                                argList.add(args[index + 1])
+                            }
+                        }
+                        throw DriverException(stderr = "Could not find android.jar for API level $apiLevel; the " +
+                            "$ARG_ANDROID_JAR_PATTERN set might be invalid: ${argList.joinToString()}")
+                    }
+
                     break
                 }
                 if (verbose) {
