@@ -56,7 +56,7 @@ import com.intellij.psi.util.TypeConversionUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightTypeParameter
 
 /** Represents a type backed by PSI */
-class PsiTypeItem private constructor(private val codebase: PsiBasedCodebase, private val psiType: PsiType) : TypeItem {
+class PsiTypeItem private constructor(private val codebase: PsiBasedCodebase, val psiType: PsiType) : TypeItem {
     private var toString: String? = null
     private var toAnnotatedString: String? = null
     private var toInnerAnnotatedString: String? = null
