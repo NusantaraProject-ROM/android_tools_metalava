@@ -1902,6 +1902,10 @@ abstract class DriverTest {
             }
         }
 
+        fun java(to: String, @Language("JAVA") source: String): LintDetectorTest.TestFile {
+            return TestFiles.java(to, source.trimIndent())
+        }
+
         fun java(@Language("JAVA") source: String): LintDetectorTest.TestFile {
             return TestFiles.java(source.trimIndent())
         }
