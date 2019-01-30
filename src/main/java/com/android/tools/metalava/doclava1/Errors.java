@@ -206,7 +206,7 @@ public class Errors {
     public static final Error UNAVAILABLE_SYMBOL = new Error(110, WARNING, Category.DOCUMENTATION);
     public static final Error HIDDEN_SUPERCLASS = new Error(111, WARNING, Category.DOCUMENTATION);
     public static final Error DEPRECATED = new Error(112, HIDDEN, Category.DOCUMENTATION);
-    public static final Error DEPRECATION_MISMATCH = new Error(113, WARNING, Category.DOCUMENTATION);
+    public static final Error DEPRECATION_MISMATCH = new Error(113, ERROR, Category.DOCUMENTATION);
     public static final Error MISSING_COMMENT = new Error(114, LINT, Category.DOCUMENTATION);
     public static final Error IO_ERROR = new Error(115, ERROR);
     public static final Error NO_SINCE_DATA = new Error(116, HIDDEN, Category.DOCUMENTATION);
