@@ -56,11 +56,16 @@ import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.DefaultAnnotationItem
 import com.android.tools.metalava.model.DefaultAnnotationValue
+import com.android.tools.metalava.model.FieldItem
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MethodItem
+import com.android.tools.metalava.model.ModifierList
+import com.android.tools.metalava.model.ParameterItem
+import com.android.tools.metalava.model.TypeItem
 import com.android.tools.metalava.model.parseDocument
 import com.android.tools.metalava.model.psi.PsiAnnotationItem
 import com.android.tools.metalava.model.psi.PsiBasedCodebase
+import com.android.tools.metalava.model.psi.PsiTypeItem
 import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.google.common.io.ByteStreams
 import com.google.common.io.Closeables
@@ -240,32 +245,70 @@ class AnnotationsMerger(
             override fun compare(old: Item, new: Item) {
                 val newModifiers = new.modifiers
                 for (annotation in old.modifiers.annotations()) {
-                    var addAnnotation = false
-                    if (annotation.isNullnessAnnotation()) {
-                        if (!newModifiers.hasNullnessInfo()) {
-                            addAnnotation = true
-                        }
-                    } else {
-                        // TODO: Check for other incompatibilities than nullness?
-                        val qualifiedName = annotation.qualifiedName() ?: continue
-                        if (newModifiers.findAnnotation(qualifiedName) == null) {
-                            addAnnotation = true
-                        }
-                    }
+                    mergeAnnotation(annotation, newModifiers, new)
+                }
+            }
 
-                    if (addAnnotation) {
-                        // Don't map annotation names - this would turn newly non null back into non null
-                        new.mutableModifiers().addAnnotation(
-                            new.codebase.createAnnotation(
-                                annotation.toSource(),
-                                new,
-                                mapName = false
-                            )
+            private fun mergeAnnotation(
+                annotation: AnnotationItem,
+                newModifiers: ModifierList,
+                new: Item
+            ) {
+                var addAnnotation = false
+                if (annotation.isNullnessAnnotation()) {
+                    if (!newModifiers.hasNullnessInfo()) {
+                        addAnnotation = true
+                    }
+                } else {
+                    // TODO: Check for other incompatibilities than nullness?
+                    val qualifiedName = annotation.qualifiedName() ?: return
+                    if (newModifiers.findAnnotation(qualifiedName) == null) {
+                        addAnnotation = true
+                    }
+                }
+
+                if (addAnnotation) {
+                    // Don't map annotation names - this would turn newly non null back into non null
+                    new.mutableModifiers().addAnnotation(
+                        new.codebase.createAnnotation(
+                            annotation.toSource(),
+                            new,
+                            mapName = false
                         )
+                    )
+                }
+            }
+
+            override fun compare(old: ParameterItem, new: ParameterItem) {
+                mergeTypeAnnotations(old.type(), new)
+            }
+
+            override fun compare(old: FieldItem, new: FieldItem) {
+                mergeTypeAnnotations(old.type(), new)
+            }
+
+            override fun compare(old: MethodItem, new: MethodItem) {
+                mergeTypeAnnotations(old.returnType(), new)
+            }
+
+            // Merge in type annotations
+            private fun mergeTypeAnnotations(
+                typeItem: TypeItem?,
+                new: Item
+            ) {
+                typeItem ?: return
+                val type = (typeItem as? PsiTypeItem)?.psiType ?: return
+                val typeAnnotations = type.annotations
+                if (typeAnnotations.isNotEmpty()) {
+                    for (annotation in typeAnnotations) {
+                        val codebase = new.codebase as PsiBasedCodebase
+                        val annotationItem = PsiAnnotationItem.create(codebase, annotation)
+                        mergeAnnotation(annotationItem, new.modifiers, new)
                     }
                 }
             }
         }
+
         CodebaseComparator().compare(
             visitor, externalCodebase, codebase, ApiPredicate()
         )
