@@ -1333,7 +1333,7 @@ class DocAnalyzerTest : DriverTest() {
                  * @deprecated Blah blah blah 1
                  */
                 @Deprecated
-                @androidx.annotation.NonNull
+                @android.annotation.NonNull
                 public java.lang.String toString() { throw new RuntimeException("Stub!"); }
                 /**
                  * My description
