@@ -1352,17 +1352,17 @@ class StubsTest : DriverTest() {
                     /** My class doc */
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public final class Kotlin extends test.pkg.Parent {
-                    public Kotlin(@androidx.annotation.NonNull java.lang.String property1, int arg2) { throw new RuntimeException("Stub!"); }
-                    @androidx.annotation.NonNull
+                    public Kotlin(@android.annotation.NonNull java.lang.String property1, int arg2) { throw new RuntimeException("Stub!"); }
+                    @android.annotation.NonNull
                     public java.lang.String method() { throw new RuntimeException("Stub!"); }
                     /** My method doc */
                     public void otherMethod(boolean ok, int times) { throw new RuntimeException("Stub!"); }
                     /** property doc */
-                    @androidx.annotation.Nullable
+                    @android.annotation.Nullable
                     public java.lang.String getProperty2() { throw new RuntimeException("Stub!"); }
                     /** property doc */
-                    public void setProperty2(@androidx.annotation.Nullable java.lang.String p) { throw new RuntimeException("Stub!"); }
-                    @androidx.annotation.NonNull
+                    public void setProperty2(@android.annotation.Nullable java.lang.String p) { throw new RuntimeException("Stub!"); }
+                    @android.annotation.NonNull
                     public java.lang.String getProperty1() { throw new RuntimeException("Stub!"); }
                     public int someField2;
                     }
