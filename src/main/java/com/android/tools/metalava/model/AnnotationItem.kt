@@ -27,6 +27,8 @@ import com.android.tools.lint.annotations.Extractor.ANDROID_STRING_DEF
 import com.android.tools.metalava.ANDROIDX_ANNOTATION_PREFIX
 import com.android.tools.metalava.ANDROIDX_NONNULL
 import com.android.tools.metalava.ANDROIDX_NULLABLE
+import com.android.tools.metalava.ANDROID_NONNULL
+import com.android.tools.metalava.ANDROID_NULLABLE
 import com.android.tools.metalava.ANDROID_SUPPORT_ANNOTATION_PREFIX
 import com.android.tools.metalava.Compatibility
 import com.android.tools.metalava.JAVA_LANG_PREFIX
@@ -238,17 +240,18 @@ interface AnnotationItem {
                 // We only change recently/newly nullable annotation in stubs
                 RECENTLY_NULLABLE -> return if (target == AnnotationTarget.SDK_STUBS_FILE) qualifiedName else ANDROIDX_NULLABLE
                 RECENTLY_NONNULL -> return if (target == AnnotationTarget.SDK_STUBS_FILE) qualifiedName else ANDROIDX_NONNULL
-                "android.annotation.Nullable" -> return if (target == AnnotationTarget.SDK_STUBS_FILE) qualifiedName else ANDROIDX_NULLABLE
-                "android.annotation.NonNull" -> return if (target == AnnotationTarget.SDK_STUBS_FILE) qualifiedName else ANDROIDX_NONNULL
-                ANDROIDX_NULLABLE -> return if (target == AnnotationTarget.SDK_STUBS_FILE) "android.annotation.Nullable" else ANDROIDX_NULLABLE
-                ANDROIDX_NONNULL -> return if (target == AnnotationTarget.SDK_STUBS_FILE) "android.annotation.NonNull" else ANDROIDX_NONNULL
 
-                "android.support.annotation.NonNull" -> return ANDROIDX_NONNULL
-                "android.support.annotation.Nullable" -> return ANDROIDX_NULLABLE
-                "libcore.util.NonNull" -> return ANDROIDX_NONNULL
-                "libcore.util.Nullable" -> return ANDROIDX_NULLABLE
-                "org.jetbrains.annotations.NotNull" -> return ANDROIDX_NONNULL
-                "org.jetbrains.annotations.Nullable" -> return ANDROIDX_NULLABLE
+                ANDROIDX_NULLABLE,
+                ANDROID_NULLABLE,
+                "android.support.annotation.Nullable",
+                "libcore.util.Nullable",
+                "org.jetbrains.annotations.Nullable" -> return if (target == AnnotationTarget.SDK_STUBS_FILE) ANDROID_NULLABLE else ANDROIDX_NULLABLE
+
+                ANDROIDX_NONNULL,
+                ANDROID_NONNULL,
+                "android.support.annotation.NonNull",
+                "libcore.util.NonNull",
+                "org.jetbrains.annotations.NotNull" -> return if (target == AnnotationTarget.SDK_STUBS_FILE) ANDROID_NONNULL else ANDROIDX_NONNULL
 
                 // Typedefs
                 "android.support.annotation.IntDef",
@@ -408,8 +411,8 @@ interface AnnotationItem {
 
             // @android.annotation.Nullable and NonNullable specially recognized annotations by the Kotlin
             // compiler 1.3 and above: they always go in the stubs.
-            if (qualifiedName == "android.annotation.Nullable" ||
-                qualifiedName == "android.annotation.NonNull" ||
+            if (qualifiedName == ANDROID_NULLABLE ||
+                qualifiedName == ANDROID_NONNULL ||
                 qualifiedName == ANDROIDX_NULLABLE ||
                 qualifiedName == ANDROIDX_NONNULL
             ) {
@@ -424,8 +427,8 @@ interface AnnotationItem {
 
             // @RecentlyNullable and @RecentlyNonNull are specially recognized annotations by the Kotlin
             // compiler: they always go in the stubs.
-            if (qualifiedName == "androidx.annotation.RecentlyNullable" ||
-                qualifiedName == "androidx.annotation.RecentlyNonNull"
+            if (qualifiedName == RECENTLY_NULLABLE ||
+                qualifiedName == RECENTLY_NONNULL
             ) {
                 return ANNOTATION_IN_ALL_STUBS
             }
