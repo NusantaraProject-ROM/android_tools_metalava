@@ -48,9 +48,13 @@ import com.android.utils.StdLogger.Level.ERROR
 import com.google.common.base.Stopwatch
 import com.google.common.collect.Lists
 import com.google.common.io.Files
+import com.intellij.core.CoreApplicationEnvironment
 import com.intellij.openapi.diagnostic.DefaultLogger
+import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.util.Disposer
+import com.intellij.psi.javadoc.CustomJavadocTagProvider
+import com.intellij.psi.javadoc.JavadocTagInfo
 import com.intellij.util.execution.ParametersListUtil
 import java.io.File
 import java.io.IOException
@@ -909,7 +913,20 @@ private fun createProjectEnvironment(): LintCoreProjectEnvironment {
         DefaultLogger.disableStderrDumping(parentDisposable)
     }
 
-    return LintCoreProjectEnvironment.create(parentDisposable, appEnv)
+    val environment = LintCoreProjectEnvironment.create(parentDisposable, appEnv)
+
+    // Missing service needed in metalava but not in lint: javadoc handling
+    environment.project.registerService(
+        com.intellij.psi.javadoc.JavadocManager::class.java,
+        com.intellij.psi.impl.source.javadoc.JavadocManagerImpl::class.java
+    )
+    environment.registerProjectExtensionPoint(JavadocTagInfo.EP_NAME,
+        com.intellij.psi.javadoc.JavadocTagInfo::class.java)
+    CoreApplicationEnvironment.registerExtensionPoint(
+        Extensions.getRootArea(), CustomJavadocTagProvider.EP_NAME, CustomJavadocTagProvider::class.java
+    )
+
+    return environment
 }
 
 private fun ensurePsiFileCapacity() {
