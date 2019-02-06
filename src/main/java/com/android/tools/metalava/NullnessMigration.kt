@@ -75,14 +75,19 @@ class NullnessMigration : ComparisonVisitor(visitAddedItemsRecursively = true) {
     }
 
     private fun hasNullnessInformation(type: TypeItem): Boolean {
-        val typeString = type.toTypeString(false, true, false)
-        return typeString.contains(".Nullable") || typeString.contains(".NonNull")
+        return if (SUPPORT_TYPE_USE_ANNOTATIONS) {
+            val typeString = type.toTypeString(outerAnnotations = false, innerAnnotations = true)
+            typeString.contains(".Nullable") || typeString.contains(".NonNull")
+        } else {
+            false
+        }
     }
 
     private fun checkType(old: TypeItem, new: TypeItem) {
         if (hasNullnessInformation(new)) {
-            if (old.toTypeString(false, true, false) !=
-                new.toTypeString(false, true, false)
+            assert(SUPPORT_TYPE_USE_ANNOTATIONS)
+            if (old.toTypeString(outerAnnotations = false, innerAnnotations = true) !=
+                new.toTypeString(outerAnnotations = false, innerAnnotations = true)
             ) {
                 new.markRecent()
             }

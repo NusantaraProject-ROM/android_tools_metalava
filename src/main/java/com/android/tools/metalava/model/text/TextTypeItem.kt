@@ -19,6 +19,7 @@ package com.android.tools.metalava.model.text
 import com.android.tools.metalava.JAVA_LANG_OBJECT
 import com.android.tools.metalava.JAVA_LANG_PREFIX
 import com.android.tools.metalava.doclava1.TextCodebase
+import com.android.tools.metalava.model.AnnotationItem
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MemberItem
@@ -27,6 +28,7 @@ import com.android.tools.metalava.model.TypeItem
 import com.android.tools.metalava.model.TypeParameterItem
 import com.android.tools.metalava.model.TypeParameterList
 import com.android.tools.metalava.model.TypeParameterListOwner
+import java.util.function.Predicate
 
 const val ASSUME_TYPE_VARS_EXTEND_OBJECT = false
 
@@ -38,16 +40,44 @@ class TextTypeItem(
     override fun toString(): String = type
 
     override fun toErasedTypeString(context: Item?): String {
-        return toTypeString(false, false, true, context)
+        return toTypeString(
+            outerAnnotations = false,
+            innerAnnotations = false,
+            erased = true,
+            kotlinStyleNulls = false,
+            context = context
+        )
     }
 
     override fun toTypeString(
         outerAnnotations: Boolean,
         innerAnnotations: Boolean,
         erased: Boolean,
-        context: Item?
+        kotlinStyleNulls: Boolean,
+        context: Item?,
+        filter: Predicate<Item>?
     ): String {
-        return toTypeString(type, outerAnnotations, innerAnnotations, erased, context)
+        val typeString = toTypeString(type, outerAnnotations, innerAnnotations, erased, context)
+
+        if (innerAnnotations && kotlinStyleNulls && !primitive && context != null) {
+            var nullable: Boolean? = AnnotationItem.getImplicitNullness(context)
+
+            if (nullable == null) {
+                for (annotation in context.modifiers.annotations()) {
+                    if (annotation.isNullable()) {
+                        nullable = true
+                    } else if (annotation.isNonNull()) {
+                        nullable = false
+                    }
+                }
+            }
+            when (nullable) {
+                null -> return "$typeString!"
+                true -> return "$typeString?"
+                // else: non-null: nothing to add
+            }
+        }
+        return typeString
     }
 
     override fun asClass(): ClassItem? {
@@ -175,6 +205,8 @@ class TextTypeItem(
 
     override fun markRecent() = codebase.unsupported()
 
+    override fun scrubAnnotations() = codebase.unsupported()
+
     companion object {
         // heuristic to guess if a given type parameter is a type variable
         fun isLikelyTypeParameter(typeString: String): Boolean {
@@ -272,7 +304,7 @@ class TextTypeItem(
             return s
         }
 
-        fun eraseAnnotations(type: String, outer: Boolean, inner: Boolean): String {
+        private fun eraseAnnotations(type: String, outer: Boolean, inner: Boolean): String {
             if (type.indexOf('@') == -1) {
                 return type
             }

@@ -135,7 +135,7 @@ private val CLASS_PATTERN = Pattern.compile(
 fun getPackage(source: String): String? {
     val matcher = PACKAGE_PATTERN.matcher(source)
     return if (matcher.find()) {
-        matcher.group(1).trim { it <= ' ' }
+        matcher.group(1).trim()
     } else {
         null
     }

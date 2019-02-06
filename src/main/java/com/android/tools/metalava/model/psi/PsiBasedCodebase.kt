@@ -17,6 +17,8 @@
 package com.android.tools.metalava.model.psi
 
 import com.android.SdkConstants
+import com.android.tools.metalava.ANDROIDX_NONNULL
+import com.android.tools.metalava.ANDROIDX_NULLABLE
 import com.android.tools.metalava.doclava1.Errors
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.DefaultCodebase
@@ -45,6 +47,7 @@ import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPackage
 import com.intellij.psi.PsiType
+import com.intellij.psi.TypeAnnotationProvider
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.javadoc.PsiDocTag
 import com.intellij.psi.search.GlobalSearchScope
@@ -666,12 +669,33 @@ open class PsiBasedCodebase(location: File, override var description: String = "
     fun createPsiType(s: String, parent: PsiElement? = null): PsiType =
         getFactory().createTypeFromText(s, parent)
 
-    private fun createPsiAnnotation(s: String, parent: PsiElement? = null): PsiAnnotation =
+    fun createPsiAnnotation(s: String, parent: PsiElement? = null): PsiAnnotation =
         getFactory().createAnnotationFromText(s, parent)
 
     fun createDocTagFromText(s: String): PsiDocTag = getFactory().createDocTagFromText(s)
 
     private fun getFactory() = JavaPsiFacade.getElementFactory(project)
+
+    private var nonNullAnnotationProvider: TypeAnnotationProvider? = null
+    private var nullableAnnotationProvider: TypeAnnotationProvider? = null
+
+    /** Type annotation provider which provides androidx.annotation.NonNull */
+    fun getNonNullAnnotationProvider(): TypeAnnotationProvider {
+        return nonNullAnnotationProvider ?: run {
+            val provider = TypeAnnotationProvider.Static.create(arrayOf(createPsiAnnotation("@$ANDROIDX_NONNULL")))
+            nonNullAnnotationProvider
+            provider
+        }
+    }
+
+    /** Type annotation provider which provides androidx.annotation.Nullable */
+    fun getNullableAnnotationProvider(): TypeAnnotationProvider {
+        return nullableAnnotationProvider ?: run {
+            val provider = TypeAnnotationProvider.Static.create(arrayOf(createPsiAnnotation("@$ANDROIDX_NULLABLE")))
+            nullableAnnotationProvider
+            provider
+        }
+    }
 
     override fun createAnnotation(
         source: String,
