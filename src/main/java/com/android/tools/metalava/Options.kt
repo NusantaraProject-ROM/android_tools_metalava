@@ -1253,10 +1253,10 @@ class Options(
                             "$ARG_FORMAT=v1" -> {
                                 FileFormat.V1
                             }
-                            "$ARG_FORMAT=v2" -> {
+                            "$ARG_FORMAT=v2", "$ARG_FORMAT=recommended" -> {
                                 FileFormat.V2
                             }
-                            "$ARG_FORMAT=v3" -> {
+                            "$ARG_FORMAT=v3", "$ARG_FORMAT=latest" -> {
                                 FileFormat.V3
                             }
                             else -> throw DriverException(stderr = "Unexpected signature format; expected v1, v2 or v3")

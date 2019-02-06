@@ -868,6 +868,9 @@ class ApiAnalyzer(
                     val annotation = method.modifiers.annotations().find { it.isNullable() }
                     annotation?.let {
                         method.mutableModifiers().removeAnnotation(it)
+                        // Have to also clear the annotation out of the return type itself, if it's a type
+                        // use annotation
+                        method.returnType()?.scrubAnnotations()
                     }
                 }
             }

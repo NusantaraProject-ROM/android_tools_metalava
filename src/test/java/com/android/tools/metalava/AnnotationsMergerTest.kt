@@ -179,12 +179,12 @@ class AnnotationsMergerTest : DriverTest() {
             sourceFiles = *arrayOf(
                 java(
                     """
-                package test.pkg;
+                    package test.pkg;
 
-                public interface Appendable {
-                    Appendable append(CharSequence csq) throws IOException;
-                }
-                """
+                    public interface Appendable {
+                        Appendable append(CharSequence csq) throws IOException;
+                    }
+                    """
                 )
             ),
             compatibilityMode = false,

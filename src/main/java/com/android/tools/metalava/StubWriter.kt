@@ -538,7 +538,8 @@ class StubWriter(
         writer.print(
             returnType?.toTypeString(
                 outerAnnotations = false,
-                innerAnnotations = generateAnnotations
+                innerAnnotations = generateAnnotations,
+                filter = filterReference
             )
         )
 
@@ -581,7 +582,8 @@ class StubWriter(
         writer.print(
             field.type().toTypeString(
                 outerAnnotations = false,
-                innerAnnotations = generateAnnotations
+                innerAnnotations = generateAnnotations,
+                filter = filterReference
             )
         )
         writer.print(' ')
@@ -617,7 +619,8 @@ class StubWriter(
             writer.print(
                 parameter.type().toTypeString(
                     outerAnnotations = false,
-                    innerAnnotations = generateAnnotations
+                    innerAnnotations = generateAnnotations,
+                    filter = filterReference
                 )
             )
             writer.print(' ')
