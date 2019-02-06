@@ -53,6 +53,7 @@ import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.util.Disposer
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.javadoc.CustomJavadocTagProvider
 import com.intellij.psi.javadoc.JavadocTagInfo
 import com.intellij.util.execution.ParametersListUtil
@@ -836,20 +837,27 @@ private fun loadFromSources(): Codebase {
  * description. The codebase will use a project environment initialized according to the current
  * [options].
  */
-internal fun parseSources(sources: List<File>, description: String): PsiBasedCodebase {
+internal fun parseSources(
+    sources: List<File>,
+    description: String,
+    sourcePath: List<File> = options.sourcePath,
+    classpath: List<File> = options.classpath,
+    javaLanguageLevel: LanguageLevel = options.javaLanguageLevel,
+    manifest: File? = options.manifest,
+    currentApiLevel: Int = options.currentApiLevel
+): PsiBasedCodebase {
     val projectEnvironment = createProjectEnvironment()
     val project = projectEnvironment.project
 
     // Push language level to PSI handler
-    project.getComponent(LanguageLevelProjectExtension::class.java)?.languageLevel =
-        options.javaLanguageLevel
+    project.getComponent(LanguageLevelProjectExtension::class.java)?.languageLevel = javaLanguageLevel
 
     val joined = mutableListOf<File>()
-    joined.addAll(options.sourcePath.mapNotNull { if (it.path.isNotBlank()) it.absoluteFile else null })
-    joined.addAll(options.classpath.map { it.absoluteFile })
+    joined.addAll(sourcePath.mapNotNull { if (it.path.isNotBlank()) it.absoluteFile else null })
+    joined.addAll(classpath.map { it.absoluteFile })
     // Add in source roots implied by the source files
     val sourceRoots = mutableListOf<File>()
-    extractRoots(options.sources, sourceRoots)
+    extractRoots(sources, sourceRoots)
     joined.addAll(sourceRoots)
 
     // Create project environment with those paths
@@ -858,15 +866,15 @@ internal fun parseSources(sources: List<File>, description: String): PsiBasedCod
     val kotlinFiles = sources.filter { it.path.endsWith(SdkConstants.DOT_KT) }
     val trace = KotlinLintAnalyzerFacade().analyze(kotlinFiles, joined, project)
 
-    val rootDir = sourceRoots.firstOrNull() ?: options.sourcePath.firstOrNull() ?: File("").canonicalFile
+    val rootDir = sourceRoots.firstOrNull() ?: sourcePath.firstOrNull() ?: File("").canonicalFile
 
     val units = Extractor.createUnitsForFiles(project, sources)
-    val packageDocs = gatherHiddenPackagesFromJavaDocs(options.sourcePath)
+    val packageDocs = gatherHiddenPackagesFromJavaDocs(sourcePath)
 
     val codebase = PsiBasedCodebase(rootDir, description)
     codebase.initialize(project, units, packageDocs)
-    codebase.manifest = options.manifest
-    codebase.apiLevel = options.currentApiLevel
+    codebase.manifest = manifest
+    codebase.apiLevel = currentApiLevel
     codebase.bindingContext = trace.bindingContext
     return codebase
 }
@@ -1200,7 +1208,7 @@ private fun gatherHiddenPackagesFromJavaDocs(sourcePath: List<File>): PackageDoc
     return PackageDocs(packageComments, overviewHtml, hiddenPackages)
 }
 
-private fun extractRoots(sources: List<File>, sourceRoots: MutableList<File> = mutableListOf()): List<File> {
+fun extractRoots(sources: List<File>, sourceRoots: MutableList<File> = mutableListOf()): List<File> {
     // Cache for each directory since computing root for a source file is
     // expensive
     val dirToRootCache = mutableMapOf<String, File>()

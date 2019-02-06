@@ -526,10 +526,134 @@ class ApiFileTest : DriverTest() {
     }
 
     @Test
+    fun `Nullness in reified signatures`() {
+        check(
+            compatibilityMode = false,
+            sourceFiles = *arrayOf(
+                kotlin(
+                    "src/test/pkg/test.kt",
+                    """
+                    package test.pkg
+
+                    import androidx.annotation.UiThread
+                    import test.pkg2.NavArgs
+                    import test.pkg2.NavArgsLazy
+                    import test.pkg2.Fragment
+                    import test.pkg2.Bundle
+
+                    @UiThread
+                    inline fun <reified Args : NavArgs> Fragment.navArgs() = NavArgsLazy(Args::class) {
+                        throw IllegalStateException("Fragment $this has null arguments")
+                    }
+                    """
+                ),
+                kotlin(
+                    """
+                    package test.pkg2
+
+                    import kotlin.reflect.KClass
+
+                    interface NavArgs
+                    class Fragment
+                    class Bundle
+                    class NavArgsLazy<Args : NavArgs>(
+                        private val navArgsClass: KClass<Args>,
+                        private val argumentProducer: () -> Bundle
+                    )
+                    """
+                ),
+                uiThreadSource
+            ),
+            api = """
+                // Signature format: 3.0
+                package test.pkg {
+                  public final class TestKt {
+                    ctor public TestKt();
+                    method @UiThread public static inline <reified Args extends test.pkg2.NavArgs> test.pkg2.NavArgsLazy<Args> navArgs(test.pkg2.Fragment);
+                  }
+                }
+                """,
+            format = FileFormat.V3,
+            extraArguments = arrayOf(
+                ARG_HIDE_PACKAGE, "androidx.annotation",
+                ARG_HIDE_PACKAGE, "test.pkg2",
+                ARG_HIDE, "ReferencesHidden",
+                ARG_HIDE, "UnavailableSymbol",
+                ARG_HIDE, "HiddenTypeParameter"
+            ),
+            checkDoclava1 = false /* doesn't support parameter names */
+        )
+    }
+
+    @Test
+    fun `Nullness in varargs`() {
+        check(
+            compatibilityMode = false,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package androidx.collection;
+
+                    import java.util.Collection;
+                    import java.util.HashMap;
+                    import java.util.Map;
+
+                    public class ArrayMap<K, V> extends HashMap<K, V> implements Map<K, V> {
+                        public ArrayMap() {
+                        }
+                    }
+                    """
+                ),
+                kotlin(
+                    "src/main/java/androidx/collection/ArrayMap.kt",
+                    """
+                    package androidx.collection
+
+                    inline fun <K, V> arrayMapOf(): ArrayMap<K, V> = ArrayMap()
+
+                    fun <K, V> arrayMapOf(vararg pairs: Pair<K, V>): ArrayMap<K, V> {
+                        val map = ArrayMap<K, V>(pairs.size)
+                        for (pair in pairs) {
+                            map[pair.first] = pair.second
+                        }
+                        return map
+                    }
+                    fun <K, V> arrayMapOfNullable(vararg pairs: Pair<K, V>?): ArrayMap<K, V>? {
+                        return null
+                    }
+                    """
+                )
+            ),
+            api = """
+                // Signature format: 3.0
+                package androidx.collection {
+                  public class ArrayMap<K, V> extends java.util.HashMap<K,V> implements java.util.Map<K,V> {
+                    ctor public ArrayMap();
+                  }
+                  public final class ArrayMapKt {
+                    ctor public ArrayMapKt();
+                    method public static inline <K, V> androidx.collection.ArrayMap<K,V> arrayMapOf();
+                    method public static <K, V> androidx.collection.ArrayMap<K,V> arrayMapOf(kotlin.Pair<? extends K,? extends V>... pairs);
+                    method public static <K, V> androidx.collection.ArrayMap<K,V>? arrayMapOfNullable(kotlin.Pair<? extends K,? extends V>?... pairs);
+                  }
+                }
+                """,
+            format = FileFormat.V3,
+            extraArguments = arrayOf(
+                ARG_HIDE_PACKAGE, "androidx.annotation",
+                ARG_HIDE, "ReferencesHidden",
+                ARG_HIDE, "UnavailableSymbol",
+                ARG_HIDE, "HiddenTypeParameter"
+            ),
+            checkDoclava1 = false /* doesn't support parameter names */
+        )
+    }
+
+    @Test
     fun `Propagate Platform types in Kotlin`() {
         check(
             compatibilityMode = false,
-            outputKotlinStyleNulls = true,
+            format = FileFormat.V3,
             sourceFiles = *arrayOf(
                 kotlin(
                     """
@@ -1263,8 +1387,38 @@ class ApiFileTest : DriverTest() {
                         String[] value();
                     }
                     """
+                ),
+                kotlin(
+                    """
+                    package test.pkg
+
+                    @DslMarker
+                    annotation class ImplicitRuntimeRetention
+
+                    @Retention(AnnotationRetention.RUNTIME)
+                    annotation class ExplicitRuntimeRetention {
+                    }
+                    """.trimIndent()
                 )
             ),
+            format = FileFormat.V3,
+            api = """
+            // Signature format: 3.0
+            package android.annotation {
+              @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS) @java.lang.annotation.Target({java.lang.annotation.ElementType.TYPE, java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD, java.lang.annotation.ElementType.PARAMETER, java.lang.annotation.ElementType.CONSTRUCTOR, java.lang.annotation.ElementType.LOCAL_VARIABLE}) public @interface SuppressLint {
+                method public abstract String[] value();
+              }
+            }
+            package test.pkg {
+              @kotlin.annotation.Retention(AnnotationRetention.RUNTIME) public @interface ExplicitRuntimeRetention {
+              }
+              @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS) public @interface Foo {
+                method public abstract String value();
+              }
+              @kotlin.DslMarker public @interface ImplicitRuntimeRetention {
+              }
+            }
+            """.trimIndent(),
             compatibilityMode = true,
             stubs = arrayOf(
                 // For annotations where the java.lang.annotation classes themselves are not
@@ -1273,6 +1427,7 @@ class ApiFileTest : DriverTest() {
                 """
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
+                @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS)
                 public @interface Foo {
                 public java.lang.String value();
                 }
@@ -1709,7 +1864,8 @@ class ApiFileTest : DriverTest() {
                         public final class Range<T extends java.lang.Comparable<? super T>> { }
                     }
                     """
-                ), java(
+                ),
+                java(
                     """
                     package test.pkg;
 
@@ -3331,6 +3487,45 @@ class ApiFileTest : DriverTest() {
                     """
                 )
             )
+        )
+    }
+
+    @Test
+    fun `v3 format for qualified references in types`() {
+        check(
+            format = FileFormat.V3,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package androidx.appcompat.app;
+                    import android.view.View;
+                    import android.view.View.OnClickListener;
+
+                    public class ActionBarDrawerToggle {
+                        private ActionBarDrawerToggle() { }
+                        public View.OnClickListener getToolbarNavigationClickListener1() {
+                            return null;
+                        }
+                        public OnClickListener getToolbarNavigationClickListener2() {
+                            return null;
+                        }
+                        public android.view.View.OnClickListener getToolbarNavigationClickListener3() {
+                            return null;
+                        }
+                    }
+                    """
+                )
+            ),
+            api = """
+                // Signature format: 3.0
+                package androidx.appcompat.app {
+                  public class ActionBarDrawerToggle {
+                    method public android.view.View.OnClickListener! getToolbarNavigationClickListener1();
+                    method public android.view.View.OnClickListener! getToolbarNavigationClickListener2();
+                    method public android.view.View.OnClickListener! getToolbarNavigationClickListener3();
+                  }
+                }
+                """
         )
     }
 }

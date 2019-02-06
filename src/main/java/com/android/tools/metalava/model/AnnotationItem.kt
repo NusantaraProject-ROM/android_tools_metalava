@@ -400,6 +400,14 @@ interface AnnotationItem {
                 "android.widget.RemoteViews.RemoteView",
                 "android.view.ViewDebug.CapturedViewProperty",
 
+                "kotlin.annotation.Target",
+                "kotlin.annotation.Retention",
+                "kotlin.annotation.Repeatable",
+                "kotlin.annotation.MustBeDocumented",
+                "kotlin.DslMarker",
+                "kotlin.PublishedApi",
+                "kotlin.ExtensionFunctionType",
+
                 "java.lang.FunctionalInterface",
                 "java.lang.SafeVarargs",
                 "java.lang.annotation.Documented",

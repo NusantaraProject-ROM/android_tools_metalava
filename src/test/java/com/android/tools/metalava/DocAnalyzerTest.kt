@@ -237,6 +237,53 @@ class DocAnalyzerTest : DriverTest() {
     }
 
     @Test
+    fun `Conditional Permission`() {
+        check(
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+
+                    import android.Manifest;
+                    import android.annotation.RequiresPermission;
+
+                    // Scenario described in b/73559440
+                    public class PermissionTest {
+                        @RequiresPermission(value=Manifest.permission.WATCH_APPOPS, conditional=true)
+                        public void test1() {
+                        }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package android;
+
+                    public abstract class Manifest {
+                        public static final class permission {
+                            public static final String WATCH_APPOPS = "android.permission.WATCH_APPOPS";
+                        }
+                    }
+                    """
+                ),
+                requiresPermissionSource
+            ),
+            checkCompilation = false, // needs androidx.annotations in classpath
+            checkDoclava1 = false,
+            stubs = arrayOf(
+                """
+                package test.pkg;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class PermissionTest {
+                public PermissionTest() { throw new RuntimeException("Stub!"); }
+                @androidx.annotation.RequiresPermission(value=android.Manifest.permission.WATCH_APPOPS, conditional=true)
+                public void test1() { throw new RuntimeException("Stub!"); }
+                }
+                """
+            )
+        )
+    }
+    @Test
     fun `Document ranges`() {
         check(
             sourceFiles = *arrayOf(

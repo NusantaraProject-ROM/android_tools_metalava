@@ -2306,6 +2306,71 @@ CompatibilityCheckTest : DriverTest() {
     }
 
     @Test
+    fun `Compare signatures with Kotlin nullability from signature`() {
+        check(
+            warnings = """
+            TESTROOT/load-api.txt:5: error: Attempted to remove @NonNull annotation from parameter str in test.pkg.Foo.method1(int p, Integer int2, int p1, String str, java.lang.String... args) [InvalidNullConversion]
+            TESTROOT/load-api.txt:7: error: Attempted to change parameter from @Nullable to @NonNull: incompatible change for parameter str in test.pkg.Foo.method3(String str, int p, int int2) [InvalidNullConversion]
+            """.trimIndent(),
+            format = FileFormat.V3,
+            checkCompatibilityApi = """
+                // Signature format: 3.0
+                package test.pkg {
+                  public final class Foo {
+                    ctor public Foo();
+                    method public void method1(int p = 42, Integer? int2 = null, int p1 = 42, String str = "hello world", java.lang.String... args);
+                    method public void method2(int p, int int2 = (2 * int) * some.other.pkg.Constants.Misc.SIZE);
+                    method public void method3(String? str, int p, int int2 = double(int) + str.length);
+                    field public static final test.pkg.Foo.Companion! Companion;
+                  }
+                }
+                """,
+            signatureSource = """
+                // Signature format: 3.0
+                package test.pkg {
+                  public final class Foo {
+                    ctor public Foo();
+                    method public void method1(int p = 42, Integer? int2 = null, int p1 = 42, String! str = "hello world", java.lang.String... args);
+                    method public void method2(int p, int int2 = (2 * int) * some.other.pkg.Constants.Misc.SIZE);
+                    method public void method3(String str, int p, int int2 = double(int) + str.length);
+                    field public static final test.pkg.Foo.Companion! Companion;
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
+    fun `Compare signatures with Kotlin nullability from source`() {
+        check(
+            warnings = """
+            src/test/pkg/test.kt:4: error: Attempted to change parameter from @Nullable to @NonNull: incompatible change for parameter str1 in test.pkg.TestKt.fun1(String str1, String str2, java.util.List<java.lang.String> list) [InvalidNullConversion]
+            """.trimIndent(),
+            format = FileFormat.V3,
+            checkCompatibilityApi = """
+                // Signature format: 3.0
+                package test.pkg {
+                  public final class TestKt {
+                    ctor public TestKt();
+                    method public static void fun1(String? str1, String str2, java.util.List<java.lang.String!> list);
+                  }
+                }
+                """,
+            sourceFiles = *arrayOf(
+                kotlin(
+                    """
+                        package test.pkg
+                        import java.util.List
+
+                        fun fun1(str1: String, str2: String?, list: List<String?>) { }
+
+                    """.trimIndent()
+                )
+            )
+        )
+    }
+
+    @Test
     fun `Adding and removing reified`() {
         check(
             compatibilityMode = false,

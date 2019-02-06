@@ -38,6 +38,7 @@ import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.util.PsiUtil
 import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UMethod
 
 open class PsiClassItem(
@@ -376,6 +377,29 @@ open class PsiClassItem(
     override fun toString(): String = "class ${qualifiedName()}"
 
     companion object {
+        private fun hasExplicitRetention(modifiers: PsiModifierItem, psiClass: PsiClass, isKotlin: Boolean): Boolean {
+            if (modifiers.findAnnotation("java.lang.annotation.Retention") != null) {
+                return true
+            }
+            if (modifiers.findAnnotation("kotlin.annotation.Retention") != null) {
+                return true
+            }
+            if (isKotlin && psiClass is UClass) {
+                // In Kotlin some annotations show up on the Java facade only; for example,
+                // a @DslMarker annotation will imply a runtime annotation which is present
+                // in the java facade, not in the source list of annotations
+                val modifierList = psiClass.modifierList
+                if (modifierList != null && modifierList.annotations.any {
+                        val qualifiedName = it.qualifiedName
+                        qualifiedName == "kotlin.annotation.Retention" ||
+                            qualifiedName == "java.lang.annotation.Retention"
+                    }) {
+                    return true
+                }
+            }
+            return false
+        }
+
         fun create(codebase: PsiBasedCodebase, psiClass: PsiClass): PsiClassItem {
             if (psiClass is PsiTypeParameter) {
                 return PsiTypeParameterItem.create(codebase, psiClass)
@@ -405,11 +429,12 @@ open class PsiClassItem(
             // Construct the children
             val psiMethods = psiClass.methods
             val methods: MutableList<PsiMethodItem> = ArrayList(psiMethods.size)
+            val isKotlin = isKotlin(psiClass)
 
             if (classType == ClassType.ENUM) {
                 addEnumMethods(codebase, item, psiClass, methods)
             } else if (classType == ClassType.ANNOTATION_TYPE && compatibility.explicitlyListClassRetention &&
-                modifiers.findAnnotation("java.lang.annotation.Retention") == null
+                !hasExplicitRetention(modifiers, psiClass, isKotlin)
             ) {
                 // By policy, include explicit retention policy annotation if missing
                 modifiers.addAnnotation(
@@ -419,8 +444,6 @@ open class PsiClassItem(
                     )
                 )
             }
-
-            val isKotlin = isKotlin(psiClass)
 
             val constructors: MutableList<PsiConstructorItem> = ArrayList(5)
             for (psiMethod in psiMethods) {

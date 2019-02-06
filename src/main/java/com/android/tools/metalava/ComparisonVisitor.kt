@@ -320,8 +320,8 @@ class CodebaseComparator {
                                 for (i in 0 until parameterCount1) {
                                     val parameter1 = parameters1[i]
                                     val parameter2 = parameters2[i]
-                                    val type1 = parameter1.type().toTypeString()
-                                    val type2 = parameter2.type().toTypeString()
+                                    val type1 = parameter1.type().toTypeString(context = parameter1)
+                                    val type2 = parameter2.type().toTypeString(context = parameter2)
                                     delta = type1.compareTo(type2)
                                     if (delta != 0) {
                                         // Try a little harder:
@@ -329,8 +329,8 @@ class CodebaseComparator {
                                         //  (2) drop java.lang. prefixes from comparisons in wildcard
                                         //      signatures since older signature files may have removed
                                         //      those
-                                        val simpleType1 = parameter1.type().toCanonicalType()
-                                        val simpleType2 = parameter2.type().toCanonicalType()
+                                        val simpleType1 = parameter1.type().toCanonicalType(parameter1)
+                                        val simpleType2 = parameter2.type().toCanonicalType(parameter2)
                                         delta = simpleType1.compareTo(simpleType2)
                                         if (delta != 0) {
                                             // Special case: Kotlin coroutines
