@@ -3715,6 +3715,41 @@ class StubsTest : DriverTest() {
         )
     }
 
+    @Test(expected = AssertionError::class)
+    fun `Test check-api should not generate stubs or API files`() {
+        check(
+            extraArguments = arrayOf(
+                ARG_CHECK_API,
+                ARG_EXCLUDE_ANNOTATIONS
+            ),
+            compatibilityMode = false,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    public class Foo {
+                        /**
+                         * @deprecated Use checkPermission instead.
+                         */
+                        @Deprecated
+                        protected boolean inClass(String name) {
+                            return false;
+                        }
+                    }
+                    """
+                )
+            ),
+            api = """
+            package test.pkg {
+              public class Foo {
+                ctor public Foo();
+                method @Deprecated protected boolean inClass(String);
+              }
+            }
+            """
+        )
+    }
+
     @Test
     fun `Include package private classes referenced from public API`() {
         // Real world example: android.net.http.Connection in apache-http referenced from RequestHandle
