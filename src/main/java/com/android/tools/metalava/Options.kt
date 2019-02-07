@@ -136,7 +136,8 @@ const val ARG_INCLUDE_ANNOTATION_CLASSES = "--include-annotation-classes"
 const val ARG_REWRITE_ANNOTATIONS = "--rewrite-annotations"
 const val ARG_INCLUDE_SOURCE_RETENTION = "--include-source-retention"
 const val ARG_INCLUDE_SIG_VERSION = "--include-signature-version"
-const val ARG_UPDATE_API = "--update-api"
+const val ARG_UPDATE_API = "--only-update-api"
+const val ARG_CHECK_API = "--only-check-api"
 const val ARG_PASS_BASELINE_UPDATES = "--pass-baseline-updates"
 const val ARG_DEX_API_MAPPING = "--dex-api-mapping"
 const val ARG_GENERATE_DOCUMENTATION = "--generate-documentation"
@@ -241,7 +242,20 @@ class Options(
      * signature files. This avoids having duplicate metalava invocation logic where potentially newly
      * added flags are missing in one of the invocations etc.
      */
-    var updateApi = false
+    var onlyUpdateApi = false
+
+    /**
+     * Whether metalava is invoked as part of running the checkapi target. When this is true, metalava
+     * should *cancel* various other flags that are also being passed in, such as updating signature
+     * files.
+     *
+     * This is there to ease integration in the build system: for a given target, the build system will
+     * pass all the applicable flags (--stubs, --api, --check-compatibility, --generate-documentation, etc),
+     * and this integration is re-used for the checkapi facility where we *only* want to run compatibility
+     * checks. This avoids having duplicate metalava invocation logic where potentially newly
+     * added flags are missing in one of the invocations etc.
+     */
+    var onlyCheckApi = false
 
     /**
      * Whether signature files should emit in "compat" mode, preserving the various
@@ -420,7 +434,7 @@ class Options(
     var migrateNullsFrom: File? = null
 
     /** Private backing list for [compatibilityChecks]] */
-    private var mutableCompatibilityChecks: MutableList<CheckRequest> = mutableListOf()
+    private val mutableCompatibilityChecks: MutableList<CheckRequest> = mutableListOf()
 
     /** The list of compatibility checks to run */
     val compatibilityChecks: List<CheckRequest> = mutableCompatibilityChecks
@@ -986,7 +1000,8 @@ class Options(
 
                 ARG_NO_DOCS, "-nodocs" -> noDocs = true
 
-                ARG_UPDATE_API -> updateApi = true
+                ARG_UPDATE_API, "--update-api" -> onlyUpdateApi = true
+                ARG_CHECK_API -> onlyCheckApi = true
 
                 ARG_GENERATE_DOCUMENTATION -> {
                     // Digest all the remaining arguments.
@@ -1350,7 +1365,10 @@ class Options(
             generateAnnotations = false
         }
 
-        if (updateApi) {
+        if (onlyUpdateApi) {
+            if (onlyCheckApi) {
+                throw DriverException(stderr = "Cannot supply both $ARG_UPDATE_API and $ARG_CHECK_API at the same time")
+            }
             // We're running in update API mode: cancel other "action" flags; only signature file generation
             // flags count
             annotationCoverageClassReport = null
@@ -1373,6 +1391,46 @@ class Options(
             mutableCompatibilityChecks.clear()
             mutableAnnotationCoverageOf.clear()
             artifactRegistrations.clear()
+            mutableConvertToXmlFiles.clear()
+            nullabilityAnnotationsValidator = null
+            nullabilityWarningsTxt = null
+            validateNullabilityFromMergedStubs = false
+            validateNullabilityFromMergedStubs = false
+            validateNullabilityFromList = null
+        } else if (onlyCheckApi) {
+            annotationCoverageClassReport = null
+            annotationCoverageMemberReport = null
+            dumpAnnotationStatistics = false
+            apiLevelJars = null
+            generateApiLevelXml = null
+            applyApiLevelsXml = null
+            androidJarSignatureFiles = null
+            stubsDir = null
+            docStubsDir = null
+            stubsSourceList = null
+            docStubsSourceList = null
+            sdkValueDir = null
+            externalAnnotations = null
+            proguard = null
+            noDocs = true
+            invokeDocumentationToolArguments = emptyArray()
+            checkKotlinInterop = false
+            mutableAnnotationCoverageOf.clear()
+            artifactRegistrations.clear()
+            mutableConvertToXmlFiles.clear()
+            nullabilityAnnotationsValidator = null
+            nullabilityWarningsTxt = null
+            validateNullabilityFromMergedStubs = false
+            validateNullabilityFromMergedStubs = false
+            validateNullabilityFromList = null
+            apiFile = null
+            apiXmlFile = null
+            privateApiFile = null
+            dexApiFile = null
+            dexApiMappingFile = null
+            privateDexApiFile = null
+            removedApiFile = null
+            removedDexApiFile = null
         }
 
         if (baselineFile == null) {
@@ -1790,6 +1848,8 @@ class Options(
                 "to make it easier customize build system tasks.",
             ARG_UPDATE_API, "Cancel any other \"action\" flags other than generating signature files. This is here " +
                 "to make it easier customize build system tasks, particularly for the \"make update-api\" task.",
+            ARG_CHECK_API, "Cancel any other \"action\" flags other than checking signature files. This is here " +
+                "to make it easier customize build system tasks, particularly for the \"make checkapi\" task.",
 
             "", "\nAPI sources:",
             "$ARG_SOURCE_FILES <files>", "A comma separated list of source files to be parsed. Can also be " +

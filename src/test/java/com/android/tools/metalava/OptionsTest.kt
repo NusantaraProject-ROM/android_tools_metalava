@@ -42,10 +42,14 @@ General:
 --no-docs                                 Cancel any other documentation flags supplied to
                                           metalava. This is here to make it easier
                                           customize build system tasks.
---update-api                              Cancel any other "action" flags other than
+--only-update-api                         Cancel any other "action" flags other than
                                           generating signature files. This is here to make
                                           it easier customize build system tasks,
                                           particularly for the "make update-api" task.
+--only-check-api                          Cancel any other "action" flags other than
+                                          checking signature files. This is here to make
+                                          it easier customize build system tasks,
+                                          particularly for the "make checkapi" task.
 
 API sources:
 --source-files <files>                    A comma separated list of source files to be
