@@ -147,6 +147,7 @@ const val ARG_MERGE_BASELINE = "--merge-baseline"
 const val ARG_STUB_PACKAGES = "--stub-packages"
 const val ARG_STUB_IMPORT_PACKAGES = "--stub-import-packages"
 const val ARG_DELETE_EMPTY_BASELINES = "--delete-empty-baselines"
+const val ARG_SUBTRACT_API = "--subtract-api"
 
 class Options(
     private val args: Array<String>,
@@ -197,6 +198,9 @@ class Options(
      * been configured via ${#ARG_GENERATE_DOCUMENTATION}
      */
     var noDocs = false
+
+    /** API to subtract from signature and stub generation. Corresponds to [ARG_SUBTRACT_API]. */
+    var subtractApi: File? = null
 
     /**
      * Validator for nullability annotations, if validation is enabled.
@@ -420,7 +424,7 @@ class Options(
     var removedDexApiFile: File? = null
 
     /** Whether output should be colorized */
-    var color = System.getenv("TERM")?.startsWith("xterm") ?: false
+    var color = System.getenv("TERM")?.startsWith("xterm") ?: System.getenv("COLORTERM") != null ?: false
 
     /** Whether to omit Java and Kotlin runtime library packages from annotation coverage stats */
     var omitRuntimePackageStats = false
@@ -643,6 +647,13 @@ class Options(
                     listString.split(",").forEach { path ->
                         mutableSources.addAll(stringToExistingFiles(path))
                     }
+                }
+
+                ARG_SUBTRACT_API -> {
+                    if (subtractApi != null) {
+                        throw DriverException(stderr = "Only one $ARG_SUBTRACT_API can be supplied")
+                    }
+                    subtractApi = stringToExistingFile(getValue(args, ++index))
                 }
 
                 // TODO: Remove the legacy --merge-annotations flag once it's no longer used to update P docs
@@ -1901,11 +1912,14 @@ class Options(
                 "as hidden",
             ARG_SHOW_UNANNOTATED, "Include un-annotated public APIs in the signature file as well",
             "$ARG_JAVA_SOURCE <level>", "Sets the source level for Java source files; default is 1.8.",
-            "$ARG_STUB_PACKAGES <path>", "List of packages (separated by ${File.pathSeparator} which will be " +
-                "used to filter out irrelevant code. If specified, only code in these packages will be " +
+            "$ARG_STUB_PACKAGES <package-list>", "List of packages (separated by ${File.pathSeparator}) which will " +
+                "be used to filter out irrelevant code. If specified, only code in these packages will be " +
                 "included in signature files, stubs, etc. (This is not limited to just the stubs; the name " +
                 "is historical.) You can also use \".*\" at the end to match subpackages, so `foo.*` will " +
                 "match both `foo` and `foo.bar`.",
+            "$ARG_SUBTRACT_API <api file>", "Subtracts the API in the given signature or jar file from the " +
+                "current API being emitted via $ARG_API, $ARG_STUBS, $ARG_DOC_STUBS, etc. " +
+                "Note that the subtraction only applies to classes; it does not subtract members.",
 
             "", "\nDocumentation:",
             ARG_PUBLIC, "Only include elements that are public",

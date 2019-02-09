@@ -226,6 +226,9 @@ abstract class DriverTest {
         dexApi: String? = null,
         /** The DEX mapping API (corresponds to --dex-api-mapping) */
         dexApiMapping: String? = null,
+        /** The subtract api signature content (corresponds to --subtract-api) */
+        @Language("TEXT")
+        subtractApi: String? = null,
         /** Expected stubs (corresponds to --stubs) */
         @Language("JAVA") stubs: Array<String> = emptyArray(),
         /** Stub source file list generated */
@@ -773,6 +776,15 @@ abstract class DriverTest {
             emptyArray()
         }
 
+        var subtractApiFile: File? = null
+        val subtractApiArgs = if (subtractApi != null) {
+            subtractApiFile = temporaryFolder.newFile("subtract-api.txt")
+            subtractApiFile.writeText(subtractApi.trimIndent())
+            arrayOf(ARG_SUBTRACT_API, subtractApiFile.path)
+        } else {
+            emptyArray()
+        }
+
         val convertFiles = mutableListOf<Options.ConvertFile>()
         val convertArgs = if (convertToJDiff.isNotEmpty()) {
             val args = mutableListOf<String>()
@@ -998,6 +1010,7 @@ abstract class DriverTest {
             *dexApiArgs,
             *privateDexApiArgs,
             *dexApiMappingArgs,
+            *subtractApiArgs,
             *stubsArgs,
             *stubsSourceListArgs,
             "$ARG_COMPAT_OUTPUT=${if (compatibilityMode) "yes" else "no"}",
@@ -1276,7 +1289,10 @@ abstract class DriverTest {
                 "${stubsSourceListFile.path} does not exist even though --write-stubs-source-list was used",
                 stubsSourceListFile.exists()
             )
-            val actualText = readFile(stubsSourceListFile, stripBlankLines, trim)
+            val actualText = cleanupString(readFile(stubsSourceListFile, stripBlankLines, trim), project)
+                // To make golden files look better put one entry per line instead of a single
+                // space separated line
+                .replace(' ', '\n')
             assertEquals(stripComments(stubsSourceList, stripLineComments = false).trimIndent(), actualText)
         }
 
