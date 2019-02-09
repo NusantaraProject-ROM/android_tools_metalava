@@ -17,9 +17,10 @@
 
 package com.android.tools.metalava
 
-import com.android.SdkConstants
+import com.android.SdkConstants.DOT_JAR
 import com.android.SdkConstants.DOT_JAVA
 import com.android.SdkConstants.DOT_KT
+import com.android.SdkConstants.DOT_TXT
 import com.android.ide.common.process.CachedProcessOutputHandler
 import com.android.ide.common.process.DefaultProcessExecutor
 import com.android.ide.common.process.ProcessInfoBuilder
@@ -37,6 +38,7 @@ import com.android.tools.metalava.doclava1.ApiPredicate
 import com.android.tools.metalava.doclava1.Errors
 import com.android.tools.metalava.doclava1.FilterPredicate
 import com.android.tools.metalava.doclava1.TextCodebase
+import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.PackageDocs
@@ -207,14 +209,14 @@ private fun processFlags() {
     processNonCodebaseFlags()
 
     val codebase =
-        if (options.sources.size == 1 && options.sources[0].path.endsWith(SdkConstants.DOT_TXT)) {
+        if (options.sources.size == 1 && options.sources[0].path.endsWith(DOT_TXT)) {
             SignatureFileLoader.load(
                 file = options.sources[0],
                 kotlinStyleNulls = options.inputKotlinStyleNulls
             )
         } else if (options.apiJar != null) {
             loadFromJarFile(options.apiJar!!)
-        } else if (options.sources.size == 1 && options.sources[0].path.endsWith(SdkConstants.DOT_JAR)) {
+        } else if (options.sources.size == 1 && options.sources[0].path.endsWith(DOT_JAR)) {
             loadFromJarFile(options.sources[0])
         } else if (options.sources.isNotEmpty() || options.sourcePath.isNotEmpty()) {
             loadFromSources()
@@ -225,6 +227,10 @@ private fun processFlags() {
 
     if (options.verbose) {
         options.stdout.println("\n$PROGRAM_NAME analyzed API in ${stopwatch.elapsed(TimeUnit.SECONDS)} seconds")
+    }
+
+    options.subtractApi?.let {
+        subtractApi(codebase, it)
     }
 
     val androidApiLevelXml = options.generateApiLevelXml
@@ -372,7 +378,7 @@ private fun processFlags() {
     val previousApiFile = options.migrateNullsFrom
     if (previousApiFile != null) {
         val previous =
-            if (previousApiFile.path.endsWith(SdkConstants.DOT_JAR)) {
+            if (previousApiFile.path.endsWith(DOT_JAR)) {
                 loadFromJarFile(previousApiFile)
             } else {
                 SignatureFileLoader.load(
@@ -448,6 +454,23 @@ private fun processFlags() {
     }
 
     invokeDocumentationTool()
+}
+
+fun subtractApi(codebase: Codebase, subtractApiFile: File) {
+    val path = subtractApiFile.path
+    val oldCodebase =
+        when {
+            path.endsWith(DOT_TXT) -> SignatureFileLoader.load(subtractApiFile)
+            path.endsWith(DOT_JAR) -> loadFromJarFile(subtractApiFile)
+            else -> throw DriverException("Unsupported $ARG_SUBTRACT_API format, expected .txt or .jar: ${subtractApiFile.name}")
+        }
+
+    CodebaseComparator().compare(object : ComparisonVisitor() {
+        override fun compare(old: ClassItem, new: ClassItem) {
+            new.included = false
+            new.emit = false
+        }
+    }, oldCodebase, codebase, ApiType.ALL.getReferenceFilter())
 }
 
 fun processNonCodebaseFlags() {
@@ -554,7 +577,7 @@ fun checkCompatibility(
     val signatureFile = check.file
 
     val current =
-        if (signatureFile.path.endsWith(SdkConstants.DOT_JAR)) {
+        if (signatureFile.path.endsWith(DOT_JAR)) {
             loadFromJarFile(signatureFile)
         } else {
             SignatureFileLoader.load(
@@ -801,7 +824,7 @@ private fun loadFromSources(): Codebase {
         val previous =
             when {
                 previousApiFile == null -> null
-                previousApiFile.path.endsWith(SdkConstants.DOT_JAR) -> loadFromJarFile(previousApiFile)
+                previousApiFile.path.endsWith(DOT_JAR) -> loadFromJarFile(previousApiFile)
                 else -> SignatureFileLoader.load(
                     file = previousApiFile,
                     kotlinStyleNulls = options.inputKotlinStyleNulls
@@ -863,7 +886,7 @@ internal fun parseSources(
     // Create project environment with those paths
     projectEnvironment.registerPaths(joined)
 
-    val kotlinFiles = sources.filter { it.path.endsWith(SdkConstants.DOT_KT) }
+    val kotlinFiles = sources.filter { it.path.endsWith(DOT_KT) }
     val trace = KotlinLintAnalyzerFacade().analyze(kotlinFiles, joined, project)
 
     val rootDir = sourceRoots.firstOrNull() ?: sourcePath.firstOrNull() ?: File("").canonicalFile

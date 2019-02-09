@@ -1995,7 +1995,13 @@ class StubsTest : DriverTest() {
                 public MySubClass2() { super(0); throw new RuntimeException("Stub!"); }
                 }
                 """
-            )
+            ),
+            stubsSourceList = """
+                TESTROOT/stubs/test/pkg/MyClass1.java
+                TESTROOT/stubs/test/pkg/MyClass2.java
+                TESTROOT/stubs/test/pkg/MySubClass1.java
+                TESTROOT/stubs/test/pkg/MySubClass2.java
+            """
         )
     }
 
