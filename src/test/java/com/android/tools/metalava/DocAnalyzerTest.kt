@@ -1163,7 +1163,7 @@ class DocAnalyzerTest : DriverTest() {
                             <method name="&lt;init>()V"/>
                             <method name="addCallbackBuffer([B)V" since="8"/>
                             <method name="getLogo()Landroid/graphics/drawable/Drawable;"/>
-                            <field name="ACTION_NEW_VIDEO" since="14" deprecated="25"/>
+                            <field name="ACTION_NEW_VIDEO" since="14" deprecated="19"/>
                         </class>
                     </api>
                     """,
@@ -1186,7 +1186,7 @@ class DocAnalyzerTest : DriverTest() {
                 public Camera() { throw new RuntimeException("Stub!"); }
                 /**
                  * @deprecated
-                 * <p class="caution"><strong>This class was deprecated in API level 21.</strong></p>
+                 * <p class="caution"><strong>This class was deprecated in API level 19.</strong></p>
                  *  Use something else.
                  * @since 14
                  */
