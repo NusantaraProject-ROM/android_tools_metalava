@@ -701,7 +701,7 @@ class DocAnalyzer(
         if (level > 1) {
             // TODO: *pre*pend instead!
             val description =
-                "<p class=\"caution\"><strong>This class was deprecated in API level 21.</strong></p>"
+                "<p class=\"caution\"><strong>This class was deprecated in API level $level.</strong></p>"
             item.appendDocumentation(description, "@deprecated", append = false)
         }
     }
