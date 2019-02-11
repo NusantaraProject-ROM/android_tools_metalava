@@ -15,6 +15,7 @@
  */
 package com.android.tools.metalava.apilevels;
 
+import com.android.SdkConstants;
 import com.android.tools.metalava.model.Codebase;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
@@ -62,8 +63,14 @@ class AndroidJarReader {
     }
 
     public Api getApi() throws IOException {
-        Api api = new Api();
+        Api api;
         if (mApiLevels != null) {
+            int max = mApiLevels.length - 1;
+            if (mCodebase != null) {
+                max = mCodebase.getApiLevel();
+            }
+
+            api = new Api(max);
             for (int apiLevel = 1; apiLevel < mApiLevels.length; apiLevel++) {
                 File jar = getAndroidJarFile(apiLevel);
                 readJar(api, apiLevel, jar);
@@ -75,6 +82,7 @@ class AndroidJarReader {
                 }
             }
         } else {
+            api = new Api(mCurrentApi);
             // Get all the android.jar. They are in platforms-#
             int apiLevel = mMinApi - 1;
             while (true) {
@@ -96,6 +104,7 @@ class AndroidJarReader {
             }
         }
 
+        api.inlineFromHiddenSuperClasses();
         api.removeImplicitInterfaces();
         api.removeOverridingMethods();
 
@@ -118,16 +127,16 @@ class AndroidJarReader {
         while (entry != null) {
             String name = entry.getName();
 
-            if (name.endsWith(".class")) {
+            if (name.endsWith(SdkConstants.DOT_CLASS)) {
                 byte[] bytes = ByteStreams.toByteArray(zis);
                 ClassReader reader = new ClassReader(bytes);
                 ClassNode classNode = new ClassNode(Opcodes.ASM5);
                 reader.accept(classNode, 0 /*flags*/);
 
-                // TODO: Skip package private classes; use metalava's heuristics
-
                 ApiClass theClass = api.addClass(classNode.name, apiLevel,
                     (classNode.access & Opcodes.ACC_DEPRECATED) != 0);
+
+                theClass.updateHidden(apiLevel, (classNode.access & Opcodes.ACC_PUBLIC) == 0);
 
                 // super class
                 if (classNode.superName != null) {

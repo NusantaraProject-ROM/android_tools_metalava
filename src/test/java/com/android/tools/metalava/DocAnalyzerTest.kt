@@ -429,6 +429,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Merge Multiple sections`() {
         check(
+            warnings = "src/android/widget/Toolbar2.java:14: error: Documentation should not specify @apiSince manually; it's computed and injected at build time by metalava [ForbiddenTag]",
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -442,6 +443,14 @@ class DocAnalyzerTest : DriverTest() {
                         */
                         @UiThread
                         public int getCurrentContentInsetEnd() {
+                            return 0;
+                        }
+
+                        /**
+                        * @apiSince 15
+                        */
+                        @UiThread
+                        public int getCurrentContentInsetRight() {
                             return 0;
                         }
                     }
@@ -468,9 +477,7 @@ class DocAnalyzerTest : DriverTest() {
             stubs = arrayOf(
                 """
                 package android.widget;
-                /**
-                 * @since 21
-                 */
+                /** @apiSince 21 */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class Toolbar2 {
                 public Toolbar2() { throw new RuntimeException("Stub!"); }
@@ -479,11 +486,19 @@ class DocAnalyzerTest : DriverTest() {
                  * <br>
                  * This method must be called on the thread that originally created
                  * this UI element. This is typically the main thread of your app.
-                 * @since 24
                  * @return blah blah blah
+                 * @apiSince 24
                  */
                 @androidx.annotation.UiThread
                 public int getCurrentContentInsetEnd() { throw new RuntimeException("Stub!"); }
+                /**
+                 * <br>
+                 * This method must be called on the thread that originally created
+                 * this UI element. This is typically the main thread of your app.
+                 * @apiSince 15
+                 */
+                @androidx.annotation.UiThread
+                public int getCurrentContentInsetRight() { throw new RuntimeException("Stub!"); }
                 }
                 """
             )
@@ -1117,16 +1132,14 @@ class DocAnalyzerTest : DriverTest() {
             stubs = arrayOf(
                 """
                 package android.widget;
-                /**
-                 * @since 21
-                 */
+                /** @apiSince 21 */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class Toolbar {
                 public Toolbar() { throw new RuntimeException("Stub!"); }
                 /**
                  * Existing documentation for {@linkplain #getCurrentContentInsetEnd()} here.
-                 * @since 24
                  * @return blah blah blah
+                 * @apiSince 24
                  */
                 public int getCurrentContentInsetEnd() { throw new RuntimeException("Stub!"); }
                 }
@@ -1175,25 +1188,244 @@ class DocAnalyzerTest : DriverTest() {
                 /**
                  * The Camera class is used to set image capture settings, start/stop preview.
                  *
-                 * @deprecated
-                 * <p class="caution"><strong>This class was deprecated in API level 21.</strong></p>
-                 *  We recommend using the new {@link android.hardware.camera2} API for new
+                 * @deprecated We recommend using the new {@link android.hardware.camera2} API for new
                  *             applications.*
+                 * @apiSince 1
+                 * @deprecatedSince 21
                  */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 @Deprecated
                 public class Camera {
                 public Camera() { throw new RuntimeException("Stub!"); }
                 /**
-                 * @deprecated
-                 * <p class="caution"><strong>This class was deprecated in API level 19.</strong></p>
-                 *  Use something else.
-                 * @since 14
+                 * @deprecated Use something else.
+                 * @apiSince 14
+                 * @deprecatedSince 19
                  */
                 @Deprecated public static final java.lang.String ACTION_NEW_VIDEO = "android.hardware.action.NEW_VIDEO";
                 }
                 """
             )
+        )
+    }
+
+    @Test
+    fun `Api levels around current and preview`() {
+        check(
+            extraArguments = arrayOf(
+                ARG_CURRENT_CODENAME,
+                "Z",
+                ARG_CURRENT_VERSION,
+                "35" // not real api level of Z
+            ),
+            includeSystemApiAnnotations = true,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package android.pkg;
+                    import android.annotation.SystemApi;
+                    public class Test {
+                       public static final String UNIT_TEST_1 = "unit.test.1";
+                       /**
+                         * @hide
+                         */
+                        @SystemApi
+                       public static final String UNIT_TEST_2 = "unit.test.2";
+                    }
+                    """
+                ),
+                systemApiSource
+            ),
+            applyApiLevelsXml = """
+                    <?xml version="1.0" encoding="utf-8"?>
+                    <api version="2">
+                        <class name="android/pkg/Test" since="1">
+                            <field name="UNIT_TEST_1" since="35"/>
+                            <field name="UNIT_TEST_2" since="36"/>
+                        </class>
+                    </api>
+                    """,
+            checkCompilation = true,
+            checkDoclava1 = false,
+            stubs = arrayOf(
+                """
+                package android.pkg;
+                /** @apiSince 1 */
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class Test {
+                public Test() { throw new RuntimeException("Stub!"); }
+                /** @apiSince 35 */
+                public static final java.lang.String UNIT_TEST_1 = "unit.test.1";
+                /**
+                 * @hide
+                 */
+                public static final java.lang.String UNIT_TEST_2 = "unit.test.2";
+                }
+                """
+            )
+        )
+    }
+
+    @Test
+    fun `No api levels on SystemApi only elements`() {
+        // @SystemApi, @TestApi etc cannot get api versions since we don't have
+        // accurate android.jar files (or even reliable api.txt/api.xml files) for them.
+        check(
+            extraArguments = arrayOf(
+                ARG_CURRENT_CODENAME,
+                "Z",
+                ARG_CURRENT_VERSION,
+                "35" // not real api level of Z
+            ),
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package android.pkg;
+                    public class Test {
+                       public Test(int i) { }
+                       public static final String UNIT_TEST_1 = "unit.test.1";
+                       public static final String UNIT_TEST_2 = "unit.test.2";
+                    }
+                    """
+                )
+            ),
+            applyApiLevelsXml = """
+                    <?xml version="1.0" encoding="utf-8"?>
+                    <api version="2">
+                        <class name="android/pkg/Test" since="1">
+                            <method name="&lt;init>(I)V"/>
+                            <field name="UNIT_TEST_1" since="35"/>
+                            <field name="UNIT_TEST_2" since="36"/>
+                        </class>
+                    </api>
+                    """,
+            checkCompilation = true,
+            checkDoclava1 = false,
+            stubs = arrayOf(
+                """
+                package android.pkg;
+                /** @apiSince 1 */
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class Test {
+                /** @apiSince 1 */
+                public Test(int i) { throw new RuntimeException("Stub!"); }
+                /** @apiSince 35 */
+                public static final java.lang.String UNIT_TEST_1 = "unit.test.1";
+                /** @apiSince Z */
+                public static final java.lang.String UNIT_TEST_2 = "unit.test.2";
+                }
+                """
+            )
+        )
+    }
+
+    @Test
+    fun `Generate API level javadocs`() {
+        // TODO: Check package-info.java conflict
+        // TODO: Test merging
+        // TODO: Test non-merging
+        check(
+            extraArguments = arrayOf(
+                ARG_CURRENT_CODENAME,
+                "Z",
+                ARG_CURRENT_VERSION,
+                "35" // not real api level of Z
+            ),
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package android.pkg1;
+                    public class Test1 {
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package android.pkg1;
+                    public class Test2 {
+                    }
+                    """
+                ),
+                source(
+                    "src/android/pkg2/package.html",
+                    """
+                    <body bgcolor="white">
+                    Some existing doc here.
+                    @deprecated
+                    <!-- comment -->
+                    </body>
+                    """
+                ).indented(),
+                java(
+                    """
+                    package android.pkg2;
+                    public class Test1 {
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package android.pkg2;
+                    public class Test2 {
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package android.pkg3;
+                    public class Test1 {
+                    }
+                    """
+                )
+            ),
+            applyApiLevelsXml = """
+                    <?xml version="1.0" encoding="utf-8"?>
+                    <api version="2">
+                        <class name="android/pkg1/Test1" since="15"/>
+                        <class name="android/pkg3/Test1" since="20"/>
+                    </api>
+                    """,
+            checkCompilation = true,
+            checkDoclava1 = false,
+            stubs = arrayOf(
+                """
+                package android.pkg1;
+                /** @apiSince 15 */
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class Test1 {
+                public Test1() { throw new RuntimeException("Stub!"); }
+                }
+                """,
+                """
+                [android/pkg1/package-info.java]
+                /** @apiSince 15 */
+                package android.pkg1;
+                """,
+                """
+                [android/pkg2/package-info.java]
+                /**
+                 * Some existing doc here.
+                 * @deprecated
+                 * <!-- comment -->
+                 */
+                package android.pkg2;
+                """,
+                """
+                [android/pkg3/package-info.java]
+                /** @apiSince 20 */
+                package android.pkg3;
+                """
+            ),
+            stubsSourceList = """
+                TESTROOT/stubs/android/pkg1/package-info.java
+                TESTROOT/stubs/android/pkg1/Test1.java
+                TESTROOT/stubs/android/pkg1/Test2.java
+                TESTROOT/stubs/android/pkg2/package-info.java
+                TESTROOT/stubs/android/pkg2/Test1.java
+                TESTROOT/stubs/android/pkg2/Test2.java
+                TESTROOT/stubs/android/pkg3/package-info.java
+                TESTROOT/stubs/android/pkg3/Test1.java
+            """
         )
     }
 
@@ -1322,9 +1554,7 @@ class DocAnalyzerTest : DriverTest() {
             stubs = arrayOf(
                 """
                 package test.pkg;
-                /**
-                 * @since 21
-                 */
+                /** @apiSince 21 */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 @androidx.annotation.RequiresApi(21)
                 public class MyClass1 {
