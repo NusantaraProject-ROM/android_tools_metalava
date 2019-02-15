@@ -2656,6 +2656,69 @@ CompatibilityCheckTest : DriverTest() {
         )
     }
 
+    @Test
+    fun `Empty bundle files`() {
+        // Regression test for 124333557
+        // Makes sure we properly handle conflicting definitions of a java file in separate source roots
+        check(
+            warnings = "",
+            compatibilityMode = false,
+            checkCompatibilityApi = """
+                // Signature format: 3.0
+                package com.android.location.provider {
+                  public class LocationProviderBase1 {
+                    ctor public LocationProviderBase1();
+                    method public void onGetStatus(android.os.Bundle!);
+                  }
+                  public class LocationProviderBase2 {
+                    ctor public LocationProviderBase2();
+                    method public void onGetStatus(android.os.Bundle!);
+                  }
+                }
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    "src2/com/android/location/provider/LocationProviderBase1.java",
+                    """
+                    /** Something */
+                    package com.android.location.provider;
+                    """
+                ),
+                java(
+                    "src/com/android/location/provider/LocationProviderBase1.java",
+                    """
+                    package com.android.location.provider;
+                    import android.os.Bundle;
+
+                    public class LocationProviderBase1 {
+                        public void onGetStatus(Bundle bundle) { }
+                    }
+                    """
+                ),
+                // Try both combinations (empty java file both first on the source path
+                // and second on the source path)
+                java(
+                    "src/com/android/location/provider/LocationProviderBase2.java",
+                    """
+                    /** Something */
+                    package com.android.location.provider;
+                    """
+                ),
+                java(
+                    "src/com/android/location/provider/LocationProviderBase2.java",
+                    """
+                    package com.android.location.provider;
+                    import android.os.Bundle;
+
+                    public class LocationProviderBase2 {
+                        public void onGetStatus(Bundle bundle) { }
+                    }
+                    """
+                )
+            )
+        )
+    }
+
     // TODO: Check method signatures changing incompatibly (look especially out for adding new overloaded
     // methods and comparator getting confused!)
     //   ..equals on the method items should actually be very useful!

@@ -867,7 +867,7 @@ internal fun parseSources(
     classpath: List<File> = options.classpath,
     javaLanguageLevel: LanguageLevel = options.javaLanguageLevel,
     manifest: File? = options.manifest,
-    currentApiLevel: Int = options.currentApiLevel
+    currentApiLevel: Int = options.currentApiLevel + if (options.currentCodeName != null) 1 else 0
 ): PsiBasedCodebase {
     val projectEnvironment = createProjectEnvironment()
     val project = projectEnvironment.project
@@ -1267,7 +1267,11 @@ private fun findRoot(file: File): File? {
         if (before == '/' || before == '\\') {
             return File(path.substring(0, endIndex))
         } else {
-            reporter.report(Errors.IO_ERROR, file, "$PROGRAM_NAME was unable to determine the package name")
+            reporter.report(
+                Errors.IO_ERROR, file, "$PROGRAM_NAME was unable to determine the package name. " +
+                    "This usually means that a source file was where the directory does not seem to match the package " +
+                    "declaration; we expected the path $path to end with /${pkg.replace('.', '/') + '/' + file.name}"
+            )
         }
     }
 

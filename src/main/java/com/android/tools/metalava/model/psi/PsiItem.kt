@@ -121,7 +121,71 @@ abstract class PsiItem(
             return
         }
 
+        // Micro-optimization: we're very often going to be merging @apiSince and to a lesser
+        // extend @deprecatedSince into existing comments, since we're flagging every single
+        // public API. Normally merging into documentation has to be done carefully, since
+        // there could be existing versions of the tag we have to append to, and some parts
+        // of the comment needs to be present in certain places. For example, you can't
+        // just append to the description of a method by inserting something right before "*/"
+        // since you could be appending to a javadoc tag like @return.
+        //
+        // However, for @apiSince and @deprecatedSince specifically, in addition to being frequent,
+        // they will (a) never appear in existing docs, and (b) they're separate tags, which means
+        // it's safe to append them at the end. So we'll special case these two tags here, to
+        // help speed up the builds since these tags are inserted 30,000+ times for each framework
+        // API target (there are many), and each time would have involved constructing a full javadoc
+        // AST with lexical tokens using IntelliJ's javadoc parsing APIs. Instead, we'll just
+        // do some simple string heuristics.
+        if (tagSection == "@apiSince" || tagSection == "@deprecatedSince") {
+            documentation = addUniqueTag(documentation, tagSection, comment)
+            return
+        }
+
         documentation = mergeDocumentation(documentation, element, comment.trim(), tagSection, append)
+    }
+
+    private fun addUniqueTag(documentation: String, tagSection: String, commentLine: String): String {
+        assert(commentLine.indexOf('\n') == -1) // Not meant for multi-line comments
+
+        if (documentation.isBlank()) {
+            return "/** $tagSection $commentLine */"
+        }
+
+        // Already single line?
+        if (documentation.indexOf('\n') == -1) {
+            var end = documentation.lastIndexOf("*/")
+            val s = "/**\n *" + documentation.substring(3, end) + "\n * $tagSection $commentLine\n */"
+            return s
+        }
+
+        var end = documentation.lastIndexOf("*/")
+        while (end > 0 && documentation[end - 1].isWhitespace() &&
+            documentation[end - 1] != '\n') {
+            end--
+        }
+        var indent: String
+        var linePrefix = ""
+        val secondLine = documentation.indexOf('\n')
+        if (secondLine == -1) {
+            // Single line comment
+            indent = "\n * "
+        } else {
+            val indentStart = secondLine + 1
+            var indentEnd = indentStart
+            while (indentEnd < documentation.length) {
+                if (!documentation[indentEnd].isWhitespace()) {
+                    break
+                }
+                indentEnd++
+            }
+            indent = documentation.substring(indentStart, indentEnd)
+            // TODO: If it starts with "* " follow that
+            if (documentation.startsWith("* ", indentEnd)) {
+                linePrefix = "* "
+            }
+        }
+        val s = documentation.substring(0, end) + indent + linePrefix + tagSection + " " + commentLine + "\n" + indent + " */"
+        return s
     }
 
     override fun fullyQualifiedDocumentation(): String {

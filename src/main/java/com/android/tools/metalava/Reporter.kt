@@ -308,7 +308,7 @@ open class Reporter(private val rootFolder: File? = null) {
 
         val sb = StringBuilder(100)
 
-        if (color) {
+        if (color && !isUnderTest()) {
             sb.append(terminalAttributes(bold = true))
             if (!options.omitLocations) {
                 location?.let {
