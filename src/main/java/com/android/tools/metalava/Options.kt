@@ -505,6 +505,9 @@ class Options(
     /** The api level of the codebase, or -1 if not known/specified */
     var currentApiLevel = -1
 
+    /** The codename of the codebase, if it's a preview, or null if not specified */
+    var currentCodeName: String? = null
+
     /** API level XML file to generate */
     var generateApiLevelXml: File? = null
 
@@ -589,7 +592,6 @@ class Options(
         }
 
         var androidJarPatterns: MutableList<String>? = null
-        var currentCodeName: String? = null
         var currentJar: File? = null
         var updateBaselineFile: File? = null
         var baselineFile: File? = null

@@ -68,6 +68,10 @@ public class ApiElement implements Comparable<ApiElement> {
         return mName;
     }
 
+    public int getSince() {
+        return mSince;
+    }
+
     /**
      * Checks if this API element was introduced not later than another API element.
      *

@@ -15,6 +15,7 @@ import com.android.tools.metalava.model.FieldItem
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.MemberItem
 import com.android.tools.metalava.model.MethodItem
+import com.android.tools.metalava.model.PackageItem
 import com.android.tools.metalava.model.ParameterItem
 import com.android.tools.metalava.model.psi.containsLinkTags
 import com.android.tools.metalava.model.visitors.ApiVisitor
@@ -33,6 +34,7 @@ import java.util.regex.Pattern
  * to convert since tags in the documentation tool used.
  */
 const val ADD_API_LEVEL_TEXT = false
+const val ADD_DEPRECATED_IN_TEXT = false
 
 /**
  * Walk over the API and apply tweaks to the documentation, such as
@@ -660,16 +662,24 @@ class DocAnalyzer(
 
         val apiLookup = ApiLookup.get(client)
 
-        codebase.accept(object : ApiVisitor(visitConstructorsAsMethods = false) {
+        val pkgApi = HashMap<PackageItem, Int?>(300)
+        codebase.accept(object : ApiVisitor(visitConstructorsAsMethods = true) {
             override fun visitMethod(method: MethodItem) {
-                val psiMethod = method.psi() as PsiMethod
+                val psiMethod = method.psi() as? PsiMethod ?: return
                 addApiLevelDocumentation(apiLookup.getMethodVersion(psiMethod), method)
                 addDeprecatedDocumentation(apiLookup.getMethodDeprecatedIn(psiMethod), method)
             }
 
             override fun visitClass(cls: ClassItem) {
                 val psiClass = cls.psi() as PsiClass
-                addApiLevelDocumentation(apiLookup.getClassVersion(psiClass), cls)
+                val since = apiLookup.getClassVersion(psiClass)
+                if (since != -1) {
+                    addApiLevelDocumentation(since, cls)
+
+                    // Compute since version for the package: it's the min of all the classes in the package
+                    val pkg = cls.containingPackage()
+                    pkgApi[pkg] = Math.min(pkgApi[pkg] ?: Integer.MAX_VALUE, since)
+                }
                 addDeprecatedDocumentation(apiLookup.getClassDeprecatedIn(psiClass), cls)
             }
 
@@ -679,30 +689,78 @@ class DocAnalyzer(
                 addDeprecatedDocumentation(apiLookup.getFieldDeprecatedIn(psiField), field)
             }
         })
+
+        val packageDocs = codebase.getPackageDocs()
+        if (packageDocs != null) {
+            for ((pkg, api) in pkgApi.entries) {
+                val code = api ?: 1
+                addApiLevelDocumentation(code, pkg)
+            }
+        }
     }
 
     private fun addApiLevelDocumentation(level: Int, item: Item) {
-        if (level > 1) {
+        if (level > 0) {
+            if (item.originallyHidden) {
+                // @SystemApi, @TestApi etc -- don't apply API levels here since we don't have accurate historical data
+                return
+            }
+            val currentCodeName = options.currentCodeName
+            val code: String = if (currentCodeName != null && level > options.currentApiLevel) {
+                currentCodeName
+            } else {
+                level.toString()
+            }
+
             @Suppress("ConstantConditionIf")
             if (ADD_API_LEVEL_TEXT) { // See 113933920: Remove "Requires API level" from method comment
-                appendDocumentation("Requires API level ${describeApiLevel(level)}", item, false)
+                val description = if (code == currentCodeName) currentCodeName else describeApiLevel(level)
+                appendDocumentation("Requires API level $description", item, false)
             }
             // Also add @since tag, unless already manually entered.
             // TODO: Override it everywhere in case the existing doc is wrong (we know
             // better), and at least for OpenJDK sources we *should* since the since tags
             // are talking about language levels rather than API levels!
-            if (!item.documentation.contains("@since")) {
-                item.appendDocumentation(level.toString(), "@since")
+            if (!item.documentation.contains("@apiSince")) {
+                item.appendDocumentation(code, "@apiSince")
+            } else {
+                reporter.report(
+                    Errors.FORBIDDEN_TAG, item, "Documentation should not specify @apiSince " +
+                        "manually; it's computed and injected at build time by $PROGRAM_NAME"
+                )
             }
         }
     }
 
     private fun addDeprecatedDocumentation(level: Int, item: Item) {
-        if (level > 1) {
-            // TODO: *pre*pend instead!
-            val description =
-                "<p class=\"caution\"><strong>This class was deprecated in API level $level.</strong></p>"
-            item.appendDocumentation(description, "@deprecated", append = false)
+        if (level > 0) {
+            if (item.originallyHidden) {
+                // @SystemApi, @TestApi etc -- don't apply API levels here since we don't have accurate historical data
+                return
+            }
+            val currentCodeName = options.currentCodeName
+            val code: String = if (currentCodeName != null && level > options.currentApiLevel) {
+                currentCodeName
+            } else {
+                level.toString()
+            }
+
+            @Suppress("ConstantConditionIf")
+            if (ADD_DEPRECATED_IN_TEXT) {
+                // TODO: *pre*pend instead!
+                val description =
+                    "<p class=\"caution\"><strong>This class was deprecated in API level $code.</strong></p>"
+                item.appendDocumentation(description, "@deprecated", append = false)
+            }
+
+            if (!item.documentation.contains("@deprecatedSince")) {
+                item.appendDocumentation(code, "@deprecatedSince")
+            } else {
+                reporter.report(
+                    Errors.FORBIDDEN_TAG, item, "Documentation should not specify @deprecatedSince " +
+                        "manually; it's computed and injected at build time by $PROGRAM_NAME"
+                )
+            }
         }
     }
 
@@ -716,12 +774,13 @@ fun ApiLookup.getClassVersion(cls: PsiClass): Int {
     return getClassVersion(owner)
 }
 
+val defaultEvaluator = DefaultJavaEvaluator(null, null)
+
 fun ApiLookup.getMethodVersion(method: PsiMethod): Int {
     val containingClass = method.containingClass ?: return -1
     val owner = containingClass.qualifiedName ?: return -1
-    val evaluator = DefaultJavaEvaluator(null, null)
-    val desc = evaluator.getMethodDescription(method, false, false)
-    return getMethodVersion(owner, method.name, desc)
+    val desc = defaultEvaluator.getMethodDescription(method, false, false)
+    return getMethodVersion(owner, if (method.isConstructor) "<init>" else method.name, desc)
 }
 
 fun ApiLookup.getFieldVersion(field: PsiField): Int {
@@ -738,8 +797,7 @@ fun ApiLookup.getClassDeprecatedIn(cls: PsiClass): Int {
 fun ApiLookup.getMethodDeprecatedIn(method: PsiMethod): Int {
     val containingClass = method.containingClass ?: return -1
     val owner = containingClass.qualifiedName ?: return -1
-    val evaluator = DefaultJavaEvaluator(null, null)
-    val desc = evaluator.getMethodDescription(method, false, false)
+    val desc = defaultEvaluator.getMethodDescription(method, false, false)
     return getMethodDeprecatedIn(owner, method.name, desc)
 }
 
