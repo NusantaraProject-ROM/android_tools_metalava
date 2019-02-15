@@ -22,7 +22,9 @@ import com.android.tools.lint.checks.infrastructure.TestFile
 import com.android.tools.metalava.model.SUPPORT_TYPE_USE_ANNOTATIONS
 import org.intellij.lang.annotations.Language
 import org.junit.Test
+import java.io.File
 import java.io.FileNotFoundException
+import kotlin.test.assertEquals
 
 @SuppressWarnings("ALL")
 class StubsTest : DriverTest() {
@@ -4069,6 +4071,62 @@ class StubsTest : DriverTest() {
                 }
                 """
             )
+        )
+    }
+
+    @Test
+    fun `Regression test for 124333557`() {
+        // Regression test for 124333557: Handle empty java files
+        check(
+            compatibilityMode = false,
+            warnings = """
+            TESTROOT/src/test/Something2.java: error: metalava was unable to determine the package name. This usually means that a source file was where the directory does not seem to match the package declaration; we expected the path TESTROOT/src/test/Something2.java to end with /test/wrong/Something2.java [IoError]
+            TESTROOT/src/test/Something2.java: error: metalava was unable to determine the package name. This usually means that a source file was where the directory does not seem to match the package declaration; we expected the path TESTROOT/src/test/Something2.java to end with /test/wrong/Something2.java [IoError]
+            """,
+            sourceFiles = *arrayOf(
+                java(
+                    "src/test/pkg/Something.java",
+                    """
+                    /** Nothing much here */
+                    """
+                ),
+                java(
+                    "src/test/pkg/Something2.java",
+                    """
+                    /** Nothing much here */
+                    package test.pkg;
+                    """
+                ),
+                java(
+                    "src/test/Something2.java",
+                    """
+                    /** Wrong package */
+                    package test.wrong;
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    public class Test {
+                        private Test() { }
+                    }
+                    """
+                )
+            ),
+            api = """
+                package test.pkg {
+                  public class Test {
+                  }
+                }
+                """,
+            projectSetup = { dir ->
+                // Make sure we handle blank/doc-only java doc files in root extraction
+                val src = listOf(File(dir, "src"))
+                val files = gatherSources(src)
+                val roots = extractRoots(files)
+                assertEquals(1, roots.size)
+                assertEquals(src[0].path, roots[0].path)
+            }
         )
     }
 

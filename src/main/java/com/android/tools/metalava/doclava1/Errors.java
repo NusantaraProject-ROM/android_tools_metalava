@@ -257,6 +257,7 @@ public class Errors {
     // The plan is for this to be set as an error once (1) existing code is marked as @deprecated
     // and (2) the principle is adopted by the API council
     public static final Error EXTENDS_DEPRECATED = new Error(161, HIDDEN);
+    public static final Error FORBIDDEN_TAG = new Error(162, ERROR);
 
     // API lint
     public static final Error START_WITH_LOWER = new Error(300, ERROR, Category.API_LINT, "S1");

@@ -420,7 +420,14 @@ abstract class DriverTest {
         if (!sourcePathDir.isDirectory) {
             sourcePathDir.mkdirs()
         }
-        val sourcePath = sourcePathDir.path
+
+        var sourcePath = sourcePathDir.path
+
+        // Make it easy to configure a source path with more than one source root: src and src2
+        if (sourceFiles.any { it.targetPath.startsWith("src2") }) {
+            sourcePath = sourcePath + File.pathSeparator + sourcePath + "2"
+        }
+
         val sourceList =
             if (signatureSource != null) {
                 sourcePathDir.mkdirs()
@@ -1245,14 +1252,26 @@ abstract class DriverTest {
         if (stubs.isNotEmpty() && stubsDir != null) {
             for (i in 0 until stubs.size) {
                 var stub = stubs[i].trimIndent()
-                val sourceFile = sourceFiles[i]
-                val targetPath = if (sourceFile.targetPath.endsWith(DOT_KT)) {
-                    // Kotlin source stubs are rewritten as .java files for now
-                    sourceFile.targetPath.substring(0, sourceFile.targetPath.length - 3) + DOT_JAVA
+
+                var targetPath: String
+                var stubFile: File
+                if (stub.startsWith("[") && stub.contains("]")) {
+                    val pathEnd = stub.indexOf("]\n")
+                    targetPath = stub.substring(1, pathEnd)
+                    stubFile = File(stubsDir, targetPath)
+                    if (stubFile.isFile) {
+                        stub = stub.substring(pathEnd + 2)
+                    }
                 } else {
-                    sourceFile.targetPath
+                    val sourceFile = sourceFiles[i]
+                    targetPath = if (sourceFile.targetPath.endsWith(DOT_KT)) {
+                        // Kotlin source stubs are rewritten as .java files for now
+                        sourceFile.targetPath.substring(0, sourceFile.targetPath.length - 3) + DOT_JAVA
+                    } else {
+                        sourceFile.targetPath
+                    }
+                    stubFile = File(stubsDir, targetPath.substring("src/".length))
                 }
-                var stubFile = File(stubsDir, targetPath.substring("src/".length))
                 if (!stubFile.isFile) {
                     if (stub.startsWith("[") && stub.contains("]")) {
                         val pathEnd = stub.indexOf("]\n")

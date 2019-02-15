@@ -16,6 +16,7 @@
 
 package com.android.tools.metalava.model.psi
 
+import com.android.SdkConstants.DOT_CLASS
 import com.android.tools.lint.detector.api.ConstantEvaluator
 import com.android.tools.metalava.doclava1.Errors
 import com.android.tools.metalava.model.Codebase
@@ -89,7 +90,7 @@ open class CodePrinter(
         } else if (value is PsiLiteral) {
             return appendSourceLiteral(value.value, sb, owner)
         } else if (value is PsiClassObjectAccessExpression) {
-            sb.append(value.operand.type.canonicalText).append(".class")
+            sb.append(value.operand.type.canonicalText).append(DOT_CLASS)
             return true
         } else if (value is PsiArrayInitializerMemberValue) {
             sb.append('{')

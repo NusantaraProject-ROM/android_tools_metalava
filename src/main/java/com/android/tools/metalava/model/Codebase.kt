@@ -64,7 +64,7 @@ interface Codebase {
 
     /**
      * The package documentation, if any - this returns overview.html files for each package
-     * that provided one. Note all codebases provide this.
+     * that provided one. Not all codebases provide this.
      */
     fun getPackageDocs(): PackageDocs?
 
