@@ -5,6 +5,7 @@ import com.android.sdklib.SdkVersionInfo
 import com.android.sdklib.repository.AndroidSdkHandler
 import com.android.tools.lint.LintCliClient
 import com.android.tools.lint.checks.ApiLookup
+import com.android.tools.lint.detector.api.editDistance
 import com.android.tools.lint.helpers.DefaultJavaEvaluator
 import com.android.tools.metalava.doclava1.Errors
 import com.android.tools.metalava.model.AnnotationAttributeValue
@@ -311,13 +312,26 @@ class DocAnalyzer(
                             resolved
                         else {
                             val v: Any = value.value() ?: value.toSource()
+                            if (v == CARRIER_PRIVILEGES_MARKER) {
+                                // TODO: Warn if using allOf with carrier
+                                sb.append("{@link android.telephony.TelephonyManager#hasCarrierPrivileges carrier privileges}")
+                                continue
+                            }
                             findPermissionField(codebase, v)
                         }
                         if (field == null) {
-                            reporter.report(
-                                Errors.MISSING_PERMISSION, item,
-                                "Cannot find permission field for $value required by $item (may be hidden or removed)"
-                            )
+                            val v = value.value()?.toString() ?: value.toSource()
+                            if (editDistance(CARRIER_PRIVILEGES_MARKER, v, 3) < 3) {
+                                reporter.report(
+                                    Errors.MISSING_PERMISSION, item,
+                                    "Unrecognized permission `$v`; did you mean `$CARRIER_PRIVILEGES_MARKER`?"
+                                )
+                            } else {
+                                reporter.report(
+                                    Errors.MISSING_PERMISSION, item,
+                                    "Cannot find permission field for $value required by $item (may be hidden or removed)"
+                                )
+                            }
                             sb.append(value.toSource())
                         } else {
                             if (filterReference.test(field)) {

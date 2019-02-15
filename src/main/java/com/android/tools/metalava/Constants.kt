@@ -37,6 +37,7 @@ const val ANDROID_NONNULL = "android.annotation.NonNull"
 const val ANDROIDX_VISIBLE_FOR_TESTING = "androidx.annotation.VisibleForTesting"
 const val ANDROID_SUPPORT_VISIBLE_FOR_TESTING = "android.support.annotation.VisibleForTesting"
 const val ATTR_OTHERWISE = "otherwise"
+const val CARRIER_PRIVILEGES_MARKER = "carrier privileges"
 
 const val ENV_VAR_METALAVA_TESTS_RUNNING = "METALAVA_TESTS_RUNNING"
 const val ENV_VAR_METALAVA_DUMP_ARGV = "METALAVA_DUMP_ARGV"
