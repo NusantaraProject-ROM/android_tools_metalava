@@ -152,6 +152,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Document Permissions`() {
         check(
+            docStubs = true,
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -180,6 +181,15 @@ class DocAnalyzerTest : DriverTest() {
                         @RequiresPermission(value=Manifest.permission.WATCH_APPOPS, conditional=true) // b/73559440
                         public void test5() {
                         }
+
+                        @RequiresPermission(anyOf = {Manifest.permission.ACCESS_COARSE_LOCATION, "carrier privileges"})
+                        public void test6() {
+                        }
+
+                        // Typo in marker
+                        @RequiresPermission(anyOf = {Manifest.permission.ACCESS_COARSE_LOCATION, "carier priviliges"})
+                        public void test6() {
+                        }
                     }
                     """
                 ),
@@ -201,6 +211,7 @@ class DocAnalyzerTest : DriverTest() {
             ),
             checkCompilation = false, // needs androidx.annotations in classpath
             checkDoclava1 = false,
+            warnings = "src/test/pkg/PermissionTest.java:31: lint: Unrecognized permission `carier priviliges`; did you mean `carrier privileges`? [MissingPermission]",
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -230,6 +241,16 @@ class DocAnalyzerTest : DriverTest() {
                 public void test4() { throw new RuntimeException("Stub!"); }
                 @androidx.annotation.RequiresPermission(value=android.Manifest.permission.WATCH_APPOPS, conditional=true)
                 public void test5() { throw new RuntimeException("Stub!"); }
+                /**
+                 * Requires {@link android.Manifest.permission#ACCESS_COARSE_LOCATION} or {@link android.telephony.TelephonyManager#hasCarrierPrivileges carrier privileges}
+                 */
+                @androidx.annotation.RequiresPermission(anyOf={android.Manifest.permission.ACCESS_COARSE_LOCATION, "carrier privileges"})
+                public void test6() { throw new RuntimeException("Stub!"); }
+                /**
+                 * Requires {@link android.Manifest.permission#ACCESS_COARSE_LOCATION} or "carier priviliges"
+                 */
+                @androidx.annotation.RequiresPermission(anyOf={android.Manifest.permission.ACCESS_COARSE_LOCATION, "carier priviliges"})
+                public void test6() { throw new RuntimeException("Stub!"); }
                 }
                 """
             )
