@@ -670,18 +670,6 @@ interface ClassItem : Item {
                 if (!predicate.test(superClass)) {
                     superClass.filteredInterfaceTypes(predicate, types, true, includeParents, target)
                 } else if (includeSelf && superClass.isInterface()) {
-                    // Special case: Arguably, IInterface should be included in the system API by the
-                    // general rules. However, this was just added to the system API in 28 at the same
-                    // time as metalava, which did not include some hidden super classes in its analysis.
-                    // This is now marked as an incompatible API change, so treat this the same way as in
-                    // API 28 until this is clarified.
-                    if (superClass.simpleName() == "IInterface" &&
-                        (target.qualifiedName() == "android.telephony.mbms.vendor.MbmsDownloadServiceBase" ||
-                            target.qualifiedName() == "android.telephony.mbms.vendor.MbmsStreamingServiceBase")
-                    ) {
-                        return types
-                    }
-
                     types.add(superClassType)
                     if (includeParents) {
                         superClass.filteredInterfaceTypes(predicate, types, true, includeParents, target)
