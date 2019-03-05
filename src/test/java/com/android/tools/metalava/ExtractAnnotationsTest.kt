@@ -21,13 +21,9 @@ import org.junit.Test
 @SuppressWarnings("ALL") // Sample code
 class ExtractAnnotationsTest : DriverTest() {
 
-    @Test
-    fun `Check java typedef extraction and warning about non-source retention of typedefs`() {
-        check(
-            includeSourceRetentionAnnotations = false,
-            sourceFiles = *arrayOf(
-                java(
-                    """
+    private val sourceFiles1 = arrayOf(
+        java(
+            """
                     package test.pkg;
 
                     import android.annotation.IntDef;
@@ -70,10 +66,17 @@ class ExtractAnnotationsTest : DriverTest() {
                         }
                     }
                     """
-                ).indented(),
-                intDefAnnotationSource,
-                intRangeAnnotationSource
-            ),
+        ).indented(),
+        intDefAnnotationSource,
+        intRangeAnnotationSource
+    )
+
+    @Test
+    fun `Check java typedef extraction and warning about non-source retention of typedefs`() {
+        check(
+            includeSourceRetentionAnnotations = false,
+            format = FileFormat.V2,
+            sourceFiles = *sourceFiles1,
             warnings = "src/test/pkg/IntDefTest.java:11: error: This typedef annotation class should have @Retention(RetentionPolicy.SOURCE) [AnnotationExtraction]",
             extractAnnotations = mapOf(
                 "test.pkg" to """
@@ -507,6 +510,114 @@ class ExtractAnnotationsTest : DriverTest() {
                 </root>
                 """
             )
+        )
+    }
+
+    @Test
+    fun `No typedef signatures in api files`() {
+        check(
+            includeSourceRetentionAnnotations = false,
+            extraArguments = arrayOf(
+                ARG_HIDE_PACKAGE, "android.annotation",
+                ARG_TYPEDEFS_IN_SIGNATURES, "none"
+            ),
+            format = FileFormat.V2,
+            sourceFiles = *sourceFiles1,
+            api = """
+                // Signature format: 2.0
+                package test.pkg {
+                  public class IntDefTest {
+                    ctor public IntDefTest();
+                    method public void setFlags(Object, int);
+                    method public void setStyle(int, int);
+                    method public void testIntDef(int);
+                    field public static final int STYLE_NORMAL = 0; // 0x0
+                    field public static final int STYLE_NO_FRAME = 2; // 0x2
+                    field public static final int STYLE_NO_INPUT = 3; // 0x3
+                    field public static final int STYLE_NO_TITLE = 1; // 0x1
+                    field public static final String TYPE_1 = "type1";
+                    field public static final String TYPE_2 = "type2";
+                    field public static final int UNRELATED = 3; // 0x3
+                    field public static final String UNRELATED_TYPE = "other";
+                  }
+                  public static class IntDefTest.Inner {
+                    ctor public IntDefTest.Inner();
+                    method public void setInner(int);
+                  }
+                }
+            """
+        )
+    }
+
+    @Test
+    fun `Inlining typedef signatures in api files`() {
+        check(
+            includeSourceRetentionAnnotations = false,
+            extraArguments = arrayOf(
+                ARG_HIDE_PACKAGE, "android.annotation",
+                ARG_TYPEDEFS_IN_SIGNATURES, "inline"
+            ),
+            format = FileFormat.V2,
+            sourceFiles = *sourceFiles1,
+            api = """
+                // Signature format: 2.0
+                package test.pkg {
+                  public class IntDefTest {
+                    ctor public IntDefTest();
+                    method public void setFlags(Object, @IntDef(value={test.pkg.IntDefTest.STYLE_NORMAL, test.pkg.IntDefTest.STYLE_NO_TITLE, test.pkg.IntDefTest.STYLE_NO_FRAME, test.pkg.IntDefTest.STYLE_NO_INPUT, 3, 3 + 1}, flag=true) int);
+                    method public void setStyle(@IntDef({test.pkg.IntDefTest.STYLE_NORMAL, test.pkg.IntDefTest.STYLE_NO_TITLE, test.pkg.IntDefTest.STYLE_NO_FRAME, test.pkg.IntDefTest.STYLE_NO_INPUT}) int, int);
+                    method public void testIntDef(int);
+                    field public static final int STYLE_NORMAL = 0; // 0x0
+                    field public static final int STYLE_NO_FRAME = 2; // 0x2
+                    field public static final int STYLE_NO_INPUT = 3; // 0x3
+                    field public static final int STYLE_NO_TITLE = 1; // 0x1
+                    field public static final String TYPE_1 = "type1";
+                    field public static final String TYPE_2 = "type2";
+                    field public static final int UNRELATED = 3; // 0x3
+                    field public static final String UNRELATED_TYPE = "other";
+                  }
+                  public static class IntDefTest.Inner {
+                    ctor public IntDefTest.Inner();
+                    method public void setInner(@IntDef(value={test.pkg.IntDefTest.STYLE_NORMAL, test.pkg.IntDefTest.STYLE_NO_TITLE, test.pkg.IntDefTest.STYLE_NO_FRAME, test.pkg.IntDefTest.STYLE_NO_INPUT, 3, 3 + 1}, flag=true) int);
+                  }
+                }
+            """
+        )
+    }
+
+    @Test
+    fun `Referencing typedef signatures in api files`() {
+        check(
+            includeSourceRetentionAnnotations = false,
+            extraArguments = arrayOf(
+                ARG_HIDE_PACKAGE, "android.annotation",
+                ARG_TYPEDEFS_IN_SIGNATURES, "ref"
+            ),
+            format = FileFormat.V2,
+            sourceFiles = *sourceFiles1,
+            api = """
+                // Signature format: 2.0
+                package test.pkg {
+                  public class IntDefTest {
+                    ctor public IntDefTest();
+                    method public void setFlags(Object, @DialogFlags int);
+                    method public void setStyle(@DialogStyle int, int);
+                    method public void testIntDef(int);
+                    field public static final int STYLE_NORMAL = 0; // 0x0
+                    field public static final int STYLE_NO_FRAME = 2; // 0x2
+                    field public static final int STYLE_NO_INPUT = 3; // 0x3
+                    field public static final int STYLE_NO_TITLE = 1; // 0x1
+                    field public static final String TYPE_1 = "type1";
+                    field public static final String TYPE_2 = "type2";
+                    field public static final int UNRELATED = 3; // 0x3
+                    field public static final String UNRELATED_TYPE = "other";
+                  }
+                  public static class IntDefTest.Inner {
+                    ctor public IntDefTest.Inner();
+                    method public void setInner(@DialogFlags int);
+                  }
+                }
+            """
         )
     }
 }
