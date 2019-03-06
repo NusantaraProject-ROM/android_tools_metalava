@@ -32,6 +32,7 @@ import com.android.tools.metalava.ANDROID_NULLABLE
 import com.android.tools.metalava.ANDROID_SUPPORT_ANNOTATION_PREFIX
 import com.android.tools.metalava.Compatibility
 import com.android.tools.metalava.JAVA_LANG_PREFIX
+import com.android.tools.metalava.Options
 import com.android.tools.metalava.RECENTLY_NONNULL
 import com.android.tools.metalava.RECENTLY_NULLABLE
 import com.android.tools.metalava.doclava1.ApiPredicate
@@ -85,6 +86,9 @@ interface AnnotationItem {
     /** True if this annotation represents @IntDef, @LongDef or @StringDef */
     fun isTypeDefAnnotation(): Boolean {
         val name = qualifiedName() ?: return false
+        if (!(name.endsWith("Def"))) {
+            return false
+        }
         return (INT_DEF_ANNOTATION.isEquals(name) ||
             STRING_DEF_ANNOTATION.isEquals(name) ||
             LONG_DEF_ANNOTATION.isEquals(name) ||
@@ -118,6 +122,12 @@ interface AnnotationItem {
     /** Find the class declaration for the given annotation */
     fun resolve(): ClassItem? {
         return codebase.findClass(qualifiedName() ?: return null)
+    }
+
+    /** If this annotation has a typedef annotation associated with it, return it */
+    fun findTypedefAnnotation(): AnnotationItem? {
+        val className = originalName() ?: return null
+        return codebase.findClass(className)?.modifiers?.annotations()?.firstOrNull { it.isTypeDefAnnotation() }
     }
 
     /** Returns the retention of this annotation */
@@ -466,6 +476,12 @@ interface AnnotationItem {
             // See if the annotation is pointing to an annotation class that is part of the API; if not, skip it.
             val cls = codebase.findClass(qualifiedName) ?: return NO_ANNOTATION_TARGETS
             if (!ApiPredicate().test(cls)) {
+                if (options.typedefMode != Options.TypedefMode.NONE) {
+                    if (cls.modifiers.annotations().any { it.isTypeDefAnnotation() }) {
+                        return ANNOTATION_SIGNATURE_ONLY
+                    }
+                }
+
                 return NO_ANNOTATION_TARGETS
             }
 
