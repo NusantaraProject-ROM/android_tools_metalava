@@ -121,6 +121,16 @@ API sources:
                                           --api, --stubs, --doc-stubs, etc. Note that the
                                           subtraction only applies to classes; it does not
                                           subtract members.
+--typedefs-in-signatures <ref|inline>     Whether to include typedef annotations in
+                                          signature files. `--typedefs-in-signatures ref`
+                                          will include just a reference to the typedef
+                                          class, which is not itself part of the API and
+                                          is not included as a class, and
+                                          `--typedefs-in-signatures inline` will include
+                                          the constants themselves into each usage site.
+                                          You can also supply `--typedefs-in-signatures
+                                          none` to explicitly turn it off, if the default
+                                          ever changes.
 
 Documentation:
 --public                                  Only include elements that are public
