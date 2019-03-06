@@ -493,6 +493,7 @@ interface ModifierList {
                         continue
                     }
 
+                    var printAnnotation = annotation
                     if (!annotation.targets().contains(target)) {
                         continue
                     } else if ((annotation.isNullnessAnnotation())) {
@@ -501,6 +502,23 @@ interface ModifierList {
                         }
                     } else if (annotation.qualifiedName() == "java.lang.Deprecated") {
                         // Special cased in stubs and signature files: emitted first
+                        continue
+                    } else if (options.typedefMode == Options.TypedefMode.INLINE) {
+                        val typedef = annotation.findTypedefAnnotation()
+                        if (typedef != null) {
+                            printAnnotation = typedef
+                        }
+                    } else if (options.typedefMode == Options.TypedefMode.REFERENCE &&
+                        annotation.targets() === ANNOTATION_SIGNATURE_ONLY &&
+                        annotation.findTypedefAnnotation() != null) {
+                        // For annotation references, only include the simple name
+                        writer.write("@")
+                        writer.write(annotation.resolve()?.simpleName() ?: annotation.qualifiedName()!!)
+                        if (separateLines) {
+                            writer.write("\n")
+                        } else {
+                            writer.write(" ")
+                        }
                         continue
                     }
 
@@ -520,7 +538,8 @@ interface ModifierList {
                         }
                     }
 
-                    val source = annotation.toSource(target)
+                    val source = printAnnotation.toSource(target)
+
                     if (omitCommonPackages) {
                         writer.write(AnnotationItem.shortenAnnotation(source))
                     } else {

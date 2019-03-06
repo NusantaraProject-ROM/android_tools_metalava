@@ -16,6 +16,9 @@
 
 package com.android.tools.metalava.model
 
+import com.android.tools.metalava.Options
+import com.android.tools.metalava.options
+
 /** Various places where a given annotation can be written */
 enum class AnnotationTarget {
     /** Write the annotation into the signature file */
@@ -80,4 +83,11 @@ val ANNOTATION_IN_DOC_STUBS_AND_EXTERNAL = setOf(
 val ANNOTATION_EXTERNAL = setOf(AnnotationTarget.SIGNATURE_FILE, AnnotationTarget.EXTERNAL_ANNOTATIONS_FILE)
 
 /** Write it only into the external annotations file, not the signature file */
-val ANNOTATION_EXTERNAL_ONLY = setOf(AnnotationTarget.SIGNATURE_FILE, AnnotationTarget.EXTERNAL_ANNOTATIONS_FILE)
+val ANNOTATION_EXTERNAL_ONLY = if (options.typedefMode == Options.TypedefMode.INLINE ||
+    options.typedefMode == Options.TypedefMode.NONE) // just here for compatibility purposes
+    setOf(AnnotationTarget.SIGNATURE_FILE, AnnotationTarget.EXTERNAL_ANNOTATIONS_FILE)
+else
+    setOf(AnnotationTarget.EXTERNAL_ANNOTATIONS_FILE)
+
+/** Write it only into the he signature file */
+val ANNOTATION_SIGNATURE_ONLY = setOf(AnnotationTarget.SIGNATURE_FILE)
