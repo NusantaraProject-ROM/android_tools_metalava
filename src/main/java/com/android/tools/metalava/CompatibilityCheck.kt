@@ -363,8 +363,15 @@ class CompatibilityCheck(
             }
 
             if (!compatible) {
-                val oldTypeString = oldReturnType.toSimpleType()
-                val newTypeString = newReturnType.toSimpleType()
+                var oldTypeString = oldReturnType.toSimpleType()
+                var newTypeString = newReturnType.toSimpleType()
+                // Typically, show short type names like "String" if they're distinct (instead of long type names like
+                // "java.util.Set<T!>")
+                if (oldTypeString == newTypeString) {
+                    // If the short names aren't unique, then show full type names like "java.util.Set<T!>"
+                    oldTypeString = oldReturnType.toString()
+                    newTypeString = newReturnType.toString()
+                }
                 val message =
                     "${describe(new, capitalize = true)} has changed return type from $oldTypeString to $newTypeString"
                 report(Errors.CHANGED_TYPE, new, message)
