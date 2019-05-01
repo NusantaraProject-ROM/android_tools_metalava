@@ -2790,6 +2790,41 @@ CompatibilityCheckTest : DriverTest() {
         )
     }
 
+    @Test
+    fun `Check generic type argument when showUnannotated is explicitly enabled`() {
+        // Regression test for 130567941
+        check(
+            warnings = """
+            """,
+            compatibilityMode = false,
+            inputKotlinStyleNulls = true,
+            outputKotlinStyleNulls = true,
+            checkCompatibilityApi = """
+                // Signature format: 3.0
+                package androidx.versionedparcelable {
+                  public abstract class VersionedParcel {
+                    method public <T> T![]! readArray();
+                  }
+                }
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package androidx.versionedparcelable;
+
+                    public abstract class VersionedParcel {
+                        private VersionedParcel() { }
+
+                        public <T> T[] readArray()
+                    }
+                    """
+                )
+            ),
+            extraArguments = arrayOf(ARG_SHOW_UNANNOTATED, ARG_SHOW_ANNOTATION, "androidx.annotation.RestrictTo")
+        )
+    }
+
+
     // TODO: Check method signatures changing incompatibly (look especially out for adding new overloaded
     // methods and comparator getting confused!)
     //   ..equals on the method items should actually be very useful!
