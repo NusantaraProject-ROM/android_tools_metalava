@@ -590,10 +590,6 @@ class DocAnalyzer(
     )
 
     private fun tweakGrammar() {
-        if (reporter.isSuppressed(Errors.TYPO)) {
-            return
-        }
-
         codebase.accept(object : VisibleItemVisitor() {
             override fun visitItem(item: Item) {
                 var doc = item.documentation
@@ -601,22 +597,25 @@ class DocAnalyzer(
                     return
                 }
 
-                for (typo in typos.keys) {
-                    if (doc.contains(typo)) {
-                        val replacement = typos[typo] ?: continue
-                        val new = doc.replace(Regex("\\b$typo\\b"), replacement)
-                        if (new != doc) {
-                            reporter.report(
-                                Errors.TYPO,
-                                item,
-                                "Replaced $typo with $replacement in the documentation for $item"
-                            )
-                            doc = new
-                            item.documentation = doc
+                if (!reporter.isSuppressed(Errors.TYPO)) {
+                    for (typo in typos.keys) {
+                        if (doc.contains(typo)) {
+                            val replacement = typos[typo] ?: continue
+                            val new = doc.replace(Regex("\\b$typo\\b"), replacement)
+                            if (new != doc) {
+                                reporter.report(
+                                    Errors.TYPO,
+                                    item,
+                                    "Replaced $typo with $replacement in the documentation for $item"
+                                )
+                                doc = new
+                                item.documentation = doc
+                            }
                         }
                     }
                 }
 
+                // Work around javadoc cutting off the summary line after the first ". ".
                 val firstDot = doc.indexOf(".")
                 if (firstDot > 0 && doc.regionMatches(firstDot - 1, "e.g. ", 0, 5, false)) {
                     doc = doc.substring(0, firstDot) + ".g.&nbsp;" + doc.substring(firstDot + 4)
