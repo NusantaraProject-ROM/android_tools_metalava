@@ -112,7 +112,8 @@ class DocAnalyzerTest : DriverTest() {
                 public @interface StringRes {
                 }
                 """
-            )
+            ),
+            extraArguments = arrayOf(ARG_HIDE, "Typo") // "e.g. " correction should still run with Typo fixing is off.
         )
     }
 
