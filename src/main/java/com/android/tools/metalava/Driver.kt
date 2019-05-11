@@ -608,7 +608,7 @@ fun checkCompatibility(
                 file = check.codebase,
                 kotlinStyleNulls = options.inputKotlinStyleNulls
             )
-        } else if (options.showAnnotations.isNotEmpty() || apiType != ApiType.PUBLIC_API) {
+        } else if (!options.showUnannotated || apiType != ApiType.PUBLIC_API) {
             val apiFile = apiType.getSignatureFile(codebase, "compat-check-signatures-$apiType")
 
             // Fast path: if the signature files are identical, we're already good!
