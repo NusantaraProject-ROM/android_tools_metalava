@@ -48,6 +48,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Rule
+import org.junit.rules.ErrorCollector
 import org.junit.rules.TemporaryFolder
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -66,6 +67,9 @@ abstract class DriverTest {
     @get:Rule
     var temporaryFolder = TemporaryFolder()
 
+    @get:Rule
+    val errorCollector = ErrorCollector()
+
     @Before
     fun setup() {
         System.setProperty(ENV_VAR_METALAVA_TESTS_RUNNING, SdkConstants.VALUE_TRUE)
@@ -81,7 +85,13 @@ abstract class DriverTest {
         return dir
     }
 
+    // Makes a note to fail the test, but still allows the test to complete before failing
+    protected fun addError(error: String) {
+        errorCollector.addError(Throwable(error))
+    }
+
     protected fun runDriver(vararg args: String, expectedFail: String = ""): String {
+
         resetTicker()
 
         // Capture the actual input and output from System.out/err and compare it
@@ -90,9 +100,9 @@ abstract class DriverTest {
         val previousOut = System.out
         val previousErr = System.err
         try {
-            val output = OutputForbiddenWriter("stdout")
+            val output = TeeWriter(previousOut)
             System.setOut(PrintStream(output))
-            val error = OutputForbiddenWriter("stderr")
+            val error = TeeWriter(previousErr)
             System.setErr(PrintStream(error))
 
             val sw = StringWriter()
@@ -120,10 +130,13 @@ abstract class DriverTest {
             }
 
             val stdout = output.toString(UTF_8.name())
-            assertTrue(stdout, stdout.isEmpty())
-
+            if (!stdout.isEmpty()) {
+                addError("Unexpected write to stdout:\n ${stdout}")
+            }
             val stderr = error.toString(UTF_8.name())
-            assertTrue(stderr, stderr.isEmpty())
+            if (!stderr.isEmpty()) {
+                addError("Unexpected write to stderr:\n ${stderr}")
+            }
 
             val printedOutput = sw.toString()
             if (printedOutput.isNotEmpty() && printedOutput.trim().isEmpty()) {
@@ -139,22 +152,22 @@ abstract class DriverTest {
         }
     }
 
-    // This is here to make sure we don't have any unexpected random println's
-    // in the source that are left behind after debugging and ends up polluting
-    // the production output
-    class OutputForbiddenWriter(private val stream: String) : ByteArrayOutputStream() {
+    // This is here so we can keep a record of what was printed, to make sure we
+    // don't have any unexpected printlns in the source that are left behind after
+    // debugging and pollute the production output
+    class TeeWriter(private val otherStream: PrintStream) : ByteArrayOutputStream() {
         override fun write(b: ByteArray?, off: Int, len: Int) {
-            fail("Unexpected write directly to $stream")
+            otherStream.write(b, off, len)
             super.write(b, off, len)
         }
 
         override fun write(b: ByteArray?) {
-            fail("Unexpected write directly to $stream")
+            otherStream.write(b)
             super.write(b)
         }
 
         override fun write(b: Int) {
-            fail("Unexpected write directly to $stream")
+            otherStream.write(b)
             super.write(b)
         }
     }
