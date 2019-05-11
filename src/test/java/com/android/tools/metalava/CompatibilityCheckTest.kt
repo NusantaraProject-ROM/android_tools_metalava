@@ -2719,6 +2719,112 @@ CompatibilityCheckTest : DriverTest() {
         )
     }
 
+    @Test
+    fun `Check parameterized return type nullability`() {
+        // Regression test for 130567941
+        check(
+            warnings = "",
+            compatibilityMode = false,
+            checkCompatibilityApi = """
+                // Signature format: 3.0
+                package androidx.coordinatorlayout.widget {
+                  public class CoordinatorLayout {
+                    ctor public CoordinatorLayout();
+                    method public java.util.List<android.view.View!> getDependencies();
+                  }
+                }
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package androidx.coordinatorlayout.widget;
+
+                    import java.util.List;
+                    import androidx.annotation.NonNull;
+                    import android.view.View;
+
+                    public class CoordinatorLayout {
+                        @NonNull
+                        public List<View> getDependencies() {
+                            throw Exception("Not implemented");
+                        }
+                    }
+                    """
+                ),
+                androidxNonNullSource
+            ),
+            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation")
+        )
+    }
+
+    @Test
+    fun `Check return type changing package`() {
+        // Regression test for 130567941
+        check(
+            warnings = """
+            TESTROOT/load-api.txt:7: error: Method test.pkg.sample.SampleClass.convert has changed return type from Number to java.lang.Number [ChangedType]
+            """,
+            compatibilityMode = false,
+            inputKotlinStyleNulls = true,
+            outputKotlinStyleNulls = true,
+            checkCompatibilityApi = """
+                // Signature format: 3.0
+                package test.pkg.sample {
+                  public abstract class SampleClass {
+                    method public <Number> Number! convert(Number);
+                    method public <Number> Number! convert(Number);
+                  }
+                }
+                """,
+            signatureSource = """
+                // Signature format: 3.0
+                package test.pkg.sample {
+                  public abstract class SampleClass {
+                    // Here the generic type parameter applies to both the function argument and the function return type
+                    method public <Number> Number! convert(Number);
+                    // Here the generic type parameter applies to the function argument but not the function return type
+                    method public <Number> java.lang.Number! convert(Number);
+                  }
+                }
+            """
+        )
+    }
+
+    @Test
+    fun `Check generic type argument when showUnannotated is explicitly enabled`() {
+        // Regression test for 130567941
+        check(
+            warnings = """
+            """,
+            compatibilityMode = false,
+            inputKotlinStyleNulls = true,
+            outputKotlinStyleNulls = true,
+            checkCompatibilityApi = """
+                // Signature format: 3.0
+                package androidx.versionedparcelable {
+                  public abstract class VersionedParcel {
+                    method public <T> T![]! readArray();
+                  }
+                }
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package androidx.versionedparcelable;
+
+                    public abstract class VersionedParcel {
+                        private VersionedParcel() { }
+
+                        public <T> T[] readArray()
+                    }
+                    """
+                )
+            ),
+            extraArguments = arrayOf(ARG_SHOW_UNANNOTATED, ARG_SHOW_ANNOTATION, "androidx.annotation.RestrictTo")
+        )
+    }
+
+
     // TODO: Check method signatures changing incompatibly (look especially out for adding new overloaded
     // methods and comparator getting confused!)
     //   ..equals on the method items should actually be very useful!
