@@ -275,6 +275,11 @@ public class ApiFile {
     }
 
     private static Pair<String, List<String>> processKotlinTypeSuffix(TextCodebase api, String type, List<String> annotations) throws ApiParseException {
+        boolean varArgs = false;
+        if (type.endsWith("...")) {
+            type = type.substring(0, type.length() - 3);
+            varArgs = true;
+        }
         if (api.getKotlinStyleNulls()) {
             if (type.endsWith("?")) {
                 type = type.substring(0, type.length() - 1);
@@ -289,6 +294,9 @@ public class ApiFile {
         } else if (type.endsWith("?") || type.endsWith("!")) {
             throw new ApiParseException("Did you forget to supply --input-kotlin-nulls? Found Kotlin-style null type suffix when parser was not configured " +
                 "to interpret signature file that way: " + type);
+        }
+        if (varArgs) {
+            type = type + "...";
         }
         return new Pair<>(type, annotations);
     }
