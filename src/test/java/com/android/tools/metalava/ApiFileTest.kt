@@ -604,6 +604,31 @@ class ApiFileTest : DriverTest() {
                     }
                     """
                 ),
+                java(
+                    """
+                    package androidx.core.app;
+
+                    import java.util.ArrayList;
+                    import java.util.List;
+
+                    import androidx.annotation.NonNull;
+                    import androidx.annotation.Nullable;
+
+                    public class ActivityOptionsCompat {
+                        private ActivityOptionsCompat() {
+                        }
+                        @NonNull
+                        public static List<String> javaListOf(String... sharedElements) {
+                            return new ArrayList<String>();
+                        }
+                        @Nullable
+                        public static List<String> javaListOfNullable(String... sharedElements) {
+                            return null;
+                        }
+
+                    }
+                    """
+                ),
                 kotlin(
                     "src/main/java/androidx/collection/ArrayMap.kt",
                     """
@@ -635,6 +660,12 @@ class ApiFileTest : DriverTest() {
                     method public static inline <K, V> androidx.collection.ArrayMap<K,V> arrayMapOf();
                     method public static <K, V> androidx.collection.ArrayMap<K,V> arrayMapOf(kotlin.Pair<? extends K,? extends V>... pairs);
                     method public static <K, V> androidx.collection.ArrayMap<K,V>? arrayMapOfNullable(kotlin.Pair<? extends K,? extends V>?... pairs);
+                  }
+                }
+                package androidx.core.app {
+                  public class ActivityOptionsCompat {
+                    method public static java.util.List<java.lang.String!> javaListOf(java.lang.String!...);
+                    method public static java.util.List<java.lang.String!>? javaListOfNullable(java.lang.String!...);
                   }
                 }
                 """,
