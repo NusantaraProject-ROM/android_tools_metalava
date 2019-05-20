@@ -69,15 +69,6 @@ buildscript {
         classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.4'
     }
 }
-apply plugin: 'com.github.johnrengelman.shadow'
-shadowJar {
-    baseName = "metalava-$version-full-SNAPSHOT"
-    classifier = null
-    version = null
-    zip64 = true
-}
-
-defaultTasks 'clean', 'installDist'
 
 /*
  * With the build server you are given two env variables:
@@ -101,6 +92,17 @@ if (System.env.DIST_DIR != null && System.env.OUT_DIR != null) {
     // Local builds are not public release candidates.
     version = "${version}-SNAPSHOT"
 }
+
+apply plugin: 'com.github.johnrengelman.shadow'
+shadowJar {
+    baseName = "metalava-full-$version"
+    classifier = null
+    version = null
+    zip64 = true
+    destinationDir = distDir
+}
+
+defaultTasks 'clean', 'installDist'
 
 // KtLint: https://github.com/shyiko/ktlint
 
