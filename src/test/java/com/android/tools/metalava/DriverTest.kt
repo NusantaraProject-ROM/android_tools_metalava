@@ -131,11 +131,11 @@ abstract class DriverTest {
 
             val stdout = output.toString(UTF_8.name())
             if (!stdout.isEmpty()) {
-                addError("Unexpected write to stdout:\n ${stdout}")
+                addError("Unexpected write to stdout:\n $stdout")
             }
             val stderr = error.toString(UTF_8.name())
             if (!stderr.isEmpty()) {
-                addError("Unexpected write to stderr:\n ${stderr}")
+                addError("Unexpected write to stderr:\n $stderr")
             }
 
             val printedOutput = sw.toString()
