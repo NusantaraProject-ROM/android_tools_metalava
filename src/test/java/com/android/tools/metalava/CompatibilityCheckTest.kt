@@ -2824,7 +2824,6 @@ CompatibilityCheckTest : DriverTest() {
         )
     }
 
-
     // TODO: Check method signatures changing incompatibly (look especially out for adding new overloaded
     // methods and comparator getting confused!)
     //   ..equals on the method items should actually be very useful!
