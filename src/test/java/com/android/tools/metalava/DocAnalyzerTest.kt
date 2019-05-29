@@ -1708,6 +1708,97 @@ class DocAnalyzerTest : DriverTest() {
     }
 
     @Test
+    fun `Rewrite external links for 129765390`() {
+        // Tests rewriting links that go to {@docRoot}/../platform/ or {@docRoot}/../technotes,
+        // which are hosted elsewhere. http://b/129765390
+        check(
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package javax.security;
+                    /**
+                     * <a href="{@docRoot}/../technotes/guides/security/StandardNames.html#Cipher">Cipher Section</a>
+                     * <p>This class is a member of the
+                     * <a href="{@docRoot}/../technotes/guides/collections/index.html">
+                     * Java Collections Framework</a>.
+                     * <a href="../../../platform/serialization/spec/security.html">
+                     *     Security Appendix</a>
+                     * <a   href =
+                     *  "../../../technotes/Example.html">valid</a>
+                     *
+                     *
+                     * The following examples are not touched.
+                     *
+                     * <a href="../../../foobar/Example.html">wrong directory<a/>
+                     * <a href="../ArrayList.html">wrong directory</a.
+                     * <a href="http://example.com/index.html">wrong directory/host</a>
+                     */
+                    public class Example { }
+                    """
+                ),
+                java(
+                    """
+                    package not.part.of.ojluni;
+                    /**
+                     * <p>This class is a member of the
+                     * <a href="{@docRoot}/../technotes/guides/collections/index.html">
+                     * Java Collections Framework</a>.
+                     */
+                    public class TestCollection { }
+                    """
+                )
+            ),
+            checkCompilation = true,
+            checkDoclava1 = false,
+            warnings = null, // be unopinionated about whether there should be warnings
+            stubs = arrayOf(
+                    """
+                    package javax.security;
+                    /**
+                     * <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#Cipher">Cipher Section</a>
+                     * <p>This class is a member of the
+                     * <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/collections/index.html">
+                     * Java Collections Framework</a>.
+                     * <a href="https://docs.oracle.com/javase/8/docs/platform/serialization/spec/security.html">
+                     *     Security Appendix</a>
+                     * <a   href =
+                     *  "https://docs.oracle.com/javase/8/docs/technotes/Example.html">valid</a>
+                     *
+                     *
+                     * The following examples are not touched.
+                     *
+                     * <a href="../../../foobar/Example.html">wrong directory<a/>
+                     * <a href="../ArrayList.html">wrong directory</a.
+                     * <a href="http://example.com/index.html">wrong directory/host</a>
+                     */
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class Example {
+                    public Example() { throw new RuntimeException("Stub!"); }
+                    }
+                    """,
+                    """
+                    package not.part.of.ojluni;
+                    /**
+                     * <p>This class is a member of the
+                     * <a href="{@docRoot}/../technotes/guides/collections/index.html">
+                     * Java Collections Framework</a>.
+                     */
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class TestCollection {
+                    public TestCollection() { throw new RuntimeException("Stub!"); }
+                    }
+                    """
+            ),
+            extraArguments = arrayOf(
+                ARG_REPLACE_DOCUMENTATION,
+                "com.sun:java:javax:jdk.net:sun",
+                """(<a\s+href\s?=[\*\s]*")(?:(?:\{@docRoot\}/\.\./)|(?:(?:\.\./)+))((?:platform|technotes).+)">""",
+                """$1https://docs.oracle.com/javase/8/docs/$2">"""
+            )
+        )
+    }
+
+    @Test
     fun `Annotation annotating itself indirectly`() {
         check(
             sourceFiles = *arrayOf(
