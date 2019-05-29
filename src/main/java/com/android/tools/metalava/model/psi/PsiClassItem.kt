@@ -58,12 +58,14 @@ open class PsiClassItem(
         documentation = documentation,
         element = psiClass
     ), ClassItem {
+
     lateinit var containingPackage: PsiPackageItem
 
     override fun containingPackage(): PackageItem = containingClass?.containingPackage() ?: containingPackage
     override fun simpleName(): String = name
     override fun fullName(): String = fullName
     override fun qualifiedName(): String = qualifiedName
+    override fun isDefined(): Boolean = codebase.unsupported()
     override fun isInterface(): Boolean = classType == ClassType.INTERFACE
     override fun isAnnotationType(): Boolean = classType == ClassType.ANNOTATION_TYPE
     override fun isEnum(): Boolean = classType == ClassType.ENUM
