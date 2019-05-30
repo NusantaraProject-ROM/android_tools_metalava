@@ -39,6 +39,9 @@ interface ClassItem : Item {
     /** The qualified name of a class. In class foo.bar.Outer.Inner, the qualified name is the whole thing. */
     fun qualifiedName(): String
 
+    /** Is the class explicitly defined in the source file? */
+    fun isDefined(): Boolean
+
     /** Is this an innerclass? */
     fun isInnerClass(): Boolean = containingClass() != null
 
