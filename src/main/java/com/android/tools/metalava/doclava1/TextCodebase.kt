@@ -310,7 +310,7 @@ class TextCodebase(location: File) : DefaultCodebase(location) {
             var nameEnd = length
             for (i in 0 until length) {
                 val c = type[i]
-                if (c == '<' || c == '[') {
+                if (c == '<' || c == '[' || c == '!' || c == '?') {
                     nameEnd = i
                     break
                 }
