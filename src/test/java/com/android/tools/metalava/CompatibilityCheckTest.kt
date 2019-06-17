@@ -1859,6 +1859,78 @@ CompatibilityCheckTest : DriverTest() {
     }
 
     @Test
+    fun `Partial text file where type previously did not exist`() {
+        check(
+            warnings = """
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    import android.annotation.SystemApi;
+
+                    /**
+                     * @hide
+                     */
+                    @SystemApi
+                    public class SampleException1 extends java.lang.Exception {
+                    }
+                    """
+                ).indented(),
+                java(
+                    """
+                    package test.pkg;
+                    import android.annotation.SystemApi;
+
+                    /**
+                     * @hide
+                     */
+                    @SystemApi
+                    public class SampleException2 extends java.lang.Throwable {
+                    }
+                    """
+                ).indented(),
+                java(
+                    """
+                    package test.pkg;
+                    import android.annotation.SystemApi;
+
+                    /**
+                     * @hide
+                     */
+                    @SystemApi
+                    public class Utils {
+                        public void method1() throws SampleException1 { }
+                        public void method2() throws SampleException2 { }
+                    }
+                    """
+                ),
+                systemApiSource
+            ),
+
+            extraArguments = arrayOf(
+                ARG_SHOW_ANNOTATION, "android.annotation.SystemApi",
+                ARG_HIDE_PACKAGE, "android.annotation",
+                ARG_HIDE_PACKAGE, "android.support.annotation"
+            ),
+
+            checkCompatibilityApiReleased =
+            """
+                package test.pkg {
+                  public class Utils {
+                    ctor public Utils();
+                    // We don't define SampleException1 or SampleException in this file,
+                    // in this partial signature, so we don't need to validate that they
+                    // have not been changed
+                    method public void method1() throws test.pkg.SampleException1;
+                    method public void method2() throws test.pkg.SampleException2;
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
     fun `Test verifying simple removed API`() {
         check(
             warnings = """
@@ -2821,6 +2893,43 @@ CompatibilityCheckTest : DriverTest() {
                 )
             ),
             extraArguments = arrayOf(ARG_SHOW_UNANNOTATED, ARG_SHOW_ANNOTATION, "androidx.annotation.RestrictTo")
+        )
+    }
+
+    @Test
+    fun `Check implicit containing class`() {
+        // Regression test for 131633221
+        check(
+            warnings = """
+            src/androidx/core/app/NotificationCompat.java:5: error: Added class androidx.core.app.NotificationCompat [AddedClass]
+            """,
+            compatibilityMode = false,
+            inputKotlinStyleNulls = true,
+            outputKotlinStyleNulls = true,
+            checkCompatibilityApi = """
+                // Signature format: 3.0
+                package androidx.core.app {
+                  public static class NotificationCompat.Builder {
+                    ctor public NotificationCompat.Builder();
+                  }
+                }
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package androidx.core.app;
+
+                    import android.content.Context;
+
+                    public class NotificationCompat {
+                      private NotificationCompat() {
+                      }
+                      public static class Builder {
+                      }
+                    }
+                    """
+                )
+            )
         )
     }
 
