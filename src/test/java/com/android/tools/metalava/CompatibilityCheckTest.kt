@@ -2897,6 +2897,38 @@ CompatibilityCheckTest : DriverTest() {
     }
 
     @Test
+    fun `Check using parameterized arrays as type parameters`() {
+        check(
+            format = FileFormat.V3,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    import java.util.ArrayList;
+                    import java.lang.Exception;
+
+                    public class SampleArray<D extends ArrayList> extends ArrayList<D[]> {
+                        public D[] get(int index) {
+                            throw Exception("Not implemented");
+                        }
+                    }
+                    """
+                )
+            ),
+
+            checkCompatibilityApi = """
+                // Signature format: 3.0
+                package test.pkg {
+                  public class SampleArray<D extends java.util.ArrayList> extends java.util.ArrayList<D[]> {
+                    ctor public SampleArray();
+                    method public D![]! get(int);
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
     fun `Check implicit containing class`() {
         // Regression test for 131633221
         check(
