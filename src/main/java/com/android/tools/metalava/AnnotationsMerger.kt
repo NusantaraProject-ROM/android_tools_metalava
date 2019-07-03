@@ -309,7 +309,10 @@ class AnnotationsMerger(
     }
 
     private fun mergeInclusionAnnotationsFromCodebase(externalCodebase: Codebase) {
-        val inclusionAnnotations = options.showAnnotations union options.hideAnnotations
+        val inclusionAnnotations =
+            options.showAnnotations union
+            options.hideAnnotations union
+            options.hideMetaAnnotations
         if (inclusionAnnotations.isNotEmpty()) {
             val visitor = object : ComparisonVisitor() {
                 override fun compare(old: Item, new: Item) {

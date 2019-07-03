@@ -25,7 +25,7 @@ import org.junit.Test
 /** Test to explore hidden versus public APIs via annotations */
 class CoreApiTest : DriverTest() {
     @Test
-    fun `Hidden with hide annotation`() {
+    fun `Hidden with --hide-annotation`() {
         check(
             sourceFiles = *arrayOf(
                 java(
@@ -273,6 +273,94 @@ class CoreApiTest : DriverTest() {
             """
         )
     }
+
+    @Test
+    fun `Hidden with --hide-meta-annotation`() {
+        check(
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    @libcore.api.LibCoreHiddenFeature
+                    package test.pkg.hidden;
+                    """
+                ).indented(),
+
+                java(
+                    """
+                    package test.pkg.hidden;
+                    public class HiddenClass {
+                    }
+                    """
+                ).indented(),
+
+                java(
+                    """
+                    package test.pkg;
+                    public class ExposedClass {
+                        @libcore.api.LibCoreHiddenFeature
+                        public void hiddenMethod() { }
+                        @libcore.api.LibCoreHiddenFeature
+                        public String hiddenField;
+
+                        public void exposedMethod() { }
+                        public String exposedField;
+
+                        @libcore.api.LibCoreHiddenFeature
+                        public class HiddenInnerClass {
+                            public void hiddenMethod() { }
+                            public String hiddenField;
+                        }
+                    }
+                    """
+                ).indented(),
+
+                java(
+                    """
+                    package test.pkg;
+                    @libcore.api.LibCoreHiddenFeature
+                    public class HiddenClass {
+                        public void hiddenMethod() { }
+                        public String hiddenField;
+                    }
+                    """
+                ).indented(),
+
+                libcoreCoreHiddenFeature,
+                libcoreCoreMetaHidden
+            ),
+            api =
+                """
+                package libcore.api {
+                  public abstract class LibCoreMetaHidden implements java.lang.annotation.Annotation {
+                  }
+                }
+                package test.pkg {
+                  public class ExposedClass {
+                    ctor public ExposedClass();
+                    method public void exposedMethod();
+                    field public java.lang.String exposedField;
+                  }
+                }
+                """,
+            stubs = arrayOf(
+                NO_STUB,
+                NO_STUB,
+                """
+                package test.pkg;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class ExposedClass {
+                public ExposedClass() { throw new RuntimeException("Stub!"); }
+                public void exposedMethod() { throw new RuntimeException("Stub!"); }
+                public java.lang.String exposedField;
+                }
+                """,
+                NO_STUB
+            ),
+            extraArguments = arrayOf(
+                ARG_HIDE_META_ANNOTATION, "libcore.api.LibCoreMetaHidden"
+            )
+        )
+    }
 }
 
 val libcoreCoreApi: TestFile = TestFiles.java(
@@ -323,6 +411,52 @@ val libcoreCoreHidden: TestFile = TestFiles.java(
     @Target({TYPE, FIELD, METHOD, CONSTRUCTOR, ANNOTATION_TYPE, PACKAGE})
     @Retention(RetentionPolicy.SOURCE)
     public @interface LibCoreHidden {
+    }
+    """
+).indented()
+
+/**
+ * Annotation whose annotated elements should be hidden.
+ */
+val libcoreCoreHiddenFeature: TestFile = TestFiles.java(
+    """
+    package libcore.api;
+
+    import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
+    import static java.lang.annotation.ElementType.CONSTRUCTOR;
+    import static java.lang.annotation.ElementType.FIELD;
+    import static java.lang.annotation.ElementType.METHOD;
+    import static java.lang.annotation.ElementType.PACKAGE;
+    import static java.lang.annotation.ElementType.TYPE;
+    import static java.lang.annotation.RetentionPolicy.CLASS;
+
+    import java.lang.annotation.Retention;
+
+    @Retention(CLASS)
+    @LibCoreHiddenFeature
+    @LibCoreMetaHidden
+    public @interface LibCoreHiddenFeature {
+    }
+    """
+).indented()
+
+/**
+ * Meta-annotation used to denote an annotation whose annotated elements should
+ * be hidden.
+ */
+val libcoreCoreMetaHidden: TestFile = TestFiles.java(
+    """
+    package libcore.api;
+
+    import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
+    import static java.lang.annotation.RetentionPolicy.CLASS;
+
+    import java.lang.annotation.Retention;
+    import java.lang.annotation.Target;
+
+    @Retention(CLASS)
+    @Target({ANNOTATION_TYPE})
+    public @interface LibCoreMetaHidden {
     }
     """
 ).indented()
