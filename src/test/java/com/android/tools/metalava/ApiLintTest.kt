@@ -2074,4 +2074,35 @@ class ApiLintTest : DriverTest() {
             )
         )
     }
+
+    @Test
+    fun `KotlinOperator check only applies to java`() {
+        check(
+            apiLint = "", // enabled
+            compatibilityMode = false,
+            warnings = """
+                src/android/pkg/Foo.java:4: info: Method can be invoked as a binary operator from Kotlin: `div` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                        package android.pkg;
+                        public class Foo {
+                            private Foo() { }
+                            public Foo div(int value) { }
+                        }
+                    """
+                ),
+                kotlin(
+                    """
+                        package android.pkg
+                        class Bar {
+                            operator fun div(value: Int): Bar { }
+                            // "fun div(value: Int): Bar { }" is also disallowed but that's already enforced by the kotlin compiler
+                        }
+                    """
+                )
+            )
+        )
+    }
 }
