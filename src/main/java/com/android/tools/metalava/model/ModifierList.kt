@@ -119,14 +119,37 @@ interface ModifierList {
 
     /**
      * Returns true if this modifier list contains any annotations explicitly passed in
-     * via [Options.hideAnnotations]
+     * via [Options.hideAnnotations] or any annotations which are themselves annotated
+     * with meta-annotations explicitly passed in via [Options.hideMetaAnnotations]
+     *
+     * @see hasHideMetaAnnotations
      */
     fun hasHideAnnotations(): Boolean {
-        if (options.hideAnnotations.isEmpty()) {
+        if (options.hideAnnotations.isEmpty() && options.hideMetaAnnotations.isEmpty()) {
             return false
         }
-        return annotations().any {
-            options.hideAnnotations.contains(it.qualifiedName())
+        return annotations().any { annotation ->
+            options.hideAnnotations.contains(annotation.qualifiedName()) ||
+                annotation.resolve()?.hasHideMetaAnnotation() ?: false
+        }
+    }
+
+    /**
+     * Returns true if this modifier list contains any meta-annotations explicitly passed in
+     * via [Options.hideMetaAnnotations].
+     *
+     * Hidden meta-annotations allow Metalava to handle concepts like Kotlin's [Experimental],
+     * which allows developers to create annotations that describe experimental features -- sets
+     * of distinct and potentially overlapping unstable API surfaces. Libraries may wish to exclude
+     * such sets of APIs from tracking and stub JAR generation by passing [Experimental] as a
+     * hidden meta-annotation.
+     */
+    fun hasHideMetaAnnotations(): Boolean {
+        if (options.hideMetaAnnotations.isEmpty()) {
+            return false
+        }
+        return annotations().any { annotation ->
+            options.hideMetaAnnotations.contains(annotation.qualifiedName())
         }
     }
 
