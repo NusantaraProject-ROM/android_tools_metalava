@@ -1002,12 +1002,12 @@ public class ApiFile {
                             switch (k) {
                                 case '\\':
                                     state = STATE_ESCAPE;
-                                    mPos++;
                                     break;
                                 case '"':
                                     mCurrent = new String(mBuf, start, mPos - start);
                                     return mCurrent;
                             }
+                            break;
                         case STATE_ESCAPE:
                             state = STATE_BEGIN;
                             break;
