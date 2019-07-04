@@ -101,6 +101,7 @@ const val ARG_LINTS_AS_ERRORS = "--lints-as-errors"
 const val ARG_SHOW_ANNOTATION = "--show-annotation"
 const val ARG_SHOW_SINGLE_ANNOTATION = "--show-single-annotation"
 const val ARG_HIDE_ANNOTATION = "--hide-annotation"
+const val ARG_HIDE_META_ANNOTATION = "--hide-meta-annotation"
 const val ARG_SHOW_UNANNOTATED = "--show-unannotated"
 const val ARG_COLOR = "--color"
 const val ARG_NO_COLOR = "--no-color"
@@ -171,6 +172,8 @@ class Options(
     private val mutableShowSingleAnnotations: MutableList<String> = mutableListOf()
     /** Internal list backing [hideAnnotations] */
     private val mutableHideAnnotations: MutableList<String> = mutableListOf()
+    /** Internal list backing [hideMetaAnnotations] */
+    private val mutableHideMetaAnnotations: MutableList<String> = mutableListOf()
     /** Internal list backing [stubImportPackages] */
     private val mutableStubImportPackages: MutableSet<String> = mutableSetOf()
     /** Internal list backing [mergeQualifierAnnotations] */
@@ -346,6 +349,9 @@ class Options(
 
     /** Annotations to hide */
     var hideAnnotations: List<String> = mutableHideAnnotations
+
+    /** Meta-annotations to hide */
+    var hideMetaAnnotations: List<String> = mutableHideMetaAnnotations
 
     /** Whether to report warnings and other diagnostics along the way */
     var quiet = false
@@ -739,6 +745,8 @@ class Options(
 
                 ARG_HIDE_ANNOTATION, "--hideAnnotations", "-hideAnnotation" ->
                     mutableHideAnnotations.add(getValue(args, ++index))
+                ARG_HIDE_META_ANNOTATION, "--hideMetaAnnotations", "-hideMetaAnnotation" ->
+                    mutableHideMetaAnnotations.add(getValue(args, ++index))
 
                 ARG_STUBS, "-stubs" -> stubsDir = stringToNewDir(getValue(args, ++index))
                 ARG_DOC_STUBS -> docStubsDir = stringToNewDir(getValue(args, ++index))
@@ -1953,6 +1961,8 @@ class Options(
                 "to members; these must also be explicitly annotated",
             "$ARG_HIDE_ANNOTATION <annotation class>", "Treat any elements annotated with the given annotation " +
                 "as hidden",
+            "$ARG_HIDE_META_ANNOTATION <meta-annotation class>", "Treat as hidden any elements annotated with an " +
+                "annotation which is itself annotated with the given meta-annotation",
             ARG_SHOW_UNANNOTATED, "Include un-annotated public APIs in the signature file as well",
             "$ARG_JAVA_SOURCE <level>", "Sets the source level for Java source files; default is 1.8.",
             "$ARG_STUB_PACKAGES <package-list>", "List of packages (separated by ${File.pathSeparator}) which will " +
