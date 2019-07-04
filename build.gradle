@@ -80,17 +80,35 @@ buildscript {
 if (System.env.DIST_DIR != null && System.env.OUT_DIR != null) {
     buildDir = file("${System.env.OUT_DIR}/host/common/metalava").getCanonicalFile()
     ext.distDir = file(System.env.DIST_DIR).getCanonicalFile()
-    ext.distsDir = ext.distDir
 
     // The distDir is conveniently named after the build ID.
     version = "${version}.${ext.distDir.name}"
 } else {
     buildDir = file('../../out/host/common')
     ext.distDir = file('../../out/dist')
-    ext.distsDir = ext.distDir
 
     // Local builds are not public release candidates.
     version = "${version}-SNAPSHOT"
+}
+
+tasks.withType(Test.class) { task ->
+    JUnitXmlReport report = task.reports.getJunitXml()
+    TaskProvider<Zip> zipTask = project.tasks.register(
+            "zipResultsOf${task.name.capitalize()}",
+            Zip.class
+    ) {
+        it.destinationDirectory.set(new File(distDir,"host-test-reports"))
+        it.archiveFileName.set("metalava-tests.zip")
+    }
+    if (System.env.DIST_DIR != null && System.env.OUT_DIR != null) {
+        task.ignoreFailures = true
+    }
+    task.finalizedBy(zipTask)
+    task.doFirst {
+        zipTask.configure {
+            it.from(report.destination)
+        }
+    }
 }
 
 apply plugin: 'com.github.johnrengelman.shadow'
