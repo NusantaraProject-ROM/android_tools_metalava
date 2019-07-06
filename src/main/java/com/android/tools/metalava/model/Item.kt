@@ -159,6 +159,7 @@ interface Item {
 
     fun hasShowAnnotation(): Boolean = modifiers.hasShowAnnotation()
     fun hasHideAnnotation(): Boolean = modifiers.hasHideAnnotations()
+    fun hasHideMetaAnnotation(): Boolean = modifiers.hasHideMetaAnnotations()
 
     fun checkLevel(): Boolean {
         return modifiers.checkLevel()

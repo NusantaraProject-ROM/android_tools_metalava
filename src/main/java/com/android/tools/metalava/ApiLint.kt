@@ -2770,7 +2770,7 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
         }
 
         for (method in methods) {
-            if (method.modifiers.isStatic()) {
+            if (method.modifiers.isStatic() || method.modifiers.isOperator()) {
                 continue
             }
             val name = method.name()
