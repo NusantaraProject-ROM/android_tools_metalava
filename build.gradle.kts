@@ -137,7 +137,7 @@ fun isBuildingOnServer(): Boolean {
 
 fun Project.getKtlintConfiguration(): Configuration {
     return configurations.findByName("ktlint") ?: configurations.create("ktlint") {
-        val dependency = project.dependencies.create("com.github.shyiko:ktlint:0.31.0")
+        val dependency = project.dependencies.create("com.pinterest:ktlint:0.33.0")
         dependencies.add(dependency)
     }
 }
@@ -146,14 +146,14 @@ tasks.register("ktlint", JavaExec::class.java) {
     description = "Check Kotlin code style."
     group = "Verification"
     classpath = getKtlintConfiguration()
-    main = "com.github.shyiko.ktlint.Main"
-    args = listOf("src/**/*.kt")
+    main = "com.pinterest.ktlint.Main"
+    args = listOf("src/**/*.kt", "build.gradle.kts")
 }
 
 tasks.register("ktlintFormat", JavaExec::class.java) {
     description = "Fix Kotlin code style deviations."
     group = "formatting"
     classpath = getKtlintConfiguration()
-    main = "com.github.shyiko.ktlint.Main"
-    args = listOf("-F", "src/**/*.kt")
+    main = "com.pinterest.ktlint.Main"
+    args = listOf("-F", "src/**/*.kt", "build.gradle.kts")
 }
