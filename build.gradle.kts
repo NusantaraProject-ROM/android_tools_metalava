@@ -92,7 +92,7 @@ tasks.withType(Test::class.java) {
 }
 
 fun getMetalavaVersion(): Any {
-    val versionPropertyFile = File("src/main/resources/version.properties")
+    val versionPropertyFile = File(projectDir, "src/main/resources/version.properties")
     if (versionPropertyFile.canRead()) {
         val versionProps = Properties()
         versionProps.load(FileInputStream(versionPropertyFile))
