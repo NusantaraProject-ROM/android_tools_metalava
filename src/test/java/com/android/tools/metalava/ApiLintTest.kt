@@ -2080,7 +2080,11 @@ class ApiLintTest : DriverTest() {
         check(
             apiLint = "", // enabled
             compatibilityMode = false,
+            // Note, src/android/pkg/FontFamily.kt:3 warning should not be there, it is a bug in PSI
+            // https://youtrack.jetbrains.com/issue/KT-32556
             warnings = """
+                src/android/pkg/A.kt:3: info: Method can be invoked with an indexing operator from Kotlin: `get` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
+                src/android/pkg/FontFamily.kt:1: info: Method can be invoked as a "in" operator from Kotlin: `contains` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
                 src/android/pkg/Foo.java:4: info: Method can be invoked as a binary operator from Kotlin: `div` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
                 """,
             sourceFiles = *arrayOf(
@@ -2099,6 +2103,32 @@ class ApiLintTest : DriverTest() {
                         class Bar {
                             operator fun div(value: Int): Bar { }
                             // "fun div(value: Int): Bar { }" is also disallowed but that's already enforced by the kotlin compiler
+                        }
+                    """
+                ),
+                kotlin(
+                    """
+                        package android.pkg
+                        class FontFamily(val fonts: List<String>) : List<String> by fonts
+                    """
+                ),
+                kotlin(
+                    """
+                        package android.pkg
+                        class B: A() {
+                            override fun get(i: Int): A {
+                                return A()
+                            }
+                        }
+                    """
+                ),
+                kotlin(
+                    """
+                        package android.pkg
+                        open class A {
+                            open fun get(i: Int): A {
+                                return A()
+                            }
                         }
                     """
                 )
