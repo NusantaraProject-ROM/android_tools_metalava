@@ -816,7 +816,7 @@ abstract class DriverTest {
             emptyArray()
         }
 
-        var subtractApiFile: File? = null
+        var subtractApiFile: File?
         val subtractApiArgs = if (subtractApi != null) {
             subtractApiFile = temporaryFolder.newFile("subtract-api.txt")
             subtractApiFile.writeText(subtractApi.trimIndent())
