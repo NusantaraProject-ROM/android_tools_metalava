@@ -493,11 +493,13 @@ class StubWriter(
     }
 
     private fun generateMissingConstructors(cls: ClassItem) {
-        val clsDefaultConstructor = cls.defaultConstructor
+        val clsStubConstructor = cls.stubConstructor
         val constructors = cls.filteredConstructors(filterEmit)
-        if (clsDefaultConstructor != null && !constructors.contains(clsDefaultConstructor)) {
-            clsDefaultConstructor.mutableModifiers().setPackagePrivate(true)
-            visitConstructor(clsDefaultConstructor)
+        if (clsStubConstructor != null && !constructors.contains(clsStubConstructor)) {
+            if (!clsStubConstructor.isPrivate) {
+                clsStubConstructor.mutableModifiers().setPackagePrivate(true)
+            }
+            visitConstructor(clsStubConstructor)
             return
         }
     }
