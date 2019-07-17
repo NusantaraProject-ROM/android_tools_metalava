@@ -1015,7 +1015,7 @@ class ApiLintTest : DriverTest() {
                 src/android/pkg/MyClass.java:8: error: Methods must not throw generic exceptions (`java.lang.Error`) [GenericException] [Rule S1 in go/android-api-guidelines]
                 src/android/pkg/MyClass.java:9: warning: Methods taking no arguments should throw `IllegalStateException` instead of `java.lang.IllegalArgumentException` [IllegalStateException] [Rule S1 in go/android-api-guidelines]
                 src/android/pkg/MyClass.java:10: warning: Methods taking no arguments should throw `IllegalStateException` instead of `java.lang.NullPointerException` [IllegalStateException] [Rule S1 in go/android-api-guidelines]
-                src/android/pkg/MyClass.java:11: error: Methods calling into system server should rethrow `RemoteException` as `RuntimeException` (but do not list it in the throws clause) [RethrowRemoteException] [Rule FW9 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:11: error: Methods calling system APIs should rethrow `RemoteException` as `RuntimeException` (but do not list it in the throws clause) [RethrowRemoteException] [Rule FW9 in go/android-api-guidelines]
                 """,
             sourceFiles = *arrayOf(
                 java(
