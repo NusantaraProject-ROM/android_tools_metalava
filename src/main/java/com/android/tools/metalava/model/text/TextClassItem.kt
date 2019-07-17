@@ -79,7 +79,7 @@ open class TextClassItem(
 
     private var innerClasses: List<ClassItem> = mutableListOf()
 
-    override var defaultConstructor: ConstructorItem? = null
+    override var stubConstructor: ConstructorItem? = null
 
     override var hasPrivateConstructor: Boolean = false
 

@@ -722,11 +722,11 @@ interface ClassItem : Item {
     /**
      * The default constructor to invoke on this class from subclasses; initially null
      * but populated by [ApiAnalyzer.addConstructors]. (Note that in some cases
-     * [defaultConstructor] may not be in [constructors], e.g. when we need to
+     * [stubConstructor] may not be in [constructors], e.g. when we need to
      * create a constructor to match a public parent class with a non-default constructor
      * and the one in the code is not a match, e.g. is marked @hide etc.)
      */
-    var defaultConstructor: ConstructorItem?
+    var stubConstructor: ConstructorItem?
 
     /**
      * Creates a map of type variables from this class to the given target class.
