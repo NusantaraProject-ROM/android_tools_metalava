@@ -114,7 +114,7 @@ class ApiAnalyzer(
 
     /**
      * Handle computing constructor hierarchy. We'll be setting several attributes:
-     * [ClassItem.defaultConstructor] : The default constructor to invoke in this
+     * [ClassItem.stubConstructor] : The default constructor to invoke in this
      *   class from subclasses. **NOTE**: This constructor may not be part of
      *   the [ClassItem.constructors] list, e.g. for package private default constructors
      *   we've inserted (because there were no public constructors or constructors not
@@ -123,7 +123,7 @@ class ApiAnalyzer(
      *   If we can find a public constructor we'll put that here instead.
      *
      * [ConstructorItem.superConstructor] The default constructor to invoke. If set,
-     * use this rather than the [ClassItem.defaultConstructor].
+     * use this rather than the [ClassItem.stubConstructor].
      *
      * [ClassItem.hasPrivateConstructor] Set if this class has one or more private
      * constructors.
@@ -177,7 +177,7 @@ class ApiAnalyzer(
         cls.tag = true
 
         if (superClass != null) {
-            val superDefaultConstructor = superClass.defaultConstructor
+            val superDefaultConstructor = superClass.stubConstructor
             if (superDefaultConstructor != null) {
                 val constructors = cls.constructors()
                 for (constructor in constructors) {
@@ -197,7 +197,7 @@ class ApiAnalyzer(
             val constructors = cls.constructors()
             for (constructor in constructors) {
                 if (constructor.parameters().isEmpty() && constructor.isPublic && !constructor.hidden) {
-                    cls.defaultConstructor = constructor
+                    cls.stubConstructor = constructor
                     return
                 }
             }
@@ -215,14 +215,16 @@ class ApiAnalyzer(
                     }
 
                 if (cls.filteredConstructors(filter).contains(best)) {
-                    cls.defaultConstructor = best
+                    cls.stubConstructor = best
                     return
                 }
 
                 if (!referencesExcludedType(best, filter)) {
-                    cls.defaultConstructor = best
-                    best.mutableModifiers().setPackagePrivate(true)
-                    best.hidden = false
+                    cls.stubConstructor = best
+                    if (!best.isPrivate) {
+                        best.mutableModifiers().setPackagePrivate(true)
+                        best.hidden = false
+                    }
                     best.docOnly = false
                     return
                 }
@@ -230,10 +232,10 @@ class ApiAnalyzer(
 
             // No constructors, yet somebody extends this (or private constructor): we have to invent one, such that
             // subclasses can dispatch to it in the stub files etc
-            cls.defaultConstructor = cls.createDefaultConstructor().also {
+            cls.stubConstructor = cls.createDefaultConstructor().also {
                 it.mutableModifiers().setPackagePrivate(true)
                 it.hidden = false
-                it.superConstructor = superClass?.defaultConstructor
+                it.superConstructor = superClass?.stubConstructor
             }
         }
     }

@@ -239,7 +239,7 @@ class StubsTest : DriverTest() {
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class Foo {
-                Foo() { throw new RuntimeException("Stub!"); }
+                private Foo() { throw new RuntimeException("Stub!"); }
                 }
                 """
         )
@@ -991,7 +991,7 @@ class StubsTest : DriverTest() {
                     public FinalFieldTest() { throw new RuntimeException("Stub!"); }
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public static final class IsoFields {
-                    IsoFields() { throw new RuntimeException("Stub!"); }
+                    private IsoFields() { throw new RuntimeException("Stub!"); }
                     public static final test.pkg.FinalFieldTest.TemporalField DAY_OF_QUARTER;
                     static { DAY_OF_QUARTER = null; }
                     }
@@ -1548,7 +1548,7 @@ class StubsTest : DriverTest() {
                     }
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class Child3 extends test.pkg.Constructors.Child2 {
-                    Child3(java.lang.String s) { super(null); throw new RuntimeException("Stub!"); }
+                    private Child3(java.lang.String s) { super(null); throw new RuntimeException("Stub!"); }
                     }
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class Child4 extends test.pkg.Constructors.Parent {
@@ -1630,7 +1630,7 @@ class StubsTest : DriverTest() {
                     }
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class Child3 extends test.pkg.Constructors.Child2 {
-                    Child3(java.lang.String s) { super(null); throw new RuntimeException("Stub!"); }
+                    private Child3(java.lang.String s) { super(null); throw new RuntimeException("Stub!"); }
                     }
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class Child4 extends test.pkg.Constructors.Parent {
@@ -3441,7 +3441,7 @@ class StubsTest : DriverTest() {
                 @Deprecated
                 @test.pkg.MyRuntimeRetentionAnnotation
                 public class Foo {
-                Foo() { throw new RuntimeException("Stub!"); }
+                private Foo() { throw new RuntimeException("Stub!"); }
                 }
                 """
             )
@@ -3509,7 +3509,7 @@ class StubsTest : DriverTest() {
                 @test.pkg.MyClassRetentionAnnotation
                 @test.pkg.MyRuntimeRetentionAnnotation
                 public class Foo {
-                Foo() { throw new RuntimeException("Stub!"); }
+                private Foo() { throw new RuntimeException("Stub!"); }
                 @Deprecated
                 public void bar() { throw new RuntimeException("Stub!"); }
                 @Deprecated protected int foo;
@@ -4060,14 +4060,14 @@ class StubsTest : DriverTest() {
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class Orange {
-                Orange() { throw new RuntimeException("Stub!"); }
+                private Orange() { throw new RuntimeException("Stub!"); }
                 }
                 """,
                 """
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class Alpha extends test.pkg.Charlie<test.pkg.Orange> {
-                Alpha() { throw new RuntimeException("Stub!"); }
+                private Alpha() { throw new RuntimeException("Stub!"); }
                 }
                 """
             )
