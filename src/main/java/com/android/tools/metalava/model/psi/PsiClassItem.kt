@@ -81,7 +81,7 @@ open class PsiClassItem(
         this.superClassType = superClassType
     }
 
-    override var defaultConstructor: ConstructorItem? = null
+    override var stubConstructor: ConstructorItem? = null
     override var notStrippable = false
     override var artifact: String? = null
 
