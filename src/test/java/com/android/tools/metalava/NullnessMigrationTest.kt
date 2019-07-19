@@ -97,7 +97,7 @@ class NullnessMigrationTest : DriverTest() {
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public abstract class MyTest {
-                MyTest() { throw new RuntimeException("Stub!"); }
+                private MyTest() { throw new RuntimeException("Stub!"); }
                 @androidx.annotation.RecentlyNullable
                 public java.lang.Double convert1(java.lang.Float f) { throw new RuntimeException("Stub!"); }
                 }
@@ -145,7 +145,7 @@ class NullnessMigrationTest : DriverTest() {
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public abstract class MyTest {
-                MyTest() { throw new RuntimeException("Stub!"); }
+                private MyTest() { throw new RuntimeException("Stub!"); }
                 public java.lang.Double convert1(@androidx.annotation.RecentlyNonNull java.lang.Float f) { throw new RuntimeException("Stub!"); }
                 }
                 """
@@ -721,7 +721,7 @@ class NullnessMigrationTest : DriverTest() {
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class Child1 extends test.pkg.Parent {
-                Child1() { throw new RuntimeException("Stub!"); }
+                private Child1() { throw new RuntimeException("Stub!"); }
                 public void method1(@androidx.annotation.RecentlyNonNull java.lang.String first, int second) { throw new RuntimeException("Stub!"); }
                 }
                 """,
@@ -729,7 +729,7 @@ class NullnessMigrationTest : DriverTest() {
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class Child2 extends test.pkg.Parent {
-                Child2() { throw new RuntimeException("Stub!"); }
+                private Child2() { throw new RuntimeException("Stub!"); }
                 public void method0(java.lang.String first, int second) { throw new RuntimeException("Stub!"); }
                 public void method1(java.lang.String first, int second) { throw new RuntimeException("Stub!"); }
                 public void method2(@androidx.annotation.RecentlyNonNull java.lang.String first, int second) { throw new RuntimeException("Stub!"); }
