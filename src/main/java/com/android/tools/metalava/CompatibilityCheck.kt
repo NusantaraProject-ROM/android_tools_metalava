@@ -777,6 +777,15 @@ class CompatibilityCheck(
             return
         }
 
+        // In most cases it is not permitted to add a new method to an interface, even with a
+        // default implementation because it could could create ambiguity if client code implements
+        // two interfaces that each now define methods with the same signature.
+        // Annotation types cannot implement other interfaces, however, so it is permitted to add
+        // add new default methods to annotation types.
+        if (new.containingClass().isAnnotationType() && new.hasDefaultValue()) {
+            return
+        }
+
         if (inherited == null || inherited == new || !inherited.modifiers.isAbstract()) {
             val error = if (new.modifiers.isAbstract()) Errors.ADDED_ABSTRACT_METHOD else Errors.ADDED_METHOD
             handleAdded(error, new)

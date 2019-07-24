@@ -2965,6 +2965,38 @@ CompatibilityCheckTest : DriverTest() {
         )
     }
 
+    @Test
+    fun `New default method on annotation`() {
+        // Regression test for 134754815
+        check(
+            warnings = """
+            src/androidx/room/Relation.java:5: warning: Added method androidx.room.Relation.IHaveNoDefault() [AddedAbstractMethod]
+            """,
+            compatibilityMode = false,
+            inputKotlinStyleNulls = true,
+            outputKotlinStyleNulls = true,
+            checkCompatibilityApi = """
+                // Signature format: 3.0
+                package androidx.room {
+                  public @interface Relation {
+                  }
+                }
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package androidx.room;
+
+                    public @interface Relation {
+                        String IHaveADefault() default "";
+                        String IHaveNoDefault();
+                    }
+                    """
+                )
+            )
+        )
+    }
+
     // TODO: Check method signatures changing incompatibly (look especially out for adding new overloaded
     // methods and comparator getting confused!)
     //   ..equals on the method items should actually be very useful!
