@@ -17,7 +17,6 @@
 package com.android.tools.metalava.model
 
 import com.android.tools.metalava.compatibility
-import com.android.tools.metalava.model.psi.PsiModifierItem
 
 open class DefaultModifierList(
     override val codebase: Codebase,
@@ -244,7 +243,7 @@ open class DefaultModifierList(
 
     // Rename? It's not a full equality, it's whether an override's modifier set is significant
     override fun equivalentTo(other: ModifierList): Boolean {
-        if (other is PsiModifierItem) {
+        if (other is DefaultModifierList) {
             val flags2 = other.flags
             val mask = if (compatibility.includeSynchronized) COMPAT_EQUIVALENCE_MASK else EQUIVALENCE_MASK
 
