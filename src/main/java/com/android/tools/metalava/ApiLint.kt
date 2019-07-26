@@ -229,8 +229,6 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
     // run independently as well; therefore, only run them here if not running separately)
     private val kotlinInterop = if (!options.checkKotlinInterop) KotlinInteropChecks() else null
 
-    private var isKotlin = false
-
     override fun visitClass(cls: ClassItem) {
         val methods = cls.filteredMethods(filterReference).asSequence()
         val fields = cls.filteredFields(filterReference, showUnannotated).asSequence()
@@ -242,8 +240,6 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
             cls, methods, constructors, allMethods, fields, superClass, interfaces,
             filterReference
         )
-
-        isKotlin = cls.isKotlin()
     }
 
     override fun visitMethod(method: MethodItem) {
@@ -255,13 +251,13 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
         for (parameter in method.parameters()) {
             checkType(parameter.type(), parameter)
         }
-        kotlinInterop?.checkMethod(method, isKotlin)
+        kotlinInterop?.checkMethod(method)
     }
 
     override fun visitField(field: FieldItem) {
         checkField(field)
         checkType(field.type(), field)
-        kotlinInterop?.checkField(field, isKotlin)
+        kotlinInterop?.checkField(field)
     }
 
     private fun checkType(type: TypeItem, item: Item) {
