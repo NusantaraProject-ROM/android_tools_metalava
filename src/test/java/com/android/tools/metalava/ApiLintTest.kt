@@ -2076,15 +2076,16 @@ class ApiLintTest : DriverTest() {
     }
 
     @Test
-    fun `KotlinOperator check only applies to java`() {
+    fun `KotlinOperator check only applies when not using operator modifier`() {
         check(
             apiLint = "", // enabled
             compatibilityMode = false,
-            // Note, src/android/pkg/FontFamily.kt:3 warning should not be there, it is a bug in PSI
+            // Note, src/android/pkg/FontFamily.kt:1 warning should not be there, it is a bug in PSI
             // https://youtrack.jetbrains.com/issue/KT-32556
             warnings = """
-                src/android/pkg/A.kt:3: info: Method can be invoked with an indexing operator from Kotlin: `get` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
-                src/android/pkg/FontFamily.kt:1: info: Method can be invoked as a "in" operator from Kotlin: `contains` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
+                src/android/pkg/A.kt:3: info: Note that adding the `operator` keyword would allow calling this method using operator syntax [KotlinOperator]
+                src/android/pkg/Bar.kt:4: info: Note that adding the `operator` keyword would allow calling this method using operator syntax [KotlinOperator]
+                src/android/pkg/FontFamily.kt:1: info: Note that adding the `operator` keyword would allow calling this method using operator syntax [KotlinOperator]
                 src/android/pkg/Foo.java:4: info: Method can be invoked as a binary operator from Kotlin: `div` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
                 """,
             sourceFiles = *arrayOf(
@@ -2101,8 +2102,8 @@ class ApiLintTest : DriverTest() {
                     """
                         package android.pkg
                         class Bar {
-                            operator fun div(value: Int): Bar { }
-                            // "fun div(value: Int): Bar { }" is also disallowed but that's already enforced by the kotlin compiler
+                            operator fun div(value: Int): Bar { TODO() }
+                            fun plus(value: Int): Bar { TODO() }
                         }
                     """
                 ),
