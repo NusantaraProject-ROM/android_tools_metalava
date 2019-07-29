@@ -2759,10 +2759,16 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
          */
 
         fun flagKotlinOperator(method: MethodItem, message: String) {
-            report(
-                KOTLIN_OPERATOR, method,
-                "$message (this is usually desirable; just make sure it makes sense for this type of object)"
-            )
+            if (method.isKotlin()) {
+                report(
+                    KOTLIN_OPERATOR, method,
+                    "Note that adding the `operator` keyword would allow calling this method using operator syntax")
+            } else {
+                report(
+                    KOTLIN_OPERATOR, method,
+                    "$message (this is usually desirable; just make sure it makes sense for this type of object)"
+                )
+            }
         }
 
         for (method in methods) {
