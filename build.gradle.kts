@@ -27,6 +27,7 @@ plugins {
     id("application")
     id("java")
     id("com.github.johnrengelman.shadow") version "4.0.4"
+    id("maven-publish")
 }
 
 group = "com.android"
@@ -156,4 +157,36 @@ tasks.register("ktlintFormat", JavaExec::class.java) {
     classpath = getKtlintConfiguration()
     main = "com.pinterest.ktlint.Main"
     args = listOf("-F", "src/**/*.kt", "build.gradle.kts")
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("metalavaLibrary") {
+            from(components["java"])
+            pom {
+                licenses {
+                    license {
+                        name.set("The Apache License, Version 2.0")
+                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                    }
+                }
+                developers {
+                    developer {
+                        name.set("The Android Open Source Project")
+                    }
+                }
+                scm {
+                    connection.set("scm:git:https://android.googlesource.com/platform/tools/metalava")
+                    url.set("https://android.googlesource.com/platform/tools/metalava/")
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = "distRepo"
+            url = uri("file://${getDistributionDirectory().canonicalPath}/repo")
+        }
+    }
 }
