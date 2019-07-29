@@ -179,6 +179,7 @@ class BaselineTest : DriverTest() {
                     """
                     package android.pkg;
                     import android.annotation.TestApi;
+                    import androidx.annotation.Nullable;
 
                     public class RegistrationMethods {
                         // Here we have 3 sets of correct registrations: both register and unregister are
@@ -194,27 +195,27 @@ class BaselineTest : DriverTest() {
                         // the test API does see the full set of methods even if they're left out of the
                         // signature files and baselines.
 
-                        public void registerOk1Callback(Runnable r) { }
-                        public void unregisterOk1Callback(Runnable r) { }
+                        public void registerOk1Callback(@Nullable Runnable r) { }
+                        public void unregisterOk1Callback(@Nullable Runnable r) { }
 
                         /** @hide */
                         @TestApi
-                        public void registerOk2Callback(Runnable r) { }
+                        public void registerOk2Callback(@Nullable Runnable r) { }
                         /** @hide */
                         @TestApi
-                        public void unregisterOk2Callback(Runnable r) { }
+                        public void unregisterOk2Callback(@Nullable Runnable r) { }
 
                         // In the Test API, both methods are present
-                        public void registerOk3Callback(Runnable r) { }
+                        public void registerOk3Callback(@Nullable Runnable r) { }
                         /** @hide */
                         @TestApi
-                        public void unregisterOk3Callback(Runnable r) { }
+                        public void unregisterOk3Callback(@Nullable Runnable r) { }
 
-                        public void registerUnpaired1Callback(Runnable r) { }
+                        public void registerUnpaired1Callback(@Nullable Runnable r) { }
 
                         /** @hide */
                         @TestApi
-                        public void registerUnpaired2Callback(Runnable r) { }
+                        public void registerUnpaired2Callback(@Nullable Runnable r) { }
                     }
                     """
                 ),
