@@ -344,6 +344,7 @@ public class Errors {
     public static final Error DEFAULT_VALUE_CHANGE = new Error(382, ERROR, Category.API_LINT); // Formerly 144
     public static final Error DOCUMENT_EXCEPTIONS = new Error(383, ERROR, Category.API_LINT); // Formerly 145
     public static final Error FORBIDDEN_SUPER_CLASS = new Error(384, ERROR, Category.API_LINT);
+    public static final Error MISSING_NULLABILITY = new Error(385, ERROR, Category.API_LINT);
 
     static {
         // Attempt to initialize error names based on the field names
