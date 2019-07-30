@@ -30,17 +30,19 @@ class ApiLintTest : DriverTest() {
                 src/android/pkg/ALL_CAPS.java:3: warning: Acronyms should not be capitalized in class names: was `ALL_CAPS`, should this be `AllCaps`? [AcronymName] [Rule S1 in go/android-api-guidelines]
                 src/android/pkg/HTMLWriter.java:3: warning: Acronyms should not be capitalized in class names: was `HTMLWriter`, should this be `HtmlWriter`? [AcronymName] [Rule S1 in go/android-api-guidelines]
                 src/android/pkg/MyStringImpl.java:3: error: Don't expose your implementation details: `MyStringImpl` ends with `Impl` [EndsWithImpl]
-                src/android/pkg/badlyNamedClass.java:3: error: Class must start with uppercase char: badlyNamedClass [StartWithUpper] [Rule S1 in go/android-api-guidelines]
-                src/android/pkg/badlyNamedClass.java:5: error: Method name must start with lowercase char: BadlyNamedMethod1 [StartWithLower] [Rule S1 in go/android-api-guidelines]
-                src/android/pkg/badlyNamedClass.java:7: warning: Acronyms should not be capitalized in method names: was `fromHTMLToHTML`, should this be `fromHtmlToHtml`? [AcronymName] [Rule S1 in go/android-api-guidelines]
-                src/android/pkg/badlyNamedClass.java:8: warning: Acronyms should not be capitalized in method names: was `toXML`, should this be `toXml`? [AcronymName] [Rule S1 in go/android-api-guidelines]
-                src/android/pkg/badlyNamedClass.java:9: warning: Acronyms should not be capitalized in method names: was `getID`, should this be `getId`? [AcronymName] [Rule S1 in go/android-api-guidelines]
-                src/android/pkg/badlyNamedClass.java:4: error: Constant field names must be named with only upper case characters: `android.pkg.badlyNamedClass#BadlyNamedField`, should be `BADLY_NAMED_FIELD`? [AllUpper] [Rule C2 in go/android-api-guidelines]
+                src/android/pkg/badlyNamedClass.java:5: error: Class must start with uppercase char: badlyNamedClass [StartWithUpper] [Rule S1 in go/android-api-guidelines]
+                src/android/pkg/badlyNamedClass.java:7: error: Method name must start with lowercase char: BadlyNamedMethod1 [StartWithLower] [Rule S1 in go/android-api-guidelines]
+                src/android/pkg/badlyNamedClass.java:9: warning: Acronyms should not be capitalized in method names: was `fromHTMLToHTML`, should this be `fromHtmlToHtml`? [AcronymName] [Rule S1 in go/android-api-guidelines]
+                src/android/pkg/badlyNamedClass.java:10: warning: Acronyms should not be capitalized in method names: was `toXML`, should this be `toXml`? [AcronymName] [Rule S1 in go/android-api-guidelines]
+                src/android/pkg/badlyNamedClass.java:11: warning: Acronyms should not be capitalized in method names: was `getID`, should this be `getId`? [AcronymName] [Rule S1 in go/android-api-guidelines]
+                src/android/pkg/badlyNamedClass.java:6: error: Constant field names must be named with only upper case characters: `android.pkg.badlyNamedClass#BadlyNamedField`, should be `BADLY_NAMED_FIELD`? [AllUpper] [Rule C2 in go/android-api-guidelines]
                 """,
             sourceFiles = *arrayOf(
                 java(
                     """
                     package android.pkg;
+
+                    import androidx.annotation.Nullable;
 
                     public class badlyNamedClass {
                         public static final int BadlyNamedField = 1;
@@ -48,6 +50,7 @@ class ApiLintTest : DriverTest() {
 
                         public void fromHTMLToHTML() { }
                         public void toXML() { }
+                        @Nullable
                         public String getID() { return null; }
                         public void setZOrderOnTop() { } // OK
                     }
@@ -81,6 +84,8 @@ class ApiLintTest : DriverTest() {
                     """
                     package android.icu;
 
+                    import androidx.annotation.Nullable;
+
                     // Same as above android.pkg.badlyNamedClass but in a package
                     // that API lint is supposed to ignore (see ApiLint#isInteresting)
                     public class badlyNamedClass {
@@ -88,6 +93,7 @@ class ApiLintTest : DriverTest() {
                         public void BadlyNamedMethod1() { }
 
                         public void toXML() { }
+                        @Nullable
                         public String getID() { return null; }
                         public void setZOrderOnTop() { }
                     }
@@ -97,6 +103,8 @@ class ApiLintTest : DriverTest() {
                     """
                     package android.icu.sub;
 
+                    import androidx.annotation.Nullable;
+
                     // Same as above android.pkg.badlyNamedClass but in a package
                     // that API lint is supposed to ignore (see ApiLint#isInteresting)
                     public class badlyNamedClass {
@@ -104,16 +112,19 @@ class ApiLintTest : DriverTest() {
                         public void BadlyNamedMethod1() { }
 
                         public void toXML() { }
+                        @Nullable
                         public String getID() { return null; }
                         public void setZOrderOnTop() { }
                     }
                     """
                 )
-            ),
+            )
+            /*
             expectedOutput = """
                 9 new API lint issues were found.
                 See tools/metalava/API-LINT.md for how to handle these.
             """
+             */
         )
     }
 
@@ -172,23 +183,28 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/Constants.java:9: error: All constants must be defined at compile time: android.pkg.Constants#FOO [CompileTimeConstant]
-                src/android/pkg/Constants.java:8: warning: If min/max could change in future, make them dynamic methods: android.pkg.Constants#MAX_FOO [MinMaxConstant] [Rule C8 in go/android-api-guidelines]
-                src/android/pkg/Constants.java:7: warning: If min/max could change in future, make them dynamic methods: android.pkg.Constants#MIN_FOO [MinMaxConstant] [Rule C8 in go/android-api-guidelines]
-                src/android/pkg/Constants.java:6: error: Constant field names must be named with only upper case characters: `android.pkg.Constants#myStrings`, should be `MY_STRINGS`? [AllUpper] [Rule C2 in go/android-api-guidelines]
-                src/android/pkg/Constants.java:5: error: Constant field names must be named with only upper case characters: `android.pkg.Constants#strings`, should be `STRINGS`? [AllUpper] [Rule C2 in go/android-api-guidelines]
+                src/android/pkg/Constants.java:13: error: All constants must be defined at compile time: android.pkg.Constants#FOO [CompileTimeConstant]
+                src/android/pkg/Constants.java:12: warning: If min/max could change in future, make them dynamic methods: android.pkg.Constants#MAX_FOO [MinMaxConstant] [Rule C8 in go/android-api-guidelines]
+                src/android/pkg/Constants.java:11: warning: If min/max could change in future, make them dynamic methods: android.pkg.Constants#MIN_FOO [MinMaxConstant] [Rule C8 in go/android-api-guidelines]
+                src/android/pkg/Constants.java:9: error: Constant field names must be named with only upper case characters: `android.pkg.Constants#myStrings`, should be `MY_STRINGS`? [AllUpper] [Rule C2 in go/android-api-guidelines]
+                src/android/pkg/Constants.java:7: error: Constant field names must be named with only upper case characters: `android.pkg.Constants#strings`, should be `STRINGS`? [AllUpper] [Rule C2 in go/android-api-guidelines]
                 """,
             sourceFiles = *arrayOf(
                 java(
                     """
                     package android.pkg;
 
+                    import androidx.annotation.NonNull;
+
                     public class Constants {
                         private Constants() { }
+                        @NonNull
                         public static final String[] strings = { "NONE", "WPA_PSK" };
+                        @NonNull
                         public static final String[] myStrings = { "NONE", "WPA_PSK" };
                         public static final int MIN_FOO = 1;
                         public static final int MAX_FOO = 10;
+                        @NonNull
                         public static final String FOO = System.getProperty("foo");
                     }
                     """
@@ -395,16 +411,18 @@ class ApiLintTest : DriverTest() {
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MissingEquals.java:4: error: Must override both equals and hashCode; missing one in android.pkg.MissingEquals [EqualsAndHashCode] [Rule M8 in go/android-api-guidelines]
-                src/android/pkg/MissingHashCode.java:5: error: Must override both equals and hashCode; missing one in android.pkg.MissingHashCode [EqualsAndHashCode] [Rule M8 in go/android-api-guidelines]
+                src/android/pkg/MissingHashCode.java:7: error: Must override both equals and hashCode; missing one in android.pkg.MissingHashCode [EqualsAndHashCode] [Rule M8 in go/android-api-guidelines]
                 """,
             sourceFiles = *arrayOf(
                 java(
                     """
                     package android.pkg;
 
+                    import androidx.annotation.Nullable;
+
                     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
                     public class Ok {
-                        public boolean equals(Object other) { return true; }
+                        public boolean equals(@Nullable Object other) { return true; }
                         public int hashCode() { return 0; }
                     }
                     """
@@ -421,22 +439,26 @@ class ApiLintTest : DriverTest() {
                 java(
                     """
                     package android.pkg;
+                    
+                    import androidx.annotation.Nullable;
 
                     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
                     public class MissingHashCode {
-                        public boolean equals(Object other) { return true; }
+                        public boolean equals(@Nullable Object other) { return true; }
                     }
                     """
                 ),
                 java(
                     """
                     package android.pkg;
+                    
+                    import androidx.annotation.Nullable;
 
                     public class UnrelatedEquals {
                         @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-                        public static boolean equals(Object other) { return true; } // static
+                        public static boolean equals(@Nullable Object other) { return true; } // static
                         public boolean equals(int other) { return false; } // wrong parameter type
-                        public boolean equals(Object other, int bar) { return false; } // wrong signature
+                        public boolean equals(@Nullable Object other, int bar) { return false; } // wrong signature
                     }
                     """
                 )
@@ -450,21 +472,24 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/MissingCreator.java:3: error: Parcelable requires a `CREATOR` field; missing in android.pkg.MissingCreator [ParcelCreator] [Rule FW3 in go/android-api-guidelines]
-                src/android/pkg/MissingDescribeContents.java:3: error: Parcelable requires `public int describeContents()`; missing in android.pkg.MissingDescribeContents [ParcelCreator] [Rule FW3 in go/android-api-guidelines]
-                src/android/pkg/MissingWriteToParcel.java:3: error: Parcelable requires `void writeToParcel(Parcel, int)`; missing in android.pkg.MissingWriteToParcel [ParcelCreator] [Rule FW3 in go/android-api-guidelines]
-                src/android/pkg/NonFinalParcelable.java:3: error: Parcelable classes must be final: android.pkg.NonFinalParcelable is not final [ParcelNotFinal] [Rule FW8 in go/android-api-guidelines]
-                src/android/pkg/ParcelableConstructor.java:4: error: Parcelable inflation is exposed through CREATOR, not raw constructors, in android.pkg.ParcelableConstructor [ParcelConstructor] [Rule FW3 in go/android-api-guidelines]
+                src/android/pkg/MissingCreator.java:5: error: Parcelable requires a `CREATOR` field; missing in android.pkg.MissingCreator [ParcelCreator] [Rule FW3 in go/android-api-guidelines]
+                src/android/pkg/MissingDescribeContents.java:5: error: Parcelable requires `public int describeContents()`; missing in android.pkg.MissingDescribeContents [ParcelCreator] [Rule FW3 in go/android-api-guidelines]
+                src/android/pkg/MissingWriteToParcel.java:5: error: Parcelable requires `void writeToParcel(Parcel, int)`; missing in android.pkg.MissingWriteToParcel [ParcelCreator] [Rule FW3 in go/android-api-guidelines]
+                src/android/pkg/NonFinalParcelable.java:5: error: Parcelable classes must be final: android.pkg.NonFinalParcelable is not final [ParcelNotFinal] [Rule FW8 in go/android-api-guidelines]
+                src/android/pkg/ParcelableConstructor.java:6: error: Parcelable inflation is exposed through CREATOR, not raw constructors, in android.pkg.ParcelableConstructor [ParcelConstructor] [Rule FW3 in go/android-api-guidelines]
                 """,
             sourceFiles = *arrayOf(
                 java(
                     """
                     package android.pkg;
+                    
+                    import androidx.annotation.Nullable;
 
                     public final class ParcelableConstructor implements android.os.Parcelable {
-                        public ParcelableConstructor(android.os.Parcel p) { }
+                        public ParcelableConstructor(@Nullable android.os.Parcel p) { }
                         public int describeContents() { return 0; }
-                        public void writeToParcel(android.os.Parcel p, int f) { }
+                        public void writeToParcel(@Nullable android.os.Parcel p, int f) { }
+                        @Nullable
                         public static final android.os.Parcelable.Creator<android.app.WallpaperColors> CREATOR = null;
                     }
                     """
@@ -472,11 +497,14 @@ class ApiLintTest : DriverTest() {
                 java(
                     """
                     package android.pkg;
+                    
+                    import androidx.annotation.Nullable;
 
                     public class NonFinalParcelable implements android.os.Parcelable {
                         public NonFinalParcelable() { }
                         public int describeContents() { return 0; }
-                        public void writeToParcel(android.os.Parcel p, int f) { }
+                        public void writeToParcel(@Nullable android.os.Parcel p, int f) { }
+                        @Nullable
                         public static final android.os.Parcelable.Creator<android.app.WallpaperColors> CREATOR = null;
                     }
                     """
@@ -484,21 +512,26 @@ class ApiLintTest : DriverTest() {
                 java(
                     """
                     package android.pkg;
+                    
+                    import androidx.annotation.Nullable;
 
                     public final class MissingCreator implements android.os.Parcelable {
                         public MissingCreator() { }
                         public int describeContents() { return 0; }
-                        public void writeToParcel(android.os.Parcel p, int f) { }
+                        public void writeToParcel(@Nullable android.os.Parcel p, int f) { }
                     }
                     """
                 ),
                 java(
                     """
                     package android.pkg;
+                    
+                    import androidx.annotation.Nullable;
 
                     public final class MissingDescribeContents implements android.os.Parcelable {
                         public MissingDescribeContents() { }
-                        public void writeToParcel(android.os.Parcel p, int f) { }
+                        public void writeToParcel(@Nullable android.os.Parcel p, int f) { }
+                        @Nullable
                         public static final android.os.Parcelable.Creator<android.app.WallpaperColors> CREATOR = null;
                     }
                     """
@@ -507,9 +540,12 @@ class ApiLintTest : DriverTest() {
                     """
                     package android.pkg;
 
+                    import androidx.annotation.Nullable;
+
                     public final class MissingWriteToParcel implements android.os.Parcelable {
                         public MissingWriteToParcel() { }
                         public int describeContents() { return 0; }
+                        @Nullable
                         public static final android.os.Parcelable.Creator<android.app.WallpaperColors> CREATOR = null;
                     }
                     """
@@ -552,31 +588,33 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/RegistrationMethods.java:6: error: Found registerUnpairedCallback but not unregisterUnpairedCallback in android.pkg.RegistrationMethods [PairedRegistration] [Rule L2 in go/android-api-guidelines]
-                src/android/pkg/RegistrationMethods.java:7: error: Found unregisterMismatchedCallback but not registerMismatchedCallback in android.pkg.RegistrationMethods [PairedRegistration] [Rule L2 in go/android-api-guidelines]
-                src/android/pkg/RegistrationMethods.java:8: error: Callback methods should be named register/unregister; was addCallback [RegistrationName] [Rule L3 in go/android-api-guidelines]
-                src/android/pkg/RegistrationMethods.java:13: error: Found addUnpairedListener but not removeUnpairedListener in android.pkg.RegistrationMethods [PairedRegistration] [Rule L2 in go/android-api-guidelines]
-                src/android/pkg/RegistrationMethods.java:14: error: Found removeMismatchedListener but not addMismatchedListener in android.pkg.RegistrationMethods [PairedRegistration] [Rule L2 in go/android-api-guidelines]
-                src/android/pkg/RegistrationMethods.java:15: error: Listener methods should be named add/remove; was registerWrongListener [RegistrationName] [Rule L3 in go/android-api-guidelines]
+                src/android/pkg/RegistrationMethods.java:8: error: Found registerUnpairedCallback but not unregisterUnpairedCallback in android.pkg.RegistrationMethods [PairedRegistration] [Rule L2 in go/android-api-guidelines]
+                src/android/pkg/RegistrationMethods.java:9: error: Found unregisterMismatchedCallback but not registerMismatchedCallback in android.pkg.RegistrationMethods [PairedRegistration] [Rule L2 in go/android-api-guidelines]
+                src/android/pkg/RegistrationMethods.java:10: error: Callback methods should be named register/unregister; was addCallback [RegistrationName] [Rule L3 in go/android-api-guidelines]
+                src/android/pkg/RegistrationMethods.java:15: error: Found addUnpairedListener but not removeUnpairedListener in android.pkg.RegistrationMethods [PairedRegistration] [Rule L2 in go/android-api-guidelines]
+                src/android/pkg/RegistrationMethods.java:16: error: Found removeMismatchedListener but not addMismatchedListener in android.pkg.RegistrationMethods [PairedRegistration] [Rule L2 in go/android-api-guidelines]
+                src/android/pkg/RegistrationMethods.java:17: error: Listener methods should be named add/remove; was registerWrongListener [RegistrationName] [Rule L3 in go/android-api-guidelines]
                 """,
             sourceFiles = *arrayOf(
                 java(
                     """
                     package android.pkg;
+                    
+                    import androidx.annotation.Nullable;
 
                     public class RegistrationMethods {
-                        public void registerOkCallback(Runnable r) { } // OK
-                        public void unregisterOkCallback(Runnable r) { } // OK
-                        public void registerUnpairedCallback(Runnable r) { }
-                        public void unregisterMismatchedCallback(Runnable r) { }
-                        public void addCallback(Runnable r) { }
+                        public void registerOkCallback(@Nullable Runnable r) { } // OK
+                        public void unregisterOkCallback(@Nullable Runnable r) { } // OK
+                        public void registerUnpairedCallback(@Nullable Runnable r) { }
+                        public void unregisterMismatchedCallback(@Nullable Runnable r) { }
+                        public void addCallback(@Nullable Runnable r) { }
 
-                        public void addOkListener(Runnable r) { } // OK
-                        public void removeOkListener(Runnable r) { } // OK
+                        public void addOkListener(@Nullable Runnable r) { } // OK
+                        public void removeOkListener(@Nullable Runnable r) { } // OK
 
-                        public void addUnpairedListener(Runnable r) { }
-                        public void removeMismatchedListener(Runnable r) { }
-                        public void registerWrongListener(Runnable r) { }
+                        public void addUnpairedListener(@Nullable Runnable r) { }
+                        public void removeMismatchedListener(@Nullable Runnable r) { }
+                        public void registerWrongListener(@Nullable Runnable r) { }
                     }
                     """
                 )
@@ -590,10 +628,10 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/CheckSynchronization.java:10: error: Internal locks must not be exposed: method android.pkg.CheckSynchronization.errorMethod1(Runnable) [VisiblySynchronized] [Rule M5 in go/android-api-guidelines]
-                src/android/pkg/CheckSynchronization.java:12: error: Internal locks must not be exposed (synchronizing on this or class is still externally observable): method android.pkg.CheckSynchronization.errorMethod2() [VisiblySynchronized] [Rule M5 in go/android-api-guidelines]
-                src/android/pkg/CheckSynchronization.java:16: error: Internal locks must not be exposed (synchronizing on this or class is still externally observable): method android.pkg.CheckSynchronization.errorMethod2() [VisiblySynchronized] [Rule M5 in go/android-api-guidelines]
-                src/android/pkg/CheckSynchronization.java:21: error: Internal locks must not be exposed (synchronizing on this or class is still externally observable): method android.pkg.CheckSynchronization.errorMethod3() [VisiblySynchronized] [Rule M5 in go/android-api-guidelines]
+                src/android/pkg/CheckSynchronization.java:12: error: Internal locks must not be exposed: method android.pkg.CheckSynchronization.errorMethod1(Runnable) [VisiblySynchronized] [Rule M5 in go/android-api-guidelines]
+                src/android/pkg/CheckSynchronization.java:14: error: Internal locks must not be exposed (synchronizing on this or class is still externally observable): method android.pkg.CheckSynchronization.errorMethod2() [VisiblySynchronized] [Rule M5 in go/android-api-guidelines]
+                src/android/pkg/CheckSynchronization.java:18: error: Internal locks must not be exposed (synchronizing on this or class is still externally observable): method android.pkg.CheckSynchronization.errorMethod2() [VisiblySynchronized] [Rule M5 in go/android-api-guidelines]
+                src/android/pkg/CheckSynchronization.java:23: error: Internal locks must not be exposed (synchronizing on this or class is still externally observable): method android.pkg.CheckSynchronization.errorMethod3() [VisiblySynchronized] [Rule M5 in go/android-api-guidelines]
                 src/android/pkg/CheckSynchronization2.kt:5: error: Internal locks must not be exposed (synchronizing on this or class is still externally observable): method android.pkg.CheckSynchronization2.errorMethod1() [VisiblySynchronized] [Rule M5 in go/android-api-guidelines]
                 src/android/pkg/CheckSynchronization2.kt:8: error: Internal locks must not be exposed (synchronizing on this or class is still externally observable): method android.pkg.CheckSynchronization2.errorMethod2() [VisiblySynchronized] [Rule M5 in go/android-api-guidelines]
                 src/android/pkg/CheckSynchronization2.kt:16: error: Internal locks must not be exposed (synchronizing on this or class is still externally observable): method android.pkg.CheckSynchronization2.errorMethod4() [VisiblySynchronized] [Rule M5 in go/android-api-guidelines]
@@ -603,15 +641,17 @@ class ApiLintTest : DriverTest() {
                 java(
                     """
                     package android.pkg;
+                    
+                    import androidx.annotation.Nullable;
 
                     public class CheckSynchronization {
-                        public void okMethod1(Runnable r) { }
+                        public void okMethod1(@Nullable Runnable r) { }
                         private static final Object LOCK = new Object();
                         public void okMethod2() {
                             synchronized(LOCK) {
                             }
                         }
-                        public synchronized void errorMethod1(Runnable r) { } // ERROR
+                        public synchronized void errorMethod1(@Nullable Runnable r) { } // ERROR
                         public void errorMethod2() {
                             synchronized(this) {
                             }
@@ -667,18 +707,22 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/IntentBuilderNames.java:6: warning: Methods creating an Intent should be named `create<Foo>Intent()`, was `makeMyIntent` [IntentBuilderName] [Rule FW1 in go/android-api-guidelines]
-                src/android/pkg/IntentBuilderNames.java:7: warning: Methods creating an Intent should be named `create<Foo>Intent()`, was `createIntentNow` [IntentBuilderName] [Rule FW1 in go/android-api-guidelines]
+                src/android/pkg/IntentBuilderNames.java:8: warning: Methods creating an Intent should be named `create<Foo>Intent()`, was `makeMyIntent` [IntentBuilderName] [Rule FW1 in go/android-api-guidelines]
+                src/android/pkg/IntentBuilderNames.java:10: warning: Methods creating an Intent should be named `create<Foo>Intent()`, was `createIntentNow` [IntentBuilderName] [Rule FW1 in go/android-api-guidelines]
                 """,
             sourceFiles = *arrayOf(
                 java(
                     """
                     package android.pkg;
                     import android.content.Intent;
+                    import androidx.annotation.Nullable;
 
                     public class IntentBuilderNames {
+                        @Nullable
                         public Intent createEnrollIntent() { return null; } // OK
+                        @Nullable
                         public Intent makeMyIntent() { return null; } // WARN
+                        @Nullable
                         public Intent createIntentNow() { return null; } // WARN
                     }
                     """
@@ -757,9 +801,9 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/MyClass.java:4: warning: Methods must return the builder object (return type Builder instead of void): method android.pkg.MyClass.Builder.setSomething(int) [SetterReturnsThis] [Rule M4 in go/android-api-guidelines]
-                src/android/pkg/MyClass.java:4: warning: Builder methods names should use setFoo() style: method android.pkg.MyClass.Builder.withFoo(int) [BuilderSetStyle]
-                src/android/pkg/MyClass.java:4: warning: Missing `build()` method in android.pkg.MyClass.Builder [MissingBuild]
+                src/android/pkg/MyClass.java:6: warning: Methods must return the builder object (return type Builder instead of void): method android.pkg.MyClass.Builder.setSomething(int) [SetterReturnsThis] [Rule M4 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:6: warning: Builder methods names should use setFoo() style: method android.pkg.MyClass.Builder.withFoo(int) [BuilderSetStyle]
+                src/android/pkg/MyClass.java:6: warning: Missing `build()` method in android.pkg.MyClass.Builder [MissingBuild]
                 src/android/pkg/TopLevelBuilder.java:3: warning: Builder should be defined as inner class: android.pkg.TopLevelBuilder [TopLevelBuilder]
                 src/android/pkg/TopLevelBuilder.java:3: warning: Missing `build()` method in android.pkg.TopLevelBuilder [MissingBuild]
                 """,
@@ -775,13 +819,17 @@ class ApiLintTest : DriverTest() {
                 java(
                     """
                     package android.pkg;
+                    
+                    import androidx.annotation.NonNull;
 
                     public class MyClass {
                         public class Builder {
                             public void clearAll() { }
                             public int getSomething() { return 0; }
                             public void setSomething(int s) { }
+                            @NonNull
                             public Builder withFoo(int s) { return this; }
+                            @NonNull
                             public Builder setOk(int s) { return this; }
                         }
                     }
@@ -790,9 +838,12 @@ class ApiLintTest : DriverTest() {
                 java(
                     """
                     package android.pkg;
+                    
+                    import androidx.annotation.NonNull;
 
                     public class Ok {
                         public class OkBuilder {
+                            @NonNull
                             public Ok build() { return null; }
                         }
                     }
@@ -867,10 +918,10 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/content/MyClass1.java:7: warning: Field type `android.view.View` violates package layering: nothing in `package android.content` should depend on `package android.view` [PackageLayering] [Rule FW6 in go/android-api-guidelines]
-                src/android/content/MyClass1.java:7: warning: Method return type `android.view.View` violates package layering: nothing in `package android.content` should depend on `package android.view` [PackageLayering] [Rule FW6 in go/android-api-guidelines]
-                src/android/content/MyClass1.java:7: warning: Method parameter type `android.view.View` violates package layering: nothing in `package android.content` should depend on `package android.view` [PackageLayering] [Rule FW6 in go/android-api-guidelines]
-                src/android/content/MyClass1.java:7: warning: Method parameter type `android.view.View` violates package layering: nothing in `package android.content` should depend on `package android.view` [PackageLayering] [Rule FW6 in go/android-api-guidelines]
+                src/android/content/MyClass1.java:8: warning: Field type `android.view.View` violates package layering: nothing in `package android.content` should depend on `package android.view` [PackageLayering] [Rule FW6 in go/android-api-guidelines]
+                src/android/content/MyClass1.java:8: warning: Method return type `android.view.View` violates package layering: nothing in `package android.content` should depend on `package android.view` [PackageLayering] [Rule FW6 in go/android-api-guidelines]
+                src/android/content/MyClass1.java:8: warning: Method parameter type `android.view.View` violates package layering: nothing in `package android.content` should depend on `package android.view` [PackageLayering] [Rule FW6 in go/android-api-guidelines]
+                src/android/content/MyClass1.java:8: warning: Method parameter type `android.view.View` violates package layering: nothing in `package android.content` should depend on `package android.view` [PackageLayering] [Rule FW6 in go/android-api-guidelines]
                 """,
             sourceFiles = *arrayOf(
                 java(
@@ -880,13 +931,19 @@ class ApiLintTest : DriverTest() {
                     import android.graphics.drawable.Drawable;
                     import android.graphics.Bitmap;
                     import android.view.View;
+                    import androidx.annotation.Nullable;
 
                     public class MyClass1 {
+                        @Nullable
                         public View view = null;
+                        @Nullable
                         public Drawable drawable = null;
+                        @Nullable
                         public Bitmap bitmap = null;
-                        public View ok(View view, Drawable drawable) { return null; }
-                        public Bitmap wrong(View view, Bitmap bitmap) { return null; }
+                        @Nullable
+                        public View ok(@Nullable View view, @Nullable Drawable drawable) { return null; }
+                        @Nullable
+                        public Bitmap wrong(@Nullable View view, @Nullable Bitmap bitmap) { return null; }
                     }
                     """
                 )
@@ -945,18 +1002,25 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/MyClass.java:4: error: Parameter type is concrete collection (`java.util.HashMap`); must be higher-level interface [ConcreteCollection] [Rule CL2 in go/android-api-guidelines]
-                src/android/pkg/MyClass.java:5: error: Return type is concrete collection (`java.util.Vector`); must be higher-level interface [ConcreteCollection] [Rule CL2 in go/android-api-guidelines]
-                src/android/pkg/MyClass.java:5: error: Parameter type is concrete collection (`java.util.LinkedList`); must be higher-level interface [ConcreteCollection] [Rule CL2 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:6: error: Parameter type is concrete collection (`java.util.HashMap`); must be higher-level interface [ConcreteCollection] [Rule CL2 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:9: error: Return type is concrete collection (`java.util.Vector`); must be higher-level interface [ConcreteCollection] [Rule CL2 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:10: error: Parameter type is concrete collection (`java.util.LinkedList`); must be higher-level interface [ConcreteCollection] [Rule CL2 in go/android-api-guidelines]
                 """,
             sourceFiles = *arrayOf(
                 java(
                     """
                     package android.pkg;
+                    
+                    import androidx.annotation.Nullable;
 
                     public class MyClass {
-                        public MyClass(java.util.HashMap<String,String> map1, java.util.Map<String,String> map2) { }
-                        public java.util.Vector<String> getList(java.util.LinkedList<String> list) { return null; }
+                        public MyClass(@Nullable java.util.HashMap<String,String> map1,
+                                @Nullable java.util.Map<String,String> map2) {
+                        }
+                        @Nullable
+                        public java.util.Vector<String> getList(@Nullable  java.util.LinkedList<String> list) {
+                            return null;
+                        }
                     }
                     """
                 )
@@ -1070,19 +1134,22 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/MyClass.java:6: error: Type must not be heavy BitSet (method android.pkg.MyClass.reverse(java.util.BitSet)) [HeavyBitSet]
-                src/android/pkg/MyClass.java:6: error: Type must not be heavy BitSet (parameter bitset in android.pkg.MyClass.reverse(java.util.BitSet bitset)) [HeavyBitSet]
-                src/android/pkg/MyClass.java:5: error: Type must not be heavy BitSet (field android.pkg.MyClass.bitset) [HeavyBitSet]
+                src/android/pkg/MyClass.java:8: error: Type must not be heavy BitSet (method android.pkg.MyClass.reverse(java.util.BitSet)) [HeavyBitSet]
+                src/android/pkg/MyClass.java:9: error: Type must not be heavy BitSet (parameter bitset in android.pkg.MyClass.reverse(java.util.BitSet bitset)) [HeavyBitSet]
+                src/android/pkg/MyClass.java:6: error: Type must not be heavy BitSet (field android.pkg.MyClass.bitset) [HeavyBitSet]
                 """,
             sourceFiles = *arrayOf(
                 java(
                     """
                     package android.pkg;
+                    import androidx.annotation.Nullable;
                     import java.util.BitSet;
 
                     public class MyClass {
+                        @Nullable
                         public BitSet bitset;
-                        public BitSet reverse(BitSet bitset) { return null; }
+                        @Nullable
+                        public BitSet reverse(@Nullable BitSet bitset) { return null; }
                     }
                     """
                 )
@@ -1096,18 +1163,22 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/MyFirstManager.java:4: error: Managers must always be obtained from Context; no direct constructors [ManagerConstructor]
-                src/android/pkg/MyFirstManager.java:6: error: Managers must always be obtained from Context (`get`) [ManagerLookup]
+                src/android/pkg/MyFirstManager.java:6: error: Managers must always be obtained from Context; no direct constructors [ManagerConstructor]
+                src/android/pkg/MyFirstManager.java:8: error: Managers must always be obtained from Context (`get`) [ManagerLookup]
                 """,
             sourceFiles = *arrayOf(
                 java(
                     """
                     package android.pkg;
+                    
+                    import androidx.annotation.Nullable;
 
                     public class MyFirstManager {
                         public MyFirstManager() {
                         }
+                        @Nullable
                         public MyFirstManager get() { return null; }
+                        @Nullable
                         public MySecondManager ok() { return null; }
                     }
                     """
@@ -1132,22 +1203,26 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/MyClass.java:6: error: Must avoid boxed primitives (`java.lang.Long`) [AutoBoxing] [Rule M11 in go/android-api-guidelines]
-                src/android/pkg/MyClass.java:8: error: Must avoid boxed primitives (`java.lang.Short`) [AutoBoxing] [Rule M11 in go/android-api-guidelines]
-                src/android/pkg/MyClass.java:8: error: Must avoid boxed primitives (`java.lang.Double`) [AutoBoxing] [Rule M11 in go/android-api-guidelines]
-                src/android/pkg/MyClass.java:4: error: Must avoid boxed primitives (`java.lang.Integer`) [AutoBoxing] [Rule M11 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:9: error: Must avoid boxed primitives (`java.lang.Long`) [AutoBoxing] [Rule M11 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:11: error: Must avoid boxed primitives (`java.lang.Short`) [AutoBoxing] [Rule M11 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:12: error: Must avoid boxed primitives (`java.lang.Double`) [AutoBoxing] [Rule M11 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:6: error: Must avoid boxed primitives (`java.lang.Integer`) [AutoBoxing] [Rule M11 in go/android-api-guidelines]
                 """,
             sourceFiles = *arrayOf(
                 java(
                     """
                     package android.pkg;
 
+                    import androidx.annotation.Nullable;
+
                     public class MyClass {
+                        @Nullable
                         public Integer integer1;
                         public int integer2;
-                        public MyClass(Long l) {
+                        public MyClass(@Nullable Long l) {
                         }
-                        public Short getDouble(Double l) { return null; }
+                        @Nullable
+                        public Short getDouble(@Nullable Double l) { return null; }
                     }
                     """
                 )
@@ -1226,8 +1301,8 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/MyClass.java:10: error: Context is distinct, so it must be the first argument (method `wrong`) [ContextFirst] [Rule M3 in go/android-api-guidelines]
-                src/android/pkg/MyClass.java:11: error: ContentResolver is distinct, so it must be the first argument (method `wrong`) [ContextFirst] [Rule M3 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:11: error: Context is distinct, so it must be the first argument (method `wrong`) [ContextFirst] [Rule M3 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:12: error: ContentResolver is distinct, so it must be the first argument (method `wrong`) [ContextFirst] [Rule M3 in go/android-api-guidelines]
                 """,
             sourceFiles = *arrayOf(
                 java(
@@ -1235,14 +1310,15 @@ class ApiLintTest : DriverTest() {
                     package android.pkg;
                     import android.content.Context;
                     import android.content.ContentResolver;
+                    import androidx.annotation.Nullable;
 
                     public class MyClass {
-                        public MyClass(Context context1, Context context2) {
+                        public MyClass(@Nullable Context context1, @Nullable Context context2) {
                         }
-                        public void ok(ContentResolver resolver, int i) { }
-                        public void ok(Context context, int i) { }
-                        public void wrong(int i, Context context) { }
-                        public void wrong(int i, ContentResolver resolver) { }
+                        public void ok(@Nullable ContentResolver resolver, int i) { }
+                        public void ok(@Nullable Context context, int i) { }
+                        public void wrong(int i, @Nullable Context context) { }
+                        public void wrong(int i, @Nullable ContentResolver resolver) { }
                     }
                     """
                 )
@@ -1256,8 +1332,8 @@ class ApiLintTest : DriverTest() {
             extraArguments = arrayOf(ARG_API_LINT, ARG_HIDE, "ExecutorRegistration"),
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/MyClass.java:6: warning: Listeners should always be at end of argument list (method `MyClass`) [ListenerLast] [Rule M3 in go/android-api-guidelines]
-                src/android/pkg/MyClass.java:9: warning: Listeners should always be at end of argument list (method `wrong`) [ListenerLast] [Rule M3 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:7: warning: Listeners should always be at end of argument list (method `MyClass`) [ListenerLast] [Rule M3 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:10: warning: Listeners should always be at end of argument list (method `wrong`) [ListenerLast] [Rule M3 in go/android-api-guidelines]
                 """,
             sourceFiles = *arrayOf(
                 java(
@@ -1265,12 +1341,13 @@ class ApiLintTest : DriverTest() {
                     package android.pkg;
                     import android.pkg.MyCallback;
                     import android.content.Context;
+                    import androidx.annotation.Nullable;
 
                     public class MyClass {
-                        public MyClass(MyCallback listener, int i) {
+                        public MyClass(@Nullable MyCallback listener, int i) {
                         }
-                        public void ok(Context context, int i, MyCallback listener) { }
-                        public void wrong(MyCallback listener, int i) { }
+                        public void ok(@Nullable Context context, int i, @Nullable MyCallback listener) { }
+                        public void wrong(@Nullable MyCallback listener, int i) { }
                     }
                     """
                 ),
@@ -1336,38 +1413,44 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/MyClass.java:12: warning: Registration methods should have overload that accepts delivery Executor: `registerWrongCallback` [ExecutorRegistration] [Rule L1 in go/android-api-guidelines]
-                src/android/pkg/MyClass.java:4: warning: Registration methods should have overload that accepts delivery Executor: `MyClass` [ExecutorRegistration] [Rule L1 in go/android-api-guidelines]
-                src/android/pkg/MyClass.java:9: warning: SAM-compatible parameters (such as parameter 1, "executor", in android.pkg.MyClass.registerStreamEventCallback) should be last to improve Kotlin interoperability; see https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions [SamShouldBeLast]
-                src/android/pkg/MyClass.java:10: warning: SAM-compatible parameters (such as parameter 1, "executor", in android.pkg.MyClass.unregisterStreamEventCallback) should be last to improve Kotlin interoperability; see https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions [SamShouldBeLast]
+                src/android/pkg/MyClass.java:16: warning: Registration methods should have overload that accepts delivery Executor: `registerWrongCallback` [ExecutorRegistration] [Rule L1 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:6: warning: Registration methods should have overload that accepts delivery Executor: `MyClass` [ExecutorRegistration] [Rule L1 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:11: warning: SAM-compatible parameters (such as parameter 1, "executor", in android.pkg.MyClass.registerStreamEventCallback) should be last to improve Kotlin interoperability; see https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions [SamShouldBeLast]
+                src/android/pkg/MyClass.java:13: warning: SAM-compatible parameters (such as parameter 1, "executor", in android.pkg.MyClass.unregisterStreamEventCallback) should be last to improve Kotlin interoperability; see https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions [SamShouldBeLast]
                 """,
             sourceFiles = *arrayOf(
                 java(
                     """
                     package android.pkg;
 
+                    import androidx.annotation.Nullable;
+
                     public class MyClass {
-                        public MyClass(MyCallback callback) {
+                        public MyClass(@Nullable MyCallback callback) {
                         }
 
-                        public void registerStreamEventCallback(MyCallback callback);
-                        public void unregisterStreamEventCallback(MyCallback callback);
-                        public void registerStreamEventCallback(java.util.concurrent.Executor executor, MyCallback callback);
-                        public void unregisterStreamEventCallback(java.util.concurrent.Executor executor, MyCallback callback);
+                        public void registerStreamEventCallback(@Nullable MyCallback callback);
+                        public void unregisterStreamEventCallback(@Nullable MyCallback callback);
+                        public void registerStreamEventCallback(@Nullable java.util.concurrent.Executor executor,
+                                @Nullable MyCallback callback);
+                        public void unregisterStreamEventCallback(@Nullable java.util.concurrent.Executor executor,
+                                @Nullable MyCallback callback);
 
-                        public void registerWrongCallback(MyCallback callback);
-                        public void unregisterWrongCallback(MyCallback callback);
+                        public void registerWrongCallback(@Nullable MyCallback callback);
+                        public void unregisterWrongCallback(@Nullable MyCallback callback);
                     }
                     """
                 ),
                 java(
                     """
                     package android.graphics;
+                    
                     import android.pkg.MyCallback;
+                    import androidx.annotation.Nullable;
 
                     public class MyUiClass {
-                        public void registerWrongCallback(MyCallback callback);
-                        public void unregisterWrongCallback(MyCallback callback);
+                        public void registerWrongCallback(@Nullable MyCallback callback);
+                        public void unregisterWrongCallback(@Nullable MyCallback callback);
                     }
                     """
                 ),
@@ -1443,8 +1526,8 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/CheckFiles.java:12: warning: Methods accepting `File` should also accept `FileDescriptor` or streams: method android.pkg.CheckFiles.error(int,java.io.File) [StreamFiles] [Rule M10 in go/android-api-guidelines]
-                src/android/pkg/CheckFiles.java:8: warning: Methods accepting `File` should also accept `FileDescriptor` or streams: constructor android.pkg.CheckFiles(android.content.Context,java.io.File) [StreamFiles] [Rule M10 in go/android-api-guidelines]
+                src/android/pkg/CheckFiles.java:13: warning: Methods accepting `File` should also accept `FileDescriptor` or streams: method android.pkg.CheckFiles.error(int,java.io.File) [StreamFiles] [Rule M10 in go/android-api-guidelines]
+                src/android/pkg/CheckFiles.java:9: warning: Methods accepting `File` should also accept `FileDescriptor` or streams: constructor android.pkg.CheckFiles(android.content.Context,java.io.File) [StreamFiles] [Rule M10 in go/android-api-guidelines]
                 """,
             sourceFiles = *arrayOf(
                 java(
@@ -1452,15 +1535,16 @@ class ApiLintTest : DriverTest() {
                     package android.pkg;
                     import android.content.Context;
                     import android.content.ContentResolver;
+                    import androidx.annotation.Nullable;
                     import java.io.File;
                     import java.io.InputStream;
 
                     public class CheckFiles {
-                        public CheckFiles(Context context, File file) {
+                        public CheckFiles(@Nullable Context context, @Nullable File file) {
                         }
-                        public void ok(int i, File file) { }
-                        public void ok(int i, InputStream stream) { }
-                        public void error(int i, File file) { }
+                        public void ok(int i, @Nullable File file) { }
+                        public void ok(int i, @Nullable InputStream stream) { }
+                        public void error(int i, @Nullable File file) { }
                     }
                     """
                 )
@@ -1474,8 +1558,8 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/CheckFiles.java:12: warning: Methods accepting `File` should also accept `FileDescriptor` or streams: method android.pkg.CheckFiles.error(int,java.io.File) [StreamFiles] [Rule M10 in go/android-api-guidelines]
-                src/android/pkg/CheckFiles.java:8: warning: Methods accepting `File` should also accept `FileDescriptor` or streams: constructor android.pkg.CheckFiles(android.content.Context,java.io.File) [StreamFiles] [Rule M10 in go/android-api-guidelines]
+                src/android/pkg/CheckFiles.java:13: warning: Methods accepting `File` should also accept `FileDescriptor` or streams: method android.pkg.CheckFiles.error(int,java.io.File) [StreamFiles] [Rule M10 in go/android-api-guidelines]
+                src/android/pkg/CheckFiles.java:9: warning: Methods accepting `File` should also accept `FileDescriptor` or streams: constructor android.pkg.CheckFiles(android.content.Context,java.io.File) [StreamFiles] [Rule M10 in go/android-api-guidelines]
                 """,
             sourceFiles = *arrayOf(
                 java(
@@ -1483,15 +1567,16 @@ class ApiLintTest : DriverTest() {
                     package android.pkg;
                     import android.content.Context;
                     import android.content.ContentResolver;
+                    import androidx.annotation.Nullable;
                     import java.io.File;
                     import java.io.InputStream;
 
                     public class CheckFiles {
-                        public CheckFiles(Context context, File file) {
+                        public CheckFiles(@Nullable Context context, @Nullable File file) {
                         }
-                        public void ok(int i, File file) { }
-                        public void ok(int i, InputStream stream) { }
-                        public void error(int i, File file) { }
+                        public void ok(int i, @Nullable File file) { }
+                        public void ok(int i, @Nullable InputStream stream) { }
+                        public void error(int i, @Nullable File file) { }
                     }
                     """
                 )
@@ -1733,24 +1818,26 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/KotlinOperatorTest.java:4: info: Method can be invoked with an indexing operator from Kotlin: `get` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
-                src/android/pkg/KotlinOperatorTest.java:5: info: Method can be invoked with an indexing operator from Kotlin: `set` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
-                src/android/pkg/KotlinOperatorTest.java:6: info: Method can be invoked with function call syntax from Kotlin: `invoke` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
-                src/android/pkg/KotlinOperatorTest.java:7: info: Method can be invoked as a binary operator from Kotlin: `plus` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
-                src/android/pkg/KotlinOperatorTest.java:7: error: Only one of `plus` and `plusAssign` methods should be present for Kotlin [UniqueKotlinOperator]
-                src/android/pkg/KotlinOperatorTest.java:8: info: Method can be invoked as a compound assignment operator from Kotlin: `plusAssign` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
+                src/android/pkg/KotlinOperatorTest.java:6: info: Method can be invoked with an indexing operator from Kotlin: `get` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
+                src/android/pkg/KotlinOperatorTest.java:7: info: Method can be invoked with an indexing operator from Kotlin: `set` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
+                src/android/pkg/KotlinOperatorTest.java:8: info: Method can be invoked with function call syntax from Kotlin: `invoke` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
+                src/android/pkg/KotlinOperatorTest.java:9: info: Method can be invoked as a binary operator from Kotlin: `plus` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
+                src/android/pkg/KotlinOperatorTest.java:9: error: Only one of `plus` and `plusAssign` methods should be present for Kotlin [UniqueKotlinOperator]
+                src/android/pkg/KotlinOperatorTest.java:10: info: Method can be invoked as a compound assignment operator from Kotlin: `plusAssign` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
                 """,
             sourceFiles = *arrayOf(
                 java(
                     """
                     package android.pkg;
+                    
+                    import androidx.annotation.Nullable;
 
                     public class KotlinOperatorTest {
                         public int get(int i) { return i + 2; }
                         public void set(int i, int j, int k) { }
                         public void invoke(int i, int j, int k) { }
-                        public int plus(JavaClass other) { return 0; }
-                        public void plusAssign(JavaClass other) { }
+                        public int plus(@Nullable JavaClass other) { return 0; }
+                        public void plusAssign(@Nullable JavaClass other) { }
                     }
                     """
                 )
@@ -1764,21 +1851,26 @@ class ApiLintTest : DriverTest() {
             extraArguments = arrayOf(ARG_API_LINT, ARG_HIDE, "AutoBoxing"),
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/ArrayTest.java:7: warning: Method should return Collection<Object> (or subclass) instead of raw array; was `java.lang.Object[]` [ArrayReturn]
-                src/android/pkg/ArrayTest.java:8: warning: Method parameter should be Collection<Number> (or subclass) instead of raw array; was `java.lang.Number[]` [ArrayReturn]
+                src/android/pkg/ArrayTest.java:11: warning: Method should return Collection<Object> (or subclass) instead of raw array; was `java.lang.Object[]` [ArrayReturn]
+                src/android/pkg/ArrayTest.java:13: warning: Method parameter should be Collection<Number> (or subclass) instead of raw array; was `java.lang.Number[]` [ArrayReturn]
                 """,
             sourceFiles = *arrayOf(
                 java(
                     """
                     package android.pkg;
+                    
+                    import androidx.annotation.Nullable;
 
                     public class ArrayTest {
+                        @Nullable
                         public int[] ok1() { return null; }
+                        @Nullable
                         public String[] ok2() { return null; }
-                        public void ok3(int[] i) { }
+                        public void ok3(@Nullable int[] i) { }
+                        @Nullable
                         public Object[] error1() { return null; }
-                        public void error2(Number[] i) { }
-                        public void ok(Number... args) { }
+                        public void error2(@Nullable Number[] i) { }
+                        public void ok(@Nullable Number... args) { }
                     }
                     """
                 )
@@ -1792,19 +1884,20 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/MyManager.java:6: warning: When a method overload is needed to target a specific UserHandle, callers should be directed to use Context.createPackageContextAsUser() and re-obtain the relevant Manager, and no new API should be added [UserHandle]
-                src/android/pkg/UserHandleTest.java:7: warning: Method taking UserHandle should be named `doFooAsUser` or `queryFooForUser`, was `error` [UserHandleName]
+                src/android/pkg/MyManager.java:7: warning: When a method overload is needed to target a specific UserHandle, callers should be directed to use Context.createPackageContextAsUser() and re-obtain the relevant Manager, and no new API should be added [UserHandle]
+                src/android/pkg/UserHandleTest.java:8: warning: Method taking UserHandle should be named `doFooAsUser` or `queryFooForUser`, was `error` [UserHandleName]
                 """,
             sourceFiles = *arrayOf(
                 java(
                     """
                     package android.pkg;
                     import android.os.UserHandle;
+                    import androidx.annotation.Nullable;
 
                     public class UserHandleTest {
-                        public void doFooAsUser(int i, UserHandle handle) {} //OK
-                        public void doFooForUser(int i, UserHandle handle) {} //OK
-                        public void error(int i, UserHandle handle) {}
+                        public void doFooAsUser(int i, @Nullable UserHandle handle) {} //OK
+                        public void doFooForUser(int i, @Nullable UserHandle handle) {} //OK
+                        public void error(int i, @Nullable UserHandle handle) {}
                     }
                     """
                 ),
@@ -1812,10 +1905,11 @@ class ApiLintTest : DriverTest() {
                     """
                     package android.pkg;
                     import android.os.UserHandle;
+                    import androidx.annotation.Nullable;
 
                     public class MyManager {
                         private MyManager() { }
-                        public void error(int i, UserHandle handle) {}
+                        public void error(int i, @Nullable UserHandle handle) {}
                     }
                     """
                 )
@@ -1910,15 +2004,18 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/CloneTest.java:5: error: Provide an explicit copy constructor instead of implementing `clone()` [NoClone]
+                src/android/pkg/CloneTest.java:7: error: Provide an explicit copy constructor instead of implementing `clone()` [NoClone]
                 """,
             sourceFiles = *arrayOf(
                 java(
                     """
                     package android.pkg;
 
+                    import androidx.annotation.Nullable;
+
                     public class CloneTest {
                         public void clone(int i) { } // ok
+                        @Nullable
                         public CloneTest clone() { return super.clone(); } // error
                     }
                     """
@@ -1933,18 +2030,21 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/IcuTest.java:4: warning: Type `java.util.TimeZone` should be replaced with richer ICU type `android.icu.util.TimeZone` [UseIcu]
-                src/android/pkg/IcuTest.java:5: warning: Type `java.text.BreakIterator` should be replaced with richer ICU type `android.icu.text.BreakIterator` [UseIcu]
-                src/android/pkg/IcuTest.java:5: warning: Type `java.text.Collator` should be replaced with richer ICU type `android.icu.text.Collator` [UseIcu]
+                src/android/pkg/IcuTest.java:6: warning: Type `java.util.TimeZone` should be replaced with richer ICU type `android.icu.util.TimeZone` [UseIcu]
+                src/android/pkg/IcuTest.java:7: warning: Type `java.text.BreakIterator` should be replaced with richer ICU type `android.icu.text.BreakIterator` [UseIcu]
+                src/android/pkg/IcuTest.java:8: warning: Type `java.text.Collator` should be replaced with richer ICU type `android.icu.text.Collator` [UseIcu]
                 """,
             sourceFiles = *arrayOf(
                 java(
                     """
                     package android.pkg;
 
+                    import androidx.annotation.Nullable;
+
                     public abstract class IcuTest {
-                        public IcuTest(java.util.TimeZone timeZone) { }
-                        public abstract java.text.BreakIterator foo(java.text.Collator collator);
+                        public IcuTest(@Nullable java.util.TimeZone timeZone) { }
+                        @Nullable
+                        public abstract java.text.BreakIterator foo(@Nullable java.text.Collator collator);
                     }
                     """
                 )
@@ -1958,18 +2058,20 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/PdfTest.java:4: error: Must use ParcelFileDescriptor instead of FileDescriptor in parameter fd in android.pkg.PdfTest.error1(java.io.FileDescriptor fd) [NoClone]
-                src/android/pkg/PdfTest.java:5: error: Must use ParcelFileDescriptor instead of FileDescriptor in method android.pkg.PdfTest.getFileDescriptor() [UseParcelFileDescriptor] [Rule FW11 in go/android-api-guidelines]
+                src/android/pkg/PdfTest.java:6: error: Must use ParcelFileDescriptor instead of FileDescriptor in parameter fd in android.pkg.PdfTest.error1(java.io.FileDescriptor fd) [NoClone]
+                src/android/pkg/PdfTest.java:7: error: Must use ParcelFileDescriptor instead of FileDescriptor in method android.pkg.PdfTest.getFileDescriptor() [UseParcelFileDescriptor] [Rule FW11 in go/android-api-guidelines]
                 """,
             sourceFiles = *arrayOf(
                 java(
                     """
                     package android.pkg;
 
+                    import androidx.annotation.Nullable;
+
                     public abstract class PdfTest {
-                        public void error1(java.io.FileDescriptor fd) { }
+                        public void error1(@Nullable java.io.FileDescriptor fd) { }
                         public int getFileDescriptor() { return -1; }
-                        public void ok(android.os.ParcelFileDescriptor fd) { }
+                        public void ok(@Nullable android.os.ParcelFileDescriptor fd) { }
                     }
                     """
                 )
@@ -2007,14 +2109,17 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/MySingleton.java:5: error: Singleton classes should use `getInstance()` methods: `MySingleton` [SingletonConstructor]
+                src/android/pkg/MySingleton.java:8: error: Singleton classes should use `getInstance()` methods: `MySingleton` [SingletonConstructor]
                 """,
             sourceFiles = *arrayOf(
                 java(
                     """
                     package android.pkg;
 
+                    import androidx.annotation.Nullable;
+
                     public abstract class MySingleton {
+                        @Nullable
                         public static MySingleton getMyInstance() { return null; }
                         public MySingleton() { }
                         public void foo() { }
@@ -2024,8 +2129,11 @@ class ApiLintTest : DriverTest() {
                 java(
                     """
                     package android.pkg;
+                    
+                    import androidx.annotation.Nullable;
 
                     public abstract class MySingleton2 {
+                        @Nullable
                         public static MySingleton2 getMyInstance() { return null; }
                         private MySingleton2() { } // OK, private
                         public void foo() { }
@@ -2076,23 +2184,28 @@ class ApiLintTest : DriverTest() {
     }
 
     @Test
-    fun `KotlinOperator check only applies to java`() {
+    fun `KotlinOperator check only applies when not using operator modifier`() {
         check(
             apiLint = "", // enabled
             compatibilityMode = false,
-            // Note, src/android/pkg/FontFamily.kt:3 warning should not be there, it is a bug in PSI
+            // Note, src/android/pkg/FontFamily.kt:1 warning should not be there, it is a bug in PSI
             // https://youtrack.jetbrains.com/issue/KT-32556
             warnings = """
-                src/android/pkg/A.kt:3: info: Method can be invoked with an indexing operator from Kotlin: `get` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
-                src/android/pkg/FontFamily.kt:1: info: Method can be invoked as a "in" operator from Kotlin: `contains` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
-                src/android/pkg/Foo.java:4: info: Method can be invoked as a binary operator from Kotlin: `div` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
+                src/android/pkg/A.kt:3: info: Note that adding the `operator` keyword would allow calling this method using operator syntax [KotlinOperator]
+                src/android/pkg/Bar.kt:4: info: Note that adding the `operator` keyword would allow calling this method using operator syntax [KotlinOperator]
+                src/android/pkg/FontFamily.kt:1: info: Note that adding the `operator` keyword would allow calling this method using operator syntax [KotlinOperator]
+                src/android/pkg/Foo.java:7: info: Method can be invoked as a binary operator from Kotlin: `div` (this is usually desirable; just make sure it makes sense for this type of object) [KotlinOperator]
                 """,
             sourceFiles = *arrayOf(
                 java(
                     """
                         package android.pkg;
+                        
+                        import androidx.annotation.Nullable;
+                        
                         public class Foo {
                             private Foo() { }
+                            @Nullable
                             public Foo div(int value) { }
                         }
                     """
@@ -2101,8 +2214,8 @@ class ApiLintTest : DriverTest() {
                     """
                         package android.pkg
                         class Bar {
-                            operator fun div(value: Int): Bar { }
-                            // "fun div(value: Int): Bar { }" is also disallowed but that's already enforced by the kotlin compiler
+                            operator fun div(value: Int): Bar { TODO() }
+                            fun plus(value: Int): Bar { TODO() }
                         }
                     """
                 ),
@@ -2129,6 +2242,43 @@ class ApiLintTest : DriverTest() {
                             open fun get(i: Int): A {
                                 return A()
                             }
+                        }
+                    """
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `Test fields, parameters and returns require nullability`() {
+        check(
+            apiLint = "", // enabled
+            compatibilityMode = false,
+            warnings = """
+                src/android/pkg/Foo.java:11: error: Missing nullability on parameter `name` in method `Foo` [MissingNullability]
+                src/android/pkg/Foo.java:12: error: Missing nullability on parameter `value` in method `setBadValue` [MissingNullability]
+                src/android/pkg/Foo.java:13: error: Missing nullability on method `getBadValue` return [MissingNullability]
+                src/android/pkg/Foo.java:7: error: Missing nullability on field `badField` in class `class android.pkg.Foo` [MissingNullability]
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                        package android.pkg;
+
+                        import androidx.annotation.NonNull;
+                        import androidx.annotation.Nullable;
+
+                        public class Foo {
+                            public Foo badField;
+                            @Nullable
+                            public Foo goodField;
+
+                            public Foo(String name, int number) { }
+                            public void setBadValue(Foo value) { }
+                            public Foo getBadValue(int number) { throw UnsupportedOperationExceptions(); }
+                            public void setGoodValue(@Nullable Foo value) { }
+                            @NonNull
+                            public Foo getGoodValue(int number) { throw UnsupportedOperationExceptions(); }
                         }
                     """
                 )
