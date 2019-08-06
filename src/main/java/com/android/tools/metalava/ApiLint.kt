@@ -270,7 +270,7 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
         checkBoxed(type, item)
         checkIcu(type, typeString, item)
         checkBitSet(type, typeString, item)
-        checkHasNullability(type, item)
+        checkHasNullability(item)
     }
 
     private fun checkClass(
@@ -1778,13 +1778,19 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
         }
     }
 
-    private fun checkHasNullability(type: TypeItem, item: Item) {
-        if (!type.primitive && !item.hasNullnessInfo()) {
+    private fun checkHasNullability(item: Item) {
+        if (item.requiresNullnessInfo() && !item.hasNullnessInfo()) {
             val where = when (item) {
                 is ParameterItem -> "parameter `${item.name()}` in method `${item.parent()?.name()}`"
                 is FieldItem -> "field `${item.name()}` in class `${item.parent()}`"
                 is ConstructorItem -> "constructor `${item.name()}` return"
-                is MethodItem -> "method `${item.name()}` return"
+                is MethodItem -> {
+                    // For methods requiresNullnessInfo and hasNullnessInfo considers both parameters and return,
+                    // only warn about non-annotated returns here as parameters will get visited individually.
+                    if (item.isConstructor() || item.returnType()?.primitive == true) return
+                    if (item.modifiers.hasNullnessInfo()) return
+                    "method `${item.name()}` return"
+                }
                 else -> throw IllegalStateException("Unexpected item type: $item")
             }
             report(MISSING_NULLABILITY, item, "Missing nullability on $where")
