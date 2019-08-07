@@ -15,7 +15,7 @@ buildscript {
 
 buildDir = getBuildDirectory()
 
-defaultTasks = listOf("clean", "installDist")
+defaultTasks = listOf("clean", "installDist", "test")
 
 repositories {
     google()
