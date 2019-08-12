@@ -15,7 +15,7 @@ buildscript {
 
 buildDir = getBuildDirectory()
 
-defaultTasks = listOf("clean", "installDist", "test")
+defaultTasks = listOf("installDist", "test", "shadowJar", "createArchive")
 
 repositories {
     google()
@@ -134,6 +134,16 @@ fun isBuildingOnServer(): Boolean {
     return System.getenv("OUT_DIR") != null && System.getenv("DIST_DIR") != null
 }
 
+/**
+ * @return build id string for current build
+ *
+ * The build server does not pass the build id so we infer it from the last folder of the
+ * distribution directory name.
+ */
+fun getBuildId(): String {
+    return if (System.getenv("DIST_DIR") != null) File(System.getenv("DIST_DIR")).name else "0"
+}
+
 // KtLint: https://github.com/shyiko/ktlint
 
 fun Project.getKtlintConfiguration(): Configuration {
@@ -159,9 +169,12 @@ tasks.register("ktlintFormat", JavaExec::class.java) {
     args = listOf("-F", "src/**/*.kt", "build.gradle.kts")
 }
 
+val libraryName = "Metalava"
+val repositoryName = "Dist"
+
 publishing {
     publications {
-        create<MavenPublication>("metalavaLibrary") {
+        create<MavenPublication>(libraryName) {
             from(components["java"])
             pom {
                 licenses {
@@ -185,8 +198,18 @@ publishing {
 
     repositories {
         maven {
-            name = "distRepo"
-            url = uri("file://${getDistributionDirectory().canonicalPath}/repo")
+            name = repositoryName
+            url = uri("file://${getDistributionDirectory().canonicalPath}/repo/m2repository")
         }
     }
+}
+
+tasks.register("createArchive", Zip::class.java) {
+    description = "Create a zip of the library in a maven format"
+    group = "publishing"
+
+    from("${getDistributionDirectory().canonicalPath}/repo")
+    archiveFileName.set("top-of-tree-m2repository-all-${getBuildId()}.zip")
+    destinationDirectory.set(getDistributionDirectory())
+    dependsOn("publish${libraryName}PublicationTo${repositoryName}Repository")
 }
