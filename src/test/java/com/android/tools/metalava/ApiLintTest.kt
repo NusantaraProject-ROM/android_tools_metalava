@@ -2258,7 +2258,7 @@ class ApiLintTest : DriverTest() {
                 src/android/pkg/Foo.java:11: error: Missing nullability on parameter `name` in method `Foo` [MissingNullability]
                 src/android/pkg/Foo.java:12: error: Missing nullability on parameter `value` in method `setBadValue` [MissingNullability]
                 src/android/pkg/Foo.java:13: error: Missing nullability on method `getBadValue` return [MissingNullability]
-                src/android/pkg/Foo.java:19: error: Missing nullability on parameter `duration` in method `methodMissingParamAnnotations` [MissingNullability]
+                src/android/pkg/Foo.java:20: error: Missing nullability on parameter `duration` in method `methodMissingParamAnnotations` [MissingNullability]
                 src/android/pkg/Foo.java:7: error: Missing nullability on field `badField` in class `class android.pkg.Foo` [MissingNullability]
                 """,
             sourceFiles = *arrayOf(
@@ -2269,7 +2269,7 @@ class ApiLintTest : DriverTest() {
                         import androidx.annotation.NonNull;
                         import androidx.annotation.Nullable;
 
-                        public class Foo {
+                        public class Foo<T> {
                             public Foo badField;
                             @Nullable
                             public Foo goodField;
@@ -2278,9 +2278,10 @@ class ApiLintTest : DriverTest() {
                             public void setBadValue(Foo value) { }
                             public Foo getBadValue(int number) { throw UnsupportedOperationExceptions(); }
                             public void setGoodValue(@Nullable Foo value) { }
+                            public void setGoodIgnoredGenericValue(T value) { }
                             @NonNull
                             public Foo getGoodValue(int number) { throw UnsupportedOperationExceptions(); }
-                            
+
                             @NonNull
                             public Foo methodMissingParamAnnotations(java.time.Duration duration) {
                                 throw UnsupportedOperationException();
