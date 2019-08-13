@@ -1780,6 +1780,13 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
 
     private fun checkHasNullability(item: Item) {
         if (item.requiresNullnessInfo() && !item.hasNullnessInfo()) {
+            val type = item.type()
+            if (type != null && type.isTypeParameter()) {
+              // Generic types should have declarations of nullability set at the site of where
+              // the type is set, so that for Foo<T>, T does not need to specify nullability, but
+              // for Foo<Bar>, Bar does.
+              return // Do not enforce nullability for generics
+            }
             val where = when (item) {
                 is ParameterItem -> "parameter `${item.name()}` in method `${item.parent()?.name()}`"
                 is FieldItem -> "field `${item.name()}` in class `${item.parent()}`"

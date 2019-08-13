@@ -162,6 +162,11 @@ interface TypeItem {
     fun asTypeParameter(context: MemberItem? = null): TypeParameterItem?
 
     /**
+     * Whether this type is a type parameter.
+     */
+    fun isTypeParameter(context: MemberItem? = null): Boolean = asTypeParameter(context) != null
+
+    /**
      * Mark nullness annotations in the type as recent.
      * TODO: This isn't very clean; we should model individual annotations.
      */
