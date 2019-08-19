@@ -2488,3 +2488,28 @@ val visibleForTestingSource: TestFile = java(
     }
     """
 ).indented()
+
+val columnSource: TestFile = java(
+    """
+    package android.provider;
+
+    import static java.lang.annotation.ElementType.FIELD;
+    import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+    import android.content.ContentProvider;
+    import android.content.ContentValues;
+    import android.database.Cursor;
+
+    import java.lang.annotation.Documented;
+    import java.lang.annotation.Retention;
+    import java.lang.annotation.Target;
+
+    @Documented
+    @Retention(RUNTIME)
+    @Target({FIELD})
+    public @interface Column {
+        int value();
+        boolean readOnly() default false;
+    }
+    """
+).indented()

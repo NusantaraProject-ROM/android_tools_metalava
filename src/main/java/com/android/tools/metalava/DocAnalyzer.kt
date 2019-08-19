@@ -210,6 +210,7 @@ class DocAnalyzer(
                     "androidx.annotation.StringDef" -> handleTypeDef(annotation, item)
                     "android.annotation.RequiresFeature" -> handleRequiresFeature(annotation, item)
                     "androidx.annotation.RequiresApi" -> handleRequiresApi(annotation, item)
+                    "android.provider.Column" -> handleColumn(annotation, item)
                     "kotlin.Deprecated" -> handleKotlinDeprecation(annotation, item)
                 }
 
@@ -487,6 +488,48 @@ class DocAnalyzer(
                 if (level is Int) {
                     addApiLevelDocumentation(level, item)
                 }
+            }
+
+            private fun handleColumn(
+                annotation: AnnotationItem,
+                item: Item
+            ) {
+                val value = annotation.findAttribute("value")?.leafValues()?.firstOrNull() ?: return
+                val readOnly = annotation.findAttribute("readOnly")?.leafValues()?.firstOrNull()?.value() == true
+                val sb = StringBuilder(100)
+                val resolved = value.resolve()
+                val field = resolved as? FieldItem
+                sb.append("This constant represents a column name that can be used with a ")
+                sb.append("{@link android.content.ContentProvider}")
+                sb.append(" through a ")
+                sb.append("{@link android.content.ContentValues}")
+                sb.append(" or ")
+                sb.append("{@link android.database.Cursor}")
+                sb.append(" object. The values stored in this column are ")
+                sb.append("")
+                if (field == null) {
+                    reporter.report(
+                        Errors.MISSING_COLUMN, item,
+                        "Cannot find feature field for $value required by $item (may be hidden or removed)"
+                    )
+                    sb.append("{@link ${value.toSource()}}")
+                } else {
+                    if (filterReference.test(field)) {
+                        sb.append("{@link ${field.containingClass().qualifiedName()}#${field.name()} ${field.containingClass().simpleName()}#${field.name()}} ")
+                    } else {
+                        reporter.report(
+                            Errors.MISSING_COLUMN, item,
+                            "Feature field $value required by $item is hidden or removed"
+                        )
+                        sb.append("${field.containingClass().simpleName()}#${field.name()} ")
+                    }
+                }
+
+                if (readOnly) {
+                    sb.append(", and are read-only and cannot be mutated")
+                }
+                sb.append(".")
+                appendDocumentation(sb.toString(), item, false)
             }
         })
     }
