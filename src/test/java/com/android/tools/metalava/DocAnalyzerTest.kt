@@ -1961,4 +1961,75 @@ class DocAnalyzerTest : DriverTest() {
 
         dir.deleteRecursively()
     }
+
+    @Test
+    fun `Test Column annotation`() {
+        // Bug: 120429729
+        check(
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    import android.provider.Column;
+                    import android.database.Cursor;
+                    @SuppressWarnings("WeakerAccess")
+                    public class ColumnTest {
+                        @Column(Cursor.FIELD_TYPE_STRING)
+                        public static final String DATA = "_data";
+                        @Column(value = Cursor.FIELD_TYPE_BLOB, readOnly = true)
+                        public static final String HASH = "_hash";
+                        @Column(value = Cursor.FIELD_TYPE_STRING, readOnly = true)
+                        public static final String TITLE = "title";
+                        @Column(value = Cursor.NONEXISTENT, readOnly = true)
+                        public static final String BOGUS = "bogus";
+                    }
+                    """
+                ),
+                java(
+                    """
+                        package android.database;
+                        public interface Cursor {
+                            int FIELD_TYPE_NULL = 0;
+                            int FIELD_TYPE_INTEGER = 1;
+                            int FIELD_TYPE_FLOAT = 2;
+                            int FIELD_TYPE_STRING = 3;
+                            int FIELD_TYPE_BLOB = 4;
+                        }
+                    """
+                ),
+                columnSource
+            ),
+            checkCompilation = true,
+            checkDoclava1 = false,
+            warnings = """
+                src/test/pkg/ColumnTest.java:12: warning: Cannot find feature field for Cursor.NONEXISTENT required by field ColumnTest.BOGUS (may be hidden or removed) [MissingColumn]
+                """,
+            stubs = arrayOf(
+                """
+                package test.pkg;
+                import android.database.Cursor;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class ColumnTest {
+                public ColumnTest() { throw new RuntimeException("Stub!"); }
+                /**
+                 * This constant represents a column name that can be used with a {@link android.content.ContentProvider} through a {@link android.content.ContentValues} or {@link android.database.Cursor} object. The values stored in this column are {@link Cursor.NONEXISTENT}, and are read-only and cannot be mutated.
+                 */
+                @android.provider.Column(value=Cursor.NONEXISTENT, readOnly=true) public static final java.lang.String BOGUS = "bogus";
+                /**
+                 * This constant represents a column name that can be used with a {@link android.content.ContentProvider} through a {@link android.content.ContentValues} or {@link android.database.Cursor} object. The values stored in this column are {@link android.database.Cursor#FIELD_TYPE_STRING Cursor#FIELD_TYPE_STRING} .
+                 */
+                @android.provider.Column(android.database.Cursor.FIELD_TYPE_STRING) public static final java.lang.String DATA = "_data";
+                /**
+                 * This constant represents a column name that can be used with a {@link android.content.ContentProvider} through a {@link android.content.ContentValues} or {@link android.database.Cursor} object. The values stored in this column are {@link android.database.Cursor#FIELD_TYPE_BLOB Cursor#FIELD_TYPE_BLOB} , and are read-only and cannot be mutated.
+                 */
+                @android.provider.Column(value=android.database.Cursor.FIELD_TYPE_BLOB, readOnly=true) public static final java.lang.String HASH = "_hash";
+                /**
+                 * This constant represents a column name that can be used with a {@link android.content.ContentProvider} through a {@link android.content.ContentValues} or {@link android.database.Cursor} object. The values stored in this column are {@link android.database.Cursor#FIELD_TYPE_STRING Cursor#FIELD_TYPE_STRING} , and are read-only and cannot be mutated.
+                 */
+                @android.provider.Column(value=android.database.Cursor.FIELD_TYPE_STRING, readOnly=true) public static final java.lang.String TITLE = "title";
+                }
+                """
+            )
+        )
+    }
 }
