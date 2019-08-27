@@ -258,7 +258,7 @@ open class Reporter(private val rootFolder: File? = null) {
         return if (lineNumber > 0) "$path:$lineNumber" else path
     }
 
-    /** Returns the 0-based line number */
+    /** Returns the 0-based line number of character position <offset> in <text> */
     private fun getLineNumber(text: String, offset: Int): Int {
         var line = 0
         var curr = 0
@@ -299,7 +299,7 @@ open class Reporter(private val rootFolder: File? = null) {
                 severity
             }
 
-        if (severity == ERROR) {
+        if (effectiveSeverity == ERROR) {
             hasErrors = true
             errorCount++
         } else if (severity == WARNING) {
