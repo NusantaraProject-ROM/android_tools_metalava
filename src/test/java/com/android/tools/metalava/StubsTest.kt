@@ -1544,11 +1544,11 @@ class StubsTest : DriverTest() {
                     }
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class Child2 extends test.pkg.Constructors.Parent {
-                    Child2(java.lang.String s) { super(null, 0, 0, false, (short)0); throw new RuntimeException("Stub!"); }
+                    Child2() { super(null, 0, 0, false, (short)0); throw new RuntimeException("Stub!"); }
                     }
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class Child3 extends test.pkg.Constructors.Child2 {
-                    private Child3(java.lang.String s) { super(null); throw new RuntimeException("Stub!"); }
+                    private Child3() { throw new RuntimeException("Stub!"); }
                     }
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class Child4 extends test.pkg.Constructors.Parent {
@@ -1626,11 +1626,11 @@ class StubsTest : DriverTest() {
                     }
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class Child2 extends test.pkg.Constructors.Parent {
-                    Child2(java.lang.String s) { super(null, 0, 0, false, (short)0); throw new RuntimeException("Stub!"); }
+                    Child2() { super(null, 0, 0, false, (short)0); throw new RuntimeException("Stub!"); }
                     }
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class Child3 extends test.pkg.Constructors.Child2 {
-                    private Child3(java.lang.String s) { super(null); throw new RuntimeException("Stub!"); }
+                    private Child3() { throw new RuntimeException("Stub!"); }
                     }
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class Child4 extends test.pkg.Constructors.Parent {
@@ -1972,29 +1972,28 @@ class StubsTest : DriverTest() {
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class MyClass1 {
-                MyClass1(int myVar) { throw new RuntimeException("Stub!"); }
+                MyClass1() { throw new RuntimeException("Stub!"); }
                 }
                 """,
                 """
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class MySubClass1 extends test.pkg.MyClass1 {
-                MySubClass1(int myVar) throws java.io.IOException { super(0); throw new RuntimeException("Stub!"); }
+                MySubClass1() { throw new RuntimeException("Stub!"); }
                 }
                 """,
                 """
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class MyClass2 {
-                /** @hide */
-                MyClass2(int myVar) { throw new RuntimeException("Stub!"); }
+                MyClass2() { throw new RuntimeException("Stub!"); }
                 }
                 """,
                 """
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class MySubClass2 extends test.pkg.MyClass2 {
-                public MySubClass2() { super(0); throw new RuntimeException("Stub!"); }
+                public MySubClass2() { throw new RuntimeException("Stub!"); }
                 }
                 """
             ),
