@@ -449,9 +449,6 @@ open class PsiClassItem(
 
             val constructors: MutableList<PsiConstructorItem> = ArrayList(5)
             for (psiMethod in psiMethods) {
-                if (psiMethod.isPrivate() || psiMethod.isPackagePrivate()) {
-                    item.hasPrivateConstructor = true
-                }
                 if (psiMethod.isConstructor) {
                     val constructor = PsiConstructorItem.create(codebase, item, psiMethod)
                     constructors.add(constructor)
