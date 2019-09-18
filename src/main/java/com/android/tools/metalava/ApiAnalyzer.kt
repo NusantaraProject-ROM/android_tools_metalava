@@ -29,6 +29,7 @@ import com.android.tools.metalava.model.PackageItem
 import com.android.tools.metalava.model.PackageList
 import com.android.tools.metalava.model.ParameterItem
 import com.android.tools.metalava.model.TypeItem
+import com.android.tools.metalava.model.VisibilityLevel
 import com.android.tools.metalava.model.psi.EXPAND_DOCUMENTATION
 import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.android.tools.metalava.model.visitors.ItemVisitor
@@ -219,7 +220,7 @@ class ApiAnalyzer(
                 if (!referencesExcludedType(best, filter)) {
                     cls.stubConstructor = best
                     if (!best.isPrivate) {
-                        best.mutableModifiers().setPackagePrivate(true)
+                        best.mutableModifiers().setVisibilityLevel(VisibilityLevel.PACKAGE_PRIVATE)
                         best.hidden = false
                     }
                     best.docOnly = false
@@ -230,7 +231,7 @@ class ApiAnalyzer(
             // No constructors, yet somebody extends this (or private constructor): we have to invent one, such that
             // subclasses can dispatch to it in the stub files etc
             cls.stubConstructor = cls.createDefaultConstructor().also {
-                it.mutableModifiers().setPackagePrivate(true)
+                it.mutableModifiers().setVisibilityLevel(VisibilityLevel.PACKAGE_PRIVATE)
                 it.hidden = false
                 it.superConstructor = superClass?.stubConstructor
             }
