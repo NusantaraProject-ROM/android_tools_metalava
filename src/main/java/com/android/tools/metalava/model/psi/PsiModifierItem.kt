@@ -42,7 +42,7 @@ import org.jetbrains.uast.kotlin.KotlinNullabilityUAnnotation
 
 class PsiModifierItem(
     codebase: Codebase,
-    flags: Int = 0,
+    flags: Int = PACKAGE_PRIVATE,
     annotations: MutableList<AnnotationItem>? = null
 ) : DefaultModifierList(codebase, flags, annotations), ModifierList, MutableModifierList {
     companion object {
@@ -64,16 +64,16 @@ class PsiModifierItem(
         }
 
         private fun computeFlag(element: PsiModifierListOwner, modifierList: PsiModifierList): Int {
+            var visibilityFlags = if (modifierList.hasModifierProperty(PsiModifier.PUBLIC)) {
+                PUBLIC
+            } else if (modifierList.hasModifierProperty(PsiModifier.PROTECTED)) {
+                PROTECTED
+            } else if (modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
+                PRIVATE
+            } else {
+                PACKAGE_PRIVATE
+            }
             var flags = 0
-            if (modifierList.hasModifierProperty(PsiModifier.PUBLIC)) {
-                flags = flags or PUBLIC
-            }
-            if (modifierList.hasModifierProperty(PsiModifier.PROTECTED)) {
-                flags = flags or PROTECTED
-            }
-            if (modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
-                flags = flags or PRIVATE
-            }
             if (modifierList.hasModifierProperty(PsiModifier.STATIC)) {
                 flags = flags or STATIC
             }
@@ -116,7 +116,7 @@ class PsiModifierItem(
                         // Also remove public flag which at the UAST levels it promotes these
                         // methods to, e.g. "internal myVar" gets turned into
                         //    public final boolean getMyHiddenVar$lintWithKotlin()
-                        flags = (flags or INTERNAL) and PUBLIC.inv()
+                        visibilityFlags = INTERNAL
                     }
                     if (ktModifierList.hasModifier(KtTokens.INFIX_KEYWORD)) {
                         flags = flags or INFIX
@@ -128,7 +128,7 @@ class PsiModifierItem(
                         flags = flags or INLINE
 
                         // Workaround for b/117565118:
-                        if ((flags or PRIVATE) != 0 && element is PsiMethod) {
+                        if (element is PsiMethod) {
                             val t =
                                 ((element as? UMethod)?.sourcePsi as? KtNamedFunction)?.typeParameterList?.text ?: ""
                             if (t.contains("reified") &&
@@ -136,7 +136,7 @@ class PsiModifierItem(
                                 !ktModifierList.hasModifier(KtTokens.INTERNAL_KEYWORD)
                             ) {
                                 // Switch back from private to public
-                                flags = (flags and PRIVATE.inv()) or PUBLIC
+                                visibilityFlags = PUBLIC
                             }
                         }
                     }
@@ -145,10 +145,13 @@ class PsiModifierItem(
 
                         // Workaround for b/117565118:
                         // Switch back from private to public
-                        flags = (flags and PRIVATE.inv()) or PUBLIC
+                        visibilityFlags = PUBLIC
                     }
                 }
             }
+
+            // Merge in the visibility flags.
+            flags = flags or visibilityFlags
 
             return flags
         }
@@ -240,15 +243,17 @@ class PsiModifierItem(
 
         /** Modifies the modifier flags based on the VisibleForTesting otherwise constants */
         private fun getVisibilityFlag(ref: String, flags: Int): Int {
-            return if (ref.endsWith("PROTECTED")) {
-                (flags and PUBLIC.inv() and PRIVATE.inv() and INTERNAL.inv()) or PROTECTED
+            val visibilityFlags = if (ref.endsWith("PROTECTED")) {
+                PROTECTED
             } else if (ref.endsWith("PACKAGE_PRIVATE")) {
-                (flags and PUBLIC.inv() and PRIVATE.inv() and INTERNAL.inv() and PROTECTED.inv())
+                PACKAGE_PRIVATE
             } else if (ref.endsWith("PRIVATE") || ref.endsWith("NONE")) {
-                (flags and PUBLIC.inv() and PROTECTED.inv() and INTERNAL.inv()) or PRIVATE
+                PRIVATE
             } else {
-                flags
+                flags and VISIBILITY_MASK
             }
+
+            return (flags and VISIBILITY_MASK.inv()) or visibilityFlags
         }
 
         fun create(codebase: PsiBasedCodebase, original: PsiModifierItem): PsiModifierItem {
