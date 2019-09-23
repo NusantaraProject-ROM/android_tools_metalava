@@ -27,6 +27,7 @@ import com.android.tools.metalava.model.PackageItem
 import com.android.tools.metalava.model.PropertyItem
 import com.android.tools.metalava.model.TypeItem
 import com.android.tools.metalava.model.TypeParameterList
+import com.android.tools.metalava.model.VisibilityLevel
 import com.intellij.lang.jvm.types.JvmReferenceType
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
@@ -477,12 +478,12 @@ open class PsiClassItem(
                 // (except in Java 1.9, where they can be private
                 for (method in methods) {
                     if (!method.isPrivate) {
-                        method.mutableModifiers().setPublic(true)
+                        method.mutableModifiers().setVisibilityLevel(VisibilityLevel.PUBLIC)
                     }
                 }
                 for (method in fields) {
                     val m = method.mutableModifiers()
-                    m.setPublic(true)
+                    m.setVisibilityLevel(VisibilityLevel.PUBLIC)
                     m.setStatic(true)
                 }
             }
