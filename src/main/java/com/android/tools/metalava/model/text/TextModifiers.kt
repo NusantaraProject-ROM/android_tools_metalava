@@ -29,7 +29,7 @@ import java.io.StringWriter
 
 class TextModifiers(
     override val codebase: Codebase,
-    flags: Int = 0,
+    flags: Int = PACKAGE_PRIVATE,
     annotations: MutableList<AnnotationItem>? = null
 ) : DefaultModifierList(codebase, flags, annotations) {
 

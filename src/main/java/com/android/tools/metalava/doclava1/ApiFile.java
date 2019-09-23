@@ -21,6 +21,7 @@ import com.android.tools.metalava.FileFormat;
 import com.android.tools.metalava.model.AnnotationItem;
 import com.android.tools.metalava.model.DefaultModifierList;
 import com.android.tools.metalava.model.TypeParameterList;
+import com.android.tools.metalava.model.VisibilityLevel;
 import com.android.tools.metalava.model.text.TextClassItem;
 import com.android.tools.metalava.model.text.TextConstructorItem;
 import com.android.tools.metalava.model.text.TextFieldItem;
@@ -41,9 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static com.android.tools.metalava.ConstantsKt.ANDROIDX_NONNULL;
 import static com.android.tools.metalava.ConstantsKt.ANDROIDX_NULLABLE;
@@ -511,25 +510,25 @@ public class ApiFile {
         String token,
         List<String> annotations) throws ApiParseException {
 
-        TextModifiers modifiers = new TextModifiers(api, 0, null);
+        TextModifiers modifiers = new TextModifiers(api, DefaultModifierList.PACKAGE_PRIVATE, null);
 
         processModifiers:
         while (true) {
             switch (token) {
                 case "public":
-                    modifiers.setPublic(true);
+                    modifiers.setVisibilityLevel(VisibilityLevel.PUBLIC);
                     token = tokenizer.requireToken();
                     break;
                 case "protected":
-                    modifiers.setProtected(true);
+                    modifiers.setVisibilityLevel(VisibilityLevel.PROTECTED);
                     token = tokenizer.requireToken();
                     break;
                 case "private":
-                    modifiers.setPrivate(true);
+                    modifiers.setVisibilityLevel(VisibilityLevel.PRIVATE);
                     token = tokenizer.requireToken();
                     break;
                 case "internal":
-                    modifiers.setInternal(true);
+                    modifiers.setVisibilityLevel(VisibilityLevel.INTERNAL);
                     token = tokenizer.requireToken();
                     break;
                 case "static":
