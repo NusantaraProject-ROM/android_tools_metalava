@@ -125,9 +125,6 @@ class ApiAnalyzer(
      * [ConstructorItem.superConstructor] The default constructor to invoke. If set,
      * use this rather than the [ClassItem.stubConstructor].
      *
-     * [ClassItem.hasPrivateConstructor] Set if this class has one or more private
-     * constructors.
-     *
      * [Item.tag] : mark for avoiding repeated iteration of internal item nodes
      *
      *
@@ -193,7 +190,7 @@ class ApiAnalyzer(
         }
 
         // Find default constructor, if one doesn't exist
-        if (!isLeaf || cls.hasPrivateConstructor || cls.constructors().isNotEmpty()) {
+        if (!isLeaf || cls.constructors().isNotEmpty()) {
             val constructors = cls.constructors()
             for (constructor in constructors) {
                 if (constructor.parameters().isEmpty() && constructor.isPublic && !constructor.hidden) {
