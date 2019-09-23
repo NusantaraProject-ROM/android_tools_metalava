@@ -109,7 +109,7 @@ class ApiAnalyzer(
         leafClasses
             // Filter classes by filter here to not waste time in hidden packages
             .filter { filter.test(it) }
-            .forEach { addConstructors(it, filter, true) }
+            .forEach { addConstructors(it, filter) }
     }
 
     /**
@@ -129,7 +129,7 @@ class ApiAnalyzer(
      *
      *
      */
-    private fun addConstructors(cls: ClassItem, filter: Predicate<Item>, isLeaf: Boolean) {
+    private fun addConstructors(cls: ClassItem, filter: Predicate<Item>) {
         // What happens if we have
         //  package foo:
         //     public class A { public A(int) }
@@ -170,7 +170,7 @@ class ApiAnalyzer(
         // First handle its super class hierarchy to make sure that we've
         // already constructed super classes
         val superClass = cls.filteredSuperclass(filter)
-        superClass?.let { it -> addConstructors(it, filter, false) }
+        superClass?.let { addConstructors(it, filter) }
         cls.tag = true
 
         if (superClass != null) {
@@ -190,7 +190,7 @@ class ApiAnalyzer(
         }
 
         // Find default constructor, if one doesn't exist
-        if (!isLeaf || cls.constructors().isNotEmpty()) {
+        if (cls.constructors().isNotEmpty()) {
             val constructors = cls.constructors()
             for (constructor in constructors) {
                 if (constructor.parameters().isEmpty() && constructor.isPublic && !constructor.hidden) {
