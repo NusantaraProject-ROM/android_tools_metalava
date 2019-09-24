@@ -134,21 +134,6 @@ interface TypeItem {
         }
     }
 
-    /** Returns true if this type references a type not matched by the given predicate */
-    fun referencesExcludedType(filter: Predicate<Item>): Boolean {
-        if (primitive) {
-            return false
-        }
-
-        for (item in typeArgumentClasses()) {
-            if (!filter.test(item)) {
-                return true
-            }
-        }
-
-        return false
-    }
-
     fun defaultValueString(): String = defaultValue()?.toString() ?: "null"
 
     fun hasTypeArguments(): Boolean = toTypeString().contains("<")
