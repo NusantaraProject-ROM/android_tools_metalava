@@ -32,6 +32,7 @@ interface ModifierList {
     fun annotations(): List<AnnotationItem>
 
     fun owner(): Item
+    fun getVisibilityLevel(): VisibilityLevel
     fun isPublic(): Boolean
     fun isProtected(): Boolean
     fun isPrivate(): Boolean
@@ -51,7 +52,6 @@ interface ModifierList {
     // Kotlin
     fun isSealed(): Boolean = false
 
-    fun isInternal(): Boolean = false
     fun isInfix(): Boolean = false
     fun isSuspend(): Boolean = false
     fun isOperator(): Boolean = false
@@ -192,26 +192,21 @@ interface ModifierList {
      * as the ones in the given [other] modifier list
      */
     fun asAccessibleAs(other: ModifierList): Boolean {
-        return when {
-            other.isPublic() -> isPublic()
-            other.isProtected() -> isPublic() || isProtected()
-            other.isPackagePrivate() -> isPublic() || isProtected() || isPackagePrivate()
-            other.isInternal() -> isPublic() || isProtected() || isInternal()
-            other.isPrivate() -> true
-            else -> true
+        val otherLevel = other.getVisibilityLevel()
+        val thisLevel = getVisibilityLevel()
+        // Generally the access level enum order determines relative visibility. However, there is an exception because
+        // package private and internal are not directly comparable.
+        val result = thisLevel >= otherLevel
+        return when (otherLevel) {
+            VisibilityLevel.PACKAGE_PRIVATE -> result && thisLevel != VisibilityLevel.INTERNAL
+            VisibilityLevel.INTERNAL -> result && thisLevel != VisibilityLevel.PACKAGE_PRIVATE
+            else -> result
         }
     }
 
     /** User visible description of the visibility in this modifier list */
     fun getVisibilityString(): String {
-        return when {
-            isPublic() -> "public"
-            isProtected() -> "protected"
-            isPackagePrivate() -> "package private"
-            isInternal() -> "internal"
-            isPrivate() -> "private"
-            else -> error(toString())
-        }
+        return getVisibilityLevel().userVisibleDescription
     }
 
     /**
@@ -219,14 +214,7 @@ interface ModifierList {
      * the source code for the visibility modifiers in the modifier list
      */
     fun getVisibilityModifiers(): String {
-        return when {
-            isPublic() -> "public"
-            isProtected() -> "protected"
-            isPackagePrivate() -> ""
-            isInternal() -> "internal"
-            isPrivate() -> "private"
-            else -> error(toString())
-        }
+        return getVisibilityLevel().sourceCodeModifier
     }
 
     companion object {
@@ -257,8 +245,8 @@ interface ModifierList {
                         return if (removeFinal) false else modifiers.isFinal()
                     }
 
-                    override fun isPublic(): Boolean {
-                        return if (addPublic) true else modifiers.isPublic()
+                    override fun getVisibilityLevel(): VisibilityLevel {
+                        return if (addPublic) VisibilityLevel.PUBLIC else modifiers.getVisibilityLevel()
                     }
                 }
                 AbstractFiltering()
@@ -301,11 +289,9 @@ interface ModifierList {
             // Order based on the old stubs code: TODO, use Java standard order instead?
 
             if (compatibility.nonstandardModifierOrder) {
-                when {
-                    list.isPublic() -> writer.write("public ")
-                    list.isProtected() -> writer.write("protected ")
-                    list.isInternal() -> writer.write("internal ")
-                    list.isPrivate() -> writer.write("private ")
+                val visibilityLevel = list.getVisibilityLevel()
+                if (visibilityLevel != VisibilityLevel.PACKAGE_PRIVATE) {
+                    writer.write(visibilityLevel.sourceCodeModifier + " ")
                 }
 
                 if (list.isDefault()) {
@@ -383,11 +369,9 @@ interface ModifierList {
                     writer.write("deprecated ")
                 }
 
-                when {
-                    list.isPublic() -> writer.write("public ")
-                    list.isProtected() -> writer.write("protected ")
-                    list.isInternal() -> writer.write("internal ")
-                    list.isPrivate() -> writer.write("private ")
+                val visibilityLevel = list.getVisibilityLevel()
+                if (visibilityLevel != VisibilityLevel.PACKAGE_PRIVATE) {
+                    writer.write(visibilityLevel.sourceCodeModifier + " ")
                 }
 
                 val isInterface = classItem?.isInterface() == true ||

@@ -18,6 +18,7 @@ package com.android.tools.metalava.model.psi
 
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.PackageItem
+import com.android.tools.metalava.model.VisibilityLevel
 import com.intellij.psi.PsiPackage
 
 class PsiPackageItem(
@@ -135,7 +136,8 @@ class PsiPackageItem(
             val commentText = javadoc(psiPackage) + if (extraDocs != null) "\n$extraDocs" else ""
             val modifiers = modifiers(codebase, psiPackage, commentText)
             if (modifiers.isPackagePrivate()) {
-                modifiers.setPublic(true) // packages are always public (if not hidden explicitly with private)
+                // packages are always public (if not hidden explicitly with private)
+                modifiers.setVisibilityLevel(VisibilityLevel.PUBLIC)
             }
             val qualifiedName = psiPackage.qualifiedName
 

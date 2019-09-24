@@ -29,6 +29,7 @@ import com.android.tools.metalava.model.PackageItem
 import com.android.tools.metalava.model.PackageList
 import com.android.tools.metalava.model.ParameterItem
 import com.android.tools.metalava.model.TypeItem
+import com.android.tools.metalava.model.VisibilityLevel
 import com.android.tools.metalava.model.psi.EXPAND_DOCUMENTATION
 import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.android.tools.metalava.model.visitors.ItemVisitor
@@ -109,7 +110,7 @@ class ApiAnalyzer(
         leafClasses
             // Filter classes by filter here to not waste time in hidden packages
             .filter { filter.test(it) }
-            .forEach { addConstructors(it, filter, true) }
+            .forEach { addConstructors(it, filter) }
     }
 
     /**
@@ -125,14 +126,11 @@ class ApiAnalyzer(
      * [ConstructorItem.superConstructor] The default constructor to invoke. If set,
      * use this rather than the [ClassItem.stubConstructor].
      *
-     * [ClassItem.hasPrivateConstructor] Set if this class has one or more private
-     * constructors.
-     *
      * [Item.tag] : mark for avoiding repeated iteration of internal item nodes
      *
      *
      */
-    private fun addConstructors(cls: ClassItem, filter: Predicate<Item>, isLeaf: Boolean) {
+    private fun addConstructors(cls: ClassItem, filter: Predicate<Item>) {
         // What happens if we have
         //  package foo:
         //     public class A { public A(int) }
@@ -173,7 +171,7 @@ class ApiAnalyzer(
         // First handle its super class hierarchy to make sure that we've
         // already constructed super classes
         val superClass = cls.filteredSuperclass(filter)
-        superClass?.let { it -> addConstructors(it, filter, false) }
+        superClass?.let { addConstructors(it, filter) }
         cls.tag = true
 
         if (superClass != null) {
@@ -193,7 +191,7 @@ class ApiAnalyzer(
         }
 
         // Find default constructor, if one doesn't exist
-        if (!isLeaf || cls.hasPrivateConstructor || cls.constructors().isNotEmpty()) {
+        if (cls.constructors().isNotEmpty()) {
             val constructors = cls.constructors()
             for (constructor in constructors) {
                 if (constructor.parameters().isEmpty() && constructor.isPublic && !constructor.hidden) {
@@ -222,7 +220,7 @@ class ApiAnalyzer(
                 if (!referencesExcludedType(best, filter)) {
                     cls.stubConstructor = best
                     if (!best.isPrivate) {
-                        best.mutableModifiers().setPackagePrivate(true)
+                        best.mutableModifiers().setVisibilityLevel(VisibilityLevel.PACKAGE_PRIVATE)
                         best.hidden = false
                     }
                     best.docOnly = false
@@ -233,7 +231,7 @@ class ApiAnalyzer(
             // No constructors, yet somebody extends this (or private constructor): we have to invent one, such that
             // subclasses can dispatch to it in the stub files etc
             cls.stubConstructor = cls.createDefaultConstructor().also {
-                it.mutableModifiers().setPackagePrivate(true)
+                it.mutableModifiers().setVisibilityLevel(VisibilityLevel.PACKAGE_PRIVATE)
                 it.hidden = false
                 it.superConstructor = superClass?.stubConstructor
             }
