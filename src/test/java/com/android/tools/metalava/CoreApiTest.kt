@@ -199,7 +199,6 @@ class CoreApiTest : DriverTest() {
                  */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class Exposed {
-                /** @hide */
                 Exposed() { throw new RuntimeException("Stub!"); }
                 public void exposed() { throw new RuntimeException("Stub!"); }
                 }

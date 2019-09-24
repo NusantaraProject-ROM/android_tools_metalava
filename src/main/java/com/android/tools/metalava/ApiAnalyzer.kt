@@ -191,68 +191,40 @@ class ApiAnalyzer(
         }
 
         // Find default constructor, if one doesn't exist
-        if (cls.constructors().isNotEmpty()) {
-            val constructors = cls.constructors()
-            for (constructor in constructors) {
-                if (constructor.parameters().isEmpty() && constructor.isPublic && !constructor.hidden) {
-                    cls.stubConstructor = constructor
-                    return
-                }
-            }
+        val allConstructors = cls.constructors()
+        if (allConstructors.isNotEmpty()) {
 
+            // Try and use a publicly accessible constructor first.
+            val constructors = cls.filteredConstructors(filter).toList()
             if (!constructors.isEmpty()) {
-                // Try to pick the constructor, sorting first by "matches filter", then by
-                // uses available types, then by fewest throwables, then fewest parameters,
+                // Try to pick the constructor, select first by fewest throwables, then fewest parameters,
                 // then based on order in listFilter.test(cls)
-                val first = constructors.first()
-                val best =
-                    if (constructors.size > 1) {
-                        constructors.foldRight(first) { current, next -> pickBest(current, next, filter) }
-                    } else {
-                        first
-                    }
-
-                if (cls.filteredConstructors(filter).contains(best)) {
-                    cls.stubConstructor = best
-                    return
-                }
-
-                if (!referencesExcludedType(best, filter)) {
-                    cls.stubConstructor = best
-                    if (!best.isPrivate) {
-                        best.mutableModifiers().setVisibilityLevel(VisibilityLevel.PACKAGE_PRIVATE)
-                        best.hidden = false
-                    }
-                    best.docOnly = false
-                    return
-                }
+                cls.stubConstructor = constructors.reduce {first, second -> pickBest(first, second)}
+                return
             }
+
+            // No accessible constructors are available so one will have to be created, either a private constructor to
+            // prevent instances of the class from being created, or a package private constructor for use by subclasses
+            // in the package to use. Subclasses outside the package would need a protected or public constructor which
+            // would already be part of the API so should have dropped out above.
+            //
+            // The visibility levels on the constructors from the source can give a clue as to what is required. e.g.
+            // if all constructors are private then it is ok for the generated constructor to be private, otherwise it
+            // should be package private.
+            val allPrivate = allConstructors.asSequence()
+                .map { it.isPrivate }
+                .reduce {v1, v2 -> v1 and v2}
+
+            val visibilityLevel = if (allPrivate) VisibilityLevel.PRIVATE else VisibilityLevel.PACKAGE_PRIVATE
 
             // No constructors, yet somebody extends this (or private constructor): we have to invent one, such that
             // subclasses can dispatch to it in the stub files etc
             cls.stubConstructor = cls.createDefaultConstructor().also {
-                it.mutableModifiers().setVisibilityLevel(VisibilityLevel.PACKAGE_PRIVATE)
+                it.mutableModifiers().setVisibilityLevel(visibilityLevel)
                 it.hidden = false
                 it.superConstructor = superClass?.stubConstructor
             }
         }
-    }
-
-    private fun referencesExcludedType(constructor: ConstructorItem, filter: Predicate<Item>): Boolean {
-        // Checks parameter types and throws types
-        for (parameter in constructor.parameters()) {
-            val type = parameter.type()
-            if (type.referencesExcludedType(filter)) {
-                return true
-            }
-        }
-        for (cls in constructor.throwsTypes()) {
-            if (!filter.test(cls)) {
-                return true
-            }
-        }
-
-        return false
     }
 
     // TODO: Annotation test: @ParameterName, if present, must be supplied on *all* the arguments!
@@ -261,29 +233,8 @@ class ApiAnalyzer(
 
     private fun pickBest(
         current: ConstructorItem,
-        next: ConstructorItem,
-        filter: Predicate<Item>
+        next: ConstructorItem
     ): ConstructorItem {
-        val currentMatchesFilter = filter.test(current)
-        val nextMatchesFilter = filter.test(next)
-        if (currentMatchesFilter != nextMatchesFilter) {
-            return if (currentMatchesFilter) {
-                current
-            } else {
-                next
-            }
-        }
-
-        val currentUsesAvailableTypes = !referencesExcludedType(current, filter)
-        val nextUsesAvailableTypes = !referencesExcludedType(next, filter)
-        if (currentUsesAvailableTypes != nextUsesAvailableTypes) {
-            return if (currentUsesAvailableTypes) {
-                current
-            } else {
-                next
-            }
-        }
-
         val currentThrowsCount = current.throwsTypes().size
         val nextThrowsCount = next.throwsTypes().size
 
