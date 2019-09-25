@@ -496,10 +496,9 @@ class StubWriter(
     private fun generateMissingConstructors(cls: ClassItem) {
         val clsStubConstructor = cls.stubConstructor
         val constructors = cls.filteredConstructors(filterEmit)
+        // If the default stub constructor is not publicly visible then it won't be output during the normal visiting
+        // so visit it specially to ensure that it is output.
         if (clsStubConstructor != null && !constructors.contains(clsStubConstructor)) {
-            if (!clsStubConstructor.isPrivate) {
-                clsStubConstructor.mutableModifiers().setVisibilityLevel(VisibilityLevel.PACKAGE_PRIVATE)
-            }
             visitConstructor(clsStubConstructor)
             return
         }
