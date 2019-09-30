@@ -46,6 +46,7 @@ import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPackage
+import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.TypeAnnotationProvider
 import com.intellij.psi.javadoc.PsiDocComment
@@ -564,7 +565,7 @@ open class PsiBasedCodebase(location: File, override var description: String = "
         return null
     }
 
-    fun getClassType(cls: PsiClass): PsiClassType = getFactory().createType(cls)
+    fun getClassType(cls: PsiClass): PsiClassType = getFactory().createType(cls, PsiSubstitutor.EMPTY)
 
     fun getComment(string: String, parent: PsiElement? = null): PsiDocComment =
         getFactory().createDocCommentFromText(string, parent)
