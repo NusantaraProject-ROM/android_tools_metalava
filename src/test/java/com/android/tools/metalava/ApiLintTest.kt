@@ -801,7 +801,7 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/MyClass.java:6: warning: Methods must return the builder object (return type Builder instead of void): method android.pkg.MyClass.Builder.setSomething(int) [SetterReturnsThis] [Rule M4 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:6: warning: Methods must return the builder object (return type android.pkg.MyClass.Builder<T> instead of void): method android.pkg.MyClass.Builder.setSomething(int) [SetterReturnsThis] [Rule M4 in go/android-api-guidelines]
                 src/android/pkg/MyClass.java:6: warning: Builder methods names should use setFoo() style: method android.pkg.MyClass.Builder.withFoo(int) [BuilderSetStyle]
                 src/android/pkg/MyClass.java:6: warning: Missing `build()` method in android.pkg.MyClass.Builder [MissingBuild]
                 src/android/pkg/TopLevelBuilder.java:3: warning: Builder should be defined as inner class: android.pkg.TopLevelBuilder [TopLevelBuilder]
@@ -823,14 +823,14 @@ class ApiLintTest : DriverTest() {
                     import androidx.annotation.NonNull;
 
                     public class MyClass {
-                        public class Builder {
+                        public class Builder<T> {
                             public void clearAll() { }
                             public int getSomething() { return 0; }
                             public void setSomething(int s) { }
                             @NonNull
-                            public Builder withFoo(int s) { return this; }
+                            public Builder<T> withFoo(int s) { return this; }
                             @NonNull
-                            public Builder setOk(int s) { return this; }
+                            public Builder<T> setOk(int s) { return this; }
                         }
                     }
                     """
