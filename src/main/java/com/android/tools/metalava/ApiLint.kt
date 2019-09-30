@@ -1242,10 +1242,10 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
                 )
             } else if (name.startsWith("set")) {
                 val returnType = method.returnType()?.toTypeString() ?: ""
-                if (returnType != cls.qualifiedName()) {
+                if (returnType != cls.toType().toTypeString()) {
                     report(
                         SETTER_RETURNS_THIS, cls,
-                        "Methods must return the builder object (return type ${cls.simpleName()} instead of $returnType): ${method.describe()}"
+                        "Methods must return the builder object (return type ${cls.toType().toTypeString()} instead of $returnType): ${method.describe()}"
                     )
                 }
             }
