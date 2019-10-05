@@ -1237,14 +1237,14 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
                 continue
             } else if (name.startsWith("with")) {
                 report(
-                    BUILDER_SET_STYLE, cls,
+                    BUILDER_SET_STYLE, method,
                     "Builder methods names should use setFoo() style: ${method.describe()}"
                 )
             } else if (name.startsWith("set")) {
                 val returnType = method.returnType()?.toTypeString() ?: ""
                 if (returnType != cls.toType().toTypeString()) {
                     report(
-                        SETTER_RETURNS_THIS, cls,
+                        SETTER_RETURNS_THIS, method,
                         "Methods must return the builder object (return type ${cls.toType().toTypeString()} instead of $returnType): ${method.describe()}"
                     )
                 }
