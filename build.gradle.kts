@@ -15,7 +15,7 @@ buildscript {
 
 buildDir = getBuildDirectory()
 
-defaultTasks = listOf("installDist", "test", "shadowJar", "createArchive")
+defaultTasks = listOf("installDist", "test", "shadowJar", "createArchive", "ktlint")
 
 repositories {
     google()

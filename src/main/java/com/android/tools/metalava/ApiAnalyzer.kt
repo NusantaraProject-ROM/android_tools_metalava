@@ -199,7 +199,7 @@ class ApiAnalyzer(
             if (!constructors.isEmpty()) {
                 // Try to pick the constructor, select first by fewest throwables, then fewest parameters,
                 // then based on order in listFilter.test(cls)
-                cls.stubConstructor = constructors.reduce {first, second -> pickBest(first, second)}
+                cls.stubConstructor = constructors.reduce { first, second -> pickBest(first, second) }
                 return
             }
 
@@ -213,7 +213,7 @@ class ApiAnalyzer(
             // should be package private.
             val allPrivate = allConstructors.asSequence()
                 .map { it.isPrivate }
-                .reduce {v1, v2 -> v1 and v2}
+                .reduce { v1, v2 -> v1 and v2 }
 
             val visibilityLevel = if (allPrivate) VisibilityLevel.PRIVATE else VisibilityLevel.PACKAGE_PRIVATE
 
