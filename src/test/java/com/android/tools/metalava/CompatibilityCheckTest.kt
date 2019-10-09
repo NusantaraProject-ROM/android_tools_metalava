@@ -2887,7 +2887,7 @@ CompatibilityCheckTest : DriverTest() {
                     public abstract class VersionedParcel {
                         private VersionedParcel() { }
 
-                        public <T> T[] readArray()
+                        public <T> T[] readArray() { return null; }
                     }
                     """
                 )
