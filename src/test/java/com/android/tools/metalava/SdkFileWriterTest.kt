@@ -54,6 +54,31 @@ class SdkFileWriterTest : DriverTest() {
     }
 
     @Test
+    fun `Test generating activity actions`() {
+        check(
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                package android.content;
+
+                import android.annotation.SdkConstant;
+                import android.annotation.SdkConstant.SdkConstantType;
+
+                public class Intent {
+                    @SdkConstant(SdkConstantType.ACTIVITY_INTENT_ACTION)
+                    public static final String ACTION_MAIN = "android.intent.action.MAIN";
+                }
+                """
+                ),
+                sdkConstantSource
+            ),
+            sdk_activity_actions = """
+            android.intent.action.MAIN
+            """
+        )
+    }
+
+    @Test
     fun `Test generating widgets`() {
         check(
             sourceFiles = *arrayOf(
