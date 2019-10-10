@@ -136,6 +136,7 @@ const val ARG_COPY_ANNOTATIONS = "--copy-annotations"
 const val ARG_INCLUDE_ANNOTATION_CLASSES = "--include-annotation-classes"
 const val ARG_REWRITE_ANNOTATIONS = "--rewrite-annotations"
 const val ARG_INCLUDE_SOURCE_RETENTION = "--include-source-retention"
+const val ARG_PASS_THROUGH_ANNOTATION = "--pass-through-annotation"
 const val ARG_INCLUDE_SIG_VERSION = "--include-signature-version"
 const val ARG_UPDATE_API = "--only-update-api"
 const val ARG_CHECK_API = "--only-check-api"
@@ -188,6 +189,8 @@ class Options(
     private val mutableSkipEmitPackages: MutableList<String> = mutableListOf()
     /** Internal list backing [convertToXmlFiles] */
     private val mutableConvertToXmlFiles: MutableList<ConvertFile> = mutableListOf()
+    /** Internal list backing [passThroughAnnotations] */
+    private val mutablePassThroughAnnotations: MutableSet<String> = mutableSetOf()
 
     /** Ignored flags we've already warned about - store here such that we don't keep reporting them */
     private val alreadyWarned: MutableSet<String> = mutableSetOf()
@@ -439,6 +442,9 @@ class Options(
 
     /** Whether to generate annotations into the stubs */
     var generateAnnotations = false
+
+    /** The set of annotation classes that should be passed through unchanged */
+    var passThroughAnnotations = mutablePassThroughAnnotations
 
     /**
      * A signature file to migrate nullness data from
@@ -761,6 +767,8 @@ class Options(
                 // For signature files, clear the compatibility mode
                 // (--annotations-in-signatures)
                 ARG_INCLUDE_ANNOTATIONS -> generateAnnotations = true
+
+                ARG_PASS_THROUGH_ANNOTATION -> mutablePassThroughAnnotations.add(getValue(args, ++index))
 
                 // Flag used by test suite to avoid including locations in
                 // the output when diffing against golden files
@@ -2021,7 +2029,10 @@ class Options(
                 "indicate that an element is recently marked as non null, whereas in the documentation stubs we'll " +
                 "just list this as @NonNull. Another difference is that @doconly elements are included in " +
                 "documentation stubs, but not regular stubs, etc.",
-            ARG_EXCLUDE_ANNOTATIONS, "Exclude annotations such as @Nullable from the stub files",
+            ARG_INCLUDE_ANNOTATIONS, "Include annotations such as @Nullable in the stub files.",
+            ARG_EXCLUDE_ANNOTATIONS, "Exclude annotations such as @Nullable from the stub files; the default.",
+            "$ARG_PASS_THROUGH_ANNOTATION <annotation class>", "The fully qualified name of an annotation class that" +
+                " must be passed through unchanged.",
             ARG_EXCLUDE_DOCUMENTATION_FROM_STUBS, "Exclude element documentation (javadoc and kdoc) " +
                 "from the generated stubs. (Copyright notices are not affected by this, they are always included. " +
                 "Documentation stubs (--doc-stubs) are not affected.)",
