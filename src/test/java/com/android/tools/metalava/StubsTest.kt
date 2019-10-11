@@ -1906,6 +1906,41 @@ class StubsTest : DriverTest() {
     }
 
     @Test
+    fun `Pass through libcore annotations`() {
+        check(
+            checkDoclava1 = false,
+            checkCompilation = true,
+            extraArguments = arrayOf(ARG_PASS_THROUGH_ANNOTATION, "libcore.util.NonNull"),
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package my.pkg;
+                    public class String {
+                    public String(@libcore.util.NonNull char[] value) { throw new RuntimeException("Stub!"); }
+                    }
+                    """
+                )
+            ),
+            warnings = "",
+            api = """
+                    package my.pkg {
+                      public class String {
+                        ctor public String(char[]);
+                      }
+                    }
+                    """,
+            stubs = arrayOf(
+                    """
+                    package my.pkg;
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class String {
+                    public String(@libcore.util.NonNull char[] value) { throw new RuntimeException("Stub!"); }
+                    }
+                    """)
+        )
+    }
+
+    @Test
     fun `Test inaccessible constructors`() {
         // If the constructors of a class are not visible, and the class has subclasses,
         // those subclass stubs will need to reference these inaccessible constructors.
