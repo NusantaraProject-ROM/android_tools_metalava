@@ -164,7 +164,9 @@ interface AnnotationItem {
             target: AnnotationTarget = AnnotationTarget.SIGNATURE_FILE
         ): String? {
             qualifiedName ?: return null
-
+            if (options.passThroughAnnotations.contains(qualifiedName)) {
+                return qualifiedName
+            }
             when (qualifiedName) {
                 // Resource annotations
                 "android.support.annotation.AnimRes",
@@ -379,6 +381,9 @@ interface AnnotationItem {
         /** The applicable targets for this annotation */
         fun computeTargets(annotation: AnnotationItem, codebase: Codebase): Set<AnnotationTarget> {
             val qualifiedName = annotation.qualifiedName() ?: return NO_ANNOTATION_TARGETS
+            if (options.passThroughAnnotations.contains(qualifiedName)) {
+                return ANNOTATION_IN_ALL_STUBS
+            }
             when (qualifiedName) {
 
                 // The typedef annotations are special: they should not be in the signature
