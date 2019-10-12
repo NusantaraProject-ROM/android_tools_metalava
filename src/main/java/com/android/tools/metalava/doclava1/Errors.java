@@ -259,6 +259,7 @@ public class Errors {
     public static final Error EXTENDS_DEPRECATED = new Error(161, HIDDEN);
     public static final Error FORBIDDEN_TAG = new Error(162, ERROR);
     public static final Error MISSING_COLUMN = new Error(163, WARNING, Category.DOCUMENTATION);
+    public static final Error INVALID_SYNTAX = new Error(164, ERROR);
 
     // API lint
     public static final Error START_WITH_LOWER = new Error(300, ERROR, Category.API_LINT, "S1");

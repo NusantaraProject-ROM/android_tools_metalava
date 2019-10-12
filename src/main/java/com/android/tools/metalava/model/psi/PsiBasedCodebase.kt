@@ -34,12 +34,14 @@ import com.android.tools.metalava.tick
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.JavaRecursiveElementVisitor
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaCodeReferenceElement
@@ -165,6 +167,17 @@ open class PsiBasedCodebase(location: File, override var description: String = "
                 }
             } else {
                 for (psiClass in classes) {
+                    psiClass.accept(object : JavaRecursiveElementVisitor() {
+                        override fun visitErrorElement(element: PsiErrorElement?) {
+                            super.visitErrorElement(element)
+                            reporter.report(
+                                Errors.INVALID_SYNTAX,
+                                element,
+                                "Syntax error: `${element?.errorDescription}`"
+                            )
+                        }
+                    })
+
                     val classItem = createClass(psiClass)
                     topLevelClassesFromSource.add(classItem)
 

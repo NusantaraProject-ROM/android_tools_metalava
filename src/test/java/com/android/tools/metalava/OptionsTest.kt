@@ -217,8 +217,13 @@ Generating Stubs:
                                                 @doconly elements are included in
                                                 documentation stubs, but not regular
                                                 stubs, etc.
+--include-annotations                           Include annotations such as @Nullable in
+                                                the stub files.
 --exclude-annotations                           Exclude annotations such as @Nullable from
-                                                the stub files
+                                                the stub files; the default.
+--pass-through-annotation <annotation class>    The fully qualified name of an annotation
+                                                class that must be passed through
+                                                unchanged.
 --exclude-documentation-from-stubs              Exclude element documentation (javadoc and
                                                 kdoc) from the generated stubs. (Copyright
                                                 notices are not affected by this, they are
