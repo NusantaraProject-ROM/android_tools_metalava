@@ -291,7 +291,7 @@ public class Errors {
     public static final Error INTERFACE_CONSTANT = new Error(326, ERROR, Category.API_LINT, "C4");
     public static final Error ON_NAME_EXPECTED = new Error(327, WARNING, Category.API_LINT);
     public static final Error TOP_LEVEL_BUILDER = new Error(328, WARNING, Category.API_LINT);
-    public static final Error MISSING_BUILD = new Error(329, WARNING, Category.API_LINT);
+    public static final Error MISSING_BUILD_METHOD = new Error(329, WARNING, Category.API_LINT);
     public static final Error BUILDER_SET_STYLE = new Error(330, WARNING, Category.API_LINT);
     public static final Error SETTER_RETURNS_THIS = new Error(331, WARNING, Category.API_LINT, "M4");
     public static final Error RAW_AIDL = new Error(332, ERROR, Category.API_LINT);
