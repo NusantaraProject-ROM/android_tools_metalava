@@ -2294,4 +2294,49 @@ class ApiLintTest : DriverTest() {
             )
         )
     }
+
+    @Test
+    fun `Test equals, toString, non-null constants, enums and annotation members don't require nullability`() {
+        check(
+            apiLint = "", // enabled
+            compatibilityMode = false,
+            warnings = "",
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                        package android.pkg;
+
+                        import android.annotation.SuppressLint;
+
+                        public class Foo<T> {
+                            public static final String FOO_CONSTANT = "test";
+
+                            public boolean equals(Object other) {
+                                return other == this;
+                            }
+
+                            public int hashCode() {
+                                return 0;
+                            }
+
+                            public String toString() {
+                                return "Foo";
+                            }
+
+                            @SuppressLint("Enum")
+                            public enum FooEnum {
+                                FOO, BAR;
+                            }
+
+                            public @interface FooAnnotation {
+                                String value() default "";
+                            }
+                        }
+                    """
+                ),
+                androidxNullableSource,
+                androidxNonNullSource
+            )
+        )
+    }
 }

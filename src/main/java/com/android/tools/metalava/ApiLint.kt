@@ -127,6 +127,7 @@ import com.android.tools.metalava.doclava1.Errors.USER_HANDLE_NAME
 import com.android.tools.metalava.doclava1.Errors.USE_ICU
 import com.android.tools.metalava.doclava1.Errors.USE_PARCEL_FILE_DESCRIPTOR
 import com.android.tools.metalava.doclava1.Errors.VISIBLY_SYNCHRONIZED
+import com.android.tools.metalava.model.AnnotationItem.Companion.getImplicitNullness
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.ConstructorItem
@@ -1779,7 +1780,8 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
     }
 
     private fun checkHasNullability(item: Item) {
-        if (item.requiresNullnessInfo() && !item.hasNullnessInfo()) {
+        if (item.requiresNullnessInfo() && !item.hasNullnessInfo() &&
+                getImplicitNullness(item) == null) {
             val type = item.type()
             if (type != null && type.isTypeParameter()) {
                 // Generic types should have declarations of nullability set at the site of where
