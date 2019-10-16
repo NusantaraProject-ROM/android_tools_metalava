@@ -67,7 +67,7 @@ class UAnnotationItem private constructor(
     }
 
     override fun isNonNull(): Boolean {
-        if (uAnnotation.javaPsi is KtLightNullabilityAnnotation &&
+        if (uAnnotation.javaPsi is KtLightNullabilityAnnotation<*> &&
             originalName == ""
         ) {
             // Hack/workaround: some UAST annotation nodes do not provide qualified name :=(

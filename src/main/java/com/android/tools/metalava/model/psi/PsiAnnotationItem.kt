@@ -68,7 +68,7 @@ class PsiAnnotationItem private constructor(
     }
 
     override fun isNonNull(): Boolean {
-        if (psiAnnotation is KtLightNullabilityAnnotation &&
+        if (psiAnnotation is KtLightNullabilityAnnotation<*> &&
             originalName == ""
         ) {
             // Hack/workaround: some UAST annotation nodes do not provide qualified name :=(
