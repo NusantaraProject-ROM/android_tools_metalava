@@ -803,9 +803,9 @@ class ApiLintTest : DriverTest() {
             warnings = """
                 src/android/pkg/MyClass.java:9: warning: Methods must return the builder object (return type android.pkg.MyClass.Builder<T> instead of void): method android.pkg.MyClass.Builder.setSomething(int) [SetterReturnsThis] [Rule M4 in go/android-api-guidelines]
                 src/android/pkg/MyClass.java:10: warning: Builder methods names should use setFoo() style: method android.pkg.MyClass.Builder.withFoo(int) [BuilderSetStyle]
-                src/android/pkg/MyClass.java:6: warning: Missing `build()` method in android.pkg.MyClass.Builder [MissingBuild]
+                src/android/pkg/MyClass.java:6: warning: android.pkg.MyClass.Builder does not declare a `build()` method, but builder classes are expected to [MissingBuildMethod]
                 src/android/pkg/TopLevelBuilder.java:3: warning: Builder should be defined as inner class: android.pkg.TopLevelBuilder [TopLevelBuilder]
-                src/android/pkg/TopLevelBuilder.java:3: warning: Missing `build()` method in android.pkg.TopLevelBuilder [MissingBuild]
+                src/android/pkg/TopLevelBuilder.java:3: warning: android.pkg.TopLevelBuilder does not declare a `build()` method, but builder classes are expected to [MissingBuildMethod]
                 """,
             sourceFiles = *arrayOf(
                 java(

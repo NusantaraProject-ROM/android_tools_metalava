@@ -155,7 +155,7 @@ here's the existing distribution as of early 2019:
        18 MinMaxConstant                 C8   warning
        18 SingletonConstructor                error
        17 MethodNameUnits                     error
-       15 MissingBuild                        warning
+       15 MissingBuildMethod                  warning
        15 UserHandleName                      warning
        14 UserHandle                          warning
        13 ResourceFieldName                   error
