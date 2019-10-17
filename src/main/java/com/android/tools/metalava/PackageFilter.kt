@@ -24,14 +24,9 @@ import java.io.File
  * match any subpackage of foo but not foo itself, so foo.* is taken
  * to mean "foo" and "foo.*".
  */
-class PackageFilter(
-    private val exactPackages: MutableSet<String> = mutableSetOf(),
-    private val packagePrefixes: MutableList<String> = mutableListOf()
-) {
-    init {
-        // Wildcards should have been removed by option
-        assert(packagePrefixes.none { it.contains("*") })
-    }
+class PackageFilter() {
+    val exactPackages: MutableSet<String> = mutableSetOf()
+    val packagePrefixes: MutableList<String> = mutableListOf()
 
     fun matches(qualifiedName: String): Boolean {
         if (exactPackages.contains(qualifiedName)) {
