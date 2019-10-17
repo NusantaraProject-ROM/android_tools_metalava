@@ -90,7 +90,7 @@ import com.android.tools.metalava.doclava1.Errors.MENTIONS_GOOGLE
 import com.android.tools.metalava.doclava1.Errors.METHOD_NAME_TENSE
 import com.android.tools.metalava.doclava1.Errors.METHOD_NAME_UNITS
 import com.android.tools.metalava.doclava1.Errors.MIN_MAX_CONSTANT
-import com.android.tools.metalava.doclava1.Errors.MISSING_BUILD
+import com.android.tools.metalava.doclava1.Errors.MISSING_BUILD_METHOD
 import com.android.tools.metalava.doclava1.Errors.MISSING_NULLABILITY
 import com.android.tools.metalava.doclava1.Errors.NOT_CLOSEABLE
 import com.android.tools.metalava.doclava1.Errors.NO_BYTE_OR_SHORT
@@ -1252,8 +1252,8 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
         }
         if (!hasBuild) {
             report(
-                MISSING_BUILD, cls,
-                "Missing `build()` method in ${cls.qualifiedName()}"
+                MISSING_BUILD_METHOD, cls,
+                "${cls.qualifiedName()} does not declare a `build()` method, but builder classes are expected to"
             )
         }
     }

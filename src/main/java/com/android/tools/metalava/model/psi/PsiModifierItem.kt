@@ -230,7 +230,7 @@ class PsiModifierItem(
                 if (!isPrimitiveVariable) {
                     val psiAnnotations = modifierList.annotations
                     if (psiAnnotations.isNotEmpty() && annotations.none { it.isNullnessAnnotation() }) {
-                        val ktNullAnnotation = psiAnnotations.firstOrNull { it is KtLightNullabilityAnnotation }
+                        val ktNullAnnotation = psiAnnotations.firstOrNull { it is KtLightNullabilityAnnotation<*> }
                         ktNullAnnotation?.let {
                             annotations.add(PsiAnnotationItem.create(codebase, it))
                         }
