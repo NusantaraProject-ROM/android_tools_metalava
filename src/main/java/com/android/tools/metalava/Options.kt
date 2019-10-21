@@ -38,7 +38,8 @@ import kotlin.text.Charsets.UTF_8
 /** Global options for the metadata extraction tool */
 var options = Options(emptyArray())
 
-private const val MAX_LINE_WIDTH = 90
+private const val MAX_LINE_WIDTH = 120
+private const val INDENT_WIDTH = 45
 
 const val ARG_COMPAT_OUTPUT = "--compatible-output"
 const val ARG_FORMAT = "--format"
@@ -2149,25 +2150,17 @@ class Options(
                 "end of the command line, after the generate documentation flags."
         )
 
-        var argWidth = 0
-        var i = 0
-        while (i < args.size) {
-            val arg = args[i]
-            argWidth = Math.max(argWidth, arg.length)
-            i += 2
-        }
-        argWidth += 2
-        val sb = StringBuilder(20)
-        for (indent in 0 until argWidth) {
+        val sb = StringBuilder(INDENT_WIDTH)
+        for (indent in 0 until INDENT_WIDTH) {
             sb.append(' ')
         }
         val indent = sb.toString()
-        val formatString = "%1$-" + argWidth + "s%2\$s"
+        val formatString = "%1$-" + INDENT_WIDTH + "s%2\$s"
 
-        i = 0
+        var i = 0
         while (i < args.size) {
             val arg = args[i]
-            val description = args[i + 1]
+            val description = "\n" + args[i + 1]
             if (arg.isEmpty()) {
                 if (colorize) {
                     out.println(colorized(description, TerminalColor.YELLOW))
@@ -2180,7 +2173,7 @@ class Options(
                     val invisibleChars = colorArg.length - arg.length
                     // +invisibleChars: the extra chars in the above are counted but don't contribute to width
                     // so allow more space
-                    val colorFormatString = "%1$-" + (argWidth + invisibleChars) + "s%2\$s"
+                    val colorFormatString = "%1$-" + (INDENT_WIDTH + invisibleChars) + "s%2\$s"
 
                     out.print(
                         wrap(
