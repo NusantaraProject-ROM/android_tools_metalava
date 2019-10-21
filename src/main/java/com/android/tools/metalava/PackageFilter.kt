@@ -18,7 +18,7 @@ import java.util.function.Predicate
  * args: "-stubpackages com.android.test.power ",
  * args: "-stubpackages android.car* ",
  * args: "-stubpackages com.android.ahat:com.android.ahat.*",
- * args: "-unenforce-nullability +*:-android.*:+android.icu.*:-dalvik.*
+ * args: "-force-convert-to-warning-nullability-annotations +*:-android.*:+android.icu.*:-dalvik.*
  *
  * Note that doclava does *not* include subpackages by default: -stubpackage foo
  * will match only foo, not foo.bar. Note also that "foo.*" will not match "foo",

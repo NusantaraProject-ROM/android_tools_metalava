@@ -333,6 +333,11 @@ Extracting Annotations:
 --rewrite-annotations <dir/jar>              
                                              For a bytecode folder or output jar, rewrites the androidx annotations to
                                              be package private
+--force-convert-to-warning-nullability-annotations <package1:-package2:...>
+                                             On every API declared in a class referenced by the given filter, makes
+                                             nullability issues appear to callers as warnings rather than errors by
+                                             replacing @Nullable/@NonNull in these APIs with
+                                             @RecentlyNullable/@RecentlyNonNull
 --copy-annotations <source> <dest>           
                                              For a source folder full of annotation sources, generates corresponding
                                              package private versions of the same annotations.

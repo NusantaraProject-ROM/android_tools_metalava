@@ -153,6 +153,7 @@ const val ARG_STUB_IMPORT_PACKAGES = "--stub-import-packages"
 const val ARG_DELETE_EMPTY_BASELINES = "--delete-empty-baselines"
 const val ARG_SUBTRACT_API = "--subtract-api"
 const val ARG_TYPEDEFS_IN_SIGNATURES = "--typedefs-in-signatures"
+const val ARG_FORCE_CONVERT_TO_WARNING_NULLABILITY_ANNOTATIONS = "--force-convert-to-warning-nullability-annotations"
 
 class Options(
     private val args: Array<String>,
@@ -475,6 +476,12 @@ class Options(
     var mergeQualifierAnnotations: List<File> = mutableMergeQualifierAnnotations
     var mergeInclusionAnnotations: List<File> = mutableMergeInclusionAnnotations
 
+    /**
+     * We modify the annotations on these APIs to ask kotlinc to treat it as only a warning
+     * if a caller of one of these APIs makes an incorrect assumption about its nullability.
+     */
+    var forceConvertToWarningNullabilityAnnotations: PackageFilter? = null
+
     /** Set of jars and class files for existing apps that we want to measure coverage of */
     var annotationCoverageOf: List<File> = mutableAnnotationCoverageOf
 
@@ -699,6 +706,11 @@ class Options(
                         getValue(args, ++index)
                     )
                 )
+
+                ARG_FORCE_CONVERT_TO_WARNING_NULLABILITY_ANNOTATIONS -> {
+                    val nextArg = getValue(args, ++index)
+                    forceConvertToWarningNullabilityAnnotations = PackageFilter.parse(nextArg)
+                }
 
                 ARG_VALIDATE_NULLABILITY_FROM_MERGED_STUBS -> {
                     validateNullabilityFromMergedStubs = true
@@ -2122,6 +2134,10 @@ class Options(
                 "generated stub sources; <dir> is typically $PROGRAM_NAME/stub-annotations/src/main/java/.",
             "$ARG_REWRITE_ANNOTATIONS <dir/jar>", "For a bytecode folder or output jar, rewrites the " +
                 "androidx annotations to be package private",
+            "$ARG_FORCE_CONVERT_TO_WARNING_NULLABILITY_ANNOTATIONS <package1:-package2:...>", "On every API declared " +
+                "in a class referenced by the given filter, makes nullability issues appear to callers as warnings " +
+                "rather than errors by replacing @Nullable/@NonNull in these APIs with " +
+                "@RecentlyNullable/@RecentlyNonNull",
             "$ARG_COPY_ANNOTATIONS <source> <dest>", "For a source folder full of annotation " +
                 "sources, generates corresponding package private versions of the same annotations.",
             ARG_INCLUDE_SOURCE_RETENTION, "If true, include source-retention annotations in the stub files. Does " +
