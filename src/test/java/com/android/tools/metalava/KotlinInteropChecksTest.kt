@@ -51,13 +51,18 @@ class KotlinInteropChecksTest : DriverTest() {
         check(
             extraArguments = arrayOf(ARG_CHECK_KOTLIN_INTEROP),
             warnings = """
-                src/test/pkg/Test.java:10: warning: SAM-compatible parameters (such as parameter 1, "run", in test.pkg.Test.error) should be last to improve Kotlin interoperability; see https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions [SamShouldBeLast]
+                src/test/pkg/Test.java:18: warning: SAM-compatible parameters (such as parameter 1, "run", in test.pkg.Test.error) should be last to improve Kotlin interoperability; see https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions [SamShouldBeLast]
                 src/test/pkg/test.kt:7: warning: lambda parameters (such as parameter 1, "bar", in test.pkg.TestKt.error) should be last to improve Kotlin interoperability; see https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions [SamShouldBeLast]
                 """,
             sourceFiles = *arrayOf(
                 java(
                     """
                     package test.pkg;
+
+                    import java.lang.Runnable;
+                    import java.util.concurrent.Executor;
+                    import java.util.function.Consumer;
+
                     public class Test {
                         public void ok1() { }
                         public void ok1(int x) { }
@@ -66,6 +71,9 @@ class KotlinInteropChecksTest : DriverTest() {
                         public void ok4(int x, Runnable run) { }
                         public void ok5(Runnable run1, Runnable run2) { }
                         public void ok6(java.util.List list, boolean b) { }
+                        // Consumer declares exactly one non-default method (accept), other methods are default.
+                        public void ok7(@NonNull String packageName, @NonNull Executor executor,
+                            @NonNull Consumer<Boolean> callback) {}
                         public void error(Runnable run, int x) { }
                     }
                     """

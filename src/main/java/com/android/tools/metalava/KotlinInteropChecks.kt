@@ -303,7 +303,7 @@ class KotlinInteropChecks {
             return false
         }
 
-        if (cls.methods().size != 1) {
+        if (cls.methods().filter { !it.modifiers.isDefault() }.size != 1) {
             return false
         }
 
