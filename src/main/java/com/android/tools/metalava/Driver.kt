@@ -397,6 +397,8 @@ private fun processFlags() {
         previous.dispose()
     }
 
+    convertToWarningNullabilityAnnotations(codebase, options.forceConvertToWarningNullabilityAnnotations)
+
     // Now that we've migrated nullness information we can proceed to write non-doc stubs, if any.
 
     options.stubsDir?.let {
@@ -783,6 +785,16 @@ class PrintWriterOutputStream(private val writer: PrintWriter) : OutputStream() 
 
 private fun migrateNulls(codebase: Codebase, previous: Codebase) {
     previous.compareWith(NullnessMigration(), codebase, ApiPredicate())
+}
+
+private fun convertToWarningNullabilityAnnotations(codebase: Codebase, filter: PackageFilter?) {
+    if (filter != null) {
+        // Our caller has asked for these APIs to not trigger nullness errors (only warnings) if
+        // their callers make incorrect nullness assumptions (for example, calling a function on a
+        // reference of nullable type). The way to communicate this to kotlinc is to mark these
+        // APIs as RecentlyNullable/RecentlyNonNull
+        codebase.accept(MarkPackagesAsRecent(filter))
+    }
 }
 
 private fun loadFromSources(): Codebase {
