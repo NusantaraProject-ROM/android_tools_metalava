@@ -2718,20 +2718,17 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
                         warn(clazz, m, None, "Classes that release resources should implement AutoClosable and CloseGuard")
                         return
          */
-        var requireCloseable = false
-        loop@ for (method in methods) {
-            val name = method.name()
-            when (name) {
-                "close", "release", "destroy", "finish", "finalize", "disconnect", "shutdown", "stop", "free", "quit" -> {
-                    requireCloseable = true
-                    break@loop
-                }
+        val foundMethods = methods.filter { method ->
+            when (method.name()) {
+                "close", "release", "destroy", "finish", "finalize", "disconnect", "shutdown", "stop", "free", "quit" -> true
+                else -> false
             }
         }
-        if (requireCloseable && !cls.implements("java.lang.AutoCloseable")) { // includes java.io.Closeable
+        if (foundMethods.iterator().hasNext() && !cls.implements("java.lang.AutoCloseable")) { // includes java.io.Closeable
+            val foundMethodsDescriptions = foundMethods.joinToString { method -> "${method.name()}()" }
             report(
                 NOT_CLOSEABLE, cls,
-                "Classes that release resources should implement AutoClosable and CloseGuard: ${cls.describe()}"
+                "Classes that release resources ($foundMethodsDescriptions) should implement AutoClosable and CloseGuard: ${cls.describe()}"
             )
         }
     }
