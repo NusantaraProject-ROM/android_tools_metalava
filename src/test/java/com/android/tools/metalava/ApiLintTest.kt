@@ -1731,8 +1731,8 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/MyErrorClass1.java:3: warning: Classes that release resources should implement AutoClosable and CloseGuard: class android.pkg.MyErrorClass1 [NotCloseable]
-                src/android/pkg/MyErrorClass2.java:3: warning: Classes that release resources should implement AutoClosable and CloseGuard: class android.pkg.MyErrorClass2 [NotCloseable]
+                src/android/pkg/MyErrorClass1.java:3: warning: Classes that release resources (close()) should implement AutoClosable and CloseGuard: class android.pkg.MyErrorClass1 [NotCloseable]
+                src/android/pkg/MyErrorClass2.java:3: warning: Classes that release resources (finalize(), shutdown()) should implement AutoClosable and CloseGuard: class android.pkg.MyErrorClass2 [NotCloseable]
                 """,
             sourceFiles = *arrayOf(
                 java(
@@ -1777,6 +1777,7 @@ class ApiLintTest : DriverTest() {
                     package android.pkg;
 
                     public abstract class MyErrorClass2 {
+                        public void finalize() {}
                         public void shutdown() {}
                     }
                     """
