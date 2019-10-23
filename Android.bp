@@ -41,7 +41,8 @@ java_library {
     srcs: [
         "stub-annotations/src/main/java/**/*.java",
     ],
-    sdk_version: "core_current",
+    // Allow core_current to use stub-annotations.
+    sdk_version: "28",
     target: {
         host: {
             dist: {
