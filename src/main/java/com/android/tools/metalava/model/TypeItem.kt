@@ -31,7 +31,7 @@ import java.util.function.Predicate
  */
 const val SUPPORT_TYPE_USE_ANNOTATIONS = false
 
-/** Represents a type */
+/** Represents a {@link https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Type.html Type} */
 interface TypeItem {
     /**
      * Generates a string for this type.
