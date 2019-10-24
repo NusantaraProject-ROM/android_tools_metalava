@@ -127,7 +127,12 @@ class ProguardWriter(
 
     private fun getCleanTypeName(t: TypeItem?): String {
         t ?: return ""
-        val cls = t.asClass() ?: return t.toSimpleType()
-        return cls.qualifiedNameWithDollarInnerClasses()
+        val cls = t.asClass() ?: return t.toCanonicalType()
+        var qualifiedName = cls.qualifiedNameWithDollarInnerClasses()
+
+        for (i in 0 until t.arrayDimensions()) {
+            qualifiedName += "[]"
+        }
+        return qualifiedName
     }
 }
