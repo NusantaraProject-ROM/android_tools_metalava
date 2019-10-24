@@ -29,6 +29,11 @@ import java.util.ArrayList
 import java.util.LinkedHashSet
 import java.util.function.Predicate
 
+/**
+ * Represents a {@link https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html Class}
+ *
+ * If you need to model array dimensions or resolved type parameters, see {@link com.android.tools.metalava.model.TypeItem} instead
+ */
 interface ClassItem : Item {
     /** The simple name of a class. In class foo.bar.Outer.Inner, the simple name is "Inner" */
     fun simpleName(): String
