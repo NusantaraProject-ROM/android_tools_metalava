@@ -569,7 +569,11 @@ open class PsiBasedCodebase(location: File, override var description: String = "
             val cls = psiType.resolve() ?: return null
             return findOrCreateClass(cls)
         } else if (psiType is PsiArrayType) {
-            val componentType = psiType.componentType
+            var componentType = psiType.componentType
+            // We repeatedly get the component type because the array may have multiple dimensions
+            while (componentType is PsiArrayType) {
+                componentType = componentType.componentType
+            }
             if (componentType is PsiClassType) {
                 val cls = componentType.resolve() ?: return null
                 return findOrCreateClass(cls)
