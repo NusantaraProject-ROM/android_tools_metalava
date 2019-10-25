@@ -257,13 +257,13 @@ interface AnnotationItem {
                 ANDROID_NULLABLE,
                 "android.support.annotation.Nullable",
                 "libcore.util.Nullable",
-                "org.jetbrains.annotations.Nullable" -> return if (target == AnnotationTarget.SDK_STUBS_FILE) ANDROID_NULLABLE else ANDROIDX_NULLABLE
+                "org.jetbrains.annotations.Nullable" -> return nullableAnnotationName(target)
 
                 ANDROIDX_NONNULL,
                 ANDROID_NONNULL,
                 "android.support.annotation.NonNull",
                 "libcore.util.NonNull",
-                "org.jetbrains.annotations.NotNull" -> return if (target == AnnotationTarget.SDK_STUBS_FILE) ANDROID_NONNULL else ANDROIDX_NONNULL
+                "org.jetbrains.annotations.NotNull" -> return nonNullAnnotationName(target)
 
                 // Typedefs
                 "android.support.annotation.IntDef",
@@ -332,8 +332,8 @@ interface AnnotationItem {
                             "kotlin.annotations.jvm.internal${qualifiedName.substring(qualifiedName.lastIndexOf('.'))}"
 
                         // Other third party nullness annotations?
-                        isNullableAnnotation(qualifiedName) -> ANDROIDX_NULLABLE
-                        isNonNullAnnotation(qualifiedName) -> ANDROIDX_NONNULL
+                        isNullableAnnotation(qualifiedName) -> nullableAnnotationName(target)
+                        isNonNullAnnotation(qualifiedName) -> nonNullAnnotationName(target)
 
                         // Support library annotations are all included, as is the built-in stuff like @Retention
                         qualifiedName.startsWith(ANDROIDX_ANNOTATION_PREFIX) -> return qualifiedName
@@ -377,6 +377,12 @@ interface AnnotationItem {
                 }
             }
         }
+
+        private fun nullableAnnotationName(target: AnnotationTarget) =
+            if (target == AnnotationTarget.SDK_STUBS_FILE) ANDROID_NULLABLE else ANDROIDX_NULLABLE
+
+        private fun nonNullAnnotationName(target: AnnotationTarget) =
+            if (target == AnnotationTarget.SDK_STUBS_FILE) ANDROID_NONNULL else ANDROIDX_NONNULL
 
         /** The applicable targets for this annotation */
         fun computeTargets(annotation: AnnotationItem, codebase: Codebase): Set<AnnotationTarget> {
