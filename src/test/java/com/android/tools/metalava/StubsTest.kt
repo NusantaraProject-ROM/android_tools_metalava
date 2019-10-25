@@ -1861,6 +1861,75 @@ class StubsTest : DriverTest() {
     }
 
     @Test
+    fun `Rewrite unknown nullability annotations as sdk stubs`() {
+        check(
+            checkDoclava1 = false,
+            checkCompilation = true,
+            sourceFiles = *arrayOf(
+                java(
+                    "package my.pkg;\n" +
+                        "public class String {\n" +
+                        "public String(@other.NonNull char[] value) { throw new RuntimeException(\"Stub!\"); }\n" +
+                        "}\n"
+                )
+            ),
+            warnings = "",
+            api = """
+                    package my.pkg {
+                      public class String {
+                        ctor public String(char[]);
+                      }
+                    }
+                    """,
+            stubs =
+                arrayOf(
+                    """
+                    package my.pkg;
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class String {
+                    public String(@android.annotation.NonNull char[] value) { throw new RuntimeException("Stub!"); }
+                    }
+                    """
+                )
+        )
+    }
+
+    @Test
+    fun `Rewrite unknown nullability annotations as doc stubs`() {
+        check(
+            checkDoclava1 = false,
+            checkCompilation = true,
+            sourceFiles = *arrayOf(
+                java(
+                    "package my.pkg;\n" +
+                        "public class String {\n" +
+                        "public String(@other.NonNull char[] value) { throw new RuntimeException(\"Stub!\"); }\n" +
+                        "}\n"
+                )
+            ),
+            warnings = "",
+            api = """
+                    package my.pkg {
+                      public class String {
+                        ctor public String(char[]);
+                      }
+                    }
+                    """,
+            docStubs = true,
+            stubs =
+            arrayOf(
+                """
+                    package my.pkg;
+                    @SuppressWarnings({"unchecked", "deprecation", "all"})
+                    public class String {
+                    public String(@androidx.annotation.NonNull char[] value) { throw new RuntimeException("Stub!"); }
+                    }
+                    """
+            )
+        )
+    }
+
+    @Test
     fun `Rewrite libcore annotations`() {
         check(
             checkDoclava1 = false,
