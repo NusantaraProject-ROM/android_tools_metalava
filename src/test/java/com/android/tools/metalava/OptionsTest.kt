@@ -138,6 +138,9 @@ API sources:
                                              and `--typedefs-in-signatures inline` will include the constants themselves
                                              into each usage site. You can also supply `--typedefs-in-signatures none`
                                              to explicitly turn it off, if the default ever changes.
+--ignore-classes-on-classpath                
+                                             Prevents references to classes on the classpath from being added to the
+                                             generated stub files.
 
 
 Documentation:
