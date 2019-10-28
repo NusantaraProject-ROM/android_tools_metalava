@@ -154,6 +154,7 @@ const val ARG_DELETE_EMPTY_BASELINES = "--delete-empty-baselines"
 const val ARG_SUBTRACT_API = "--subtract-api"
 const val ARG_TYPEDEFS_IN_SIGNATURES = "--typedefs-in-signatures"
 const val ARG_FORCE_CONVERT_TO_WARNING_NULLABILITY_ANNOTATIONS = "--force-convert-to-warning-nullability-annotations"
+const val ARG_IGNORE_CLASSES_ON_CLASSPATH = "--ignore-classes-on-classpath"
 
 class Options(
     private val args: Array<String>,
@@ -357,6 +358,14 @@ class Options(
 
     /** Meta-annotations to hide */
     var hideMetaAnnotations: List<String> = mutableHideMetaAnnotations
+
+    /** Whether the generated API can contain classes that are not present in the source but are present on the
+     * classpath. Defaults to true for backwards compatibility but is set to false if any API signatures are imported
+     * as they must provide a complete set of all classes required but not provided by the generated API.
+     *
+     * Once all APIs are either self contained or imported all the required references this will be removed and no
+     * classes will be allowed from the classpath JARs. */
+    var allowClassesFromClasspath = true
 
     /** Whether to report warnings and other diagnostics along the way */
     var quiet = false
@@ -823,6 +832,10 @@ class Options(
                         else -> throw DriverException(
                             stderr = "$ARG_TYPEDEFS_IN_SIGNATURES must be one of ref, inline, none; was $type")
                     }
+                }
+
+                ARG_IGNORE_CLASSES_ON_CLASSPATH -> {
+                    allowClassesFromClasspath = false
                 }
 
                 ARG_BASELINE -> {
@@ -2000,6 +2013,8 @@ class Options(
                 "`$ARG_TYPEDEFS_IN_SIGNATURES inline` will include the constants themselves into each usage " +
                 "site. You can also supply `$ARG_TYPEDEFS_IN_SIGNATURES none` to explicitly turn it off, if the " +
                 "default ever changes.",
+            ARG_IGNORE_CLASSES_ON_CLASSPATH, "Prevents references to classes on the classpath from being added to " +
+                "the generated stub files.",
 
             "", "\nDocumentation:",
             ARG_PUBLIC, "Only include elements that are public",
