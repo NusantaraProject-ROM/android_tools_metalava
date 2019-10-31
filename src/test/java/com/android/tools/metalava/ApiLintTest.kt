@@ -1787,6 +1787,79 @@ class ApiLintTest : DriverTest() {
     }
 
     @Test
+    fun `Check closeable for minSdkVersion 19`() {
+        check(
+            apiLint = "", // enabled
+            compatibilityMode = false,
+            warnings = """
+                src/android/pkg/MyErrorClass1.java:3: warning: Classes that release resources (close()) should implement AutoClosable and CloseGuard: class android.pkg.MyErrorClass1 [NotCloseable]
+                src/android/pkg/MyErrorClass2.java:3: warning: Classes that release resources (finalize(), shutdown()) should implement AutoClosable and CloseGuard: class android.pkg.MyErrorClass2 [NotCloseable]
+            """,
+            manifest = """<?xml version="1.0" encoding="UTF-8"?>
+                <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+                    <uses-sdk android:minSdkVersion="19" />
+                </manifest>
+            """.trimIndent(),
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package android.pkg;
+
+                    public abstract class MyErrorClass1 {
+                        public void close() {}
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package android.pkg;
+
+                    public abstract class MyErrorClass2 {
+                        public void finalize() {}
+                        public void shutdown() {}
+                    }
+                    """
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `Do not check closeable for minSdkVersion less than 19`() {
+        check(
+            apiLint = "", // enabled
+            compatibilityMode = false,
+            warnings = "",
+            manifest = """<?xml version="1.0" encoding="UTF-8"?>
+                <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+                    <uses-sdk android:minSdkVersion="18" />
+                </manifest>
+            """.trimIndent(),
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package android.pkg;
+
+                    public abstract class MyErrorClass1 {
+                        public void close() {}
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package android.pkg;
+
+                    public abstract class MyErrorClass2 {
+                        public void finalize() {}
+                        public void shutdown() {}
+                    }
+                    """
+                )
+            )
+        )
+    }
+
+    @Test
     fun `Check Kotlin keywords`() {
         check(
             apiLint = "", // enabled
