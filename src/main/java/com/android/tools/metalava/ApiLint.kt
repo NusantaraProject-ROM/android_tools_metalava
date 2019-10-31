@@ -138,6 +138,7 @@ import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.PackageItem
 import com.android.tools.metalava.model.ParameterItem
 import com.android.tools.metalava.model.TypeItem
+import com.android.tools.metalava.model.SetMinSdkVersion
 import com.android.tools.metalava.model.psi.PsiMethodItem
 import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.intellij.psi.JavaRecursiveElementVisitor
@@ -2718,6 +2719,13 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
                         warn(clazz, m, None, "Classes that release resources should implement AutoClosable and CloseGuard")
                         return
          */
+        // AutoClosable has been added in API 19, so libraries with minSdkVersion <19 cannot use it. If the version
+        // is not set, then keep the check enabled.
+        val minSdkVersion = codebase.getMinSdkVersion()
+        if (minSdkVersion is SetMinSdkVersion && minSdkVersion.value < 19) {
+            return
+        }
+
         val foundMethods = methods.filter { method ->
             when (method.name()) {
                 "close", "release", "destroy", "finish", "finalize", "disconnect", "shutdown", "stop", "free", "quit" -> true

@@ -17,8 +17,10 @@
 package com.android.tools.metalava.model
 
 import com.android.SdkConstants.ANDROID_URI
+import com.android.SdkConstants.ATTR_MIN_SDK_VERSION
 import com.android.SdkConstants.ATTR_NAME
 import com.android.SdkConstants.TAG_PERMISSION
+import com.android.SdkConstants.TAG_USES_SDK
 import com.android.tools.metalava.CodebaseComparator
 import com.android.tools.metalava.ComparisonVisitor
 import com.android.tools.metalava.doclava1.Errors
@@ -138,6 +140,8 @@ interface Codebase {
      */
     fun getPermissionLevel(name: String): String?
 
+    fun getMinSdkVersion(): MinSdkVersion
+
     /** Clear the [Item.tag] fields (prior to iteration like DFS) */
     fun clearTags() {
         getPackages().packages.forEach { pkg -> pkg.allClasses().forEach { cls -> cls.tag = false } }
@@ -256,9 +260,14 @@ interface Codebase {
     }
 }
 
+sealed class MinSdkVersion
+data class SetMinSdkVersion(val value: Int) : MinSdkVersion()
+object UnsetMinSdkVersion : MinSdkVersion()
+
 abstract class DefaultCodebase(override var location: File) : Codebase {
     override var manifest: File? = null
     private var permissions: Map<String, String>? = null
+    private var minSdkVersion: MinSdkVersion? = null
     override var original: Codebase? = null
     override var units: List<PsiFile> = emptyList()
     override var apiLevel: Int = -1
@@ -290,6 +299,29 @@ abstract class DefaultCodebase(override var location: File) : Codebase {
         }
 
         return permissions!![name]
+    }
+
+    override fun getMinSdkVersion(): MinSdkVersion {
+        if (minSdkVersion == null) {
+            if (manifest == null) {
+                minSdkVersion = UnsetMinSdkVersion
+                return minSdkVersion!!
+            }
+            try {
+                val doc = parseDocument(manifest?.readText(UTF_8) ?: "", true)
+                val usesSdk = getFirstSubTagByName(doc.documentElement, TAG_USES_SDK)
+                minSdkVersion = if (usesSdk == null) {
+                    UnsetMinSdkVersion
+                } else {
+                    val value = usesSdk.getAttributeNS(ANDROID_URI, ATTR_MIN_SDK_VERSION)
+                    if (value.isEmpty()) UnsetMinSdkVersion else SetMinSdkVersion(value.toInt())
+                }
+            } catch (error: Throwable) {
+                reporter.report(Errors.PARSE_ERROR, manifest, "Failed to parse $manifest: ${error.message}")
+                minSdkVersion = UnsetMinSdkVersion
+            }
+        }
+        return minSdkVersion!!
     }
 
     override fun getPackageDocs(): PackageDocs? = null
