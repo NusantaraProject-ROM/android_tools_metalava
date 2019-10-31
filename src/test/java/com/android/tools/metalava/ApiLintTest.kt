@@ -1415,8 +1415,6 @@ class ApiLintTest : DriverTest() {
             warnings = """
                 src/android/pkg/MyClass.java:16: warning: Registration methods should have overload that accepts delivery Executor: `registerWrongCallback` [ExecutorRegistration] [Rule L1 in go/android-api-guidelines]
                 src/android/pkg/MyClass.java:6: warning: Registration methods should have overload that accepts delivery Executor: `MyClass` [ExecutorRegistration] [Rule L1 in go/android-api-guidelines]
-                src/android/pkg/MyClass.java:11: warning: SAM-compatible parameters (such as parameter 1, "executor", in android.pkg.MyClass.registerStreamEventCallback) should be last to improve Kotlin interoperability; see https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions [SamShouldBeLast]
-                src/android/pkg/MyClass.java:13: warning: SAM-compatible parameters (such as parameter 1, "executor", in android.pkg.MyClass.unregisterStreamEventCallback) should be last to improve Kotlin interoperability; see https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions [SamShouldBeLast]
                 """,
             sourceFiles = *arrayOf(
                 java(
