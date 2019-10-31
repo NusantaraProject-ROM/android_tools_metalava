@@ -202,7 +202,7 @@ class StubWriter(
             }
 
             @Suppress("ConstantConditionIf")
-            if (EXPAND_DOCUMENTATION) {
+            if (EXPAND_DOCUMENTATION && options.includeDocumentationInStubs) {
                 compilationUnit?.getImportStatements(filterReference)?.let {
                     for (item in it) {
                         when (item) {
