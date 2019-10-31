@@ -487,7 +487,7 @@ interface ModifierList {
             var annotations = list.annotations()
 
             // Ensure stable signature file order
-            if (annotations.size > 2) {
+            if (annotations.size > 1) {
                 annotations = annotations.sortedBy { it.qualifiedName() }
             }
 
