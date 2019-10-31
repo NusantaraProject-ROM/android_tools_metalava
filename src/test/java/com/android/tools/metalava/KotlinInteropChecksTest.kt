@@ -51,7 +51,8 @@ class KotlinInteropChecksTest : DriverTest() {
         check(
             extraArguments = arrayOf(ARG_CHECK_KOTLIN_INTEROP),
             warnings = """
-                src/test/pkg/Test.java:18: warning: SAM-compatible parameters (such as parameter 1, "run", in test.pkg.Test.error) should be last to improve Kotlin interoperability; see https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions [SamShouldBeLast]
+                src/test/pkg/Test.java:18: warning: SAM-compatible parameters (such as parameter 1, "run", in test.pkg.Test.error1) should be last to improve Kotlin interoperability; see https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions [SamShouldBeLast]
+                src/test/pkg/Test.java:19: warning: SAM-compatible parameters (such as parameter 2, "callback", in test.pkg.Test.error2) should be last to improve Kotlin interoperability; see https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions [SamShouldBeLast]
                 src/test/pkg/test.kt:7: warning: lambda parameters (such as parameter 1, "bar", in test.pkg.TestKt.error) should be last to improve Kotlin interoperability; see https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions [SamShouldBeLast]
                 """,
             sourceFiles = *arrayOf(
@@ -74,7 +75,11 @@ class KotlinInteropChecksTest : DriverTest() {
                         // Consumer declares exactly one non-default method (accept), other methods are default.
                         public void ok7(@NonNull String packageName, @NonNull Executor executor,
                             @NonNull Consumer<Boolean> callback) {}
-                        public void error(Runnable run, int x) { }
+                        public void error1(Runnable run, int x) { }
+                        // Executors, while they have a single method are not considered to be SAM that we want to be
+                        // the last argument
+                        public void error2(@NonNull String packageName, @NonNull Consumer<Boolean> callback,
+                            @NonNull Executor executor) {}
                     }
                     """
                 ),
