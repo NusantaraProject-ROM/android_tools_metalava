@@ -324,8 +324,8 @@ class StubsTest : DriverTest() {
             source = """
                 package test.pkg;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
-                @java.lang.annotation.Target({java.lang.annotation.ElementType.TYPE, java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD, java.lang.annotation.ElementType.PARAMETER, java.lang.annotation.ElementType.CONSTRUCTOR, java.lang.annotation.ElementType.LOCAL_VARIABLE})
                 @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS)
+                @java.lang.annotation.Target({java.lang.annotation.ElementType.TYPE, java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD, java.lang.annotation.ElementType.PARAMETER, java.lang.annotation.ElementType.CONSTRUCTOR, java.lang.annotation.ElementType.LOCAL_VARIABLE})
                 public @interface Foo {
                 public java.lang.String value();
                 }
@@ -3189,7 +3189,7 @@ class StubsTest : DriverTest() {
             warnings = "",
             api = """
                 package test.pkg {
-                  @java.lang.annotation.Target({java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD}) @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME) public @interface ExportedProperty {
+                  @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME) @java.lang.annotation.Target({java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD}) public @interface ExportedProperty {
                     method public abstract String category() default "";
                     method public abstract float floating() default 1.0f;
                     method public abstract boolean formatToHexString() default false;
@@ -3226,8 +3226,8 @@ class StubsTest : DriverTest() {
                  * by this annotation.
                  */
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
-                @java.lang.annotation.Target({java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD})
                 @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
+                @java.lang.annotation.Target({java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD})
                 public @interface ExportedProperty {
                 /**
                  * When resolveId is true, and if the annotated field/method return value
@@ -3293,8 +3293,8 @@ class StubsTest : DriverTest() {
             source = """
                 package java.lang;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
-                @java.lang.annotation.Target(java.lang.annotation.ElementType.METHOD)
                 @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.SOURCE)
+                @java.lang.annotation.Target(java.lang.annotation.ElementType.METHOD)
                 public @interface MyAnnotation {
                 }
                 """
