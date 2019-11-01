@@ -250,6 +250,51 @@ class AnnotationsMergerTest : DriverTest() {
     }
 
     @Test
+    fun `Merge qualifier annotations from Java stub files making sure they apply to public members of hidden superclasses`() {
+        check(
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    class HiddenSuperClass {
+                        @Override public String publicMethod(Object object) {return "";}
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+
+                    public class PublicClass extends HiddenSuperClass {
+                    }
+                    """
+                )
+            ),
+            compatibilityMode = false,
+            outputKotlinStyleNulls = false,
+            omitCommonPackages = false,
+            mergeJavaStubAnnotations = """
+                package test.pkg;
+
+                import libcore.util.NonNull;
+                import libcore.util.Nullable;
+
+                public class PublicClass {
+                    @NonNull public @NonNull String publicMethod(@Nullable Object object) {return "";}
+                }
+                """,
+            api = """
+                package test.pkg {
+                  public class PublicClass {
+                    ctor public PublicClass();
+                    method @androidx.annotation.NonNull public java.lang.String publicMethod(@androidx.annotation.Nullable java.lang.Object);
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
     fun `Merge inclusion annotations from Java stub files`() {
         check(
             warnings = "src/test/pkg/Example.annotated.java:6: error: @test.annotation.Show APIs must also be marked @hide: method test.pkg.Example.cShown() [UnhiddenSystemApi]",
