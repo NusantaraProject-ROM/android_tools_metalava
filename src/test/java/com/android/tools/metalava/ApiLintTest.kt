@@ -957,14 +957,13 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/MyClass.java:8: error: Symmetric method for `setProp4` must be named `getProp4`; was `isProp4` [GetterSetterNames] [Rule M6 in go/android-api-guidelines]
-                src/android/pkg/MyClass.java:12: error: Symmetric method for `hasError1` must be named `setHasError1`; was `setError1` [GetterSetterNames] [Rule M6 in go/android-api-guidelines]
-                src/android/pkg/MyClass.java:11: error: Symmetric method for `setError1` must be named `getError1`; was `hasError1` [GetterSetterNames] [Rule M6 in go/android-api-guidelines]
-                src/android/pkg/MyClass.java:14: error: Symmetric method for `isError2` must be named `setIsError2`; was `setHasError2` [GetterSetterNames] [Rule M6 in go/android-api-guidelines]
-                src/android/pkg/MyClass.java:18: error: Symmetric method for `getError3` must be named `setError3`; was `setIsError3` [GetterSetterNames] [Rule M6 in go/android-api-guidelines]
-                src/android/pkg/MyClass.java:16: error: Symmetric method for `getError3` must be named `setError3`; was `setHasError3` [GetterSetterNames] [Rule M6 in go/android-api-guidelines]
-                src/android/pkg/MyClass.java:20: error: Symmetric method for `hasError5` must be named `setHasError5`; was `setError5` [GetterSetterNames] [Rule M6 in go/android-api-guidelines]
-                src/android/pkg/MyClass.java:19: error: Symmetric method for `setError5` must be named `getError5`; was `hasError5` [GetterSetterNames] [Rule M6 in go/android-api-guidelines]
+                    src/android/pkg/MyClass.java:20: error: Symmetric method for `isVisibleBad` must be named `setVisibleBad`; was `setIsVisibleBad` [GetterSetterNames] [Rule M6 in go/android-api-guidelines]
+                    src/android/pkg/MyClass.java:24: error: Symmetric method for `hasTransientStateBad` must be named `setHasTransientStateBad`; was `setTransientStateBad` [GetterSetterNames] [Rule M6 in go/android-api-guidelines]
+                    src/android/pkg/MyClass.java:28: error: Symmetric method for `setHasTransientStateAlsoBad` must be named `hasTransientStateAlsoBad`; was `isHasTransientStateAlsoBad` [GetterSetterNames] [Rule M6 in go/android-api-guidelines]
+                    src/android/pkg/MyClass.java:31: error: Symmetric method for `setCanRecordBad` must be named `canRecordBad`; was `isCanRecordBad` [GetterSetterNames] [Rule M6 in go/android-api-guidelines]
+                    src/android/pkg/MyClass.java:34: error: Symmetric method for `setShouldFitWidthBad` must be named `shouldFitWidthBad`; was `isShouldFitWidthBad` [GetterSetterNames] [Rule M6 in go/android-api-guidelines]
+                    src/android/pkg/MyClass.java:37: error: Symmetric method for `setWiFiRoamingSettingEnabledBad` must be named `isWiFiRoamingSettingEnabledBad`; was `getWiFiRoamingSettingEnabledBad` [GetterSetterNames] [Rule M6 in go/android-api-guidelines]
+                    src/android/pkg/MyClass.java:40: error: Symmetric method for `setEnabledBad` must be named `isEnabledBad`; was `getEnabledBad` [GetterSetterNames] [Rule M6 in go/android-api-guidelines]
                 """,
             sourceFiles = *arrayOf(
                 java(
@@ -972,23 +971,43 @@ class ApiLintTest : DriverTest() {
                     package android.pkg;
 
                     public class MyClass {
-                        public int getProp1() { return 0; }
-                        public boolean getProp2() { return false; }
-                        public boolean getProp3() { return false; }
-                        public void setProp3(boolean s) { }
-                        public boolean isProp4() { return false; }
-                        public void setProp4(boolean s) { }
+                        // Correct
+                        public void setVisible(boolean visible) {}
+                        public boolean isVisible() { return false; }
 
-                        public boolean hasError1() { return false; }
-                        public void setError1(boolean s) { }
-                        public boolean isError2() { return false; }
-                        public void setHasError2(boolean s) { }
-                        public boolean getError3() { return false; }
-                        public void setHasError3(boolean s) { }
-                        public boolean isError4() { return false; }
-                        public void setIsError3(boolean s) { }
-                        public boolean hasError5() { return false; }
-                        public void setError5(boolean s) { }
+                        public void setHasTransientState(boolean hasTransientState) {}
+                        public boolean hasTransientState() { return false; }
+
+                        public void setCanRecord(boolean canRecord) {}
+                        public boolean canRecord() { return false; }
+
+                        public void setShouldFitWidth(boolean shouldFitWidth) {}
+                        public boolean shouldFitWidth() { return false; }
+
+                        public void setWiFiRoamingSettingEnabled(boolean enabled) {}
+                        public boolean isWiFiRoamingSettingEnabled() { return false; }
+
+                        // Bad
+                        public void setIsVisibleBad(boolean visible) {}
+                        public boolean isVisibleBad() { return false; }
+
+                        public void setTransientStateBad(boolean hasTransientState) {}
+                        public boolean hasTransientStateBad() { return false; }
+
+                        public void setHasTransientStateAlsoBad(boolean hasTransientState) {}
+                        public boolean isHasTransientStateAlsoBad() { return false; }
+
+                        public void setCanRecordBad(boolean canRecord) {}
+                        public boolean isCanRecordBad() { return false; }
+
+                        public void setShouldFitWidthBad(boolean shouldFitWidth) {}
+                        public boolean isShouldFitWidthBad() { return false; }
+
+                        public void setWiFiRoamingSettingEnabledBad(boolean enabled) {}
+                        public boolean getWiFiRoamingSettingEnabledBad() { return false; }
+
+                        public void setEnabledBad(boolean enabled) {}
+                        public boolean getEnabledBad() { return false; }
                     }
                     """
                 )
