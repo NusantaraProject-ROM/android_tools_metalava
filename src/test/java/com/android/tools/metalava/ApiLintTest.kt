@@ -572,9 +572,126 @@ class ApiLintTest : DriverTest() {
                         public void ok() { }
                         protected void finalize() { } // OK
                         protected void wrong() { }
-                        public int ok = 42;
-                        protected int wrong = 5;
+                        public final int ok = 42;
+                        protected final int wrong = 5;
                         private int ok2 = 2;
+                    }
+                    """
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `Fields must be final and properly named`() {
+        check(
+            apiLint = "", // enabled
+            compatibilityMode = false,
+            warnings = """
+                src/android/pkg/MyClass.java:11: error: Non-static field ALSO_BAD_CONSTANT must be named using fooBar style [StartWithLower] [Rule S1 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:11: error: Constant ALSO_BAD_CONSTANT must be marked static final [AllUpper] [Rule C2 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:7: error: Non-static field AlsoBadName must be named using fooBar style [StartWithLower] [Rule S1 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:10: error: Bare field BAD_CONSTANT must be marked final, or moved behind accessors if mutable [MutableBareField] [Rule F2 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:10: error: Constant BAD_CONSTANT must be marked static final [AllUpper] [Rule C2 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:5: error: Bare field badMutable must be marked final, or moved behind accessors if mutable [MutableBareField] [Rule F2 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:9: error: Bare field badStaticMutable must be marked final, or moved behind accessors if mutable [MutableBareField] [Rule F2 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:6: error: Internal field mBadName must not be exposed [InternalField] [Rule F2 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:8: error: Constant field names must be named with only upper case characters: `android.pkg.MyClass#sBadStaticName`, should be `S_BAD_STATIC_NAME`? [AllUpper] [Rule C2 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:8: error: Internal field sBadStaticName must not be exposed [InternalField] [Rule F2 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:15: error: Internal field mBad must not be exposed [InternalField] [Rule F2 in go/android-api-guidelines]
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package android.pkg;
+
+                    public class MyClass {
+                        private int mOk;
+                        public int badMutable;
+                        public final int mBadName;
+                        public final int AlsoBadName;
+                        public static final int sBadStaticName;
+                        public static int badStaticMutable;
+                        public static int BAD_CONSTANT;
+                        public final int ALSO_BAD_CONSTANT;
+
+                        public static class LayoutParams {
+                            public int ok;
+                            public int mBad;
+                        }
+                    }
+                    """
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `Only android_net_Uri allowed`() {
+        check(
+            apiLint = "", // enabled
+            compatibilityMode = false,
+            warnings = """
+                src/android/pkg/MyClass.java:7: error: Use android.net.Uri instead of java.net.URL (method android.pkg.MyClass.bad1()) [AndroidUri] [Rule FW14 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:8: error: Use android.net.Uri instead of java.net.URI (parameter param in android.pkg.MyClass.bad2(java.util.List<java.net.URI> param)) [AndroidUri] [Rule FW14 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:9: error: Use android.net.Uri instead of android.net.URL (parameter param in android.pkg.MyClass.bad3(android.net.URL param)) [AndroidUri] [Rule FW14 in go/android-api-guidelines]
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package android.pkg;
+
+                    import java.util.List;
+                    import androidx.annotation.Nullable;
+
+                    public final class MyClass {
+                        public @Nullable java.net.URL bad1() { return null; }
+                        public void bad2(@Nullable List<java.net.URI> param) { }
+                        public void bad3(@Nullable android.net.URL param) { }
+                    }
+                    """
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `Typedef must be hidden`() {
+        check(
+            apiLint = "", // enabled
+            compatibilityMode = false,
+            warnings = """
+                src/android/pkg/MyClass.java:15: error: Don't expose @IntDef: SomeInt must be hidden. [PublicTypedef] [Rule FW15 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:20: error: Don't expose @LongDef: SomeLong must be hidden. [PublicTypedef] [Rule FW15 in go/android-api-guidelines]
+                src/android/pkg/MyClass.java:10: error: Don't expose @StringDef: SomeString must be hidden. [PublicTypedef] [Rule FW15 in go/android-api-guidelines]
+                """,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package android.pkg;
+
+                    public final class MyClass {
+                            private MyClass() {}
+
+                            public static final String SOME_STRING = "abc";
+                            public static final int SOME_INT = 1;
+                            public static final long SOME_LONG = 1L;
+
+                            @StringDef(value = {
+                                    SOME_STRING
+                            })
+                            @Retention(RetentionPolicy.SOURCE)
+                            public @interface SomeString {}
+                            @IntDef(value = {
+                                    SOME_INT
+                            })
+                            @Retention(RetentionPolicy.SOURCE)
+                            public @interface SomeInt {}
+                            @LongDef(value = {
+                                    SOME_LONG
+                            })
+                            @Retention(RetentionPolicy.SOURCE)
+                            public @interface SomeLong {}
                     }
                     """
                 )
@@ -935,11 +1052,11 @@ class ApiLintTest : DriverTest() {
 
                     public class MyClass1 {
                         @Nullable
-                        public View view = null;
+                        public final View view = null;
                         @Nullable
-                        public Drawable drawable = null;
+                        public final Drawable drawable = null;
                         @Nullable
-                        public Bitmap bitmap = null;
+                        public final Bitmap bitmap = null;
                         @Nullable
                         public View ok(@Nullable View view, @Nullable Drawable drawable) { return null; }
                         @Nullable
@@ -1147,7 +1264,7 @@ class ApiLintTest : DriverTest() {
 
                     public class MyClass {
                         @Nullable
-                        public BitSet bitset;
+                        public final BitSet bitset;
                         @Nullable
                         public BitSet reverse(@Nullable BitSet bitset) { return null; }
                     }
@@ -1217,8 +1334,8 @@ class ApiLintTest : DriverTest() {
 
                     public class MyClass {
                         @Nullable
-                        public Integer integer1;
-                        public int integer2;
+                        public final Integer integer1;
+                        public final int integer2;
                         public MyClass(@Nullable Long l) {
                         }
                         @Nullable
@@ -1286,7 +1403,7 @@ class ApiLintTest : DriverTest() {
 
                     public class MyUtils5 {
                         // OK: instance field
-                        public int foo = 42;
+                        public final int foo = 42;
                         public static void foo() { }
                     }
                     """
@@ -1873,10 +1990,10 @@ class ApiLintTest : DriverTest() {
 
                     public class KotlinKeywordTest {
                         public void okay();
-                        public int okay = 0;
+                        public final int okay = 0;
 
                         public void fun() {} // error
-                        public int as = 0; // error
+                        public final int as = 0; // error
                     }
                     """
                 )
@@ -2130,7 +2247,7 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/PdfTest.java:6: error: Must use ParcelFileDescriptor instead of FileDescriptor in parameter fd in android.pkg.PdfTest.error1(java.io.FileDescriptor fd) [NoClone]
+                src/android/pkg/PdfTest.java:6: error: Must use ParcelFileDescriptor instead of FileDescriptor in parameter fd in android.pkg.PdfTest.error1(java.io.FileDescriptor fd) [UseParcelFileDescriptor] [Rule FW11 in go/android-api-guidelines]
                 src/android/pkg/PdfTest.java:7: error: Must use ParcelFileDescriptor instead of FileDescriptor in method android.pkg.PdfTest.getFileDescriptor() [UseParcelFileDescriptor] [Rule FW11 in go/android-api-guidelines]
                 """,
             sourceFiles = *arrayOf(
@@ -2144,6 +2261,29 @@ class ApiLintTest : DriverTest() {
                         public void error1(@Nullable java.io.FileDescriptor fd) { }
                         public int getFileDescriptor() { return -1; }
                         public void ok(@Nullable android.os.ParcelFileDescriptor fd) { }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package android.system;
+
+                    public class Os {
+                        public void ok(@Nullable java.io.FileDescriptor fd) { }
+                        public int getFileDescriptor() { return -1; }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package android.yada;
+
+                    import com.android.annotations.NonNull;
+
+                    public class YadaService extends android.app.Service {
+                        @Override
+                        public final void dump(@NonNull java.io.FileDescriptor fd, @NonNull java.io.PrintWriter pw, @NonNull String[] args) {
+                        }
                     }
                     """
                 )
@@ -2342,9 +2482,9 @@ class ApiLintTest : DriverTest() {
                         import androidx.annotation.Nullable;
 
                         public class Foo<T> {
-                            public Foo badField;
+                            public final Foo badField;
                             @Nullable
-                            public Foo goodField;
+                            public final Foo goodField;
 
                             public Foo(String name, int number) { }
                             public void setBadValue(Foo value) { }
