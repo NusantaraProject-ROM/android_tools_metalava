@@ -138,6 +138,7 @@ import com.android.tools.metalava.model.MethodItem
 import com.android.tools.metalava.model.PackageItem
 import com.android.tools.metalava.model.ParameterItem
 import com.android.tools.metalava.model.TypeItem
+import com.android.tools.metalava.model.SetMinSdkVersion
 import com.android.tools.metalava.model.psi.PsiMethodItem
 import com.android.tools.metalava.model.visitors.ApiVisitor
 import com.intellij.psi.JavaRecursiveElementVisitor
@@ -1442,44 +1443,22 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
 
     private fun checkBooleans(methods: Sequence<MethodItem>) {
         /*
-            def verify_boolean(clazz):
-                """Verifies that boolean accessors are named correctly.
-                For example, hasFoo() and setHasFoo()."""
+            Correct:
 
-                def is_get(m): return len(m.args) == 0 and m.typ == "boolean"
-                def is_set(m): return len(m.args) == 1 and m.args[0] == "boolean"
+            void setVisible(boolean visible);
+            boolean isVisible();
 
-                gets = [ m for m in clazz.methods if is_get(m) ]
-                sets = [ m for m in clazz.methods if is_set(m) ]
+            void setHasTransientState(boolean hasTransientState);
+            boolean hasTransientState();
 
-                def error_if_exists(methods, trigger, expected, actual):
-                    for m in methods:
-                        if m.name == actual:
-                            error(clazz, m, "M6", "Symmetric method for %s must be named %s" % (trigger, expected))
+            void setCanRecord(boolean canRecord);
+            boolean canRecord();
 
-                for m in clazz.methods:
-                    if is_get(m):
-                        if re.match("is[A-Z]", m.name):
-                            target = m.name[2:]
-                            expected = "setIs" + target
-                            error_if_exists(sets, m.name, expected, "setHas" + target)
-                        elif re.match("has[A-Z]", m.name):
-                            target = m.name[3:]
-                            expected = "setHas" + target
-                            error_if_exists(sets, m.name, expected, "setIs" + target)
-                            error_if_exists(sets, m.name, expected, "set" + target)
-                        elif re.match("get[A-Z]", m.name):
-                            target = m.name[3:]
-                            expected = "set" + target
-                            error_if_exists(sets, m.name, expected, "setIs" + target)
-                            error_if_exists(sets, m.name, expected, "setHas" + target)
+            void setShouldFitWidth(boolean shouldFitWidth);
+            boolean shouldFitWidth();
 
-                    if is_set(m):
-                        if re.match("set[A-Z]", m.name):
-                            target = m.name[3:]
-                            expected = "get" + target
-                            error_if_exists(sets, m.name, expected, "is" + target)
-                            error_if_exists(sets, m.name, expected, "has" + target)
+            void setWiFiRoamingSettingEnabled(boolean enabled)
+            boolean isWiFiRoamingSettingEnabled()
         */
 
         fun errorIfExists(methods: Sequence<MethodItem>, trigger: String, expected: String, actual: String) {
@@ -1493,6 +1472,20 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
             }
         }
 
+        data class GetterSetterPattern(val getter: String, val setter: String)
+        val goodPrefixes = listOf(
+                GetterSetterPattern("has", "setHas"),
+                GetterSetterPattern("can", "setCan"),
+                GetterSetterPattern("should", "setShould"),
+                GetterSetterPattern("is", "set")
+        )
+        fun List<GetterSetterPattern>.match(name: String, prop: (GetterSetterPattern) -> String) = firstOrNull {
+            name.startsWith(prop(it)) && name.getOrNull(prop(it).length)?.isUpperCase() ?: false
+        }
+
+        val badGetterPrefixes = listOf("isHas", "isCan", "isShould", "get", "is")
+        val badSetterPrefixes = listOf("setIs", "set")
+
         fun isGetter(method: MethodItem): Boolean {
             val returnType = method.returnType() ?: return false
             return method.parameters().isEmpty() && returnType.primitive && returnType.toTypeString() == "boolean"
@@ -1505,27 +1498,26 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
         for (method in methods) {
             val name = method.name()
             if (isGetter(method)) {
-                if (name.startsWith("is") && name.length >= 3 && name[2].isUpperCase()) {
-                    val target = name.substring(2)
-                    val expected = "setIs$target"
-                    errorIfExists(methods, name, expected, "setHas$target")
-                } else if (name.startsWith("has") && name.length >= 4 && name[3].isUpperCase()) {
-                    val target = name.substring(3)
-                    val expected = "setHas$target"
-                    errorIfExists(methods, name, expected, "setIs$target")
-                    errorIfExists(methods, name, expected, "set$target")
-                } else if (name.startsWith("get") && name.length >= 4 && name[3].isUpperCase()) {
-                    val target = name.substring(3)
-                    val expected = "set$target"
-                    errorIfExists(methods, name, expected, "setIs$target")
-                    errorIfExists(methods, name, expected, "setHas$target")
+                val pattern = goodPrefixes.match(name, GetterSetterPattern::getter) ?: continue
+                val target = name.substring(pattern.getter.length)
+                val expectedSetter = "${pattern.setter}$target"
+
+                badSetterPrefixes.forEach {
+                    val actualSetter = "${it}$target"
+                    if (actualSetter != expectedSetter) {
+                        errorIfExists(methods, name, expectedSetter, actualSetter)
+                    }
                 }
             } else if (isSetter(method)) {
-                if (name.startsWith("set") && name.length >= 4 && name[3].isUpperCase()) {
-                    val target = name.substring(3)
-                    val expected = "get$target"
-                    errorIfExists(methods, name, expected, "is$target")
-                    errorIfExists(methods, name, expected, "has$target")
+                val pattern = goodPrefixes.match(name, GetterSetterPattern::setter) ?: continue
+                val target = name.substring(pattern.setter.length)
+                val expectedGetter = "${pattern.getter}$target"
+
+                badGetterPrefixes.forEach {
+                    val actualGetter = "${it}$target"
+                    if (actualGetter != expectedGetter) {
+                        errorIfExists(methods, name, expectedGetter, actualGetter)
+                    }
                 }
             }
         }
@@ -2718,6 +2710,13 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
                         warn(clazz, m, None, "Classes that release resources should implement AutoClosable and CloseGuard")
                         return
          */
+        // AutoClosable has been added in API 19, so libraries with minSdkVersion <19 cannot use it. If the version
+        // is not set, then keep the check enabled.
+        val minSdkVersion = codebase.getMinSdkVersion()
+        if (minSdkVersion is SetMinSdkVersion && minSdkVersion.value < 19) {
+            return
+        }
+
         val foundMethods = methods.filter { method ->
             when (method.name()) {
                 "close", "release", "destroy", "finish", "finalize", "disconnect", "shutdown", "stop", "free", "quit" -> true

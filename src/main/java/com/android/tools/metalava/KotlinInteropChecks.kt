@@ -311,6 +311,13 @@ class KotlinInteropChecks {
             return false
         }
 
+        // Executors, while they have a single method are not considered to be SAM that we want to
+        // be the last argument because often it leads to unexpected behavior of the trailing
+        // lambda.
+        if ("java.util.concurrent.Executor" == cls.qualifiedName()) {
+            return false
+        }
+
         return true
     }
 
