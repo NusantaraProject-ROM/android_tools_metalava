@@ -50,6 +50,7 @@ import com.android.tools.metalava.doclava1.Errors.ABSTRACT_INNER
 import com.android.tools.metalava.doclava1.Errors.ACRONYM_NAME
 import com.android.tools.metalava.doclava1.Errors.ACTION_VALUE
 import com.android.tools.metalava.doclava1.Errors.ALL_UPPER
+import com.android.tools.metalava.doclava1.Errors.ANDROID_URI
 import com.android.tools.metalava.doclava1.Errors.ARRAY_RETURN
 import com.android.tools.metalava.doclava1.Errors.AUTO_BOXING
 import com.android.tools.metalava.doclava1.Errors.BANNED_THROW
@@ -81,6 +82,7 @@ import com.android.tools.metalava.doclava1.Errors.INTENT_BUILDER_NAME
 import com.android.tools.metalava.doclava1.Errors.INTENT_NAME
 import com.android.tools.metalava.doclava1.Errors.INTERFACE_CONSTANT
 import com.android.tools.metalava.doclava1.Errors.INTERNAL_CLASSES
+import com.android.tools.metalava.doclava1.Errors.INTERNAL_FIELD
 import com.android.tools.metalava.doclava1.Errors.KOTLIN_OPERATOR
 import com.android.tools.metalava.doclava1.Errors.LISTENER_INTERFACE
 import com.android.tools.metalava.doclava1.Errors.LISTENER_LAST
@@ -92,6 +94,7 @@ import com.android.tools.metalava.doclava1.Errors.METHOD_NAME_UNITS
 import com.android.tools.metalava.doclava1.Errors.MIN_MAX_CONSTANT
 import com.android.tools.metalava.doclava1.Errors.MISSING_BUILD_METHOD
 import com.android.tools.metalava.doclava1.Errors.MISSING_NULLABILITY
+import com.android.tools.metalava.doclava1.Errors.MUTABLE_BARE_FIELD
 import com.android.tools.metalava.doclava1.Errors.NOT_CLOSEABLE
 import com.android.tools.metalava.doclava1.Errors.NO_BYTE_OR_SHORT
 import com.android.tools.metalava.doclava1.Errors.NO_CLONE
@@ -105,6 +108,7 @@ import com.android.tools.metalava.doclava1.Errors.PARCEL_CREATOR
 import com.android.tools.metalava.doclava1.Errors.PARCEL_NOT_FINAL
 import com.android.tools.metalava.doclava1.Errors.PERCENTAGE_INT
 import com.android.tools.metalava.doclava1.Errors.PROTECTED_MEMBER
+import com.android.tools.metalava.doclava1.Errors.PUBLIC_TYPEDEF
 import com.android.tools.metalava.doclava1.Errors.RAW_AIDL
 import com.android.tools.metalava.doclava1.Errors.REGISTRATION_NAME
 import com.android.tools.metalava.doclava1.Errors.RESOURCE_FIELD_NAME
@@ -273,6 +277,7 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
         checkIcu(type, typeString, item)
         checkBitSet(type, typeString, item)
         checkHasNullability(item)
+        checkUri(typeString, item)
     }
 
     private fun checkClass(
@@ -315,6 +320,7 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
         checkParams(cls)
         checkSingleton(cls, methods, constructors)
         checkExtends(cls)
+        checkTypedef(cls)
 
         // TODO: Not yet working
         // checkOverloadArgs(cls, methods)
@@ -331,6 +337,7 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
         }
         checkProtected(field)
         checkServices(field)
+        checkFieldName(field)
     }
 
     private fun checkMethod(
@@ -899,6 +906,80 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
                 PROTECTED_MEMBER, member,
                 "Protected ${if (member is MethodItem) "methods" else "fields"} not allowed; must be public: ${member.describe()}}"
             )
+        }
+    }
+
+    private fun checkFieldName(field: FieldItem) {
+        /*
+        def verify_fields(clazz):
+            """Verify that all exposed fields are final.
+            Exposed fields must follow myName style.
+            Catch internal mFoo objects being exposed."""
+
+            IGNORE_BARE_FIELDS = [
+                "android.app.ActivityManager.RecentTaskInfo",
+                "android.app.Notification",
+                "android.content.pm.ActivityInfo",
+                "android.content.pm.ApplicationInfo",
+                "android.content.pm.ComponentInfo",
+                "android.content.pm.ResolveInfo",
+                "android.content.pm.FeatureGroupInfo",
+                "android.content.pm.InstrumentationInfo",
+                "android.content.pm.PackageInfo",
+                "android.content.pm.PackageItemInfo",
+                "android.content.res.Configuration",
+                "android.graphics.BitmapFactory.Options",
+                "android.os.Message",
+                "android.system.StructPollfd",
+            ]
+
+            for f in clazz.fields:
+                if not "final" in f.split:
+                    if clazz.fullname in IGNORE_BARE_FIELDS:
+                        pass
+                    elif clazz.fullname.endswith("LayoutParams"):
+                        pass
+                    elif clazz.fullname.startswith("android.util.Mutable"):
+                        pass
+                    else:
+                        error(clazz, f, "F2", "Bare fields must be marked final, or add accessors if mutable")
+
+                if "static" not in f.split and "property" not in f.split:
+                    if not re.match("[a-z]([a-zA-Z]+)?", f.name):
+                        error(clazz, f, "S1", "Non-static fields must be named using myField style")
+
+                if re.match("[ms][A-Z]", f.name):
+                    error(clazz, f, "F1", "Internal objects must not be exposed")
+
+                if re.match("[A-Z_]+", f.name):
+                    if "static" not in f.split or "final" not in f.split:
+                        error(clazz, f, "C2", "Constants must be marked static final")
+         */
+        val className = field.containingClass().qualifiedName()
+        val modifiers = field.modifiers
+        if (!modifiers.isFinal()) {
+            if (className !in classesWithBareFields &&
+                    !className.endsWith("LayoutParams") &&
+                    !className.startsWith("android.util.Mutable")) {
+                report(MUTABLE_BARE_FIELD, field,
+                        "Bare field ${field.name()} must be marked final, or moved behind accessors if mutable")
+            }
+        }
+        if (!modifiers.isStatic()) {
+            if (!fieldNamePattern.matches(field.name())) {
+                report(START_WITH_LOWER, field,
+                        "Non-static field ${field.name()} must be named using fooBar style")
+            }
+        }
+        if (internalNamePattern.matches(field.name())) {
+            report(INTERNAL_FIELD, field,
+                    "Internal field ${field.name()} must not be exposed")
+        }
+        if (constantNamePattern.matches(field.name())) {
+            if (!modifiers.isStatic() || !modifiers.isFinal()) {
+                report(ALL_UPPER, field,
+                        "Constant ${field.name()} must be marked static final")
+            }
         }
     }
 
@@ -3188,9 +3269,14 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
                         error(clazz, f, "FW11", "Must use ParcelFileDescriptor")
 
          */
+        if (item.containingClass()?.qualifiedName() in lowLevelFileClassNames ||
+            isServiceDumpMethod(item)) {
+            return
+        }
+
         if (type == "java.io.FileDescriptor") {
             report(
-                NO_CLONE, item,
+                USE_PARCEL_FILE_DESCRIPTOR, item,
                 "Must use ParcelFileDescriptor instead of FileDescriptor in ${item.describe()}"
             )
         } else if (type == "int" && item is MethodItem) {
@@ -3283,6 +3369,48 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
         }
     }
 
+    private fun checkTypedef(cls: ClassItem) {
+        /*
+        def verify_intdef(clazz):
+            """intdefs must be @hide, because the constant names cannot be stored in
+               the stubs (only the values are, which is not useful)"""
+            if "@interface" not in clazz.split:
+                return
+            if "@IntDef" in clazz.annotations or "@LongDef" in clazz.annotations:
+                error(clazz, None, None, "@IntDef and @LongDef annotations must be @hide")
+         */
+        if (cls.isAnnotationType()) {
+            val modifiers = cls.modifiers
+
+            typedefAnnotations.firstOrNull { modifiers.isAnnotatedWith(it) }?.let {
+                report(PUBLIC_TYPEDEF, cls, "Don't expose @$it: ${cls.simpleName()} must be hidden.")
+            }
+        }
+    }
+
+    private fun checkUri(typeString: String, item: Item) {
+        /*
+        def verify_uris(clazz):
+            bad = ["java.net.URL", "java.net.URI", "android.net.URL"]
+
+            for f in clazz.fields:
+                if f.typ in bad:
+                    error(clazz, f, None, "Field must be android.net.Uri instead of " + f.typ)
+
+            for m in clazz.methods + clazz.ctors:
+                if m.typ in bad:
+                    error(clazz, m, None, "Must return android.net.Uri instead of " + m.typ)
+                for arg in m.args:
+                    if arg in bad:
+                        error(clazz, m, None, "Argument must take android.net.Uri instead of " + arg)
+         */
+        badUriTypes.firstOrNull { typeString.contains(it) }?.let {
+            report(
+                ANDROID_URI, item, "Use android.net.Uri instead of $it (${item.describe()})"
+            )
+        }
+    }
+
     /**
      * Checks whether the given full package name is the same as the given root
      * package or a sub package (if we just did full.startsWith("java"), then
@@ -3338,6 +3466,44 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
         private val badParameterClassNames = listOf(
             "Param", "Parameter", "Parameters", "Args", "Arg", "Argument", "Arguments", "Options", "Bundle"
         )
+
+        private val badUriTypes = listOf("java.net.URL", "java.net.URI", "android.net.URL")
+
+        private val typedefAnnotations = listOf("IntDef", "LongDef", "StringDef")
+
+        /**
+         * Classes for manipulating file descriptors directly, where using ParcelFileDescriptor
+         * isn't required
+         */
+        private val lowLevelFileClassNames = listOf(
+            "android.os.FileUtils",
+            "android.system.Os",
+            "android.net.util.SocketUtils",
+            "android.os.NativeHandle",
+            "android.os.ParcelFileDescriptor"
+        )
+
+        /**
+         * Classes which already use bare fields extensively, and bare fields are thus allowed for
+         * consistency with existing API surface.
+         */
+        private val classesWithBareFields = listOf(
+            "android.app.ActivityManager.RecentTaskInfo",
+            "android.app.Notification",
+            "android.content.pm.ActivityInfo",
+            "android.content.pm.ApplicationInfo",
+            "android.content.pm.ComponentInfo",
+            "android.content.pm.ResolveInfo",
+            "android.content.pm.FeatureGroupInfo",
+            "android.content.pm.InstrumentationInfo",
+            "android.content.pm.PackageInfo",
+            "android.content.pm.PackageItemInfo",
+            "android.content.res.Configuration",
+            "android.graphics.BitmapFactory.Options",
+            "android.os.Message",
+            "android.system.StructPollfd"
+        )
+
         private val badUnits = mapOf(
             "Ns" to "Nanos",
             "Ms" to "Millis or Micros",
@@ -3362,6 +3528,8 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
         )
 
         private val constantNamePattern = Regex("[A-Z0-9_]+")
+        private val internalNamePattern = Regex("[ms][A-Z0-9].*")
+        private val fieldNamePattern = Regex("[a-z].*")
         private val onCallbackNamePattern = Regex("on[A-Z][a-z][a-zA-Z1-9]*")
         private val configFieldPattern = Regex("config_[a-z][a-zA-Z1-9]*")
         private val layoutFieldPattern = Regex("layout_[a-z][a-zA-Z1-9]*")
@@ -3373,6 +3541,19 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
 
         private val acronymPattern2 = Regex("([A-Z]){2,}")
         private val acronymPattern3 = Regex("([A-Z]){3,}")
+
+        private val serviceDumpMethodParameterTypes =
+            listOf("java.io.FileDescriptor", "java.io.PrintWriter", "java.lang.String[]")
+
+        private fun isServiceDumpMethod(item: Item) = when (item) {
+            is MethodItem -> isServiceDumpMethod(item)
+            is ParameterItem -> isServiceDumpMethod(item.containingMethod())
+            else -> false
+        }
+
+        private fun isServiceDumpMethod(item: MethodItem) = item.name() == "dump" &&
+            item.containingClass().extends("android.app.Service") &&
+            item.parameters().map { it.type().toTypeString() } == serviceDumpMethodParameterTypes
 
         private fun hasAcronyms(name: String): Boolean {
             // Require 3 capitals, or 2 if it's at the end of a word.
