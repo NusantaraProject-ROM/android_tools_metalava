@@ -347,6 +347,10 @@ public class Errors {
     public static final Error DOCUMENT_EXCEPTIONS = new Error(383, ERROR, Category.API_LINT); // Formerly 145
     public static final Error FORBIDDEN_SUPER_CLASS = new Error(384, ERROR, Category.API_LINT);
     public static final Error MISSING_NULLABILITY = new Error(385, ERROR, Category.API_LINT);
+    public static final Error MUTABLE_BARE_FIELD = new Error(386, ERROR, Category.API_LINT, "F2");
+    public static final Error INTERNAL_FIELD = new Error(387, ERROR, Category.API_LINT, "F2");
+    public static final Error PUBLIC_TYPEDEF = new Error(388, ERROR, Category.API_LINT, "FW15");
+    public static final Error ANDROID_URI = new Error(389, ERROR, Category.API_LINT, "FW14");
 
     static {
         // Attempt to initialize error names based on the field names
