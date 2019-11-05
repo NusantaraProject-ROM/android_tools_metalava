@@ -1231,12 +1231,12 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
             cls.extends("android.app.Service") -> {
                 testMethods = true
                 ensureContextNameSuffix(cls, "Service")
-                ensureFieldValue(fields, "SERVICE_INTERFACE", cls.fullName())
+                ensureFieldValue(fields, "SERVICE_INTERFACE", cls.qualifiedName())
             }
             cls.extends("android.content.ContentProvider") -> {
                 testMethods = true
                 ensureContextNameSuffix(cls, "Provider")
-                ensureFieldValue(fields, "PROVIDER_INTERFACE", cls.fullName())
+                ensureFieldValue(fields, "PROVIDER_INTERFACE", cls.qualifiedName())
             }
             cls.extends("android.content.BroadcastReceiver") -> {
                 testMethods = true
@@ -1251,7 +1251,7 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
         if (testMethods) {
             for (method in methods) {
                 val modifiers = method.modifiers
-                if (modifiers.isFinal()) {
+                if (modifiers.isFinal() || modifiers.isStatic()) {
                     continue
                 }
                 val name = method.name()

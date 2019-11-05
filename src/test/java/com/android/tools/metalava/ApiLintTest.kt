@@ -873,6 +873,7 @@ class ApiLintTest : DriverTest() {
                         public final void ok() { }
                         public abstract void badlyNamedAbstractMethod();
                         public void badlyNamedMethod() { }
+                        public static void staticOk() { }
                     }
                     """
                 ),
@@ -881,6 +882,8 @@ class ApiLintTest : DriverTest() {
                     package android.pkg;
 
                     public class MyClass2 extends android.content.ContentProvider {
+                        public static final String PROVIDER_INTERFACE = "android.pkg.MyClass2";
+                        public final void ok();
                     }
                     """
                 ),
@@ -889,6 +892,8 @@ class ApiLintTest : DriverTest() {
                     package android.pkg;
 
                     public class MyClass3 extends android.app.Service {
+                        public static final String SERVICE_INTERFACE = "android.pkg.MyClass3";
+                        public final void ok();
                     }
                     """
                 ),
