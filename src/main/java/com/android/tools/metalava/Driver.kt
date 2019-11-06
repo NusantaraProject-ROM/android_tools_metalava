@@ -174,6 +174,7 @@ fun run(
         }
     }
     options.baseline?.close()
+    options.reportEvenIfSuppressedWriter?.close()
 
     stdout.flush()
     stderr.flush()
