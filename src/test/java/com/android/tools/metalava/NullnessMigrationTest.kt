@@ -635,6 +635,81 @@ class NullnessMigrationTest : DriverTest() {
     }
 
     @Test
+    fun `Merge nullness annotations in stubs that are not in the API signature file`() {
+        check(
+            includeSystemApiAnnotations = true,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+
+                    import androidx.annotation.NonNull;
+                    import androidx.annotation.Nullable;
+
+                    public interface Appendable {
+                        @NonNull Appendable append(@Nullable java.lang.CharSequence csq) throws IOException;
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+
+                    import androidx.annotation.NonNull;
+                    import androidx.annotation.Nullable;
+
+                    /** @hide */
+                    @android.annotation.SystemApi
+                    public interface ForSystemUse {
+                        @NonNull Object foo(@Nullable String foo);
+                    }
+                    """
+                ),
+                androidxNonNullSource,
+                androidxNullableSource
+            ),
+            compatibilityMode = false,
+            omitCommonPackages = false,
+            migrateNullsApi = """
+                package test.pkg {
+                  public interface Appendable {
+                    method public Appendable append(java.lang.CharSequence csq) throws IOException;
+                  }
+                  public class ForSystemUse {
+                    method public Object foo(String foo);
+                  }
+                }
+            """,
+            stubs = arrayOf(
+                """
+                package test.pkg;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public interface Appendable {
+                @androidx.annotation.RecentlyNonNull
+                public test.pkg.Appendable append(@androidx.annotation.RecentlyNullable java.lang.CharSequence csq);
+                }
+                """,
+                """
+                package test.pkg;
+                /** @hide */
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public interface ForSystemUse {
+                @androidx.annotation.RecentlyNonNull
+                public java.lang.Object foo(@androidx.annotation.RecentlyNullable java.lang.String foo);
+                }
+                """
+            ),
+            api = """
+                package test.pkg {
+                  public interface ForSystemUse {
+                    method @androidx.annotation.NonNull public java.lang.Object foo(@androidx.annotation.Nullable java.lang.String);
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
     fun `Test inherited methods`() {
         check(
             warnings = """
