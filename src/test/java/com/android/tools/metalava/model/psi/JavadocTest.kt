@@ -1010,4 +1010,88 @@ class JavadocTest : DriverTest() {
             )
         )
     }
+
+    @Test
+    fun `Ensure references to classes in JavaDoc of hidden members do not affect imports`() {
+        check(
+            compatibilityMode = false,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    import test.pkg.bar.Bar;
+                    import test.pkg.baz.Baz;
+                    public class Foo {
+                        /**
+                         * This method is hidden so the reference to {@link Baz} in this comment
+                         * should not cause test.pkg.baz.Baz import to be added even though Baz is
+                         * part of the API.
+                         * @hide
+                         */
+                        public void baz() {}
+
+                        /**
+                         * @see Bar
+                         */
+                        public void bar() {}
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg.bar;
+                    import test.pkg.Foo;
+                    import test.pkg.baz.Baz;
+                    public class Bar {
+                        /** @see Baz */
+                        public void baz(Baz baz) {}
+                        /** @see Foo */
+                        public void foo(Foo foo) {}
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg.baz;
+                    public class Baz {
+                    }
+                    """
+                )
+            ),
+            stubs = arrayOf(
+                """
+                package test.pkg;
+                import test.pkg.bar.Bar;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class Foo {
+                public Foo() { throw new RuntimeException("Stub!"); }
+                /**
+                 * @see Bar
+                 */
+                public void bar() { throw new RuntimeException("Stub!"); }
+                }
+                """,
+                """
+                package test.pkg.bar;
+                import test.pkg.baz.Baz;
+                import test.pkg.Foo;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class Bar {
+                public Bar() { throw new RuntimeException("Stub!"); }
+                /** @see Baz */
+                public void baz(test.pkg.baz.Baz baz) { throw new RuntimeException("Stub!"); }
+                /** @see Foo */
+                public void foo(test.pkg.Foo foo) { throw new RuntimeException("Stub!"); }
+                }
+                """,
+                """
+                package test.pkg.baz;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class Baz {
+                public Baz() { throw new RuntimeException("Stub!"); }
+                }
+                """
+            )
+        )
+    }
 }
