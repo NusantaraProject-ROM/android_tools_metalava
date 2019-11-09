@@ -47,7 +47,6 @@ import com.android.tools.lint.checks.AnnotationDetector
 import com.android.tools.lint.detector.api.getChildren
 import com.android.tools.metalava.doclava1.ApiFile
 import com.android.tools.metalava.doclava1.ApiParseException
-import com.android.tools.metalava.doclava1.ApiPredicate
 import com.android.tools.metalava.model.AnnotationAttribute
 import com.android.tools.metalava.model.AnnotationAttributeValue
 import com.android.tools.metalava.model.AnnotationItem
@@ -304,7 +303,7 @@ class AnnotationsMerger(
         }
 
         CodebaseComparator().compare(
-            visitor, externalCodebase, codebase, ApiPredicate()
+            visitor, externalCodebase, codebase
         )
     }
 
