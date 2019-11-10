@@ -211,6 +211,73 @@ class AnnotationsMergerTest : DriverTest() {
     }
 
     @Test
+    fun `Merge qualifier annotations from Java stub files onto stubs that are not in the API signature file`() {
+        check(
+            includeSystemApiAnnotations = true,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+
+                    public interface Appendable {
+                        Appendable append(CharSequence csq) throws IOException;
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+
+                    /** @hide */
+                    @android.annotation.TestApi
+                    public interface ForTesting {
+                        void foo();
+                    }
+                    """
+                )
+            ),
+            compatibilityMode = false,
+            outputKotlinStyleNulls = false,
+            omitCommonPackages = false,
+            mergeJavaStubAnnotations = """
+                package test.pkg;
+
+                import libcore.util.NonNull;
+                import libcore.util.Nullable;
+
+                public interface Appendable {
+                    @NonNull Appendable append(@Nullable java.lang.CharSequence csq);
+                }
+                """,
+            stubs = arrayOf(
+                """
+                package test.pkg;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public interface Appendable {
+                @android.annotation.NonNull
+                public test.pkg.Appendable append(@android.annotation.Nullable java.lang.CharSequence csq);
+                }
+                """,
+                """
+                package test.pkg;
+                /** @hide */
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public interface ForTesting {
+                public void foo();
+                }
+                """
+            ),
+            api = """
+                package test.pkg {
+                  public interface ForTesting {
+                    method public void foo();
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
     fun `Merge type use qualifier annotations from Java stub files`() {
         // See b/123223339
         check(
