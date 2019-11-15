@@ -152,7 +152,7 @@ open class PsiBasedCodebase(location: File, override var description: String = "
                     if (comment != null) {
                         val text = comment.text
                         if (text.contains("@hide")) {
-                            hiddenPackages.add(packageName)
+                            this.hiddenPackages[packageName] = true
                         }
                         if (packageDocs[packageName] != null) {
                             reporter.report(
