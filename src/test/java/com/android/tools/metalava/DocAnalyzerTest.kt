@@ -1460,7 +1460,7 @@ class DocAnalyzerTest : DriverTest() {
             sourceFiles = *arrayOf(
                 source("src/overview.html", "<html>My overview docs</html>"),
                 source(
-                    "src/test/visible/package.html",
+                    "src/foo/test/visible/package.html",
                     """
                     <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
                     <!-- not a body tag: <body> -->
@@ -1475,15 +1475,75 @@ class DocAnalyzerTest : DriverTest() {
                     """
                 ).indented(),
                 java(
+                    // Note that we're *deliberately* placing the source file in the wrong
+                    // source root here. This is to simulate the scenario where the source
+                    // root (--source-path) points to a parent of the source folder instead
+                    // of the source folder instead. In this case, we need to try a bit harder
+                    // to compute the right package name; metalava has some code for that.
+                    // This is a regression test for b/144264106.
+                    "src/foo/test/visible/MyClass.java",
                     """
                     package test.visible;
                     public class MyClass {
                         public void test() { }
                     }
                     """
+                ),
+                // Also test hiding classes via javadoc
+                source(
+                    "src/foo/test/hidden1/package.html",
+                    """
+                    <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+                    <html>
+                    <body>
+                    @hide
+                    This is a hidden package
+                    </body>
+                    </html>
+                    """
+                ).indented(),
+                java(
+                    "src/foo/test/hidden1/Hidden.java",
+                    """
+                    package test.hidden1;
+                    public class Hidden {
+                        public void test() { }
+                    }
+                    """
+                ),
+                // Also test hiding classes via package-info.java
+                java(
+                    """
+                    /**
+                     * My package docs<br>
+                     * @hide
+                     */
+                    package test.hidden2;
+                    """
+                ).indented(),
+                java(
+                    """
+                    package test.hidden2;
+                    public class Hidden {
+                        public void test() { }
+                    }
+                    """
                 )
             ),
             docStubs = true,
+            // Make sure we expose exactly what we intend (so @hide via javadocs and
+            // via package-info.java works)
+            api = """
+                package test.visible {
+                  public class MyClass {
+                    ctor public MyClass();
+                    method public void test();
+                  }
+                }
+            """,
+            // Make sure the stubs are generated correctly; in particular, that we've
+            // pulled docs from overview.html into javadoc on package-info.java instead
+            // (removing all the content surrounding <body>, etc)
             stubs = arrayOf(
                 """
                 <html>My overview docs</html>
@@ -1499,6 +1559,7 @@ class DocAnalyzerTest : DriverTest() {
                 package test.visible;
                 """,
                 """
+                [test/visible/MyClass.java]
                 package test.visible;
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class MyClass {
