@@ -127,6 +127,10 @@ open class DefaultModifierList(
         return isSet(SUSPEND)
     }
 
+    override fun isCompanion(): Boolean {
+        return isSet(COMPANION)
+    }
+
     override fun isOperator(): Boolean {
         return isSet(OPERATOR)
     }
@@ -201,6 +205,10 @@ open class DefaultModifierList(
 
     fun setSuspend(suspend: Boolean) {
         set(SUSPEND, suspend)
+    }
+
+    fun setCompanion(companion: Boolean) {
+        set(COMPANION, companion)
     }
 
     override fun addAnnotation(annotation: AnnotationItem) {
@@ -301,6 +309,7 @@ open class DefaultModifierList(
         const val OPERATOR = 1 shl 17
         const val INLINE = 1 shl 18
         const val SUSPEND = 1 shl 19
+        const val COMPANION = 1 shl 20
 
         /**
          * Modifiers considered significant to include signature files (and similarly
@@ -308,7 +317,7 @@ open class DefaultModifierList(
          */
         private const val EQUIVALENCE_MASK = VISIBILITY_MASK or STATIC or ABSTRACT or
             FINAL or TRANSIENT or VOLATILE or DEPRECATED or VARARG or
-            SEALED or INFIX or OPERATOR or SUSPEND
+            SEALED or INFIX or OPERATOR or SUSPEND or COMPANION
 
         private const val COMPAT_EQUIVALENCE_MASK = EQUIVALENCE_MASK or SYNCHRONIZED
     }

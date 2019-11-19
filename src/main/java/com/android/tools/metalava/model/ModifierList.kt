@@ -51,7 +51,7 @@ interface ModifierList {
 
     // Kotlin
     fun isSealed(): Boolean = false
-
+    fun isCompanion(): Boolean = false
     fun isInfix(): Boolean = false
     fun isSuspend(): Boolean = false
     fun isOperator(): Boolean = false

@@ -1864,7 +1864,22 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
             }
             val where = when (item) {
                 is ParameterItem -> "parameter `${item.name()}` in method `${item.parent()?.name()}`"
-                is FieldItem -> "field `${item.name()}` in class `${item.parent()}`"
+                is FieldItem -> {
+                    if (item.isKotlin()) {
+                        if (item.name() == "INSTANCE") {
+                            // Kotlin compiler is not marking it with a nullability annotation
+                            // https://youtrack.jetbrains.com/issue/KT-33226
+                            return
+                        }
+                        if (item.modifiers.isCompanion()) {
+                            // Kotlin compiler is not marking it with a nullability annotation
+                            // https://youtrack.jetbrains.com/issue/KT-33314
+                            return
+                        }
+                    }
+                    "field `${item.name()}` in class `${item.parent()}`"
+                }
+
                 is ConstructorItem -> "constructor `${item.name()}` return"
                 is MethodItem -> {
                     // For methods requiresNullnessInfo and hasNullnessInfo considers both parameters and return,
