@@ -147,6 +147,9 @@ class PsiModifierItem(
                         // Switch back from private to public
                         visibilityFlags = PUBLIC
                     }
+                    if (ktModifierList.hasModifier(KtTokens.COMPANION_KEYWORD)) {
+                        flags = flags or COMPANION
+                    }
                 }
             }
 
