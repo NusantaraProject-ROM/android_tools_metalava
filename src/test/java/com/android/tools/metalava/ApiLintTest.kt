@@ -25,6 +25,12 @@ class ApiLintTest : DriverTest() {
         // Make sure we only flag issues in new API
         check(
             apiLint = "", // enabled
+            extraArguments = arrayOf(
+                ARG_API_LINT_IGNORE_PREFIX,
+                "android.icu.",
+                ARG_API_LINT_IGNORE_PREFIX,
+                "java."
+            ),
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/ALL_CAPS.java:3: warning: Acronyms should not be capitalized in class names: was `ALL_CAPS`, should this be `AllCaps`? [AcronymName] [Rule S1 in go/android-api-guidelines]
@@ -87,7 +93,7 @@ class ApiLintTest : DriverTest() {
                     import androidx.annotation.Nullable;
 
                     // Same as above android.pkg.badlyNamedClass but in a package
-                    // that API lint is supposed to ignore (see ApiLint#isInteresting)
+                    // that API lint is supposed to ignore (see ARG_API_LINT_IGNORE_PREFIX)
                     public class badlyNamedClass {
                         public static final int BadlyNamedField = 1;
                         public void BadlyNamedMethod1() { }
@@ -106,7 +112,26 @@ class ApiLintTest : DriverTest() {
                     import androidx.annotation.Nullable;
 
                     // Same as above android.pkg.badlyNamedClass but in a package
-                    // that API lint is supposed to ignore (see ApiLint#isInteresting)
+                    // that API lint is supposed to ignore (see ARG_API_LINT_IGNORE_PREFIX)
+                    public class badlyNamedClass {
+                        public static final int BadlyNamedField = 1;
+                        public void BadlyNamedMethod1() { }
+
+                        public void toXML() { }
+                        @Nullable
+                        public String getID() { return null; }
+                        public void setZOrderOnTop() { }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package java;
+
+                    import androidx.annotation.Nullable;
+
+                    // Same as above android.pkg.badlyNamedClass but in a package
+                    // that API lint is supposed to ignore (see ARG_API_LINT_IGNORE_PREFIX)
                     public class badlyNamedClass {
                         public static final int BadlyNamedField = 1;
                         public void BadlyNamedMethod1() { }

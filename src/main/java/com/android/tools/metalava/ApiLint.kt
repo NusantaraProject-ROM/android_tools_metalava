@@ -3426,54 +3426,14 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
         }
     }
 
-    /**
-     * Checks whether the given full package name is the same as the given root
-     * package or a sub package (if we just did full.startsWith("java"), then
-     * we'd return true for "javafx", and if we just use full.startsWith("java.")
-     * we'd miss the root package itself.
-     */
-    private fun inSubPackage(root: String, full: String): Boolean {
-        return root == full || full.startsWith(root) && full[root.length] == '.'
-    }
-
     private fun isInteresting(cls: ClassItem): Boolean {
-        /*
-            def is_interesting(clazz):
-                """Test if given class is interesting from an Android PoV."""
-
-                if clazz.pkg.name.startswith("java"): return False
-                if clazz.pkg.name.startswith("junit"): return False
-                if clazz.pkg.name.startswith("org.apache"): return False
-                if clazz.pkg.name.startswith("org.xml"): return False
-                if clazz.pkg.name.startswith("org.json"): return False
-                if clazz.pkg.name.startswith("org.w3c"): return False
-                if clazz.pkg.name.startswith("android.icu."): return False
-                return True
-         */
-
         val name = cls.qualifiedName()
-
-        // Fail fast for most common cases:
-        if (name.startsWith("android.")) {
-            if (!name.startsWith("android.icu")) {
-                return true
+        for (prefix in options.checkApiIgnorePrefix) {
+            if (name.startsWith(prefix)) {
+                return false
             }
-        } else if (name.startsWith("java.")) {
-            return false
         }
-
-        return when {
-            inSubPackage("java", name) ||
-                inSubPackage("javax", name) ||
-                inSubPackage("junit", name) ||
-                inSubPackage("org.apache", name) ||
-                inSubPackage("org.xml", name) ||
-                inSubPackage("org.json", name) ||
-                inSubPackage("org.w3c", name) ||
-                inSubPackage("org.xmlpull", name) ||
-                inSubPackage("android.icu", name) -> false
-            else -> true
-        }
+        return true
     }
 
     companion object {
