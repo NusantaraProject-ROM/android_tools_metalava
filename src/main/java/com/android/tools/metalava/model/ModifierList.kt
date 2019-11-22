@@ -99,7 +99,7 @@ interface ModifierList {
             return false
         }
         return annotations().any {
-            options.showAnnotations.contains(it.qualifiedName())
+            options.showAnnotations.matches(it)
         }
     }
 
@@ -113,7 +113,7 @@ interface ModifierList {
             return false
         }
         return annotations().any {
-            options.showSingleAnnotations.contains(it.qualifiedName())
+            options.showSingleAnnotations.matches(it)
         }
     }
 
@@ -129,7 +129,7 @@ interface ModifierList {
             return false
         }
         return annotations().any { annotation ->
-            options.hideAnnotations.contains(annotation.qualifiedName()) ||
+            options.hideAnnotations.matches(annotation) ||
                 annotation.resolve()?.hasHideMetaAnnotation() ?: false
         }
     }

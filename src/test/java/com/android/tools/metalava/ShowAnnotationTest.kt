@@ -310,4 +310,88 @@ class ShowAnnotationTest : DriverTest() {
                 """
         )
     }
+
+    @Test
+    fun `showAnnotation with parameters`() {
+        check(
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    import androidx.annotation.RestrictTo;
+                    import static androidx.annotation.RestrictTo.Scope.LIBRARY;
+                    import static androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP;
+
+                    public class Foo {
+                        public void method1() { }
+
+                        /**
+                         * @hide restricted to this library group
+                         */
+                        @RestrictTo(LIBRARY_GROUP)
+                        public void method2() { }
+
+                        /**
+                         * @hide restricted to this library
+                         */
+                        @RestrictTo(LIBRARY)
+                        public void method3() { }
+
+                        public void method4() { }
+                    }
+                    """
+                ),
+                restrictToSource
+            ),
+
+            extraArguments = arrayOf(
+                ARG_SHOW_UNANNOTATED,
+                ARG_SHOW_ANNOTATION, "androidx.annotation.RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP)",
+                ARG_HIDE_PACKAGE, "androidx.annotation"
+            ),
+
+            api = """
+                package test.pkg {
+                  public class Foo {
+                    ctor public Foo();
+                    method public void method1();
+                    method public void method2();
+                    method public void method4();
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
+    fun `Testing parsing an annotation whose attribute references the annotated class`() {
+        check(
+            format = FileFormat.V3,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package androidx.room;
+
+                    import androidx.annotation.IntDef;
+
+                    @IntDef(OnConflictStrategy.REPLACE)
+                    public @interface OnConflictStrategy {
+                        int REPLACE = 1;
+                    }
+                    """
+                )
+            ),
+            api = """
+                // Signature format: 3.0
+                package androidx.room {
+                  @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS) public @interface OnConflictStrategy {
+                    field public static final int REPLACE = 1; // 0x1
+                  }
+                }
+                """,
+            extraArguments = arrayOf(
+                ARG_HIDE_ANNOTATION, "androidx.annotation.IntDef"
+            )
+        )
+    }
 }

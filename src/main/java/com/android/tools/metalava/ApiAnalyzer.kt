@@ -626,8 +626,8 @@ class ApiAnalyzer(
                 val parent = item.parent() ?: return
                 if (parent.hidden && item.modifiers.hasShowSingleAnnotation()) {
                     val annotation = item.modifiers.annotations().find {
-                        options.showSingleAnnotations.contains(it.qualifiedName())
-                    } ?: options.showSingleAnnotations.first()
+                        options.showSingleAnnotations.matches(it)
+                    } ?: options.showSingleAnnotations.firstQualifiedName()
                     reporter.report(
                         Errors.SHOWING_MEMBER_IN_HIDDEN_CLASS, item,
                         "Attempting to unhide ${item.describe()}, but surrounding ${parent.describe()} is " +
@@ -724,7 +724,7 @@ class ApiAnalyzer(
         }
 
         val checkSystemApi = !reporter.isSuppressed(Errors.REQUIRES_PERMISSION) &&
-            options.showAnnotations.contains(ANDROID_SYSTEM_API) && options.manifest != null
+            options.showAnnotations.matches(ANDROID_SYSTEM_API) && options.manifest != null
         val checkHiddenShowAnnotations = !reporter.isSuppressed(Errors.UNHIDDEN_SYSTEM_API) &&
             options.showAnnotations.isNotEmpty()
 
@@ -752,9 +752,9 @@ class ApiAnalyzer(
                     !item.documentation.contains("@hide") &&
                     !item.modifiers.hasShowSingleAnnotation()
                 ) {
-                    val annotationName = (item.modifiers.annotations().firstOrNull {
-                        options.showAnnotations.contains(it.qualifiedName())
-                    }?.qualifiedName() ?: options.showAnnotations.first()).removePrefix(ANDROID_ANNOTATION_PREFIX)
+                    val annotationName = (item.modifiers.annotations().firstOrNull { annotation ->
+                        options.showAnnotations.matches(annotation)
+                    }?.qualifiedName() ?: options.showAnnotations.firstQualifiedName()).removePrefix(ANDROID_ANNOTATION_PREFIX)
                     reporter.report(
                         Errors.UNHIDDEN_SYSTEM_API, item,
                         "@$annotationName APIs must also be marked @hide: ${item.describe()}"
