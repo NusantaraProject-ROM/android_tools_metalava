@@ -2010,6 +2010,40 @@ class StubsTest : DriverTest() {
     }
 
     @Test
+    fun `Pass through multiple annotations`() {
+        checkStubs(
+            extraArguments = arrayOf(
+                ARG_PASS_THROUGH_ANNOTATION, "android.support.annotation.RequiresApi,android.support.annotation.Nullable"),
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package my.pkg;
+                    public class MyClass {
+                        @android.support.annotation.RequiresApi(21)
+                        public void testMethod() {}
+                        @android.support.annotation.Nullable
+                        public String anotherTestMethod() { return null; }
+                    }
+                    """
+                ),
+                supportParameterName
+            ),
+            source = """
+                package my.pkg;
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class MyClass {
+                public MyClass() { throw new RuntimeException("Stub!"); }
+                @android.support.annotation.RequiresApi(21)
+                public void testMethod() { throw new RuntimeException("Stub!"); }
+                @android.support.annotation.Nullable
+                public java.lang.String anotherTestMethod() { throw new RuntimeException("Stub!"); }
+                }
+                 """,
+            checkDoclava1 = false
+        )
+    }
+
+    @Test
     fun `Test inaccessible constructors`() {
         // If the constructors of a class are not visible, and the class has subclasses,
         // those subclass stubs will need to reference these inaccessible constructors.
