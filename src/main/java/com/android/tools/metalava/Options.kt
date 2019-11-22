@@ -795,7 +795,12 @@ class Options(
                 // (--annotations-in-signatures)
                 ARG_INCLUDE_ANNOTATIONS -> generateAnnotations = true
 
-                ARG_PASS_THROUGH_ANNOTATION -> mutablePassThroughAnnotations.add(getValue(args, ++index))
+                ARG_PASS_THROUGH_ANNOTATION -> {
+                    val annotations = getValue(args, ++index)
+                    annotations.split(",").forEach { path ->
+                        mutablePassThroughAnnotations.add(path)
+                    }
+                }
 
                 // Flag used by test suite to avoid including locations in
                 // the output when diffing against golden files
@@ -2073,8 +2078,8 @@ class Options(
                 "documentation stubs, but not regular stubs, etc.",
             ARG_INCLUDE_ANNOTATIONS, "Include annotations such as @Nullable in the stub files.",
             ARG_EXCLUDE_ANNOTATIONS, "Exclude annotations such as @Nullable from the stub files; the default.",
-            "$ARG_PASS_THROUGH_ANNOTATION <annotation class>", "The fully qualified name of an annotation class that" +
-                " must be passed through unchanged.",
+            "$ARG_PASS_THROUGH_ANNOTATION <annotation classes>", "A comma separated list of fully qualified names of" +
+                " annotation classes that must be passed through unchanged.",
             ARG_EXCLUDE_DOCUMENTATION_FROM_STUBS, "Exclude element documentation (javadoc and kdoc) " +
                 "from the generated stubs. (Copyright notices are not affected by this, they are always included. " +
                 "Documentation stubs (--doc-stubs) are not affected.)",
