@@ -300,7 +300,7 @@ interface AnnotationItem {
 
                 "android.annotation.Widget" -> {
                     // Remove, unless (a) public or (b) specifically included in --showAnnotations
-                    return if (options.showAnnotations.contains(qualifiedName)) {
+                    return if (options.showAnnotations.matches(qualifiedName)) {
                         qualifiedName
                     } else if (filter != null) {
                         val cls = codebase.findClass(qualifiedName)
@@ -342,7 +342,7 @@ interface AnnotationItem {
                         // Unknown Android platform annotations
                         qualifiedName.startsWith("android.annotation.") -> {
                             // Remove, unless specifically included in --showAnnotations
-                            return if (options.showAnnotations.contains(qualifiedName)) {
+                            return if (options.showAnnotations.matches(qualifiedName)) {
                                 qualifiedName
                             } else {
                                 null
@@ -360,7 +360,7 @@ interface AnnotationItem {
 
                         else -> {
                             // Remove, unless (a) public or (b) specifically included in --showAnnotations
-                            return if (options.showAnnotations.contains(qualifiedName)) {
+                            return if (options.showAnnotations.matches(qualifiedName)) {
                                 qualifiedName
                             } else if (filter != null) {
                                 val cls = codebase.findClass(qualifiedName)
