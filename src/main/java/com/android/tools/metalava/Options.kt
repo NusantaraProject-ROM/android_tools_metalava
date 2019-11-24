@@ -172,11 +172,11 @@ class Options(
     /** Internal list backing [classpath] */
     private val mutableClassPath: MutableList<File> = mutableListOf()
     /** Internal list backing [showAnnotations] */
-    private val mutableShowAnnotations: MutableList<String> = mutableListOf()
+    private val mutableShowAnnotations = MutableAnnotationFilter()
     /** Internal list backing [showSingleAnnotations] */
-    private val mutableShowSingleAnnotations: MutableList<String> = mutableListOf()
+    private val mutableShowSingleAnnotations = MutableAnnotationFilter()
     /** Internal list backing [hideAnnotations] */
-    private val mutableHideAnnotations: MutableList<String> = mutableListOf()
+    private val mutableHideAnnotations = MutableAnnotationFilter()
     /** Internal list backing [hideMetaAnnotations] */
     private val mutableHideMetaAnnotations: MutableList<String> = mutableListOf()
     /** Internal list backing [stubImportPackages] */
@@ -316,14 +316,14 @@ class Options(
     var sources: List<File> = mutableSources
 
     /** Whether to include APIs with annotations (intended for documentation purposes) */
-    var showAnnotations: List<String> = mutableShowAnnotations
+    var showAnnotations: AnnotationFilter = mutableShowAnnotations
 
     /**
      * Like [showAnnotations], but does not work recursively. Note that
      * these annotations are *also* show annotations and will be added to the above list;
      * this is a subset.
      */
-    val showSingleAnnotations: List<String> = mutableShowSingleAnnotations
+    val showSingleAnnotations: AnnotationFilter = mutableShowSingleAnnotations
 
     /**
      * Whether to include unannotated elements if {@link #showAnnotations} is set.
@@ -355,10 +355,10 @@ class Options(
     var showAnnotationOverridesVisibility: Boolean = false
 
     /** Annotations to hide */
-    var hideAnnotations: List<String> = mutableHideAnnotations
+    var hideAnnotations: AnnotationFilter = mutableHideAnnotations
 
     /** Meta-annotations to hide */
-    var hideMetaAnnotations: List<String> = mutableHideMetaAnnotations
+    var hideMetaAnnotations = mutableHideMetaAnnotations
 
     /** Whether the generated API can contain classes that are not present in the source but are present on the
      * classpath. Defaults to true for backwards compatibility but is set to false if any API signatures are imported
@@ -795,7 +795,12 @@ class Options(
                 // (--annotations-in-signatures)
                 ARG_INCLUDE_ANNOTATIONS -> generateAnnotations = true
 
-                ARG_PASS_THROUGH_ANNOTATION -> mutablePassThroughAnnotations.add(getValue(args, ++index))
+                ARG_PASS_THROUGH_ANNOTATION -> {
+                    val annotations = getValue(args, ++index)
+                    annotations.split(",").forEach { path ->
+                        mutablePassThroughAnnotations.add(path)
+                    }
+                }
 
                 // Flag used by test suite to avoid including locations in
                 // the output when diffing against golden files
@@ -1588,7 +1593,7 @@ class Options(
                 return name.toLowerCase(Locale.US).removeSuffix("api") + "-"
             }
             val sb = StringBuilder()
-            showAnnotations.forEach { sb.append(annotationToPrefix(it)) }
+            showAnnotations.getIncludedAnnotationNames().forEach { sb.append(annotationToPrefix(it)) }
             sb.append(DEFAULT_BASELINE_NAME)
             var base = sourcePath[0]
             // Convention: in AOSP, signature files are often in sourcepath/api: let's place baseline
@@ -2073,8 +2078,8 @@ class Options(
                 "documentation stubs, but not regular stubs, etc.",
             ARG_INCLUDE_ANNOTATIONS, "Include annotations such as @Nullable in the stub files.",
             ARG_EXCLUDE_ANNOTATIONS, "Exclude annotations such as @Nullable from the stub files; the default.",
-            "$ARG_PASS_THROUGH_ANNOTATION <annotation class>", "The fully qualified name of an annotation class that" +
-                " must be passed through unchanged.",
+            "$ARG_PASS_THROUGH_ANNOTATION <annotation classes>", "A comma separated list of fully qualified names of" +
+                " annotation classes that must be passed through unchanged.",
             ARG_EXCLUDE_DOCUMENTATION_FROM_STUBS, "Exclude element documentation (javadoc and kdoc) " +
                 "from the generated stubs. (Copyright notices are not affected by this, they are always included. " +
                 "Documentation stubs (--doc-stubs) are not affected.)",

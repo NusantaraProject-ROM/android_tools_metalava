@@ -654,9 +654,9 @@ class CompatibilityCheck(
         if (apiType == ApiType.REMOVED) {
             message += " to the removed API"
         } else if (options.showAnnotations.isNotEmpty()) {
-            if (options.showAnnotations.any { it.endsWith("SystemApi") }) {
+            if (options.showAnnotations.matchesSuffix("SystemApi")) {
                 message += " to the system API"
-            } else if (options.showAnnotations.any { it.endsWith("TestApi") }) {
+            } else if (options.showAnnotations.matchesSuffix("TestApi")) {
                 message += " to the test API"
             }
         }

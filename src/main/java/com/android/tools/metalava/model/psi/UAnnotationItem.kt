@@ -215,7 +215,7 @@ class UAnnotationItem private constructor(
                         }
                         sb.append('}')
                     } else {
-                        println("todo")
+                        println("todo: support UCallExpression for other cases than array initializers")
                     }
                 }
                 is UAnnotation -> {

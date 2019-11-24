@@ -210,9 +210,9 @@ Generating Stubs:
                                              Include annotations such as @Nullable in the stub files.
 --exclude-annotations                        
                                              Exclude annotations such as @Nullable from the stub files; the default.
---pass-through-annotation <annotation class> 
-                                             The fully qualified name of an annotation class that must be passed through
-                                             unchanged.
+--pass-through-annotation <annotation classes>
+                                             A comma separated list of fully qualified names of annotation classes that
+                                             must be passed through unchanged.
 --exclude-documentation-from-stubs           
                                              Exclude element documentation (javadoc and kdoc) from the generated stubs.
                                              (Copyright notices are not affected by this, they are always included.
