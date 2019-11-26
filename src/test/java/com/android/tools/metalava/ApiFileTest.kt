@@ -477,6 +477,8 @@ class ApiFileTest : DriverTest() {
                     """
                     package test.pkg
                     suspend inline fun hello() { }
+                    internal suspend fun internalHello() { }
+                    private suspend fun privateHello() { }
                     """
                 )
             ),
@@ -485,6 +487,36 @@ class ApiFileTest : DriverTest() {
                   public final class TestKt {
                     ctor public TestKt();
                     method public static suspend inline Object hello(@NonNull kotlin.coroutines.Continuation<? super kotlin.Unit> p);
+                  }
+                }
+                """,
+            checkDoclava1 = false /* doesn't support Kotlin... */
+        )
+    }
+
+    @Test
+    fun `Var properties with private setters`() {
+        check(
+            format = FileFormat.V3,
+            sourceFiles = *arrayOf(
+                kotlin(
+                    """
+                    package test.pkg
+                    class MyClass {
+                        // This property should have no public setter
+                        var readOnlyVar = false
+                            internal set 
+                    }
+                    """
+                )
+            ),
+            api = """
+                // Signature format: 3.0
+                package test.pkg {
+                  public final class MyClass {
+                    ctor public MyClass();
+                    method public boolean getReadOnlyVar();
+                    property public final boolean readOnlyVar;
                   }
                 }
                 """,
