@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.asJava.elements.KtLightModifierList
 import org.jetbrains.kotlin.asJava.elements.KtLightNullabilityAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.uast.UAnnotated
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.UVariable
@@ -144,11 +145,22 @@ class PsiModifierItem(
                         flags = flags or SUSPEND
 
                         // Workaround for b/117565118:
-                        // Switch back from private to public
-                        visibilityFlags = PUBLIC
+                        if (!ktModifierList.hasModifier(KtTokens.INTERNAL_KEYWORD)) {
+                            // Switch back from private to public
+                            visibilityFlags = PUBLIC
+                        }
                     }
                     if (ktModifierList.hasModifier(KtTokens.COMPANION_KEYWORD)) {
                         flags = flags or COMPANION
+                    }
+                } else {
+                    // UAST returns a null modifierList.kotlinOrigin for get/set methods for
+                    // properties
+                    if (element is UMethod && element.sourceElement is KtProperty) {
+                        // If the name contains the marker of an internal method, mark it internal
+                        if (element.name.endsWith("\$lintWithKotlin")) {
+                            visibilityFlags = INTERNAL
+                        }
                     }
                 }
             }
