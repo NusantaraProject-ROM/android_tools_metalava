@@ -80,6 +80,9 @@ class KotlinInteropChecksTest : DriverTest() {
                         // the last argument
                         public void error2(@NonNull String packageName, @NonNull Consumer<Boolean> callback,
                             @NonNull Executor executor) {}
+                        // Iterables, while they have a single method are not considered to be SAM that we want to be
+                        // the last argument
+                        public void ok8(Iterable<String> iterable, int x) { }
                     }
                     """
                 ),
