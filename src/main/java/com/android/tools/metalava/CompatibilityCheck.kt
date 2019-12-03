@@ -255,9 +255,14 @@ class CompatibilityCheck(
             }
 
             if (oldModifiers.isStatic() != newModifiers.isStatic()) {
-                report(
-                    Errors.CHANGED_STATIC, new, "${describe(new, capitalize = true)} changed 'static' qualifier"
-                )
+                val hasPublicConstructor = old.constructors().any { it.isPublic }
+                if (!old.isInnerClass() || hasPublicConstructor) {
+                    report(
+                        Errors.CHANGED_STATIC,
+                        new,
+                        "${describe(new, capitalize = true)} changed 'static' qualifier"
+                    )
+                }
             }
         }
 
