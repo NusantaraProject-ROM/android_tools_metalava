@@ -17,7 +17,7 @@
 package com.android.tools.metalava
 
 import com.android.tools.metalava.doclava1.ApiPredicate
-import com.android.tools.metalava.doclava1.Errors
+import com.android.tools.metalava.doclava1.Issues
 import com.android.tools.metalava.doclava1.FilterPredicate
 import com.android.tools.metalava.model.Codebase
 import com.android.tools.metalava.model.Item
@@ -138,7 +138,7 @@ class AnnotationsDiffer(
 
             apiFile.writeText(cleanedUp, UTF_8)
         } catch (e: IOException) {
-            reporter.report(Errors.IO_ERROR, apiFile, "Cannot open file for write.")
+            reporter.report(Issues.IO_ERROR, apiFile, "Cannot open file for write.")
         }
     }
 }

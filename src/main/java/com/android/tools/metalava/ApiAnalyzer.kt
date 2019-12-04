@@ -17,7 +17,7 @@
 package com.android.tools.metalava
 
 import com.android.tools.metalava.doclava1.ApiPredicate
-import com.android.tools.metalava.doclava1.Errors
+import com.android.tools.metalava.doclava1.Issues
 import com.android.tools.metalava.model.AnnotationAttributeValue
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.Codebase
@@ -629,7 +629,7 @@ class ApiAnalyzer(
                         options.showSingleAnnotations.matches(it)
                     } ?: options.showSingleAnnotations.firstQualifiedName()
                     reporter.report(
-                        Errors.SHOWING_MEMBER_IN_HIDDEN_CLASS, item,
+                        Issues.SHOWING_MEMBER_IN_HIDDEN_CLASS, item,
                         "Attempting to unhide ${item.describe()}, but surrounding ${parent.describe()} is " +
                             "hidden and should also be annotated with $annotation"
                     )
@@ -676,7 +676,7 @@ class ApiAnalyzer(
                         }
 
                         reporter.report(
-                            Errors.REQUIRES_PERMISSION, method,
+                            Issues.REQUIRES_PERMISSION, method,
                             "Permission '$perm' is not defined by manifest ${codebase.manifest}."
                         )
                         continue
@@ -691,7 +691,7 @@ class ApiAnalyzer(
                 }
                 if (any && missing.size == values.size) {
                     reporter.report(
-                        Errors.REQUIRES_PERMISSION, method,
+                        Issues.REQUIRES_PERMISSION, method,
                         "None of the permissions ${missing.joinToString()} are defined by manifest " +
                             "${codebase.manifest}."
                     )
@@ -701,7 +701,7 @@ class ApiAnalyzer(
                     hasAnnotation = false
                 } else if (any && !nonSystem.isEmpty() || !any && system.isEmpty()) {
                     reporter.report(
-                        Errors.REQUIRES_PERMISSION, method, "Method '" + method.name() +
+                        Issues.REQUIRES_PERMISSION, method, "Method '" + method.name() +
                             "' must be protected with a system permission; it currently" +
                             " allows non-system callers holding " + nonSystem.toString()
                     )
@@ -711,7 +711,7 @@ class ApiAnalyzer(
 
         if (!hasAnnotation) {
             reporter.report(
-                Errors.REQUIRES_PERMISSION, method, "Method '" + method.name() +
+                Issues.REQUIRES_PERMISSION, method, "Method '" + method.name() +
                     "' must be protected with a system permission."
             )
         }
@@ -723,9 +723,9 @@ class ApiAnalyzer(
             return
         }
 
-        val checkSystemApi = !reporter.isSuppressed(Errors.REQUIRES_PERMISSION) &&
+        val checkSystemApi = !reporter.isSuppressed(Issues.REQUIRES_PERMISSION) &&
             options.showAnnotations.matches(ANDROID_SYSTEM_API) && options.manifest != null
-        val checkHiddenShowAnnotations = !reporter.isSuppressed(Errors.UNHIDDEN_SYSTEM_API) &&
+        val checkHiddenShowAnnotations = !reporter.isSuppressed(Issues.UNHIDDEN_SYSTEM_API) &&
             options.showAnnotations.isNotEmpty()
 
         packages.accept(object : ApiVisitor() {
@@ -741,7 +741,7 @@ class ApiAnalyzer(
                     !item.isKotlin()
                 ) {
                     reporter.report(
-                        Errors.DEPRECATION_MISMATCH, item,
+                        Issues.DEPRECATION_MISMATCH, item,
                         "${item.toString().capitalize()}: @Deprecated annotation (present) and @deprecated doc tag (not present) do not match"
                     )
                     // TODO: Check opposite (doc tag but no annotation)
@@ -756,7 +756,7 @@ class ApiAnalyzer(
                         options.showAnnotations.matches(annotation)
                     }?.qualifiedName() ?: options.showAnnotations.firstQualifiedName()).removePrefix(ANDROID_ANNOTATION_PREFIX)
                     reporter.report(
-                        Errors.UNHIDDEN_SYSTEM_API, item,
+                        Issues.UNHIDDEN_SYSTEM_API, item,
                         "@$annotationName APIs must also be marked @hide: ${item.describe()}"
                     )
                 }
@@ -818,7 +818,7 @@ class ApiAnalyzer(
                     method.modifiers.isNullable()
                 ) {
                     reporter.report(
-                        Errors.EXPECTED_PLATFORM_TYPE, method,
+                        Issues.EXPECTED_PLATFORM_TYPE, method,
                         "$method should not be annotated @Nullable; it should be left unspecified to make it a platform type"
                     )
                     val annotation = method.modifiers.annotations().find { it.isNullable() }
@@ -848,7 +848,7 @@ class ApiAnalyzer(
                 // check the component class
                 if (cls != null && !filterReference.test(cls) && !cls.isFromClassPath()) {
                     reporter.report(
-                        Errors.HIDDEN_TYPE_PARAMETER, item,
+                        Issues.HIDDEN_TYPE_PARAMETER, item,
                         "${item.toString().capitalize()} references hidden type $type."
                     )
                 }
@@ -862,7 +862,7 @@ class ApiAnalyzer(
                 if (!filterReference.test(cls)) {
                     if (!cls.isFromClassPath()) {
                         reporter.report(
-                            Errors.HIDDEN_TYPE_PARAMETER, item,
+                            Issues.HIDDEN_TYPE_PARAMETER, item,
                             "${item.toString().capitalize()} references hidden type $cls."
                         )
                     }
@@ -906,14 +906,14 @@ class ApiAnalyzer(
                     }
                     if (m.isHiddenOrRemoved()) {
                         reporter.report(
-                            Errors.UNAVAILABLE_SYMBOL, m,
+                            Issues.UNAVAILABLE_SYMBOL, m,
                             "Reference to unavailable method " + m.name()
                         )
                     } else if (m.deprecated) {
                         // don't bother reporting deprecated methods
                         // unless they are public
                         reporter.report(
-                            Errors.DEPRECATED, m, "Method " + cl.qualifiedName() + "." +
+                            Issues.DEPRECATED, m, "Method " + cl.qualifiedName() + "." +
                                 m.name() + " is deprecated"
                         )
                     }
@@ -921,7 +921,7 @@ class ApiAnalyzer(
                     val returnType = m.returnType()
                     if (!m.deprecated && !cl.deprecated && returnType != null && returnType.asClass()?.deprecated == true) {
                         reporter.report(
-                            Errors.REFERENCES_DEPRECATED, m,
+                            Issues.REFERENCES_DEPRECATED, m,
                             "Return type of deprecated type $returnType in ${cl.qualifiedName()}.${m.name()}(): this method should also be deprecated"
                         )
                     }
@@ -931,14 +931,14 @@ class ApiAnalyzer(
                         if (hiddenClass.qualifiedName() == returnType?.asClass()?.qualifiedName()) {
                             // Return type is hidden
                             reporter.report(
-                                Errors.UNAVAILABLE_SYMBOL, m,
+                                Issues.UNAVAILABLE_SYMBOL, m,
                                 "Method ${cl.qualifiedName()}.${m.name()} returns unavailable " +
                                     "type ${hiddenClass.simpleName()}"
                             )
                         } else {
                             // Return type contains a generic parameter
                             reporter.report(
-                                Errors.HIDDEN_TYPE_PARAMETER, m,
+                                Issues.HIDDEN_TYPE_PARAMETER, m,
                                 "Method ${cl.qualifiedName()}.${m.name()} returns unavailable " +
                                     "type ${hiddenClass.simpleName()} as a type parameter"
                             )
@@ -950,7 +950,7 @@ class ApiAnalyzer(
                         if (!t.primitive) {
                             if (!m.deprecated && !cl.deprecated && t.asClass()?.deprecated == true) {
                                 reporter.report(
-                                    Errors.REFERENCES_DEPRECATED, m,
+                                    Issues.REFERENCES_DEPRECATED, m,
                                     "Parameter of deprecated type $t in ${cl.qualifiedName()}.${m.name()}(): this method should also be deprecated"
                                 )
                             }
@@ -960,13 +960,13 @@ class ApiAnalyzer(
                                 if (hiddenClass.qualifiedName() == t.asClass()?.qualifiedName()) {
                                     // Parameter type is hidden
                                     reporter.report(
-                                        Errors.UNAVAILABLE_SYMBOL, m,
+                                        Issues.UNAVAILABLE_SYMBOL, m,
                                         "Parameter of unavailable type $t in ${cl.qualifiedName()}.${m.name()}()"
                                     )
                                 } else {
                                     // Parameter type contains a generic parameter
                                     reporter.report(
-                                        Errors.HIDDEN_TYPE_PARAMETER, m,
+                                        Issues.HIDDEN_TYPE_PARAMETER, m,
                                         "Parameter uses type parameter of unavailable type $t in ${cl.qualifiedName()}.${m.name()}()"
                                     )
                                 }
@@ -977,7 +977,7 @@ class ApiAnalyzer(
                     val t = m.returnType()
                     if (t != null && !t.primitive && !m.deprecated && !cl.deprecated && t.asClass()?.deprecated == true) {
                         reporter.report(
-                            Errors.REFERENCES_DEPRECATED, m,
+                            Issues.REFERENCES_DEPRECATED, m,
                             "Returning deprecated type $t from ${cl.qualifiedName()}.${m.name()}(): this method should also be deprecated"
                         )
                     }
@@ -987,7 +987,7 @@ class ApiAnalyzer(
                     val s = cl.superClass()
                     if (s?.deprecated == true) {
                         reporter.report(
-                            Errors.EXTENDS_DEPRECATED, cl,
+                            Issues.EXTENDS_DEPRECATED, cl,
                             "Extending deprecated super class $s from ${cl.qualifiedName()}: this class should also be deprecated"
                         )
                     }
@@ -995,7 +995,7 @@ class ApiAnalyzer(
                     for (t in cl.interfaceTypes()) {
                         if (t.asClass()?.deprecated == true) {
                             reporter.report(
-                                Errors.EXTENDS_DEPRECATED, cl,
+                                Issues.EXTENDS_DEPRECATED, cl,
                                 "Implementing interface of deprecated type $t in ${cl.qualifiedName()}: this class should also be deprecated"
                             )
                         }
@@ -1003,8 +1003,8 @@ class ApiAnalyzer(
                 }
             } else if (cl.deprecated) {
                 // not hidden, but deprecated
-                reporter.report(Errors.DEPRECATED, cl, "Class ${cl.qualifiedName()} is deprecated")
-            } else if (reporter.isSuppressed(Errors.REFERENCES_HIDDEN, cl)) {
+                reporter.report(Issues.DEPRECATED, cl, "Class ${cl.qualifiedName()} is deprecated")
+            } else if (reporter.isSuppressed(Issues.REFERENCES_HIDDEN, cl)) {
                 // If we're not reporting hidden references, bring the type back
                 // Bring this class back
                 cl.hidden = false
@@ -1033,7 +1033,7 @@ class ApiAnalyzer(
 
         if ((cl.isHiddenOrRemoved() || cl.isPackagePrivate && !cl.checkLevel()) && !cl.isTypeParameter) {
             reporter.report(
-                Errors.REFERENCES_HIDDEN, from,
+                Issues.REFERENCES_HIDDEN, from,
                 "Class ${cl.qualifiedName()} is ${if (cl.isHiddenOrRemoved()) "hidden" else "not public"} but was referenced ($usage) from public ${from.describe(
                     false
                 )}"
@@ -1091,7 +1091,7 @@ class ApiAnalyzer(
                 // generating the doc & stub information, and proceeding normally.
                 if (!superClass.isFromClassPath()) {
                     reporter.report(
-                        Errors.HIDDEN_SUPERCLASS, cl, "Public class " + cl.qualifiedName() +
+                        Issues.HIDDEN_SUPERCLASS, cl, "Public class " + cl.qualifiedName() +
                             " stripped of unavailable superclass " + superClass.qualifiedName()
                     )
                 }
@@ -1102,7 +1102,7 @@ class ApiAnalyzer(
 
                 if (superClass.isPrivate && !superClass.isFromClassPath()) {
                     reporter.report(
-                        Errors.PRIVATE_SUPERCLASS, cl, "Public class " +
+                        Issues.PRIVATE_SUPERCLASS, cl, "Public class " +
                             cl.qualifiedName() + " extends private class " + superClass.qualifiedName()
                     )
                 }
@@ -1148,7 +1148,7 @@ class ApiAnalyzer(
                         }
                         if (tcl.isHiddenOrRemoved()) {
                             reporter.report(
-                                Errors.UNAVAILABLE_SYMBOL, method,
+                                Issues.UNAVAILABLE_SYMBOL, method,
                                 "Parameter of hidden type ${tcl.fullName()} " +
                                     "in ${method.containingClass().qualifiedName()}.${method.name()}()"
                             )

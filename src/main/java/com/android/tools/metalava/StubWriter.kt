@@ -17,7 +17,7 @@
 package com.android.tools.metalava
 
 import com.android.tools.metalava.doclava1.ApiPredicate
-import com.android.tools.metalava.doclava1.Errors
+import com.android.tools.metalava.doclava1.Issues
 import com.android.tools.metalava.doclava1.FilterPredicate
 import com.android.tools.metalava.model.AnnotationTarget
 import com.android.tools.metalava.model.ClassItem
@@ -106,7 +106,7 @@ class StubWriter(
         val writer = try {
             PrintWriter(BufferedWriter(FileWriter(sourceFile)))
         } catch (e: IOException) {
-            reporter.report(Errors.IO_ERROR, sourceFile, "Cannot open file for write.")
+            reporter.report(Issues.IO_ERROR, sourceFile, "Cannot open file for write.")
             return
         }
 
@@ -125,7 +125,7 @@ class StubWriter(
             val writer = try {
                 PrintWriter(BufferedWriter(FileWriter(sourceFile)))
             } catch (e: IOException) {
-                reporter.report(Errors.IO_ERROR, sourceFile, "Cannot open file for write.")
+                reporter.report(Issues.IO_ERROR, sourceFile, "Cannot open file for write.")
                 return
             }
             startFile(sourceFile)
@@ -185,7 +185,7 @@ class StubWriter(
             writer = try {
                 PrintWriter(BufferedWriter(FileWriter(sourceFile)))
             } catch (e: IOException) {
-                reporter.report(Errors.IO_ERROR, sourceFile, "Cannot open file for write.")
+                reporter.report(Issues.IO_ERROR, sourceFile, "Cannot open file for write.")
                 errorWriter
             }
 
