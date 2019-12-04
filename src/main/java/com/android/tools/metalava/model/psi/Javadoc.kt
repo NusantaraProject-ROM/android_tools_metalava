@@ -16,7 +16,7 @@
 
 package com.android.tools.metalava.model.psi
 
-import com.android.tools.metalava.doclava1.Errors
+import com.android.tools.metalava.doclava1.Issues
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.PackageItem
@@ -589,7 +589,7 @@ private fun reportUnresolvedDocReference(owner: Item, unresolved: String) {
     val cleaned = unresolved.replace("\n", "").replace("*", "")
         .replace("  ", " ")
 
-    reporter.report(Errors.UNRESOLVED_LINK, owner, "Unresolved documentation reference: $cleaned")
+    reporter.report(Issues.UNRESOLVED_LINK, owner, "Unresolved documentation reference: $cleaned")
 }
 
 private fun expand(owner: PsiItem, element: PsiElement, sb: StringBuilder) {

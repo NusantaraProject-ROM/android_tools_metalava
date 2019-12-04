@@ -23,7 +23,7 @@ import com.android.SdkConstants.TAG_PERMISSION
 import com.android.SdkConstants.TAG_USES_SDK
 import com.android.tools.metalava.CodebaseComparator
 import com.android.tools.metalava.ComparisonVisitor
-import com.android.tools.metalava.doclava1.Errors
+import com.android.tools.metalava.doclava1.Issues
 import com.android.tools.metalava.model.psi.CodePrinter
 import com.android.tools.metalava.model.text.TextBackedAnnotationItem
 import com.android.tools.metalava.model.visitors.ItemVisitor
@@ -293,7 +293,7 @@ abstract class DefaultCodebase(override var location: File) : Codebase {
                 }
                 permissions = map
             } catch (error: Throwable) {
-                reporter.report(Errors.PARSE_ERROR, manifest, "Failed to parse $manifest: ${error.message}")
+                reporter.report(Issues.PARSE_ERROR, manifest, "Failed to parse $manifest: ${error.message}")
                 permissions = emptyMap()
             }
         }
@@ -317,7 +317,7 @@ abstract class DefaultCodebase(override var location: File) : Codebase {
                     if (value.isEmpty()) UnsetMinSdkVersion else SetMinSdkVersion(value.toInt())
                 }
             } catch (error: Throwable) {
-                reporter.report(Errors.PARSE_ERROR, manifest, "Failed to parse $manifest: ${error.message}")
+                reporter.report(Issues.PARSE_ERROR, manifest, "Failed to parse $manifest: ${error.message}")
                 minSdkVersion = UnsetMinSdkVersion
             }
         }

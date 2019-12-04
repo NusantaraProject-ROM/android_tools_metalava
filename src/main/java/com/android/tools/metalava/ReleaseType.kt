@@ -16,7 +16,7 @@
 
 package com.android.tools.metalava
 
-import com.android.tools.metalava.doclava1.Errors
+import com.android.tools.metalava.doclava1.Issues
 import com.android.tools.metalava.model.ErrorConfiguration
 
 enum class ReleaseType(val flagName: String, private val displayName: String = flagName) {
@@ -32,19 +32,19 @@ enum class ReleaseType(val flagName: String, private val displayName: String = f
          */
         override fun getErrorConfiguration(): ErrorConfiguration {
             return super.getErrorConfiguration().apply {
-                error(Errors.ADDED_CLASS)
-                error(Errors.ADDED_FIELD)
-                error(Errors.ADDED_FINAL_UNINSTANTIABLE)
-                error(Errors.ADDED_INTERFACE)
-                error(Errors.ADDED_METHOD)
-                error(Errors.ADDED_PACKAGE)
-                error(Errors.CHANGED_ABSTRACT)
-                error(Errors.CHANGED_CLASS)
-                error(Errors.CHANGED_DEPRECATED)
-                error(Errors.CHANGED_SCOPE)
-                error(Errors.CHANGED_SYNCHRONIZED)
-                error(Errors.CHANGED_THROWS)
-                error(Errors.REMOVED_FINAL)
+                error(Issues.ADDED_CLASS)
+                error(Issues.ADDED_FIELD)
+                error(Issues.ADDED_FINAL_UNINSTANTIABLE)
+                error(Issues.ADDED_INTERFACE)
+                error(Issues.ADDED_METHOD)
+                error(Issues.ADDED_PACKAGE)
+                error(Issues.CHANGED_ABSTRACT)
+                error(Issues.CHANGED_CLASS)
+                error(Issues.CHANGED_DEPRECATED)
+                error(Issues.CHANGED_SCOPE)
+                error(Issues.CHANGED_SYNCHRONIZED)
+                error(Issues.CHANGED_THROWS)
+                error(Issues.REMOVED_FINAL)
             }
         }
     },
@@ -60,16 +60,16 @@ enum class ReleaseType(val flagName: String, private val displayName: String = f
          */
         override fun getErrorConfiguration(): ErrorConfiguration {
             return super.getErrorConfiguration().apply {
-                error(Errors.ADDED_ABSTRACT_METHOD)
-                hide(Errors.ADDED_CLASS)
-                hide(Errors.ADDED_FIELD)
-                hide(Errors.ADDED_FINAL_UNINSTANTIABLE)
-                hide(Errors.ADDED_INTERFACE)
-                hide(Errors.ADDED_METHOD)
-                hide(Errors.ADDED_PACKAGE)
-                hide(Errors.CHANGED_DEPRECATED)
-                hide(Errors.CHANGED_SYNCHRONIZED)
-                hide(Errors.REMOVED_FINAL)
+                error(Issues.ADDED_ABSTRACT_METHOD)
+                hide(Issues.ADDED_CLASS)
+                hide(Issues.ADDED_FIELD)
+                hide(Issues.ADDED_FINAL_UNINSTANTIABLE)
+                hide(Issues.ADDED_INTERFACE)
+                hide(Issues.ADDED_METHOD)
+                hide(Issues.ADDED_PACKAGE)
+                hide(Issues.CHANGED_DEPRECATED)
+                hide(Issues.CHANGED_SYNCHRONIZED)
+                hide(Issues.REMOVED_FINAL)
             }
         }
     };
@@ -77,19 +77,19 @@ enum class ReleaseType(val flagName: String, private val displayName: String = f
     /** Returns the error configuration to use for the given release type */
     open fun getErrorConfiguration(): ErrorConfiguration {
         return ErrorConfiguration().apply {
-            error(Errors.ADDED_FINAL)
-            error(Errors.CHANGED_STATIC)
-            error(Errors.CHANGED_SUPERCLASS)
-            error(Errors.CHANGED_TRANSIENT)
-            error(Errors.CHANGED_TYPE)
-            error(Errors.CHANGED_VALUE)
-            error(Errors.CHANGED_VOLATILE)
-            error(Errors.REMOVED_CLASS)
-            error(Errors.REMOVED_FIELD)
-            error(Errors.REMOVED_INTERFACE)
-            error(Errors.REMOVED_METHOD)
-            error(Errors.REMOVED_PACKAGE)
-            error(Errors.ADDED_REIFIED)
+            error(Issues.ADDED_FINAL)
+            error(Issues.CHANGED_STATIC)
+            error(Issues.CHANGED_SUPERCLASS)
+            error(Issues.CHANGED_TRANSIENT)
+            error(Issues.CHANGED_TYPE)
+            error(Issues.CHANGED_VALUE)
+            error(Issues.CHANGED_VOLATILE)
+            error(Issues.REMOVED_CLASS)
+            error(Issues.REMOVED_FIELD)
+            error(Issues.REMOVED_INTERFACE)
+            error(Issues.REMOVED_METHOD)
+            error(Issues.REMOVED_PACKAGE)
+            error(Issues.ADDED_REIFIED)
         }
     }
 
