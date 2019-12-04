@@ -7,7 +7,7 @@ import com.android.tools.lint.LintCliClient
 import com.android.tools.lint.checks.ApiLookup
 import com.android.tools.lint.detector.api.editDistance
 import com.android.tools.lint.helpers.DefaultJavaEvaluator
-import com.android.tools.metalava.doclava1.Errors
+import com.android.tools.metalava.doclava1.Issues
 import com.android.tools.metalava.model.AnnotationAttributeValue
 import com.android.tools.metalava.model.AnnotationItem
 import com.android.tools.metalava.model.ClassItem
@@ -139,7 +139,7 @@ class DocAnalyzer(
                 */
                 if (findThreadAnnotations(annotations).size > 1) {
                     reporter.report(
-                        Errors.MULTIPLE_THREAD_ANNOTATIONS,
+                        Issues.MULTIPLE_THREAD_ANNOTATIONS,
                         item,
                         "Found more than one threading annotation on $item; " +
                             "the auto-doc feature does not handle this correctly"
@@ -328,12 +328,12 @@ class DocAnalyzer(
                             val v = value.value()?.toString() ?: value.toSource()
                             if (editDistance(CARRIER_PRIVILEGES_MARKER, v, 3) < 3) {
                                 reporter.report(
-                                    Errors.MISSING_PERMISSION, item,
+                                    Issues.MISSING_PERMISSION, item,
                                     "Unrecognized permission `$v`; did you mean `$CARRIER_PRIVILEGES_MARKER`?"
                                 )
                             } else {
                                 reporter.report(
-                                    Errors.MISSING_PERMISSION, item,
+                                    Issues.MISSING_PERMISSION, item,
                                     "Cannot find permission field for $value required by $item (may be hidden or removed)"
                                 )
                             }
@@ -343,7 +343,7 @@ class DocAnalyzer(
                                 sb.append("{@link ${field.containingClass().qualifiedName()}#${field.name()}}")
                             } else {
                                 reporter.report(
-                                    Errors.MISSING_PERMISSION, item,
+                                    Issues.MISSING_PERMISSION, item,
                                     "Permission $value required by $item is hidden or removed"
                                 )
                                 sb.append("${field.containingClass().qualifiedName()}.${field.name()}")
@@ -426,7 +426,7 @@ class DocAnalyzer(
                             // Typdef annotation references field which isn't part of the API: don't
                             // try to link to it.
                             reporter.report(
-                                Errors.HIDDEN_TYPEDEF_CONSTANT, item,
+                                Issues.HIDDEN_TYPEDEF_CONSTANT, item,
                                 "Typedef references constant which isn't part of the API, skipping in documentation: " +
                                     "${field.containingClass().qualifiedName()}#${field.name()}"
                             )
@@ -450,7 +450,7 @@ class DocAnalyzer(
                 sb.append("Requires the ")
                 if (field == null) {
                     reporter.report(
-                        Errors.MISSING_PERMISSION, item,
+                        Issues.MISSING_PERMISSION, item,
                         "Cannot find feature field for $value required by $item (may be hidden or removed)"
                     )
                     sb.append("{@link ${value.toSource()}}")
@@ -459,7 +459,7 @@ class DocAnalyzer(
                         sb.append("{@link ${field.containingClass().qualifiedName()}#${field.name()} ${field.containingClass().simpleName()}#${field.name()}} ")
                     } else {
                         reporter.report(
-                            Errors.MISSING_PERMISSION, item,
+                            Issues.MISSING_PERMISSION, item,
                             "Feature field $value required by $item is hidden or removed"
                         )
                         sb.append("${field.containingClass().simpleName()}#${field.name()} ")
@@ -509,7 +509,7 @@ class DocAnalyzer(
                 sb.append("")
                 if (field == null) {
                     reporter.report(
-                        Errors.MISSING_COLUMN, item,
+                        Issues.MISSING_COLUMN, item,
                         "Cannot find feature field for $value required by $item (may be hidden or removed)"
                     )
                     sb.append("{@link ${value.toSource()}}")
@@ -518,7 +518,7 @@ class DocAnalyzer(
                         sb.append("{@link ${field.containingClass().qualifiedName()}#${field.name()} ${field.containingClass().simpleName()}#${field.name()}} ")
                     } else {
                         reporter.report(
-                            Errors.MISSING_COLUMN, item,
+                            Issues.MISSING_COLUMN, item,
                             "Feature field $value required by $item is hidden or removed"
                         )
                         sb.append("${field.containingClass().simpleName()}#${field.name()} ")
@@ -644,14 +644,14 @@ class DocAnalyzer(
                     return
                 }
 
-                if (!reporter.isSuppressed(Errors.TYPO)) {
+                if (!reporter.isSuppressed(Issues.TYPO)) {
                     for (typo in typos.keys) {
                         if (doc.contains(typo)) {
                             val replacement = typos[typo] ?: continue
                             val new = doc.replace(Regex("\\b$typo\\b"), replacement)
                             if (new != doc) {
                                 reporter.report(
-                                    Errors.TYPO,
+                                    Issues.TYPO,
                                     item,
                                     "Replaced $typo with $replacement in the documentation for $item"
                                 )
@@ -785,7 +785,7 @@ class DocAnalyzer(
                 item.appendDocumentation(code, "@apiSince")
             } else {
                 reporter.report(
-                    Errors.FORBIDDEN_TAG, item, "Documentation should not specify @apiSince " +
+                    Issues.FORBIDDEN_TAG, item, "Documentation should not specify @apiSince " +
                         "manually; it's computed and injected at build time by $PROGRAM_NAME"
                 )
             }
@@ -817,7 +817,7 @@ class DocAnalyzer(
                 item.appendDocumentation(code, "@deprecatedSince")
             } else {
                 reporter.report(
-                    Errors.FORBIDDEN_TAG, item, "Documentation should not specify @deprecatedSince " +
+                    Issues.FORBIDDEN_TAG, item, "Documentation should not specify @deprecatedSince " +
                         "manually; it's computed and injected at build time by $PROGRAM_NAME"
                 )
             }

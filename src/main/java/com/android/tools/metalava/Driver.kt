@@ -35,7 +35,7 @@ import com.android.tools.lint.detector.api.assertionsEnabled
 import com.android.tools.metalava.CompatibilityCheck.CheckRequest
 import com.android.tools.metalava.apilevels.ApiGenerator
 import com.android.tools.metalava.doclava1.ApiPredicate
-import com.android.tools.metalava.doclava1.Errors
+import com.android.tools.metalava.doclava1.Issues
 import com.android.tools.metalava.doclava1.FilterPredicate
 import com.android.tools.metalava.doclava1.TextCodebase
 import com.android.tools.metalava.model.ClassItem
@@ -1091,7 +1091,7 @@ fun createReportFile(
             codebase.accept(apiWriter)
         }
     } catch (e: IOException) {
-        reporter.report(Errors.IO_ERROR, apiFile, "Cannot open file for write.")
+        reporter.report(Issues.IO_ERROR, apiFile, "Cannot open file for write.")
     }
     if (description != null && options.verbose) {
         options.stdout.print("\n$PROGRAM_NAME wrote $description file $apiFile in ${localTimer.elapsed(SECONDS)} seconds")
@@ -1127,7 +1127,7 @@ private fun addSourceFiles(list: MutableList<File>, file: File) {
         }
         if (java.nio.file.Files.isSymbolicLink(file.toPath())) {
             reporter.report(
-                Errors.IGNORING_SYMLINK, file,
+                Issues.IGNORING_SYMLINK, file,
                 "Ignoring symlink during source file discovery directory traversal"
             )
             return
@@ -1171,7 +1171,7 @@ private fun addHiddenPackages(
         // Ignore symbolic links during traversal
         if (java.nio.file.Files.isSymbolicLink(file.toPath())) {
             reporter.report(
-                Errors.IGNORING_SYMLINK, file,
+                Issues.IGNORING_SYMLINK, file,
                 "Ignoring symlink during package.html discovery directory traversal"
             )
             return
@@ -1286,7 +1286,7 @@ private fun findRoot(file: File): File? {
             return File(path.substring(0, endIndex))
         } else {
             reporter.report(
-                Errors.IO_ERROR, file, "$PROGRAM_NAME was unable to determine the package name. " +
+                Issues.IO_ERROR, file, "$PROGRAM_NAME was unable to determine the package name. " +
                     "This usually means that a source file was where the directory does not seem to match the package " +
                     "declaration; we expected the path $path to end with /${pkg.replace('.', '/') + '/' + file.name}"
             )
