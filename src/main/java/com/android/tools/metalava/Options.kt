@@ -19,7 +19,7 @@ package com.android.tools.metalava
 import com.android.SdkConstants
 import com.android.sdklib.SdkVersionInfo
 import com.android.tools.metalava.CompatibilityCheck.CheckRequest
-import com.android.tools.metalava.doclava1.Errors
+import com.android.tools.metalava.doclava1.Issues
 import com.android.utils.SdkUtils.wrap
 import com.google.common.base.CharMatcher
 import com.google.common.base.Splitter
@@ -898,7 +898,7 @@ class Options(
                 "--previous-api" -> {
                     migrateNullsFrom = stringToExistingFile(getValue(args, ++index))
                     reporter.report(
-                        Errors.DEPRECATED_OPTION, null as File?,
+                        Issues.DEPRECATED_OPTION, null as File?,
                         "--previous-api is deprecated; instead " +
                             "use $ARG_MIGRATE_NULLNESS $migrateNullsFrom"
                     )
@@ -922,7 +922,7 @@ class Options(
                     val file = stringToExistingFile(getValue(args, ++index))
                     mutableCompatibilityChecks.add(CheckRequest(file, ApiType.PUBLIC_API, ReleaseType.DEV))
                     reporter.report(
-                        Errors.DEPRECATED_OPTION, null as File?,
+                        Issues.DEPRECATED_OPTION, null as File?,
                         "--current-api is deprecated; instead " +
                             "use $ARG_CHECK_COMPATIBILITY_API_CURRENT"
                     )
@@ -1016,10 +1016,10 @@ class Options(
                     annotationCoverageMemberReport = stringToNewFile(getValue(args, ++index))
                 }
 
-                ARG_ERROR, "-error" -> Errors.setErrorLevel(getValue(args, ++index), Severity.ERROR, true)
-                ARG_WARNING, "-warning" -> Errors.setErrorLevel(getValue(args, ++index), Severity.WARNING, true)
-                ARG_LINT, "-lint" -> Errors.setErrorLevel(getValue(args, ++index), Severity.LINT, true)
-                ARG_HIDE, "-hide" -> Errors.setErrorLevel(getValue(args, ++index), Severity.HIDDEN, true)
+                ARG_ERROR, "-error" -> Issues.setIssueLevel(getValue(args, ++index), Severity.ERROR, true)
+                ARG_WARNING, "-warning" -> Issues.setIssueLevel(getValue(args, ++index), Severity.WARNING, true)
+                ARG_LINT, "-lint" -> Issues.setIssueLevel(getValue(args, ++index), Severity.LINT, true)
+                ARG_HIDE, "-hide" -> Issues.setIssueLevel(getValue(args, ++index), Severity.HIDDEN, true)
 
                 ARG_WARNINGS_AS_ERRORS -> warningsAreErrors = true
                 ARG_LINTS_AS_ERRORS -> lintsAreErrors = true
