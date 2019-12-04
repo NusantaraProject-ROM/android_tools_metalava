@@ -2997,6 +2997,49 @@ CompatibilityCheckTest : DriverTest() {
         )
     }
 
+    @Test
+    fun `Changing static qualifier on inner classes with no public constructors`() {
+        check(
+            warnings = """
+                TESTROOT/load-api.txt:11: error: Class test.pkg.ParentClass.AnotherBadInnerClass changed 'static' qualifier [ChangedStatic]
+                TESTROOT/load-api.txt:8: error: Class test.pkg.ParentClass.BadInnerClass changed 'static' qualifier [ChangedStatic]
+            """,
+            compatibilityMode = false,
+            checkCompatibilityApi = """
+                package test.pkg {
+                  public class ParentClass {
+                  }
+                  public static class ParentClass.OkInnerClass {
+                  }
+                  public class ParentClass.AnotherOkInnerClass {
+                  }
+                  public static class ParentClass.BadInnerClass {
+                    ctor public BadInnerClass();
+                  }
+                  public class ParentClass.AnotherBadInnerClass {
+                    ctor public AnotherBadInnerClass();
+                  }
+                }
+                """,
+            signatureSource = """
+                package test.pkg {
+                  public class ParentClass {
+                  }
+                  public class ParentClass.OkInnerClass {
+                  }
+                  public static class ParentClass.AnotherOkInnerClass {
+                  }
+                  public class ParentClass.BadInnerClass {
+                    ctor public BadInnerClass();
+                  }
+                  public static class ParentClass.AnotherBadInnerClass {
+                    ctor public AnotherBadInnerClass();
+                  }
+                }
+                """
+        )
+    }
+
     // TODO: Check method signatures changing incompatibly (look especially out for adding new overloaded
     // methods and comparator getting confused!)
     //   ..equals on the method items should actually be very useful!
