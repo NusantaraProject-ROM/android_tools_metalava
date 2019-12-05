@@ -23,7 +23,7 @@ import com.android.tools.metalava.Severity.INFO
 import com.android.tools.metalava.Severity.INHERIT
 import com.android.tools.metalava.Severity.LINT
 import com.android.tools.metalava.Severity.WARNING
-import com.android.tools.metalava.doclava1.Errors
+import com.android.tools.metalava.doclava1.Issues
 import com.android.tools.metalava.model.AnnotationArrayAttributeValue
 import com.android.tools.metalava.model.Item
 import com.android.tools.metalava.model.configuration
@@ -80,7 +80,7 @@ open class Reporter(private val rootFolder: File? = File("").absoluteFile) {
 
     private var hasErrors = false
 
-    fun report(id: Errors.Error, element: PsiElement?, message: String): Boolean {
+    fun report(id: Issues.Issue, element: PsiElement?, message: String): Boolean {
         val severity = configuration.getSeverity(id)
 
         if (severity == HIDDEN) {
@@ -95,7 +95,7 @@ open class Reporter(private val rootFolder: File? = File("").absoluteFile) {
         return report(severity, elementToLocation(element), message, id)
     }
 
-    fun report(id: Errors.Error, file: File?, message: String): Boolean {
+    fun report(id: Issues.Issue, file: File?, message: String): Boolean {
         val severity = configuration.getSeverity(id)
 
         if (severity == HIDDEN) {
@@ -110,14 +110,14 @@ open class Reporter(private val rootFolder: File? = File("").absoluteFile) {
         return report(severity, file?.path, message, id)
     }
 
-    fun report(id: Errors.Error, item: Item?, message: String, psi: PsiElement? = null): Boolean {
+    fun report(id: Issues.Issue, item: Item?, message: String, psi: PsiElement? = null): Boolean {
         val severity = configuration.getSeverity(id)
         if (severity == HIDDEN) {
             return false
         }
 
         fun dispatch(
-            which: (severity: Severity, location: String?, message: String, id: Errors.Error) -> Boolean
+            which: (severity: Severity, location: String?, message: String, id: Issues.Issue) -> Boolean
         ) = when {
             psi != null -> which(severity, elementToLocation(psi), message, id)
             item is PsiItem -> which(severity, elementToLocation(item.psi()), message, id)
@@ -154,7 +154,7 @@ open class Reporter(private val rootFolder: File? = File("").absoluteFile) {
         return dispatch(this::doReport)
     }
 
-    fun isSuppressed(id: Errors.Error, item: Item? = null, message: String? = null): Boolean {
+    fun isSuppressed(id: Issues.Issue, item: Item? = null, message: String? = null): Boolean {
         val severity = configuration.getSeverity(id)
         if (severity == HIDDEN) {
             return true
@@ -266,14 +266,14 @@ open class Reporter(private val rootFolder: File? = File("").absoluteFile) {
     }
 
     /** Alias to allow method reference in [report.dispatch] */
-    private fun doReport(severity: Severity, location: String?, message: String, id: Errors.Error?) =
+    private fun doReport(severity: Severity, location: String?, message: String, id: Issues.Issue?) =
         report(severity, location, message, id)
 
     open fun report(
         severity: Severity,
         location: String?,
         message: String,
-        id: Errors.Error? = null,
+        id: Issues.Issue? = null,
         color: Boolean = options.color
     ): Boolean {
         if (severity == HIDDEN) {
@@ -304,7 +304,7 @@ open class Reporter(private val rootFolder: File? = File("").absoluteFile) {
         severity: Severity,
         location: String?,
         message: String,
-        id: Errors.Error?,
+        id: Issues.Issue?,
         color: Boolean,
         omitLocations: Boolean
     ): String {
@@ -386,7 +386,7 @@ open class Reporter(private val rootFolder: File? = File("").absoluteFile) {
         severity: Severity,
         location: String?,
         message: String,
-        id: Errors.Error
+        id: Issues.Issue
     ): Boolean {
         options.reportEvenIfSuppressedWriter?.println(
             format(

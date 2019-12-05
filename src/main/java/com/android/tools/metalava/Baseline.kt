@@ -16,7 +16,7 @@
 
 package com.android.tools.metalava
 
-import com.android.tools.metalava.doclava1.Errors
+import com.android.tools.metalava.doclava1.Issues
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.FieldItem
 import com.android.tools.metalava.model.Item
@@ -45,15 +45,15 @@ class Baseline(
     var merge: Boolean = false,
     private var headerComment: String = "",
     /**
-     * Whether, when updating the baseline, we should fail the build if the main baseline does not
-     * contain all errors.
+     * Whether, when updating the baseline, we allow the metalava run to pass even if the baseline
+     * does not contain all issues that would normally fail the run (by default ERROR level).
      */
     var silentUpdate: Boolean = updateFile != null && updateFile.path == file?.path,
     private var format: FileFormat = FileFormat.BASELINE
 ) {
 
     /** Map from issue id to element id to message */
-    private val map = HashMap<Errors.Error, MutableMap<String, String>>()
+    private val map = HashMap<Issues.Issue, MutableMap<String, String>>()
 
     init {
         if (file?.isFile == true && (!silentUpdate || merge)) {
@@ -62,32 +62,32 @@ class Baseline(
         }
     }
 
-    /** Returns true if the given error is listed in the baseline, otherwise false */
-    fun mark(element: Item, message: String, error: Errors.Error): Boolean {
+    /** Returns true if the given issue is listed in the baseline, otherwise false */
+    fun mark(element: Item, message: String, issue: Issues.Issue): Boolean {
         val elementId = getBaselineKey(element)
-        return mark(elementId, message, error)
+        return mark(elementId, message, issue)
     }
 
-    /** Returns true if the given error is listed in the baseline, otherwise false */
-    fun mark(element: PsiElement, message: String, error: Errors.Error): Boolean {
+    /** Returns true if the given issue is listed in the baseline, otherwise false */
+    fun mark(element: PsiElement, message: String, issue: Issues.Issue): Boolean {
         val elementId = getBaselineKey(element)
-        return mark(elementId, message, error)
+        return mark(elementId, message, issue)
     }
 
-    /** Returns true if the given error is listed in the baseline, otherwise false */
-    fun mark(file: File, message: String, error: Errors.Error): Boolean {
+    /** Returns true if the given issue is listed in the baseline, otherwise false */
+    fun mark(file: File, message: String, issue: Issues.Issue): Boolean {
         val elementId = getBaselineKey(file)
-        return mark(elementId, message, error)
+        return mark(elementId, message, issue)
     }
 
-    private fun mark(elementId: String, @Suppress("UNUSED_PARAMETER") message: String, error: Errors.Error): Boolean {
-        val idMap: MutableMap<String, String>? = map[error] ?: run {
+    private fun mark(elementId: String, @Suppress("UNUSED_PARAMETER") message: String, issue: Issues.Issue): Boolean {
+        val idMap: MutableMap<String, String>? = map[issue] ?: run {
             if (updateFile != null) {
-                if (options.baselineErrorsOnly && configuration.getSeverity(error) != Severity.ERROR) {
+                if (options.baselineErrorsOnly && configuration.getSeverity(issue) != Severity.ERROR) {
                     return true
                 }
                 val new = HashMap<String, String>()
-                map[error] = new
+                map[issue] = new
                 new
             } else {
                 null
@@ -97,14 +97,14 @@ class Baseline(
         val oldMessage: String? = idMap?.get(elementId)
         if (oldMessage != null) {
             // for now not matching messages; the id's are unique enough and allows us
-            // to tweak error messages compatibly without recording all the deltas here
+            // to tweak issue messages compatibly without recording all the deltas here
             return true
         }
 
         if (updateFile != null) {
             idMap?.set(elementId, message)
 
-            // When creating baselines don't report errors
+            // When creating baselines don't report issues
             if (silentUpdate) {
                 return true
             }
@@ -196,20 +196,20 @@ class Baseline(
             if (idEnd == -1 || elementEnd == -1) {
                 println("Invalid metalava baseline format: $line")
             }
-            val errorId = line.substring(0, idEnd).trim()
+            val issueId = line.substring(0, idEnd).trim()
             val elementId = line.substring(idEnd + 2, elementEnd).trim()
 
             // Unless merging, we don't need the actual messages since we're only matching by
             // issue id and API location, so don't bother computing.
             val message = if (merge) lines[i + 1].trim() else ""
 
-            val error = Errors.findErrorById(errorId)
-            if (error == null) {
-                println("Invalid metalava baseline file: unknown error id '$errorId'")
+            val issue = Issues.findIssueById(issueId)
+            if (issue == null) {
+                println("Invalid metalava baseline file: unknown issue id '$issueId'")
             } else {
-                val newIdMap = map[error] ?: run {
+                val newIdMap = map[issue] ?: run {
                     val new = HashMap<String, String>()
-                    map[error] = new
+                    map[issue] = new
                     new
                 }
                 newIdMap[elementId] = message
@@ -224,11 +224,11 @@ class Baseline(
             sb.append(format.header())
             sb.append(headerComment)
 
-            map.keys.asSequence().sortedBy { it.name ?: it.code.toString() }.forEach { error ->
-                val idMap = map[error]
+            map.keys.asSequence().sortedBy { it.name ?: it.code.toString() }.forEach { issue ->
+                val idMap = map[issue]
                 idMap?.keys?.sorted()?.forEach { elementId ->
                     val message = idMap[elementId]!!
-                    sb.append(error.name ?: error.code.toString()).append(": ")
+                    sb.append(issue.name ?: issue.code.toString()).append(": ")
                     sb.append(elementId)
                     sb.append(":\n    ")
                     sb.append(message).append('\n')
@@ -248,11 +248,11 @@ class Baseline(
     }
 
     fun dumpStats(writer: PrintWriter) {
-        val counts = mutableMapOf<Errors.Error, Int>()
-        map.keys.asSequence().forEach { error ->
-            val idMap = map[error]
+        val counts = mutableMapOf<Issues.Issue, Int>()
+        map.keys.asSequence().forEach { issue ->
+            val idMap = map[issue]
             val count = idMap?.count() ?: 0
-            counts[error] = count
+            counts[issue] = count
         }
 
         writer.println("Baseline issue type counts:")

@@ -17,33 +17,33 @@
 package com.android.tools.metalava.model
 
 import com.android.tools.metalava.Severity
-import com.android.tools.metalava.doclava1.Errors
+import com.android.tools.metalava.doclava1.Issues
 
-/** An error configuration is a set of overrides for severities for various [Errors.Error] */
+/** An error configuration is a set of overrides for severities for various [Issues.Issue] */
 class ErrorConfiguration {
-    private val overrides = mutableMapOf<Errors.Error, Severity>()
+    private val overrides = mutableMapOf<Issues.Issue, Severity>()
 
     /** Returns the severity of the given issue */
-    fun getSeverity(error: Errors.Error): Severity {
-        return overrides[error] ?: error.level
+    fun getSeverity(issue: Issues.Issue): Severity {
+        return overrides[issue] ?: issue.level
     }
 
-    private fun setSeverity(error: Errors.Error, severity: Severity) {
-        overrides[error] = severity
+    private fun setSeverity(issue: Issues.Issue, severity: Severity) {
+        overrides[issue] = severity
     }
 
     /** Set the severity of the given issue to [Severity.ERROR] */
-    fun error(error: Errors.Error) {
-        setSeverity(error, Severity.ERROR)
+    fun error(issue: Issues.Issue) {
+        setSeverity(issue, Severity.ERROR)
     }
 
     /** Set the severity of the given issue to [Severity.HIDDEN] */
-    fun hide(error: Errors.Error) {
-        setSeverity(error, Severity.HIDDEN)
+    fun hide(issue: Issues.Issue) {
+        setSeverity(issue, Severity.HIDDEN)
     }
 }
 
-/** Default error configuration: uses all the severities initialized in the [Errors] class */
+/** Default error configuration: uses all the severities initialized in the [Issues] class */
 val defaultConfiguration = ErrorConfiguration()
 
 /** Current configuration to apply when reporting errors */
