@@ -439,7 +439,7 @@ class ApiLintTest : DriverTest() {
                 java(
                     """
                     package android.pkg;
-                    
+
                     import androidx.annotation.Nullable;
 
                     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
@@ -451,7 +451,7 @@ class ApiLintTest : DriverTest() {
                 java(
                     """
                     package android.pkg;
-                    
+
                     import androidx.annotation.Nullable;
 
                     public class UnrelatedEquals {
@@ -482,7 +482,7 @@ class ApiLintTest : DriverTest() {
                 java(
                     """
                     package android.pkg;
-                    
+
                     import androidx.annotation.Nullable;
 
                     public final class ParcelableConstructor implements android.os.Parcelable {
@@ -497,7 +497,7 @@ class ApiLintTest : DriverTest() {
                 java(
                     """
                     package android.pkg;
-                    
+
                     import androidx.annotation.Nullable;
 
                     public class NonFinalParcelable implements android.os.Parcelable {
@@ -512,7 +512,7 @@ class ApiLintTest : DriverTest() {
                 java(
                     """
                     package android.pkg;
-                    
+
                     import androidx.annotation.Nullable;
 
                     public final class MissingCreator implements android.os.Parcelable {
@@ -525,7 +525,7 @@ class ApiLintTest : DriverTest() {
                 java(
                     """
                     package android.pkg;
-                    
+
                     import androidx.annotation.Nullable;
 
                     public final class MissingDescribeContents implements android.os.Parcelable {
@@ -677,17 +677,17 @@ class ApiLintTest : DriverTest() {
                             public static final int SOME_INT = 1;
                             public static final long SOME_LONG = 1L;
 
-                            @StringDef(value = {
+                            @android.annotation.StringDef(value = {
                                     SOME_STRING
                             })
                             @Retention(RetentionPolicy.SOURCE)
                             public @interface SomeString {}
-                            @IntDef(value = {
+                            @android.annotation.IntDef(value = {
                                     SOME_INT
                             })
                             @Retention(RetentionPolicy.SOURCE)
                             public @interface SomeInt {}
-                            @LongDef(value = {
+                            @android.annotation.LongDef(value = {
                                     SOME_LONG
                             })
                             @Retention(RetentionPolicy.SOURCE)
@@ -716,7 +716,7 @@ class ApiLintTest : DriverTest() {
                 java(
                     """
                     package android.pkg;
-                    
+
                     import androidx.annotation.Nullable;
 
                     public class RegistrationMethods {
@@ -758,7 +758,7 @@ class ApiLintTest : DriverTest() {
                 java(
                     """
                     package android.pkg;
-                    
+
                     import androidx.annotation.Nullable;
 
                     public class CheckSynchronization {
@@ -941,7 +941,7 @@ class ApiLintTest : DriverTest() {
                 java(
                     """
                     package android.pkg;
-                    
+
                     import androidx.annotation.NonNull;
 
                     public class MyClass {
@@ -960,7 +960,7 @@ class ApiLintTest : DriverTest() {
                 java(
                     """
                     package android.pkg;
-                    
+
                     import androidx.annotation.NonNull;
 
                     public class Ok {
@@ -1151,7 +1151,7 @@ class ApiLintTest : DriverTest() {
                 java(
                     """
                     package android.pkg;
-                    
+
                     import androidx.annotation.Nullable;
 
                     public class MyClass {
@@ -1311,7 +1311,7 @@ class ApiLintTest : DriverTest() {
                 java(
                     """
                     package android.pkg;
-                    
+
                     import androidx.annotation.Nullable;
 
                     public class MyFirstManager {
@@ -1583,7 +1583,7 @@ class ApiLintTest : DriverTest() {
                 java(
                     """
                     package android.graphics;
-                    
+
                     import android.pkg.MyCallback;
                     import androidx.annotation.Nullable;
 
@@ -2042,7 +2042,7 @@ class ApiLintTest : DriverTest() {
                 java(
                     """
                     package android.pkg;
-                    
+
                     import androidx.annotation.Nullable;
 
                     public class KotlinOperatorTest {
@@ -2071,7 +2071,7 @@ class ApiLintTest : DriverTest() {
                 java(
                     """
                     package android.pkg;
-                    
+
                     import androidx.annotation.Nullable;
 
                     public class ArrayTest {
@@ -2365,7 +2365,7 @@ class ApiLintTest : DriverTest() {
                 java(
                     """
                     package android.pkg;
-                    
+
                     import androidx.annotation.Nullable;
 
                     public abstract class MySingleton2 {
@@ -2436,9 +2436,9 @@ class ApiLintTest : DriverTest() {
                 java(
                     """
                         package android.pkg;
-                        
+
                         import androidx.annotation.Nullable;
-                        
+
                         public class Foo {
                             private Foo() { }
                             @Nullable
