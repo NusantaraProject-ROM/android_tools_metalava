@@ -388,7 +388,6 @@ CompatibilityCheckTest : DriverTest() {
             checkCompatibilityApi = """
                 package test.pkg {
                   public final class TestKt {
-                    ctor public TestKt();
                     method public static final void method1(int[] x);
                     method public static final void method2(int... x);
                   }
@@ -1558,7 +1557,6 @@ CompatibilityCheckTest : DriverTest() {
             checkCompatibilityApi = """
                 package androidx.content {
                   public final class ContentValuesKt {
-                    ctor public ContentValuesKt();
                     method public static android.content.ContentValues contentValuesOf(kotlin.Pair<String,?>... pairs);
                   }
                 }
@@ -2423,7 +2421,6 @@ CompatibilityCheckTest : DriverTest() {
                 // Signature format: 3.0
                 package test.pkg {
                   public final class TestKt {
-                    ctor public TestKt();
                     method public static void fun1(String? str1, String str2, java.util.List<java.lang.String!> list);
                   }
                 }
@@ -2454,7 +2451,6 @@ CompatibilityCheckTest : DriverTest() {
             checkCompatibilityApi = """
                 package test.pkg {
                   public final class TestKt {
-                    ctor public TestKt();
                     method public static inline <T> void add(T! t);
                     method public static inline <reified T> void remove(T! t);
                     method public static inline <reified T> void unchanged(T! t);

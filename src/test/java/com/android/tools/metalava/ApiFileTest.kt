@@ -284,7 +284,6 @@ class ApiFileTest : DriverTest() {
                 // Signature format: 3.0
                 package androidx.core.util {
                   public final class TestKt {
-                    ctor public TestKt();
                     method public static inline <K, V> android.util.LruCache<K,V> lruCache(int maxSize, kotlin.jvm.functions.Function2<? super K,? super V,java.lang.Integer> sizeOf = { _, _ -> 1 }, kotlin.jvm.functions.Function1<? super K,? extends V> create = { (V)null }, kotlin.jvm.functions.Function4<? super java.lang.Boolean,? super K,? super V,? super V,kotlin.Unit> onEntryRemoved = { _, _, _, _ ->  });
                   }
                 }
@@ -353,7 +352,6 @@ class ApiFileTest : DriverTest() {
                   public static final class Kotlin.Companion {
                   }
                   public final class KotlinKt {
-                    ctor public KotlinKt();
                     method public static inline operator java.lang.String component1(java.lang.String);
                     method public static inline int getRed(int);
                     method public static inline boolean isSrgb(long);
@@ -423,7 +421,6 @@ class ApiFileTest : DriverTest() {
                     method public final <T> T getSystemService(java.lang.Class<T>);
                   }
                   public final class _java_Kt {
-                    ctor public _java_Kt();
                     method public static inline <reified T> T systemService1(test.pkg.Context);
                     method public static inline java.lang.String systemService2(test.pkg.Context);
                   }
@@ -456,7 +453,6 @@ class ApiFileTest : DriverTest() {
             api = """
                 package test.pkg {
                   public final class TestKt {
-                    ctor public TestKt();
                     method public static inline <T> void a(@Nullable T t);
                     method public static inline <reified T> void b(@Nullable T t);
                     method public static inline <reified T> void e(@Nullable T t);
@@ -485,7 +481,6 @@ class ApiFileTest : DriverTest() {
             api = """
                 package test.pkg {
                   public final class TestKt {
-                    ctor public TestKt();
                     method public static suspend inline Object hello(@NonNull kotlin.coroutines.Continuation<? super kotlin.Unit> p);
                   }
                 }
@@ -600,7 +595,6 @@ class ApiFileTest : DriverTest() {
                 // Signature format: 3.0
                 package test.pkg {
                   public final class TestKt {
-                    ctor public TestKt();
                     method @UiThread public static inline <reified Args extends test.pkg2.NavArgs> test.pkg2.NavArgsLazy<Args> navArgs(test.pkg2.Fragment);
                   }
                 }
@@ -688,7 +682,6 @@ class ApiFileTest : DriverTest() {
                     ctor public ArrayMap();
                   }
                   public final class ArrayMapKt {
-                    ctor public ArrayMapKt();
                     method public static inline <K, V> androidx.collection.ArrayMap<K,V> arrayMapOf();
                     method public static <K, V> androidx.collection.ArrayMap<K,V> arrayMapOf(kotlin.Pair<? extends K,? extends V>... pairs);
                     method public static <K, V> androidx.collection.ArrayMap<K,V>? arrayMapOfNullable(kotlin.Pair<? extends K,? extends V>?... pairs);
@@ -828,7 +821,6 @@ class ApiFileTest : DriverTest() {
                     field public final S! second;
                   }
                   public final class TestKt {
-                    ctor public TestKt();
                     method public static inline operator <F, S> F! component1(androidx.util.PlatformJavaPair<F,S>);
                   }
                 }
@@ -965,7 +957,6 @@ class ApiFileTest : DriverTest() {
                 // Signature format: 3.0
                 package androidx.content {
                   public final class TestKt {
-                    ctor public TestKt();
                     method public static void blahblahblah(String, String firstArg = "hello", int secondArg = 42, String thirdArg = "world");
                     method public static void blahblahblah(String, String firstArg = "hello", int secondArg = 42);
                     method public static void blahblahblah(String, String firstArg = "hello");
@@ -3586,6 +3577,33 @@ class ApiFileTest : DriverTest() {
                     method public android.view.View.OnClickListener! getToolbarNavigationClickListener1();
                     method public android.view.View.OnClickListener! getToolbarNavigationClickListener2();
                     method public android.view.View.OnClickListener! getToolbarNavigationClickListener3();
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
+    fun `FooKt class constructors are not public`() {
+        check(
+            format = FileFormat.V3,
+            sourceFiles = *arrayOf(
+                kotlin("src/main/java/test/pkg/Foo.kt",
+                    """
+                    package test.pkg
+                    fun myCall() : Boolean = false
+                    class Bar
+                    """
+                )
+            ),
+            api = """
+                // Signature format: 3.0
+                package test.pkg {
+                  public final class Bar {
+                    ctor public Bar();
+                  }
+                  public final class FooKt {
+                    method public static boolean myCall();
                   }
                 }
                 """
