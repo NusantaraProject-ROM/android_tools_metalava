@@ -131,6 +131,7 @@ import com.android.tools.metalava.doclava1.Issues.USER_HANDLE_NAME
 import com.android.tools.metalava.doclava1.Issues.USE_ICU
 import com.android.tools.metalava.doclava1.Issues.USE_PARCEL_FILE_DESCRIPTOR
 import com.android.tools.metalava.doclava1.Issues.VISIBLY_SYNCHRONIZED
+import com.android.tools.metalava.model.AnnotationItem
 import com.android.tools.metalava.model.AnnotationItem.Companion.getImplicitNullness
 import com.android.tools.metalava.model.ClassItem
 import com.android.tools.metalava.model.Codebase
@@ -3395,10 +3396,8 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
                 error(clazz, None, None, "@IntDef and @LongDef annotations must be @hide")
          */
         if (cls.isAnnotationType()) {
-            val modifiers = cls.modifiers
-
-            typedefAnnotations.firstOrNull { modifiers.isAnnotatedWith(it) }?.let {
-                report(PUBLIC_TYPEDEF, cls, "Don't expose @$it: ${cls.simpleName()} must be hidden.")
+            cls.modifiers.annotations().firstOrNull{ it.isTypeDefAnnotation() }?.let {
+                report(PUBLIC_TYPEDEF, cls, "Don't expose ${AnnotationItem.simpleName(it)}: ${cls.simpleName()} must be hidden.")
             }
         }
     }
@@ -3483,8 +3482,6 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
         )
 
         private val badUriTypes = listOf("java.net.URL", "java.net.URI", "android.net.URL")
-
-        private val typedefAnnotations = listOf("IntDef", "LongDef", "StringDef")
 
         /**
          * Classes for manipulating file descriptors directly, where using ParcelFileDescriptor
