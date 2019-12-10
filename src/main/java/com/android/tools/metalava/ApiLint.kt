@@ -3396,7 +3396,7 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
                 error(clazz, None, None, "@IntDef and @LongDef annotations must be @hide")
          */
         if (cls.isAnnotationType()) {
-            cls.modifiers.annotations().firstOrNull{ it.isTypeDefAnnotation() }?.let {
+            cls.modifiers.annotations().firstOrNull { it.isTypeDefAnnotation() }?.let {
                 report(PUBLIC_TYPEDEF, cls, "Don't expose ${AnnotationItem.simpleName(it)}: ${cls.simpleName()} must be hidden.")
             }
         }
