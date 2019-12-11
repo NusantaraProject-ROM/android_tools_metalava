@@ -278,7 +278,7 @@ class AnnotationsMerger(
                     // Don't map annotation names - this would turn newly non null back into non null
                     new.mutableModifiers().addAnnotation(
                         new.codebase.createAnnotation(
-                            annotation.toSource(),
+                            annotation.toSource(showDefaultAttrs = false),
                             new,
                             mapName = false
                         )
@@ -797,7 +797,7 @@ class XmlBackedAnnotationItem(
 
     override fun attributes() = attributes
 
-    override fun toSource(target: AnnotationTarget): String {
+    override fun toSource(target: AnnotationTarget, showDefaultAttrs: Boolean): String {
         val qualifiedName = AnnotationItem.mapName(codebase, qualifiedName, null, target) ?: return ""
 
         if (attributes.isEmpty()) {

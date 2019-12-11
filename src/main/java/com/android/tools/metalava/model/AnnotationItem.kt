@@ -60,7 +60,10 @@ interface AnnotationItem {
     fun originalName(): String?
 
     /** Generates source code for this annotation (using fully qualified names) */
-    fun toSource(target: AnnotationTarget = AnnotationTarget.SIGNATURE_FILE): String
+    fun toSource(
+        target: AnnotationTarget = AnnotationTarget.SIGNATURE_FILE,
+        showDefaultAttrs: Boolean = true
+    ): String
 
     /** The applicable targets for this annotation */
     fun targets(): Set<AnnotationTarget>

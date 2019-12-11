@@ -364,6 +364,64 @@ class ShowAnnotationTest : DriverTest() {
     }
 
     @Test
+    fun `showAnnotation with default parameters`() {
+        check(
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    import test.annotation.Api;
+                    import static test.annotation.Api.Type.A;
+                    import static test.annotation.Api.Type.B;
+
+                    public class Foo {
+                        public void method1() { }
+
+                        /** @hide */
+                        @Api
+                        public void method2() { }
+
+                        /** @hide */
+                        @Api(type=A)
+                        public void method3() { }
+
+                        /** @hide */
+                        @Api(type=B)
+                        public void method4() { }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.annotation;
+                    public @interface Api {
+                        enum Type {A, B}
+                        Type type() default Type.A;
+                    }
+                    """
+                )
+            ),
+
+            extraArguments = arrayOf(
+                ARG_SHOW_UNANNOTATED,
+                ARG_SHOW_ANNOTATION, "test.annotation.Api(type=test.annotation.Api.Type.A)",
+                ARG_HIDE_PACKAGE, "test.annotation"
+            ),
+
+            api = """
+                package test.pkg {
+                  public class Foo {
+                    ctor public Foo();
+                    method public void method1();
+                    method public void method2();
+                    method public void method3();
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
     fun `Testing parsing an annotation whose attribute references the annotated class`() {
         check(
             format = FileFormat.V3,
