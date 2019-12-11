@@ -41,6 +41,7 @@ import com.intellij.psi.util.PsiUtil
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.kotlin.KotlinUClass
 
 open class PsiClassItem(
     override val codebase: PsiBasedCodebase,
@@ -602,6 +603,10 @@ open class PsiClassItem(
             if (psiClass.name?.startsWith("-") == true) {
                 // Deliberately hidden; see examples like
                 //     @file:JvmName("-ViewModelExtensions") // Hide from Java sources in the IDE.
+                return false
+            }
+            if (psiClass is KotlinUClass && psiClass.sourcePsi == null) {
+                // Top level kt classes (FooKt for Foo.kt) do not have implicit default constructor
                 return false
             }
 
