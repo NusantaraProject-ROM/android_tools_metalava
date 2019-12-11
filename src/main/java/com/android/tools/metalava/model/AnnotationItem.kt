@@ -290,13 +290,14 @@ interface AnnotationItem {
                 "android.annotation.UserIdInt",
                 "android.annotation.BytesLong",
 
-                    // These aren't support annotations
+                // These aren't support annotations
                 "android.annotation.AppIdInt",
                 "android.annotation.SuppressAutoDoc",
                 "android.annotation.SystemApi",
                 "android.annotation.TestApi",
                 "android.annotation.CallbackExecutor",
                 "android.annotation.Condemned",
+                "android.annotation.Hide",
 
                 "android.annotation.Widget" -> {
                     // Remove, unless (a) public or (b) specifically included in --showAnnotations
