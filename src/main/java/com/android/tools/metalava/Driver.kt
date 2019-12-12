@@ -1154,7 +1154,7 @@ fun gatherSources(sourcePath: List<File>): List<File> {
         }
         addSourceFiles(sources, file.absoluteFile)
     }
-    return sources
+    return sources.sortedWith(compareBy({ it.name }))
 }
 
 private fun addHiddenPackages(
