@@ -139,6 +139,11 @@ private class AnnotationFilterEntry(
             // Have to call toSource to resolve attribute values into fully qualified class names.
             // For example: resolving RestrictTo(LIBRARY_GROUP) into
             // RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP)
+            // In addition, toSource (with the default argument showDefaultAttrs=true) retrieves
+            // default attributes from the definition of the annotation. For example,
+            // @SystemApi actually is converted into @android.annotation.SystemApi(\
+            // client=android.annotation.SystemApi.Client.PRIVILEGED_APPS,\
+            // process=android.annotation.SystemApi.Process.ALL)
             return AnnotationFilterEntry.fromSource(annotationItem.toSource())
         }
     }
