@@ -236,9 +236,7 @@ class UAnnotationItem private constructor(
                             appendValue(codebase, sb, initializer, target, showDefaultAttrs)
                         }
                         sb.append('}')
-                    } else {
-                        println("todo: support UCallExpression for other cases than array initializers")
-                    }
+                    } // TODO: support UCallExpression for other cases than array initializers
                 }
                 is UAnnotation -> {
                     appendAnnotation(codebase, sb, value, value.qualifiedName, target, showDefaultAttrs)
