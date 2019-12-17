@@ -1,5 +1,6 @@
 package com.android.tools.metalava
 
+import com.android.tools.lint.checks.infrastructure.TestFiles.base64gzip
 import org.junit.Test
 
 /** Tests for the --show-annotation functionality */
@@ -527,6 +528,72 @@ class ShowAnnotationTest : DriverTest() {
                 ARG_HIDE_PACKAGE, "androidx.annotation",
                 ARG_SHOW_UNANNOTATED
             )
+        )
+    }
+
+    @Test
+    fun `new class in the same package while parsing a class`() {
+        check(
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    import static test.pkg.AClass.SOME_VALUE;
+                    import test.annotation.Api;
+                    /** @hide */
+                    @Api(SOME_VALUE)
+                    public class Foo {
+                        public void foo() {}
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.annotation;
+
+                    public @interface Api {
+                        String value();
+                    }
+                    """
+                )
+            ),
+            classpath = arrayOf(
+                /* The following source file, compiled, and root folder jar'ed and stored as base64 gzip:
+                    package test.pkg;
+                    public class AClass {
+                        public static final String SOME_VALUE = "some_value";
+                    }
+                 */
+                base64gzip(
+                    "test.jar", "" +
+                        "H4sICDVE/F0AA3Rlc3QuamFyAAvwZmYRYeDg4GB4kDrFnwEJcDKwMPi6hjjq" +
+                        "evq56f87xcDAzBDgzc4BkmKCKgnAqVkEiOGafR39PN1cg0P0fN0++5457eOt" +
+                        "q3eR11tX69yZ85uDDK4YP3hapOflq+Ppe7F0FQtnxAvJI9JREq+WPX++/PmS" +
+                        "V9NmamfsaJ7JNa/yZNWsPTF7YsCuaPPd8c8FaIcH1BVcDAxAl91AcwUrEJek" +
+                        "Fpfo41bCCVNSkJ2uj/APujJRZGWOzjmJxcV6ySDS1W9j0CEHkTviCgcZmkpE" +
+                        "xMqyEqWsZdNn8IQEchnoFh+cfSZxh8VO7v+pR3ta5R+4G+7pZj377nbt57L7" +
+                        "9z8+Fz+gfEwxagePAY+BUsvpo69z5vpN/i6ZOCfnaJxL64XKLVumXvopnCgw" +
+                        "/VbEwlytrqiyQtcP86eGfWu9sGuvN+fbHX8mtCQu2lKzunzmmjAl7SXc+q+z" +
+                        "lJ+f6rxnotdiyL9uUb+e3o9DXsmL15+3+XVf0O05u9jNsDyd9hlF6terw/uk" +
+                        "K/7YOMxY0Mu3+fwp5wPCO32OTZj72o157m/mF7stXxj+6n1p+E1abg44tP1r" +
+                        "E34/BIUCIyi0GZlEGFBjnQkemCwMqAAlAaFrRY5EERRttjiSD8gELgbckY0A" +
+                        "hxFRj1sLJ4qWZ6hJAeFWkDbkIBBF0cbLiCNpBHizskEcxsqgBVRkCA4mAAHr" +
+                        "K7BxAwAA"
+                )
+            ),
+            extraArguments = arrayOf(
+                ARG_SHOW_UNANNOTATED,
+                ARG_SHOW_ANNOTATION, "test.annotation.Api",
+                ARG_HIDE_PACKAGE, "test.annotation"
+            ),
+            api = """
+                package test.pkg {
+                  public class Foo {
+                    ctor public Foo();
+                    method public void foo();
+                  }
+                }
+                """
         )
     }
 }

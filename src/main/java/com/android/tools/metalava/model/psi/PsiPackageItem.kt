@@ -37,7 +37,7 @@ class PsiPackageItem(
     // Note - top level classes only
     private val classes: MutableList<PsiClassItem> = mutableListOf()
 
-    override fun topLevelClasses(): Sequence<ClassItem> = classes.asSequence().filter { it.isTopLevelClass() }
+    override fun topLevelClasses(): Sequence<ClassItem> = classes.toList().asSequence().filter { it.isTopLevelClass() }
 
     lateinit var containingPackageField: PsiPackageItem
 
