@@ -16,10 +16,26 @@
 
 @file:Suppress("ALL")
 
-package com.android.tools.metalava
+package com.android.tools.metalava.stub
 
 import com.android.tools.lint.checks.infrastructure.TestFile
+import com.android.tools.metalava.ARG_CHECK_API
+import com.android.tools.metalava.ARG_EXCLUDE_ANNOTATIONS
+import com.android.tools.metalava.ARG_EXCLUDE_DOCUMENTATION_FROM_STUBS
+import com.android.tools.metalava.ARG_HIDE_PACKAGE
+import com.android.tools.metalava.ARG_PASS_THROUGH_ANNOTATION
+import com.android.tools.metalava.ARG_UPDATE_API
+import com.android.tools.metalava.DriverTest
+import com.android.tools.metalava.FileFormat
+import com.android.tools.metalava.androidxNullableSource
+import com.android.tools.metalava.extractRoots
+import com.android.tools.metalava.gatherSources
+import com.android.tools.metalava.intDefAnnotationSource
+import com.android.tools.metalava.intRangeAnnotationSource
 import com.android.tools.metalava.model.SUPPORT_TYPE_USE_ANNOTATIONS
+import com.android.tools.metalava.requiresPermissionSource
+import com.android.tools.metalava.restrictToSource
+import com.android.tools.metalava.supportParameterName
 import org.intellij.lang.annotations.Language
 import org.junit.Test
 import java.io.File
