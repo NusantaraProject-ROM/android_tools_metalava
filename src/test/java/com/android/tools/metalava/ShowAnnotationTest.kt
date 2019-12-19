@@ -452,4 +452,81 @@ class ShowAnnotationTest : DriverTest() {
             )
         )
     }
+
+    @Test
+    fun `Testing that file order does not affect output`() {
+        check(
+            format = FileFormat.V3,
+            sourceFiles = *arrayOf(
+                java(
+                    """
+                    package a;
+
+                    import androidx.annotation.RestrictTo;
+                    import androidx.annotation.RestrictTo.Scope;
+
+                    /**
+                     * @hide
+                     */
+                    @RestrictTo(Scope.LIBRARY_GROUP)
+                    public class Example1<T> {
+                        public class Child<T> {
+                        }
+                    }
+                    """
+                ),
+
+                java(
+                    """
+                    /**
+                     * @hide
+                     */
+                    package a;
+                    """
+                ),
+
+                java(
+                    """
+                    package a;
+
+                    import androidx.annotation.RestrictTo;
+                    import androidx.annotation.RestrictTo.Scope;
+
+                    /**
+                     * @hide
+                     */
+                    @RestrictTo(Scope.LIBRARY_GROUP)
+                    public class Example2<T> {
+                        public class Child<T> {
+                        }
+                    }
+                    """
+                ),
+                restrictToSource
+            ),
+            warnings = null,
+            api = """
+                // Signature format: 3.0
+                package a {
+                  @RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP) public class Example1<T> {
+                    ctor public Example1();
+                  }
+                  public class Example1.Child<T> {
+                    ctor public Example1.Child();
+                  }
+                  @RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP) public class Example2<T> {
+                    ctor public Example2();
+                  }
+                  public class Example2.Child<T> {
+                    ctor public Example2.Child();
+                  }
+                }
+                """,
+            extraArguments = arrayOf(
+                ARG_SHOW_ANNOTATION, "androidx.annotation.RestrictTo",
+                ARG_HIDE_PACKAGE, "androidx.annotation",
+                ARG_SHOW_UNANNOTATED
+            )
+        )
+    }
 }
