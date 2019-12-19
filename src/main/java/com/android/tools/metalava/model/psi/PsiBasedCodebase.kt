@@ -408,10 +408,6 @@ open class PsiBasedCodebase(location: File, override var description: String = "
             packageClasses[packageName] = list
         }
 
-        if (isPackageHidden(packageName)) {
-            cls.hidden = true
-        }
-
         list.add(cls)
     }
 
