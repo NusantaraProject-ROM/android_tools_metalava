@@ -45,6 +45,7 @@ import com.android.tools.metalava.model.PackageDocs
 import com.android.tools.metalava.model.psi.PsiBasedCodebase
 import com.android.tools.metalava.model.psi.packageHtmlToJavadoc
 import com.android.tools.metalava.model.visitors.ApiVisitor
+import com.android.tools.metalava.stub.StubWriter
 import com.android.utils.StdLogger
 import com.android.utils.StdLogger.Level.ERROR
 import com.google.common.base.Stopwatch
