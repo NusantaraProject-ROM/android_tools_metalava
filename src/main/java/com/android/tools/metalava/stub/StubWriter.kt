@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package com.android.tools.metalava
+package com.android.tools.metalava.stub
 
+import com.android.tools.metalava.JAVA_LANG_STRING
+import com.android.tools.metalava.compatibility
 import com.android.tools.metalava.doclava1.ApiPredicate
 import com.android.tools.metalava.doclava1.Issues
 import com.android.tools.metalava.doclava1.FilterPredicate
@@ -34,6 +36,8 @@ import com.android.tools.metalava.model.psi.EXPAND_DOCUMENTATION
 import com.android.tools.metalava.model.psi.PsiClassItem
 import com.android.tools.metalava.model.psi.trimDocIndent
 import com.android.tools.metalava.model.visitors.ApiVisitor
+import com.android.tools.metalava.options
+import com.android.tools.metalava.reporter
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
