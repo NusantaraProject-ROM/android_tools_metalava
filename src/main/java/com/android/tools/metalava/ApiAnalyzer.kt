@@ -370,6 +370,24 @@ class ApiAnalyzer(
 
         // Also add in any concrete public methods from hidden super classes
         for (superClass in hiddenSuperClasses) {
+
+            // Determine if there is a non-hidden class between the superClass and this class.
+            // If non hidden classes are found, don't include the methods for this hiddenSuperClass,
+            // as it will already have been included in a previous super class
+            var includeHiddenSuperClassMethods = true
+            var currentClass = cls.superClass()
+            while (currentClass != superClass && currentClass != null) {
+                if (!hiddenSuperClasses.contains(currentClass)) {
+                    includeHiddenSuperClassMethods = false
+                    break
+                }
+                currentClass = currentClass.superClass()
+            }
+
+            if (!includeHiddenSuperClassMethods) {
+                continue
+            }
+
             for (method in superClass.methods()) {
                 if (method.modifiers.isAbstract() || !method.modifiers.isPublic()) {
                     continue
