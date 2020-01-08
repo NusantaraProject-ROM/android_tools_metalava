@@ -3609,4 +3609,128 @@ class ApiFileTest : DriverTest() {
                 """
         )
     }
+
+    @Test
+    fun `Test inherited hidden methods for descendant classes - Package private`() {
+        check(
+            compatibilityMode = false,
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    public class Class4 extends Class3 {
+                        public void method4() { }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    public class Class3 extends Class2 {
+                        public void method3() { }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    class Class2 extends Class1 {
+                        public void method2() { }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    public class Class1 {
+                        public void method1() { }
+                    }
+                    """
+                )
+            ),
+            warnings = "",
+            api =
+            """
+                package test.pkg {
+                  public class Class1 {
+                    ctor public Class1();
+                    method public void method1();
+                  }
+                  public class Class3 extends test.pkg.Class1 {
+                    ctor public Class3();
+                    method public void method2();
+                    method public void method3();
+                  }
+                  public class Class4 extends test.pkg.Class3 {
+                    ctor public Class4();
+                    method public void method4();
+                  }
+                }
+                """
+        )
+    }
+
+    @Test
+    fun `Test inherited hidden methods for descendant classes - Hidden annotation`() {
+        check(
+            compatibilityMode = false,
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    public class Class4 extends Class3 {
+                        public void method4() { }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    public class Class3 extends Class2 {
+                        public void method3() { }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    /** @hide */
+                    public class Class2 extends Class1 {
+                        public void method2() { }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    public class Class1 {
+                        public void method1() { }
+                    }
+                    """
+                )
+            ),
+            warnings = "src/test/pkg/Class3.java:2: warning: Public class test.pkg.Class3 stripped of unavailable superclass test.pkg.Class2 [HiddenSuperclass]",
+            api =
+            """
+                package test.pkg {
+                  public class Class1 {
+                    ctor public Class1();
+                    method public void method1();
+                  }
+                  public class Class3 extends test.pkg.Class1 {
+                    ctor public Class3();
+                    method public void method2();
+                    method public void method3();
+                  }
+                  public class Class4 extends test.pkg.Class3 {
+                    ctor public Class4();
+                    method public void method4();
+                  }
+                }
+                """
+
+        )
+    }
 }
