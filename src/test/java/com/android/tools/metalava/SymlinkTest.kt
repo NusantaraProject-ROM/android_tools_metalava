@@ -89,7 +89,6 @@ class SymlinkTest : DriverTest() {
                     ARG_SOURCE_PATH, ""
                 ),
                 checkCompilation = false, // needs androidx.annotations in classpath
-                checkDoclava1 = false,
                 stubs = arrayOf(
                     """
                     package test.pkg;

@@ -27,7 +27,6 @@ class JavadocTest : DriverTest() {
         @Language("JAVA") source: String,
         compatibilityMode: Boolean = true,
         warnings: String? = "",
-        checkDoclava1: Boolean = false,
         api: String? = null,
         extraArguments: Array<String> = emptyArray(),
         docStubs: Boolean = false,
@@ -42,7 +41,6 @@ class JavadocTest : DriverTest() {
             stubs = arrayOf(source),
             compatibilityMode = compatibilityMode,
             warnings = warnings,
-            checkDoclava1 = checkDoclava1,
             checkCompilation = true,
             api = api,
             extraArguments = extraArguments,
@@ -86,7 +84,6 @@ class JavadocTest : DriverTest() {
     fun `Relative documentation links in stubs`() {
         checkStubs(
             docStubs = false,
-            checkDoclava1 = false,
             sourceFiles =
             *arrayOf(
                 java(
@@ -187,7 +184,6 @@ class JavadocTest : DriverTest() {
     fun `Rewrite relative documentation links in doc-stubs`() {
         checkStubs(
             docStubs = true,
-            checkDoclava1 = false,
             sourceFiles =
             *arrayOf(
                 java(
@@ -289,7 +285,6 @@ class JavadocTest : DriverTest() {
         // Properly handle links to inherited methods
         checkStubs(
             docStubs = true,
-            checkDoclava1 = false,
             sourceFiles =
             *arrayOf(
                 java(
@@ -370,7 +365,6 @@ class JavadocTest : DriverTest() {
     fun `Rewrite relative documentation links in doc-stubs 3`() {
         checkStubs(
             docStubs = true,
-            checkDoclava1 = false,
             sourceFiles =
             *arrayOf(
                 java(
@@ -437,7 +431,6 @@ class JavadocTest : DriverTest() {
     fun `Rewrite relative documentation links in doc-stubs 4`() {
         checkStubs(
             docStubs = true,
-            checkDoclava1 = false,
             sourceFiles =
             *arrayOf(
                 java(
@@ -567,7 +560,6 @@ class JavadocTest : DriverTest() {
         // Properly handle links to inherited methods
         checkStubs(
             docStubs = true,
-            checkDoclava1 = false,
             sourceFiles =
             *arrayOf(
                 java(
@@ -613,7 +605,6 @@ class JavadocTest : DriverTest() {
         checkStubs(
             docStubs = true,
             compatibilityMode = false,
-            checkDoclava1 = false,
             warnings = "",
             sourceFiles =
             *arrayOf(
@@ -711,7 +702,6 @@ class JavadocTest : DriverTest() {
         checkStubs(
             docStubs = true,
             compatibilityMode = false,
-            checkDoclava1 = false,
             warnings = "",
             sourceFiles =
             *arrayOf(
@@ -758,7 +748,6 @@ class JavadocTest : DriverTest() {
         checkStubs(
             docStubs = true,
             compatibilityMode = false,
-            checkDoclava1 = false,
             warnings = "",
             sourceFiles =
             *arrayOf(
@@ -824,7 +813,6 @@ class JavadocTest : DriverTest() {
         checkStubs(
             docStubs = true,
             compatibilityMode = false,
-            checkDoclava1 = false,
             warnings = "",
             sourceFiles =
             *arrayOf(
@@ -876,7 +864,6 @@ class JavadocTest : DriverTest() {
         checkStubs(
             docStubs = true,
             compatibilityMode = false,
-            checkDoclava1 = false,
             warnings =
             if (REPORT_UNRESOLVED_SYMBOLS) {
                 """
@@ -969,7 +956,6 @@ class JavadocTest : DriverTest() {
                     """
                 )
             ),
-            checkDoclava1 = false,
             docStubs = true,
             // You would *think* the right link to the constructor inner class would be
             //   {@link android.view.WindowInsets.Builder#Builder(android.view.WindowInsets)

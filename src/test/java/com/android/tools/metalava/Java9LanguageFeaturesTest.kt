@@ -26,7 +26,6 @@ class Java9LanguageFeaturesTest : DriverTest() {
         // Basic class; also checks that default constructor is made explicit
         check(
             checkCompilation = false, // Not compiling with JDK 9 yet
-            checkDoclava1 = false, // Not handling JDK 9
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -57,7 +56,6 @@ class Java9LanguageFeaturesTest : DriverTest() {
         // Basic class; also checks that default constructor is made explicit
         check(
             checkCompilation = false, // Not compiling with JDK 9 yet
-            checkDoclava1 = false, // Not handling JDK 9
             sourceFiles = *arrayOf(
                 java(
                     """

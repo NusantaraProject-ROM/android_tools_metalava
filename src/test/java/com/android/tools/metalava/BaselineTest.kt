@@ -151,8 +151,7 @@ class BaselineTest : DriverTest() {
                     field public test.pkg.Hidden2 hidden2;
                   }
                 }
-                """,
-            checkDoclava1 = false
+                """
         )
     }
 
@@ -230,8 +229,7 @@ class BaselineTest : DriverTest() {
                     method public void unregisterOk3Callback(java.lang.Runnable);
                   }
                 }
-                """,
-            checkDoclava1 = false
+                """
         )
     }
 
@@ -298,8 +296,7 @@ class BaselineTest : DriverTest() {
                     }
                     """
                 )
-            ),
-            checkDoclava1 = false
+            )
         )
     }
 }
