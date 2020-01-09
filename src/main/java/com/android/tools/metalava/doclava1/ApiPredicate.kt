@@ -53,6 +53,11 @@ class ApiPredicate(
 ) : Predicate<Item> {
 
     override fun test(member: Item): Boolean {
+        // Type Parameter references (e.g. T) aren't actual types, skip all visibility checks
+        if (member is ClassItem && member.isTypeParameter) {
+            return true
+        }
+
         if (!allowClassesFromClasspath && member.isFromClassPath()) {
             return false
         }
