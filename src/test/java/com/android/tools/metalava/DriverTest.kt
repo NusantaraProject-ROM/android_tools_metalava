@@ -381,7 +381,7 @@ abstract class DriverTest {
          */
         @Language("TEXT") apiLint: String? = null,
         /** The source files to pass to the analyzer */
-        vararg sourceFiles: TestFile
+        sourceFiles: Array<TestFile> = emptyArray()
     ) {
         // Ensure different API clients don't interfere with each other
         try {

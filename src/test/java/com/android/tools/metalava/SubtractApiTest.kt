@@ -24,7 +24,7 @@ class SubtractApiTest : DriverTest() {
     @Test
     fun `Subtract APIs`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;

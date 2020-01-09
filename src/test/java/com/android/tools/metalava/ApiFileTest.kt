@@ -61,7 +61,7 @@ class ApiFileTest : DriverTest() {
     fun `Basic class signature extraction`() {
         // Basic class; also checks that default constructor is made explicit
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -85,7 +85,7 @@ class ApiFileTest : DriverTest() {
         // Java code which explicitly specifies parameter names
         check(
             compatibilityMode = false, // parameter names only in v2
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -116,7 +116,7 @@ class ApiFileTest : DriverTest() {
         // Java code which explicitly specifies parameter names
         check(
             format = FileFormat.V3,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -152,7 +152,7 @@ class ApiFileTest : DriverTest() {
         check(
             format = FileFormat.V3,
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     """
                     package test.pkg
@@ -222,7 +222,7 @@ class ApiFileTest : DriverTest() {
         // observed in androidx.core.util with LruCache
         check(
             format = FileFormat.V3,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     """
                     package androidx.core.util
@@ -295,7 +295,7 @@ class ApiFileTest : DriverTest() {
         check(
             format = FileFormat.V1,
             extraArguments = arrayOf("--parameter-names=true"),
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     """
                     package test.pkg
@@ -387,7 +387,7 @@ class ApiFileTest : DriverTest() {
     @Test
     fun `Kotlin Reified Methods`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -428,7 +428,7 @@ class ApiFileTest : DriverTest() {
     fun `Kotlin Reified Methods 2`() {
         check(
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     """
                     @file:Suppress("NOTHING_TO_INLINE", "RedundantVisibilityModifier", "unused")
@@ -461,7 +461,7 @@ class ApiFileTest : DriverTest() {
     fun `Suspend functions`() {
         check(
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     """
                     package test.pkg
@@ -485,7 +485,7 @@ class ApiFileTest : DriverTest() {
     fun `Var properties with private setters`() {
         check(
             format = FileFormat.V3,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     """
                     package test.pkg
@@ -514,7 +514,7 @@ class ApiFileTest : DriverTest() {
     fun `Kotlin Generics`() {
         check(
             format = FileFormat.V3,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     """
                     package test.pkg
@@ -546,7 +546,7 @@ class ApiFileTest : DriverTest() {
     fun `Nullness in reified signatures`() {
         check(
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     "src/test/pkg/test.kt",
                     """
@@ -604,7 +604,7 @@ class ApiFileTest : DriverTest() {
     fun `Nullness in varargs`() {
         check(
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package androidx.collection;
@@ -698,7 +698,7 @@ class ApiFileTest : DriverTest() {
         check(
             compatibilityMode = false,
             format = FileFormat.V3,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     """
                     // Nullable Pair in Kotlin
@@ -824,7 +824,7 @@ class ApiFileTest : DriverTest() {
         check(
             compatibilityMode = false,
             outputKotlinStyleNulls = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     // Platform nullability Pair in Java
@@ -910,7 +910,7 @@ class ApiFileTest : DriverTest() {
         check(
             format = FileFormat.V3,
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     """
                         package androidx.content
@@ -963,7 +963,7 @@ class ApiFileTest : DriverTest() {
         // correctly (in particular, using fully qualified names instead of what appears in
         // the source code.)
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1050,7 +1050,7 @@ class ApiFileTest : DriverTest() {
     fun `Basic class without default constructor, has constructors with args`() {
         // Class without private constructors (shouldn't insert default constructor)
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1079,7 +1079,7 @@ class ApiFileTest : DriverTest() {
     fun `Basic class without default constructor, has private constructor`() {
         // Class without private constructors; no default constructor should be inserted
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1105,7 +1105,7 @@ class ApiFileTest : DriverTest() {
         // Interface: makes sure the right modifiers etc are shown (and that "package private" methods
         // in the interface are taken to be public etc)
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1131,7 +1131,7 @@ class ApiFileTest : DriverTest() {
         // Interface: makes sure the right modifiers etc are shown (and that "package private" methods
         // in the interface are taken to be public etc)
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1160,7 +1160,7 @@ class ApiFileTest : DriverTest() {
         // Interface: makes sure the right modifiers etc are shown (and that "package private" methods
         // in the interface are taken to be public etc)
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1188,7 +1188,7 @@ class ApiFileTest : DriverTest() {
         // Interface: makes sure the right modifiers etc are shown (and that "package private" methods
         // in the interface are taken to be public etc)
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1230,7 +1230,7 @@ class ApiFileTest : DriverTest() {
         // Real life example: StringBuilder.setLength, in compat mode
         check(
             compatibilityMode = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1265,7 +1265,7 @@ class ApiFileTest : DriverTest() {
         // This is just like the above test, but with compat mode disabled.
         check(
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1301,7 +1301,7 @@ class ApiFileTest : DriverTest() {
         // This is just like the above test, but with compat mode disabled.
         check(
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1355,7 +1355,7 @@ class ApiFileTest : DriverTest() {
         // Interface: makes sure the right modifiers etc are shown (and that "package private" methods
         // in the interface are taken to be public etc)
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1401,7 +1401,7 @@ class ApiFileTest : DriverTest() {
         // it should show up in the stubs file.).
         check(
             extraArguments = arrayOf(ARG_EXCLUDE_ANNOTATIONS),
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1485,7 +1485,7 @@ class ApiFileTest : DriverTest() {
         // Make sure superclass statement is correct; inherited method from parent that has same
         // signature isn't included in the child
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1524,7 +1524,7 @@ class ApiFileTest : DriverTest() {
     @Test
     fun `Extract fields with types and initial values`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1586,7 +1586,7 @@ class ApiFileTest : DriverTest() {
         // Note also how the "protected" modifier on the interface method gets
         // promoted to public.
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1648,7 +1648,7 @@ class ApiFileTest : DriverTest() {
         check(
             compatibilityMode = false,
             outputKotlinStyleNulls = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1684,7 +1684,7 @@ class ApiFileTest : DriverTest() {
         // a modifier order more in line with standard code conventions
         check(
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1734,7 +1734,7 @@ class ApiFileTest : DriverTest() {
         // package is not marked @hide, but doclava now treats subpackages of a hidden package
         // as also hidden.
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     ${"/** @hide hidden package */" /* avoid dangling javadoc warning */}
@@ -1806,7 +1806,7 @@ class ApiFileTest : DriverTest() {
         // and that they are listed separately.
 
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1851,7 +1851,7 @@ class ApiFileTest : DriverTest() {
         // test. Real world example: Optional.orElseThrow.
         check(
             compatibilityMode = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1882,7 +1882,7 @@ class ApiFileTest : DriverTest() {
     fun `Check various generics signature subtleties`() {
         // Some additional declarations where PSI default type handling diffs from doclava1
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1961,7 +1961,7 @@ class ApiFileTest : DriverTest() {
         // correctly (there's some special casing around enums to insert extra methods
         // that was broken, as exposed by ChronoUnit#toString)
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2054,7 +2054,7 @@ class ApiFileTest : DriverTest() {
     @Test
     fun `Superclass filtering, should skip intermediate hidden classes`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2118,8 +2118,7 @@ class ApiFileTest : DriverTest() {
     fun `Inheriting from package private classes, package private class should be included`() {
         check(
             compatibilityMode = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2159,8 +2158,7 @@ class ApiFileTest : DriverTest() {
     fun `Inheriting generic method from package private class`() {
         check(
             compatibilityMode = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2200,8 +2198,7 @@ class ApiFileTest : DriverTest() {
         // Type parameters from parent classes need to be replaced with their bounds in the child.
         check(
             compatibilityMode = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2242,8 +2239,7 @@ class ApiFileTest : DriverTest() {
         check(
             compatibilityMode = true,
             extraArguments = arrayOf("--skip-inherited-methods=false"),
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2284,7 +2280,7 @@ class ApiFileTest : DriverTest() {
         // the subclass
         check(
             compatibilityMode = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2336,7 +2332,7 @@ class ApiFileTest : DriverTest() {
         // BUG: Note that we need to implement the parent
         check(
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2385,8 +2381,7 @@ class ApiFileTest : DriverTest() {
         // If signatures vary only by the "default" modifier in the interface, don't show it on the implementing
         // class
         check(
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2430,8 +2425,7 @@ class ApiFileTest : DriverTest() {
         // method must be listed in the subclass. This is observed for example in
         // AbstractCursor#finalize, which omits the throws clause from Object's finalize.
         check(
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2475,7 +2469,7 @@ class ApiFileTest : DriverTest() {
         // class. This is an issue for example for the ZonedDateTime#getLong method
         // implementing the TemporalAccessor#getLong method
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2512,7 +2506,7 @@ class ApiFileTest : DriverTest() {
     @Test
     fun `Implementing interface method 2`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2561,7 +2555,7 @@ class ApiFileTest : DriverTest() {
     fun `Check basic @remove scenarios`() {
         // Test basic @remove handling for methods and fields
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2634,7 +2628,7 @@ class ApiFileTest : DriverTest() {
     fun `Check @remove class`() {
         // Test removing classes
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2716,7 +2710,7 @@ class ApiFileTest : DriverTest() {
     @Test
     fun `Test include overridden @Deprecated even if annotated with @hide`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2788,7 +2782,7 @@ class ApiFileTest : DriverTest() {
     fun `Test invalid class name`() {
         // Regression test for b/73018978
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     "src/test/pkg/Foo.kt",
                     """
@@ -2815,7 +2809,7 @@ class ApiFileTest : DriverTest() {
     fun `Indirect Field Includes from Interfaces`() {
         // Real-world example: include ZipConstants into ZipFile and JarFile
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg1;
@@ -2874,7 +2868,7 @@ class ApiFileTest : DriverTest() {
             extraArguments = arrayOf(
                 ARG_HIDE_PACKAGE, "com.squareup.okhttp"
             ),
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package android.net.http;
@@ -2914,7 +2908,7 @@ class ApiFileTest : DriverTest() {
     @Test
     fun `Private API signatures`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                         package test.pkg;
@@ -3032,7 +3026,7 @@ class ApiFileTest : DriverTest() {
     fun `Private API signature corner cases`() {
         // Some corner case scenarios exposed by differences in output from doclava and metalava
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                         package test.pkg;
@@ -3136,7 +3130,7 @@ class ApiFileTest : DriverTest() {
         // Real-world example: XmlResourceParser
         check(
             checkCompilation = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package android.content.res;
@@ -3200,7 +3194,7 @@ class ApiFileTest : DriverTest() {
     fun `Test KDoc suppress`() {
         // Basic class; also checks that default constructor is made explicit
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -3243,7 +3237,7 @@ class ApiFileTest : DriverTest() {
         // Regression test for 122358225
         check(
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -3326,7 +3320,7 @@ class ApiFileTest : DriverTest() {
     fun `Ignore synchronized differences`() {
         check(
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg2;
@@ -3370,7 +3364,7 @@ class ApiFileTest : DriverTest() {
             extraArguments = arrayOf("--stub-packages", "android.test.mock"),
             compatibilityMode = false,
             warnings = "src/android/test/mock/MockContentProvider.java:6: warning: Public class android.test.mock.MockContentProvider stripped of unavailable superclass android.content.ContentProvider [HiddenSuperclass]",
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package android.test.mock;
@@ -3451,7 +3445,7 @@ class ApiFileTest : DriverTest() {
         // Use the otherwise= visibility in signatures
         // Regression test for issue 118763806
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -3542,7 +3536,7 @@ class ApiFileTest : DriverTest() {
             src/test/pkg/MyClass.java:2: error: Extending deprecated super class class test.pkg.DeprecatedClass from test.pkg.MyClass: this class should also be deprecated [ExtendsDeprecated]
             src/test/pkg/MyClass.java:2: error: Implementing interface of deprecated type test.pkg.DeprecatedInterface in test.pkg.MyClass: this class should also be deprecated [ExtendsDeprecated]
             """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -3582,7 +3576,7 @@ class ApiFileTest : DriverTest() {
     fun `v3 format for qualified references in types`() {
         check(
             format = FileFormat.V3,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package androidx.appcompat.app;
@@ -3621,7 +3615,7 @@ class ApiFileTest : DriverTest() {
     fun `FooKt class constructors are not public`() {
         check(
             format = FileFormat.V3,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin("src/main/java/test/pkg/Foo.kt",
                     """
                     package test.pkg
@@ -3648,8 +3642,7 @@ class ApiFileTest : DriverTest() {
     fun `Test inherited hidden methods for descendant classes - Package private`() {
         check(
             compatibilityMode = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -3709,8 +3702,7 @@ class ApiFileTest : DriverTest() {
     fun `Test inherited hidden methods for descendant classes - Hidden annotation`() {
         check(
             compatibilityMode = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;

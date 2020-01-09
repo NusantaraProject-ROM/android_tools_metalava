@@ -203,7 +203,7 @@ CompatibilityCheckTest : DriverTest() {
                       }
                     }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     """
                     package test.pkg
@@ -240,7 +240,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     @Suppress("all")
@@ -276,7 +276,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     """
                     package test.pkg
@@ -331,7 +331,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -364,7 +364,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     """
                     package test.pkg
@@ -393,7 +393,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     """
                     package test.pkg
@@ -426,7 +426,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     """
                     package test.pkg
@@ -466,7 +466,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                         package test.pkg;
@@ -507,7 +507,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                         package test.pkg;
@@ -547,7 +547,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                         package test.pkg;
@@ -599,7 +599,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                         package test.pkg;
@@ -638,7 +638,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                         package test.pkg;
@@ -668,7 +668,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     """
                     package test.pkg
@@ -697,7 +697,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     """
                     package test.pkg
@@ -727,7 +727,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     """
                     package test.pkg
@@ -765,7 +765,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -827,7 +827,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -880,7 +880,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -918,7 +918,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -944,7 +944,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -971,7 +971,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1005,7 +1005,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1052,7 +1052,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1087,7 +1087,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1118,7 +1118,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1162,7 +1162,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1193,7 +1193,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1235,7 +1235,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1280,7 +1280,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1316,7 +1316,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1363,7 +1363,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1403,7 +1403,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1440,7 +1440,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1484,7 +1484,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1519,7 +1519,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1561,7 +1561,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     "src/androidx/content/ContentValues.kt",
                     """
@@ -1614,7 +1614,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     """
                     package androidx.navigation
@@ -1658,7 +1658,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1742,7 +1742,7 @@ CompatibilityCheckTest : DriverTest() {
                 src/test/pkg/Bar.java:17: error: Added method test.pkg.Bar.Inner1.Inner2.addedMethod() to the system API [AddedMethod]
                 TESTROOT/current-api.txt:4: error: Removed method test.pkg.Bar.Inner1.Inner2.removedMethod() [RemovedMethod]
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package other.pkg;
@@ -1814,7 +1814,7 @@ CompatibilityCheckTest : DriverTest() {
                 TESTROOT/current-api.txt:4: error: Removed method android.rolecontrollerservice.RoleControllerService.onClearRoleHolders() [RemovedMethod]
                 src/android/rolecontrollerservice/RoleControllerService.java:7: warning: Added method android.rolecontrollerservice.RoleControllerService.onGrantDefaultRoles() to the system API [AddedAbstractMethod]
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package android.rolecontrollerservice;
@@ -1861,7 +1861,7 @@ CompatibilityCheckTest : DriverTest() {
         check(
             warnings = """
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1945,7 +1945,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1992,7 +1992,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2042,7 +2042,7 @@ CompatibilityCheckTest : DriverTest() {
             warnings = """
                 TESTROOT/current-api.txt:6: error: Removed method test.view.ViewTreeObserver.registerFrameCommitCallback(Runnable) [RemovedMethod]
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.view;
@@ -2130,7 +2130,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2205,7 +2205,7 @@ CompatibilityCheckTest : DriverTest() {
                 }
                 """,
 
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 restrictToSource
             )
         )
@@ -2233,7 +2233,7 @@ CompatibilityCheckTest : DriverTest() {
                 }
                 """,
 
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 restrictToSource
             )
         )
@@ -2252,7 +2252,7 @@ CompatibilityCheckTest : DriverTest() {
                 }
                 """,
 
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                      package androidx.browser.browseractions;
@@ -2280,7 +2280,7 @@ CompatibilityCheckTest : DriverTest() {
                 }
                 """,
 
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package androidx.collection;
@@ -2310,7 +2310,7 @@ CompatibilityCheckTest : DriverTest() {
                 }
                 """,
 
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package androidx.collection;
@@ -2345,7 +2345,7 @@ CompatibilityCheckTest : DriverTest() {
                 }
                 """,
 
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 restrictToSource
             )
         )
@@ -2425,7 +2425,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     """
                         package test.pkg
@@ -2459,7 +2459,7 @@ CompatibilityCheckTest : DriverTest() {
                 }
                 """,
 
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     """
                     @file:Suppress("NOTHING_TO_INLINE", "RedundantVisibilityModifier", "unused")
@@ -2641,7 +2641,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2705,7 +2705,7 @@ CompatibilityCheckTest : DriverTest() {
 
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2742,7 +2742,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     "src2/com/android/location/provider/LocationProviderBase1.java",
                     """
@@ -2800,7 +2800,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package androidx.coordinatorlayout.widget;
@@ -2873,7 +2873,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package androidx.versionedparcelable;
@@ -2894,7 +2894,7 @@ CompatibilityCheckTest : DriverTest() {
     fun `Check using parameterized arrays as type parameters`() {
         check(
             format = FileFormat.V3,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2940,7 +2940,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package androidx.core.app;
@@ -2976,7 +2976,7 @@ CompatibilityCheckTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package androidx.room;
