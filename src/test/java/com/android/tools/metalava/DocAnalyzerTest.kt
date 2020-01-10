@@ -519,7 +519,7 @@ class DocAnalyzerTest : DriverTest() {
     }
 
     @Test
-    fun `Typedefs`() {
+    fun Typedefs() {
         check(
             sourceFiles = arrayOf(
                 java(
