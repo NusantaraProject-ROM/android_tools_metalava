@@ -115,7 +115,7 @@ abstract class DriverTest {
 
             Disposer.setDebugMode(true)
 
-            if (!com.android.tools.metalava.run(arrayOf(*args), writer, writer)) {
+            if (!run(arrayOf(*args), writer, writer)) {
                 val actualFail = cleanupString(sw.toString(), null)
                 if (cleanupString(expectedFail, null).replace(".", "").trim() !=
                     actualFail.replace(".", "").trim()
@@ -537,7 +537,7 @@ abstract class DriverTest {
                 arrayOf(ARG_API_LINT, file.path)
             }
         } else {
-            emptyArray<String>()
+            emptyArray()
         }
 
         val checkCompatibilityApiFile = if (checkCompatibilityApi != null) {
@@ -1711,34 +1711,6 @@ val nullableSource: TestFile = java(
     @SuppressWarnings({"WeakerAccess", "JavaDoc"})
     @Retention(SOURCE)
     @Target({METHOD, PARAMETER, FIELD${if (SUPPORT_TYPE_USE_ANNOTATIONS) ", TYPE_USE" else ""}})
-    public @interface Nullable {
-    }
-    """
-).indented()
-
-val supportNonNullSource: TestFile = java(
-    """
-    package android.support.annotation;
-    import java.lang.annotation.*;
-    import static java.lang.annotation.ElementType.*;
-    import static java.lang.annotation.RetentionPolicy.SOURCE;
-    @SuppressWarnings("WeakerAccess")
-    @Retention(SOURCE)
-    @Target({METHOD, PARAMETER, FIELD, TYPE_USE, TYPE_PARAMETER})
-    public @interface NonNull {
-    }
-    """
-).indented()
-
-val supportNullableSource: TestFile = java(
-    """
-    package android.support.annotation;
-    import java.lang.annotation.*;
-    import static java.lang.annotation.ElementType.*;
-    import static java.lang.annotation.RetentionPolicy.SOURCE;
-    @SuppressWarnings("WeakerAccess")
-    @Retention(SOURCE)
-    @Target({METHOD, PARAMETER, FIELD, TYPE_USE, TYPE_PARAMETER})
     public @interface Nullable {
     }
     """
