@@ -2189,6 +2189,87 @@ class ApiFileTest : DriverTest() {
     }
 
     @Test
+    fun `Inheriting generic method from package private class`() {
+        check(
+            checkDoclava1 = false, // doclava1 does not inherit methods
+            compatibilityMode = false,
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    @SuppressWarnings("ALL")
+                    public class MyClass extends HiddenParent {
+                        public void method1() { }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    @SuppressWarnings("ALL")
+                    class HiddenParent {
+                        public <T> T method2(T t) { }
+                        public String method3(String s) { }
+                    }
+                    """
+                )
+            ),
+            warnings = "",
+            api = """
+                    package test.pkg {
+                      public class MyClass {
+                        ctor public MyClass();
+                        method public void method1();
+                        method public <T> T method2(T);
+                        method public String method3(String);
+                      }
+                    }
+            """
+        )
+    }
+
+    @Test
+    fun `Type substitution for generic method referencing parent type parameter`() {
+        // Type parameters from parent classes need to be replaced with their bounds in the child.
+        check(
+            checkDoclava1 = false, // doclava1 does not inherit methods
+            compatibilityMode = false,
+            sourceFiles =
+            *arrayOf(
+                java(
+                    """
+                    package test.pkg;
+                    @SuppressWarnings("ALL")
+                    public class MyClass extends HiddenParent<String> {
+                        public void method1() { }
+                    }
+                    """
+                ),
+                java(
+                    """
+                    package test.pkg;
+                    @SuppressWarnings("ALL")
+                    class HiddenParent<T> {
+                        public T method2(T t) { }
+                    }
+                    """
+                )
+            ),
+            warnings = "",
+            api = """
+                    package test.pkg {
+                      public class MyClass {
+                        ctor public MyClass();
+                        method public void method1();
+                        method public String method2(String);
+                      }
+                    }
+            """
+        )
+    }
+
+    @Test
     fun `Using compatibility flag manually`() {
         // Like previous test, but using compatibility mode and explicitly turning on
         // the hidden super class compatibility flag. This test is mostly intended
