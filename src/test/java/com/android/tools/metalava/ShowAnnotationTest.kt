@@ -11,7 +11,7 @@ class ShowAnnotationTest : DriverTest() {
         check(
             includeSystemApiAnnotations = true,
             warnings = "src/test/pkg/Foo.java:17: error: @SystemApi APIs must also be marked @hide: method test.pkg.Foo.method4() [UnhiddenSystemApi]",
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -68,7 +68,7 @@ class ShowAnnotationTest : DriverTest() {
             includeSystemApiAnnotations = true,
             showUnannotated = true,
             warnings = "src/test/pkg/Foo.java:17: error: @SystemApi APIs must also be marked @hide: method test.pkg.Foo.method4() [UnhiddenSystemApi]",
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -130,7 +130,7 @@ class ShowAnnotationTest : DriverTest() {
     fun `Check @TestApi handling`() {
         check(
             includeSystemApiAnnotations = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -187,7 +187,7 @@ class ShowAnnotationTest : DriverTest() {
         // and the additional API made visible with annotations. However,
         // in the *stubs*, we have to include everything.
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg2;
@@ -255,7 +255,7 @@ class ShowAnnotationTest : DriverTest() {
     fun `No UnhiddenSystemApi warning for --show-single-annotations`() {
         check(
             warnings = "",
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -310,7 +310,7 @@ class ShowAnnotationTest : DriverTest() {
     @Test
     fun `showAnnotation with parameters`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -362,7 +362,7 @@ class ShowAnnotationTest : DriverTest() {
     @Test
     fun `showAnnotation with default parameters`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -421,7 +421,7 @@ class ShowAnnotationTest : DriverTest() {
     fun `Testing parsing an annotation whose attribute references the annotated class`() {
         check(
             format = FileFormat.V3,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package androidx.room;
@@ -453,7 +453,7 @@ class ShowAnnotationTest : DriverTest() {
     fun `Testing that file order does not affect output`() {
         check(
             format = FileFormat.V3,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package a;
@@ -529,7 +529,7 @@ class ShowAnnotationTest : DriverTest() {
     @Test
     fun `new class in the same package while parsing a class`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;

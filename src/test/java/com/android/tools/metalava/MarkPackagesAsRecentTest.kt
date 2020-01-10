@@ -11,7 +11,7 @@ class MarkPackagesAsRecentTest : DriverTest() {
     @Test
     fun `Basic MarkPackagesAsRecentTest test`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -45,7 +45,7 @@ class MarkPackagesAsRecentTest : DriverTest() {
     @Test
     fun `MarkPackagesAsRecent test with showAnnotation arguments`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;

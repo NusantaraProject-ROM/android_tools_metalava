@@ -16,7 +16,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Basic documentation generation test`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -74,7 +74,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Fix first sentence handling`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package android.annotation;
@@ -118,7 +118,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Fix typo replacement`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -151,7 +151,7 @@ class DocAnalyzerTest : DriverTest() {
     fun `Document Permissions`() {
         check(
             docStubs = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -257,7 +257,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Conditional Permission`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -303,7 +303,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Document ranges`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -357,7 +357,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Merging in documentation snippets from annotation memberDoc and classDoc`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -401,7 +401,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Warn about multiple threading annotations`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -444,7 +444,7 @@ class DocAnalyzerTest : DriverTest() {
     fun `Merge Multiple sections`() {
         check(
             warnings = "src/android/widget/Toolbar2.java:14: error: Documentation should not specify @apiSince manually; it's computed and injected at build time by metalava [ForbiddenTag]",
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package android.widget;
@@ -521,7 +521,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Typedefs`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -589,7 +589,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Typedefs combined with ranges`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -643,7 +643,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Create method documentation from nothing`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -681,7 +681,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Warn about missing field`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -717,7 +717,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Add to existing single-line method documentation`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -757,7 +757,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Add to existing multi-line method documentation`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -801,7 +801,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Add new parameter when no doc exists`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -833,7 +833,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Add to method when there are existing parameter docs and appear before these`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -883,7 +883,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Add new parameter when doc exists but no param doc`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -921,7 +921,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Add new parameter, sorted correctly between existing ones`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -963,7 +963,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Add to existing parameter`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1007,7 +1007,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Add new return value`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1041,7 +1041,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Add to existing return value (ensuring it appears last)`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1095,7 +1095,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Merge API levels`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package android.widget;
@@ -1150,7 +1150,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Merge deprecation levels`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package android.hardware;
@@ -1217,7 +1217,7 @@ class DocAnalyzerTest : DriverTest() {
                 "35" // not real api level of Z
             ),
             includeSystemApiAnnotations = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package android.pkg;
@@ -1274,7 +1274,7 @@ class DocAnalyzerTest : DriverTest() {
                 ARG_CURRENT_VERSION,
                 "35" // not real api level of Z
             ),
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package android.pkg;
@@ -1327,7 +1327,7 @@ class DocAnalyzerTest : DriverTest() {
                 ARG_CURRENT_VERSION,
                 "35" // not real api level of Z
             ),
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package android.pkg1;
@@ -1429,7 +1429,7 @@ class DocAnalyzerTest : DriverTest() {
         // If a codebase provides overview.html files in the a public package,
         // make sure that we include this in the exported stubs folder as well!
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 source("src/overview.html", "<html>My overview docs</html>"),
                 source(
                     "src/foo/test/visible/package.html",
@@ -1546,7 +1546,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Check RequiresFeature handling`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1590,7 +1590,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Check RequiresApi handling`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1621,7 +1621,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Include Kotlin deprecation text`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     """
                     package test.pkg
@@ -1680,7 +1680,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Annotation annotating self`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                         package test.pkg;
@@ -1741,7 +1741,7 @@ class DocAnalyzerTest : DriverTest() {
         // Tests rewriting links that go to {@docRoot}/../platform/ or {@docRoot}/../technotes,
         // which are hosted elsewhere. http://b/129765390
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package javax.security;
@@ -1829,7 +1829,7 @@ class DocAnalyzerTest : DriverTest() {
     @Test
     fun `Annotation annotating itself indirectly`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                         package test.pkg;
@@ -1926,7 +1926,7 @@ class DocAnalyzerTest : DriverTest() {
                 androidJar,
                 "STUBS_SOURCE_LIST"
             ),
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1992,7 +1992,7 @@ class DocAnalyzerTest : DriverTest() {
     fun `Test Column annotation`() {
         // Bug: 120429729
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;

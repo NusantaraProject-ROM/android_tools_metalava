@@ -22,7 +22,7 @@ class KeepFileTest : DriverTest() {
     @Test
     fun `Generate Keep file`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -85,7 +85,7 @@ class KeepFileTest : DriverTest() {
     @Test
     fun `Primitive types`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -116,7 +116,7 @@ class KeepFileTest : DriverTest() {
     @Test
     fun `Primitive array types`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -145,7 +145,7 @@ class KeepFileTest : DriverTest() {
     @Test
     fun `Object Array parameters`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -172,7 +172,7 @@ class KeepFileTest : DriverTest() {
     @Test
     fun `Arrays with Inner class`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -203,7 +203,7 @@ class KeepFileTest : DriverTest() {
     @Test
     fun `Conflicting Class Names in parameters`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -259,7 +259,7 @@ class KeepFileTest : DriverTest() {
     @Test
     fun `Multi dimensional arrays`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -301,7 +301,7 @@ class KeepFileTest : DriverTest() {
     @Test
     fun `Methods with arrays as the return type`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;

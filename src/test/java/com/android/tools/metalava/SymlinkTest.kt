@@ -39,7 +39,7 @@ class SymlinkTest : DriverTest() {
         try {
             check(
                 warnings = "TESTROOT/src/test/pkg/sub1/sub2/sub3: info: Ignoring symlink during package.html discovery directory traversal [IgnoringSymlink]",
-                sourceFiles = *arrayOf(
+                sourceFiles = arrayOf(
                     java(
                         """
                         package test.pkg;
