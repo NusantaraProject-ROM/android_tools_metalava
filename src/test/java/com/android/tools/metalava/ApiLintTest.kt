@@ -788,7 +788,7 @@ class ApiLintTest : DriverTest() {
                 ),
                 kotlin(
                     """
-                    package android.pkg;
+                    package android.pkg
 
                     class CheckSynchronization2 {
                         fun errorMethod1() {
@@ -2532,11 +2532,11 @@ class ApiLintTest : DriverTest() {
                     object Bar
 
                     class FooBar {
-                        companion object {}
+                        companion object
                     }
 
                     class FooBarNamed {
-                        companion object Named {}
+                        companion object Named
                     }
                     """
                 ),
@@ -2576,7 +2576,7 @@ class ApiLintTest : DriverTest() {
 
                             @SuppressLint("Enum")
                             public enum FooEnum {
-                                FOO, BAR;
+                                FOO, BAR
                             }
 
                             public @interface FooAnnotation {

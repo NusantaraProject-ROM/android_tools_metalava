@@ -184,7 +184,7 @@ class KotlinInteropChecksTest : DriverTest() {
                     class Foo {
                         fun error_throws_multiple_times(x: Int) {
                             if (x < 0) {
-                                throw java.io.FileNotFoundException("Something")
+                                throw FileNotFoundException("Something")
                             }
                             if (x > 10) { // make sure we don't list this twice
                                 throw FileNotFoundException("Something")
@@ -195,21 +195,21 @@ class KotlinInteropChecksTest : DriverTest() {
                         @Throws(Exception::class)
                         fun error_throwsCheckedExceptionWithWrongExceptionClassInThrows(x: Int) {
                             if (x < 0) {
-                                throw java.io.FileNotFoundException("Something")
+                                throw FileNotFoundException("Something")
                             }
                         }
 
                         @Throws(FileNotFoundException::class)
                         fun ok_hasThrows1(x: Int) {
                             if (x < 0) {
-                                throw java.io.FileNotFoundException("Something")
+                                throw FileNotFoundException("Something")
                             }
                         }
 
                         @Throws(UnsupportedOperationException::class, FileNotFoundException::class)
                         fun ok_hasThrows2(x: Int) {
                             if (x < 0) {
-                                throw java.io.FileNotFoundException("Something")
+                                throw FileNotFoundException("Something")
                             }
                         }
 
