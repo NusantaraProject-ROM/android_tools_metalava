@@ -2587,7 +2587,6 @@ CompatibilityCheckTest : DriverTest() {
             // PSI based check
 
             check(
-                checkDoclava1 = false,
                 extraArguments = arrayOf(
                     "--omit-locations",
                     ARG_HIDE,
@@ -2614,7 +2613,6 @@ CompatibilityCheckTest : DriverTest() {
                 val previousSignatureApi = signatureFile.readText(UTF_8)
 
                 check(
-                    checkDoclava1 = false,
                     extraArguments = arrayOf(
                         "--omit-locations",
                         ARG_HIDE,

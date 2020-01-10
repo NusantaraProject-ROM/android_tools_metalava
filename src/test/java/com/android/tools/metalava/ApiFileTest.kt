@@ -107,8 +107,7 @@ class ApiFileTest : DriverTest() {
                       }
                     }
                  """,
-            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation"),
-            checkDoclava1 = false /* doesn't support parameter names */
+            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation")
         )
     }
 
@@ -143,8 +142,7 @@ class ApiFileTest : DriverTest() {
                   }
                 }
                  """,
-            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation"),
-            checkDoclava1 = false /* doesn't support default Values */
+            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation")
         )
     }
 
@@ -214,8 +212,7 @@ class ApiFileTest : DriverTest() {
                 }
                 """,
             extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation", ARG_HIDE_PACKAGE, "some.other.pkg"),
-            includeSignatureVersion = true,
-            checkDoclava1 = false /* doesn't support default Values */
+            includeSignatureVersion = true
         )
     }
 
@@ -289,8 +286,7 @@ class ApiFileTest : DriverTest() {
                 }
                 """,
             extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation", ARG_HIDE_PACKAGE, "androidx.collection"),
-            includeSignatureVersion = true,
-            checkDoclava1 = false /* doesn't support default Values */
+            includeSignatureVersion = true
         )
     }
 
@@ -384,8 +380,7 @@ class ApiFileTest : DriverTest() {
                     method internal test.pkg.Kotlin.myHiddenClass copy();
                   }
                 }
-                """,
-            checkDoclava1 = false /* doesn't support Kotlin... */
+                """
         )
     }
 
@@ -425,8 +420,7 @@ class ApiFileTest : DriverTest() {
                     method public static inline java.lang.String systemService2(test.pkg.Context);
                   }
                 }
-                """,
-            checkDoclava1 = false /* doesn't support Kotlin... */
+                """
         )
     }
 
@@ -459,8 +453,7 @@ class ApiFileTest : DriverTest() {
                     method public static inline <reified T> void f(@Nullable T, @Nullable T t);
                   }
                 }
-                """,
-            checkDoclava1 = false /* doesn't support Kotlin... */
+                """
         )
     }
 
@@ -484,8 +477,7 @@ class ApiFileTest : DriverTest() {
                     method public static suspend inline Object hello(@NonNull kotlin.coroutines.Continuation<? super kotlin.Unit> p);
                   }
                 }
-                """,
-            checkDoclava1 = false /* doesn't support Kotlin... */
+                """
         )
     }
 
@@ -514,8 +506,7 @@ class ApiFileTest : DriverTest() {
                     property public final boolean readOnlyVar;
                   }
                 }
-                """,
-            checkDoclava1 = false /* doesn't support Kotlin... */
+                """
         )
     }
 
@@ -547,8 +538,7 @@ class ApiFileTest : DriverTest() {
                     method public void foo(test.pkg.Type<? super test.pkg.Bar> param);
                   }
                 }
-                """,
-            checkDoclava1 = false /* doesn't support Kotlin... */
+                """
         )
     }
 
@@ -606,8 +596,7 @@ class ApiFileTest : DriverTest() {
                 ARG_HIDE, "ReferencesHidden",
                 ARG_HIDE, "UnavailableSymbol",
                 ARG_HIDE, "HiddenTypeParameter"
-            ),
-            checkDoclava1 = false /* doesn't support parameter names */
+            )
         )
     }
 
@@ -700,8 +689,7 @@ class ApiFileTest : DriverTest() {
                 ARG_HIDE, "ReferencesHidden",
                 ARG_HIDE, "UnavailableSymbol",
                 ARG_HIDE, "HiddenTypeParameter"
-            ),
-            checkDoclava1 = false /* doesn't support parameter names */
+            )
         )
     }
 
@@ -825,8 +813,7 @@ class ApiFileTest : DriverTest() {
                   }
                 }
                 """,
-            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation"),
-            checkDoclava1 = false /* doesn't support Kotlin... */
+            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation")
         )
     }
 
@@ -913,8 +900,7 @@ class ApiFileTest : DriverTest() {
                   }
                 }
                 """,
-            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation"),
-            checkDoclava1 = false /* doesn't support Kotlin... */
+            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation")
         )
     }
 
@@ -966,8 +952,7 @@ class ApiFileTest : DriverTest() {
                   }
                 }
                 """,
-            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation"),
-            checkDoclava1 = false /* doesn't support default Values */
+            extraArguments = arrayOf(ARG_HIDE_PACKAGE, "androidx.annotation")
         )
     }
 
@@ -978,7 +963,6 @@ class ApiFileTest : DriverTest() {
         // correctly (in particular, using fully qualified names instead of what appears in
         // the source code.)
         check(
-            checkDoclava1 = true,
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -1204,9 +1188,6 @@ class ApiFileTest : DriverTest() {
         // Interface: makes sure the right modifiers etc are shown (and that "package private" methods
         // in the interface are taken to be public etc)
         check(
-            // For unknown reasons, doclava1 behaves differently here than when invoked on the
-            // whole platform
-            checkDoclava1 = false,
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -1495,8 +1476,7 @@ class ApiFileTest : DriverTest() {
                 public java.lang.String[] value();
                 }
                 """
-            ),
-            checkDoclava1 = false
+            )
         )
     }
 
@@ -1606,7 +1586,6 @@ class ApiFileTest : DriverTest() {
         // Note also how the "protected" modifier on the interface method gets
         // promoted to public.
         check(
-            checkDoclava1 = true,
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -1667,7 +1646,6 @@ class ApiFileTest : DriverTest() {
         // Note also how the "protected" modifier on the interface method gets
         // promoted to public.
         check(
-            checkDoclava1 = false,
             compatibilityMode = false,
             outputKotlinStyleNulls = false,
             sourceFiles = *arrayOf(
@@ -1973,17 +1951,7 @@ class ApiFileTest : DriverTest() {
                     method public static void assertEquals(java.util.Set<?>, java.util.Set<?>);
                   }
                 }
-                """,
-
-            // Can't check doclava1 on this: its output doesn't match javac, e.g. for the above declaration
-            // of max, javap shows this signature:
-            //   public static <T extends java.lang.Comparable<? super T>> T max(java.util.Collection<? extends T>);
-            // which matches metalava's output:
-            //   method public static <T & java.lang.Comparable<? super T>> T max(java.util.Collection<? extends T>);
-            // and not doclava1:
-            //   method public static <T extends java.lang.Object & java.lang.Comparable<? super T>> T max(java.util.Collection<? extends T>);
-
-            checkDoclava1 = false
+                """
         )
     }
 
@@ -2149,7 +2117,6 @@ class ApiFileTest : DriverTest() {
     @Test
     fun `Inheriting from package private classes, package private class should be included`() {
         check(
-            checkDoclava1 = false, // doclava1 does not include method2, which it should
             compatibilityMode = false,
             sourceFiles =
             *arrayOf(
@@ -2191,7 +2158,6 @@ class ApiFileTest : DriverTest() {
     @Test
     fun `Inheriting generic method from package private class`() {
         check(
-            checkDoclava1 = false, // doclava1 does not inherit methods
             compatibilityMode = false,
             sourceFiles =
             *arrayOf(
@@ -2233,7 +2199,6 @@ class ApiFileTest : DriverTest() {
     fun `Type substitution for generic method referencing parent type parameter`() {
         // Type parameters from parent classes need to be replaced with their bounds in the child.
         check(
-            checkDoclava1 = false, // doclava1 does not inherit methods
             compatibilityMode = false,
             sourceFiles =
             *arrayOf(
@@ -2275,7 +2240,6 @@ class ApiFileTest : DriverTest() {
         // the hidden super class compatibility flag. This test is mostly intended
         // to test the flag handling for individual compatibility flags.
         check(
-            checkDoclava1 = false, // doclava1 does not include method2, which it should
             compatibilityMode = true,
             extraArguments = arrayOf("--skip-inherited-methods=false"),
             sourceFiles =
@@ -2597,7 +2561,6 @@ class ApiFileTest : DriverTest() {
     fun `Check basic @remove scenarios`() {
         // Test basic @remove handling for methods and fields
         check(
-            checkDoclava1 = true,
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -2671,7 +2634,6 @@ class ApiFileTest : DriverTest() {
     fun `Check @remove class`() {
         // Test removing classes
         check(
-            checkDoclava1 = true,
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -2754,7 +2716,6 @@ class ApiFileTest : DriverTest() {
     @Test
     fun `Test include overridden @Deprecated even if annotated with @hide`() {
         check(
-            checkDoclava1 = false, // line numbers differ; they include comments; we point straight to modifier list
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -2827,7 +2788,6 @@ class ApiFileTest : DriverTest() {
     fun `Test invalid class name`() {
         // Regression test for b/73018978
         check(
-            checkDoclava1 = false,
             sourceFiles = *arrayOf(
                 kotlin(
                     "src/test/pkg/Foo.kt",
@@ -2855,7 +2815,6 @@ class ApiFileTest : DriverTest() {
     fun `Indirect Field Includes from Interfaces`() {
         // Real-world example: include ZipConstants into ZipFile and JarFile
         check(
-            checkDoclava1 = true,
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -2912,7 +2871,6 @@ class ApiFileTest : DriverTest() {
     fun `Skip interfaces from packages explicitly hidden via arguments`() {
         // Real-world example: HttpResponseCache implements OkCacheContainer but hides the only inherited method
         check(
-            checkDoclava1 = true,
             extraArguments = arrayOf(
                 ARG_HIDE_PACKAGE, "com.squareup.okhttp"
             ),
@@ -2956,8 +2914,6 @@ class ApiFileTest : DriverTest() {
     @Test
     fun `Private API signatures`() {
         check(
-            checkDoclava1 = false, // doclava1 doesn't have the same behavior: see
-            // https://android-review.googlesource.com/c/platform/external/doclava/+/589515
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -3076,7 +3032,6 @@ class ApiFileTest : DriverTest() {
     fun `Private API signature corner cases`() {
         // Some corner case scenarios exposed by differences in output from doclava and metalava
         check(
-            checkDoclava1 = false,
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -3180,7 +3135,6 @@ class ApiFileTest : DriverTest() {
     fun `Extend from multiple interfaces`() {
         // Real-world example: XmlResourceParser
         check(
-            checkDoclava1 = true,
             checkCompilation = true,
             sourceFiles = *arrayOf(
                 java(
@@ -3280,8 +3234,7 @@ class ApiFileTest : DriverTest() {
                       public class Foo {
                       }
                     }
-                """,
-            checkDoclava1 = false // doclava is unaware of @suppress
+                """
         )
     }
 

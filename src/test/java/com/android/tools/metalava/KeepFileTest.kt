@@ -22,7 +22,6 @@ class KeepFileTest : DriverTest() {
     @Test
     fun `Generate Keep file`() {
         check(
-            checkDoclava1 = true,
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -86,7 +85,6 @@ class KeepFileTest : DriverTest() {
     @Test
     fun `Primitive types`() {
         check(
-            checkDoclava1 = true,
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -118,7 +116,6 @@ class KeepFileTest : DriverTest() {
     @Test
     fun `Primitive array types`() {
         check(
-            checkDoclava1 = true,
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -148,7 +145,6 @@ class KeepFileTest : DriverTest() {
     @Test
     fun `Object Array parameters`() {
         check(
-            checkDoclava1 = true,
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -176,7 +172,6 @@ class KeepFileTest : DriverTest() {
     @Test
     fun `Arrays with Inner class`() {
         check(
-            checkDoclava1 = true,
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -208,7 +203,6 @@ class KeepFileTest : DriverTest() {
     @Test
     fun `Conflicting Class Names in parameters`() {
         check(
-            checkDoclava1 = true,
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -265,7 +259,6 @@ class KeepFileTest : DriverTest() {
     @Test
     fun `Multi dimensional arrays`() {
         check(
-            checkDoclava1 = true,
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -308,7 +301,6 @@ class KeepFileTest : DriverTest() {
     @Test
     fun `Methods with arrays as the return type`() {
         check(
-            checkDoclava1 = true,
             sourceFiles = *arrayOf(
                 java(
                     """
