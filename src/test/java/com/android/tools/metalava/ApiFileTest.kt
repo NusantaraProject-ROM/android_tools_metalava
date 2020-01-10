@@ -311,8 +311,8 @@ class ApiFileTest : DriverTest() {
                         var someField2 = 42
 
                         internal var myHiddenVar = false
-                        internal fun myHiddenMethod(): Unit { }
-                        internal data class myHiddenClass(): Unit { }
+                        internal fun myHiddenMethod() { }
+                        internal data class myHiddenClass(): Unit
 
                         companion object {
                             const val MY_CONST = 42
@@ -905,7 +905,7 @@ class ApiFileTest : DriverTest() {
     }
 
     @Test
-    fun `JvmOverloads`() {
+    fun JvmOverloads() {
         // Regression test for https://github.com/android/android-ktx/issues/366
         check(
             format = FileFormat.V3,
