@@ -51,7 +51,6 @@ class StubsTest : DriverTest() {
         @Language("JAVA") source: String,
         compatibilityMode: Boolean = true,
         warnings: String? = "",
-        checkDoclava1: Boolean = false,
         api: String? = null,
         extraArguments: Array<String> = emptyArray(),
         docStubs: Boolean = false,
@@ -67,7 +66,6 @@ class StubsTest : DriverTest() {
             stubs = arrayOf(source),
             compatibilityMode = compatibilityMode,
             warnings = warnings,
-            checkDoclava1 = checkDoclava1,
             checkCompilation = true,
             api = api,
             extraArguments = extraArguments,
@@ -143,7 +141,6 @@ class StubsTest : DriverTest() {
         // correctly (in particular, using fully qualified names instead of what appears in
         // the source code.)
         check(
-            checkDoclava1 = false,
             checkCompilation = true,
             sourceFiles =
             *arrayOf(
@@ -320,9 +317,6 @@ class StubsTest : DriverTest() {
         // Interface: makes sure the right modifiers etc are shown (and that "package private" methods
         // in the interface are taken to be public etc)
         checkStubs(
-            // For unknown reasons, doclava1 behaves differently here than when invoked on the
-            // whole platform
-            checkDoclava1 = false,
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -512,7 +506,6 @@ class StubsTest : DriverTest() {
         // and that they are listed separately.
 
         checkStubs(
-            checkDoclava1 = false, // Doclava1 does not generate compileable source for this
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -556,7 +549,6 @@ class StubsTest : DriverTest() {
     @Test
     fun `Skip hidden enum constants in stubs`() {
         checkStubs(
-            checkDoclava1 = false,
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -968,7 +960,6 @@ class StubsTest : DriverTest() {
     @Test
     fun `Handle non-constant fields in final classes`() {
         checkStubs(
-            checkDoclava1 = false,
             sourceFiles =
             *arrayOf(
                 java(
@@ -1024,7 +1015,6 @@ class StubsTest : DriverTest() {
     fun `Test final instance fields`() {
         // Instance fields in a class must be initialized
         checkStubs(
-            checkDoclava1 = false,
             sourceFiles =
             *arrayOf(
                 java(
@@ -1386,8 +1376,7 @@ class StubsTest : DriverTest() {
                     public java.lang.String getProperty1() { throw new RuntimeException("Stub!"); }
                     public int someField2;
                     }
-                """,
-            checkDoclava1 = false /* doesn't support Kotlin... */
+                """
         )
     }
 
@@ -1417,8 +1406,7 @@ class StubsTest : DriverTest() {
                 public Foo() { throw new RuntimeException("Stub!"); }
                 public void foo(int javaParameter1, int publicParameterName) { throw new RuntimeException("Stub!"); }
                 }
-                 """,
-            checkDoclava1 = false /* doesn't support parameter names */
+                 """
         )
     }
 
@@ -1428,7 +1416,6 @@ class StubsTest : DriverTest() {
         // signature files
         checkStubs(
             compatibilityMode = false,
-            checkDoclava1 = false, // doesn't support type-use annotations
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -1773,7 +1760,6 @@ class StubsTest : DriverTest() {
     @Test
     fun `Check generating required stubs from hidden super classes and interfaces`() {
         checkStubs(
-            checkDoclava1 = false,
             compatibilityMode = false,
             sourceFiles =
             *arrayOf(
@@ -1879,7 +1865,6 @@ class StubsTest : DriverTest() {
     @Test
     fun `Rewrite unknown nullability annotations as sdk stubs`() {
         check(
-            checkDoclava1 = false,
             checkCompilation = true,
             sourceFiles = *arrayOf(
                 java(
@@ -1913,7 +1898,6 @@ class StubsTest : DriverTest() {
     @Test
     fun `Rewrite unknown nullability annotations as doc stubs`() {
         check(
-            checkDoclava1 = false,
             checkCompilation = true,
             sourceFiles = *arrayOf(
                 java(
@@ -1948,7 +1932,6 @@ class StubsTest : DriverTest() {
     @Test
     fun `Rewrite libcore annotations`() {
         check(
-            checkDoclava1 = false,
             checkCompilation = true,
             sourceFiles = *arrayOf(
                 java(
@@ -1993,7 +1976,6 @@ class StubsTest : DriverTest() {
     @Test
     fun `Pass through libcore annotations`() {
         check(
-            checkDoclava1 = false,
             checkCompilation = true,
             extraArguments = arrayOf(ARG_PASS_THROUGH_ANNOTATION, "libcore.util.NonNull"),
             sourceFiles = *arrayOf(
@@ -2054,8 +2036,7 @@ class StubsTest : DriverTest() {
                 @android.support.annotation.Nullable
                 public java.lang.String anotherTestMethod() { throw new RuntimeException("Stub!"); }
                 }
-                 """,
-            checkDoclava1 = false
+                 """
         )
     }
 
@@ -2067,7 +2048,6 @@ class StubsTest : DriverTest() {
         // therefore hidden) but the subclass using it is also in the same package.
 
         check(
-            checkDoclava1 = false,
             checkCompilation = true,
             sourceFiles =
             *arrayOf(
@@ -2168,7 +2148,6 @@ class StubsTest : DriverTest() {
         // in the current class, so we need to handle this
 
         checkStubs(
-            checkDoclava1 = false,
             sourceFiles =
             *arrayOf(
                 // TODO: Try using prefixes like "A", and "AA" to make sure my generics
@@ -2240,7 +2219,6 @@ class StubsTest : DriverTest() {
     fun `Rewriting type parameters in interfaces from hidden super classes and in throws lists`() {
         checkStubs(
             extraArguments = arrayOf("--skip-inherited-methods=false"),
-            checkDoclava1 = false,
             format = FileFormat.V1,
             sourceFiles =
             *arrayOf(
@@ -2449,7 +2427,6 @@ class StubsTest : DriverTest() {
         // Checks some more subtle bugs around generics type variable renaming
         checkStubs(
             extraArguments = arrayOf("--skip-inherited-methods=false"),
-            checkDoclava1 = false,
             sourceFiles =
             *arrayOf(
                 java(
@@ -2516,7 +2493,6 @@ class StubsTest : DriverTest() {
     @Test
     fun `Arrays in type arguments`() {
         checkStubs(
-            checkDoclava1 = false,
             sourceFiles =
             *arrayOf(
                 java(
@@ -2558,7 +2534,6 @@ class StubsTest : DriverTest() {
         // interfaces
         // Real-world example: XmlResourceParser
         check(
-            checkDoclava1 = false,
             checkCompilation = true,
             sourceFiles = *arrayOf(
                 java(
@@ -2613,7 +2588,6 @@ class StubsTest : DriverTest() {
     @Test
     fun `Picking Super Constructors`() {
         checkStubs(
-            checkDoclava1 = false,
             sourceFiles =
             *arrayOf(
                 java(
@@ -2791,7 +2765,6 @@ class StubsTest : DriverTest() {
     @Test
     fun `Picking Constructors`() {
         checkStubs(
-            checkDoclava1 = false,
             sourceFiles =
             *arrayOf(
                 java(
@@ -2926,7 +2899,6 @@ class StubsTest : DriverTest() {
     fun `Another Constructor Test`() {
         // A specific scenario triggered in the API where the right super class detector was not chosen
         checkStubs(
-            checkDoclava1 = false,
             sourceFiles =
             *arrayOf(
                 java(
@@ -2987,7 +2959,6 @@ class StubsTest : DriverTest() {
     fun `Overriding protected methods`() {
         // Checks a scenario where the stubs were missing overrides
         checkStubs(
-            checkDoclava1 = false,
             sourceFiles =
             *arrayOf(
                 java(
@@ -3064,7 +3035,6 @@ class StubsTest : DriverTest() {
     fun `Missing overridden method`() {
         // Another special case where overridden methods were missing
         checkStubs(
-            checkDoclava1 = false,
             sourceFiles =
             *arrayOf(
                 java(
@@ -3127,7 +3097,6 @@ class StubsTest : DriverTest() {
     fun `Skip type variables in casts`() {
         // When generating casts in super constructor calls, use raw types
         checkStubs(
-            checkDoclava1 = false,
             sourceFiles =
             *arrayOf(
                 java(
@@ -3423,7 +3392,6 @@ class StubsTest : DriverTest() {
     @Test
     fun `Test package-info documentation`() {
         check(
-            checkDoclava1 = false,
             sourceFiles = *arrayOf(
                 java(
                     """

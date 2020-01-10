@@ -10,7 +10,6 @@ class ShowAnnotationTest : DriverTest() {
     fun `Basic showAnnotation test`() {
         check(
             includeSystemApiAnnotations = true,
-            checkDoclava1 = true,
             warnings = "src/test/pkg/Foo.java:17: error: @SystemApi APIs must also be marked @hide: method test.pkg.Foo.method4() [UnhiddenSystemApi]",
             sourceFiles = *arrayOf(
                 java(
@@ -68,7 +67,6 @@ class ShowAnnotationTest : DriverTest() {
         check(
             includeSystemApiAnnotations = true,
             showUnannotated = true,
-            checkDoclava1 = true,
             warnings = "src/test/pkg/Foo.java:17: error: @SystemApi APIs must also be marked @hide: method test.pkg.Foo.method4() [UnhiddenSystemApi]",
             sourceFiles = *arrayOf(
                 java(
@@ -132,7 +130,6 @@ class ShowAnnotationTest : DriverTest() {
     fun `Check @TestApi handling`() {
         check(
             includeSystemApiAnnotations = true,
-            checkDoclava1 = true,
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -190,7 +187,6 @@ class ShowAnnotationTest : DriverTest() {
         // and the additional API made visible with annotations. However,
         // in the *stubs*, we have to include everything.
         check(
-            checkDoclava1 = false,
             sourceFiles = *arrayOf(
                 java(
                     """
@@ -258,7 +254,6 @@ class ShowAnnotationTest : DriverTest() {
     @Test
     fun `No UnhiddenSystemApi warning for --show-single-annotations`() {
         check(
-            checkDoclava1 = true,
             warnings = "",
             sourceFiles = *arrayOf(
                 java(
