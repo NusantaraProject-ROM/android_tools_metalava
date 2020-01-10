@@ -24,7 +24,7 @@ class PsiBasedCodebaseTest : DriverTest() {
     @Test
     fun `Regression test for issue 112931426`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg2;
@@ -110,7 +110,7 @@ class PsiBasedCodebaseTest : DriverTest() {
             warnings = """
                 src/test/pkg/Foo.java:3: error: Syntax error: `'{' or ';' expected` [InvalidSyntax]
             """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;

@@ -33,10 +33,10 @@ class JavadocTest : DriverTest() {
         showAnnotations: Array<String> = emptyArray(),
         includeSourceRetentionAnnotations: Boolean = true,
         skipEmitPackages: List<String> = listOf("java.lang", "java.util", "java.io"),
-        vararg sourceFiles: TestFile
+        sourceFiles: Array<TestFile>
     ) {
         check(
-            sourceFiles = *sourceFiles,
+            sourceFiles = sourceFiles,
             showAnnotations = showAnnotations,
             stubs = arrayOf(source),
             compatibilityMode = compatibilityMode,
@@ -84,8 +84,7 @@ class JavadocTest : DriverTest() {
     fun `Relative documentation links in stubs`() {
         checkStubs(
             docStubs = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg1;
@@ -184,8 +183,7 @@ class JavadocTest : DriverTest() {
     fun `Rewrite relative documentation links in doc-stubs`() {
         checkStubs(
             docStubs = true,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg1;
@@ -285,8 +283,7 @@ class JavadocTest : DriverTest() {
         // Properly handle links to inherited methods
         checkStubs(
             docStubs = true,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg1;
@@ -365,8 +362,7 @@ class JavadocTest : DriverTest() {
     fun `Rewrite relative documentation links in doc-stubs 3`() {
         checkStubs(
             docStubs = true,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package android.accessibilityservice;
@@ -431,8 +427,7 @@ class JavadocTest : DriverTest() {
     fun `Rewrite relative documentation links in doc-stubs 4`() {
         checkStubs(
             docStubs = true,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package android.content;
@@ -560,8 +555,7 @@ class JavadocTest : DriverTest() {
         // Properly handle links to inherited methods
         checkStubs(
             docStubs = true,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package org.xmlpull.v1;
@@ -606,8 +600,7 @@ class JavadocTest : DriverTest() {
             docStubs = true,
             compatibilityMode = false,
             warnings = "",
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg1;
@@ -703,8 +696,7 @@ class JavadocTest : DriverTest() {
             docStubs = true,
             compatibilityMode = false,
             warnings = "",
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg1;
@@ -749,8 +741,7 @@ class JavadocTest : DriverTest() {
             docStubs = true,
             compatibilityMode = false,
             warnings = "",
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg1;
@@ -814,8 +805,7 @@ class JavadocTest : DriverTest() {
             docStubs = true,
             compatibilityMode = false,
             warnings = "",
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg1;
@@ -873,8 +863,7 @@ class JavadocTest : DriverTest() {
             } else {
                 ""
             },
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg1;
@@ -916,7 +905,7 @@ class JavadocTest : DriverTest() {
         //  119190588: Javadoc link tag to constructor of static inner class not working
         // See also https://bugs.openjdk.java.net/browse/JDK-8031625
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package android.view;
@@ -1001,7 +990,7 @@ class JavadocTest : DriverTest() {
     fun `Ensure references to classes in JavaDoc of hidden members do not affect imports`() {
         check(
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;

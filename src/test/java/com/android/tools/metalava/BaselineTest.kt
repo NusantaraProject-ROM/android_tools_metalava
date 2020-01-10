@@ -62,7 +62,7 @@ class BaselineTest : DriverTest() {
             warnings = """
                 src/test/pkg/Foo.java:9: error: Class test.pkg.Hidden2 is hidden but was referenced (as return type) from public method test.pkg.Foo.getHidden2() [ReferencesHidden]
             """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -173,7 +173,7 @@ class BaselineTest : DriverTest() {
             """,
             updateBaseline = true,
             warnings = "",
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package android.pkg;
@@ -270,7 +270,7 @@ class BaselineTest : DriverTest() {
                 ReferencesHidden: test.pkg.Foo#hidden2:
                     Class test.pkg.Hidden2 is hidden but was referenced (as field type) from public field test.pkg.Foo.hidden2
             """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
