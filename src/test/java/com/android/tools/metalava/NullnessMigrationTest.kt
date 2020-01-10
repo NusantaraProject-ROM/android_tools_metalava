@@ -790,7 +790,6 @@ class NullnessMigrationTest : DriverTest() {
                 ),
                 androidxNonNullSource
             ),
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package test.pkg;

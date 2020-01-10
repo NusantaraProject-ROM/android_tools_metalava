@@ -36,7 +36,6 @@ class DocAnalyzerTest : DriverTest() {
                 nullableSource
             ),
             checkCompilation = false, // needs androidx.annotations in classpath
-            checkDoclava1 = false,
             docStubs = true,
             stubs = arrayOf(
                 """
@@ -97,7 +96,6 @@ class DocAnalyzerTest : DriverTest() {
                 )
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package android.annotation;
@@ -134,7 +132,6 @@ class DocAnalyzerTest : DriverTest() {
                 )
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             warnings = "src/test/pkg/Foo.java:2: warning: Replaced Andriod with Android in the documentation for class test.pkg.Foo [Typo]",
             stubs = arrayOf(
                 """
@@ -211,7 +208,6 @@ class DocAnalyzerTest : DriverTest() {
                 requiresPermissionSource
             ),
             checkCompilation = false, // needs androidx.annotations in classpath
-            checkDoclava1 = false,
             warnings = "src/test/pkg/PermissionTest.java:31: lint: Unrecognized permission `carier priviliges`; did you mean `carrier privileges`? [MissingPermission]",
             stubs = arrayOf(
                 """
@@ -291,7 +287,6 @@ class DocAnalyzerTest : DriverTest() {
                 requiresPermissionSource
             ),
             checkCompilation = false, // needs androidx.annotations in classpath
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -331,7 +326,6 @@ class DocAnalyzerTest : DriverTest() {
                 intRangeAnnotationSource
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -380,7 +374,6 @@ class DocAnalyzerTest : DriverTest() {
                 workerThreadSource
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -424,7 +417,6 @@ class DocAnalyzerTest : DriverTest() {
                 workerThreadSource
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             warnings = "src/test/pkg/RangeTest.java:5: lint: Found more than one threading annotation on method test.pkg.RangeTest.test1(); the auto-doc feature does not handle this correctly [MultipleThreadAnnotations]",
             stubs = arrayOf(
                 """
@@ -481,7 +473,6 @@ class DocAnalyzerTest : DriverTest() {
                 uiThreadSource
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             applyApiLevelsXml = """
                     <?xml version="1.0" encoding="utf-8"?>
                     <api version="2">
@@ -570,7 +561,6 @@ class DocAnalyzerTest : DriverTest() {
                 intDefAnnotationSource
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -630,7 +620,6 @@ class DocAnalyzerTest : DriverTest() {
                 intDefAnnotationSource
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -671,7 +660,6 @@ class DocAnalyzerTest : DriverTest() {
                 requiresPermissionSource
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -708,7 +696,6 @@ class DocAnalyzerTest : DriverTest() {
                 requiresPermissionSource
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             warnings = "src/test/pkg/RangeTest.java:4: lint: Cannot find permission field for \"MyPermission\" required by method test.pkg.RangeTest.test1() (may be hidden or removed) [MissingPermission]",
             stubs = arrayOf(
                 """
@@ -747,7 +734,6 @@ class DocAnalyzerTest : DriverTest() {
                 requiresPermissionSource
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -791,7 +777,6 @@ class DocAnalyzerTest : DriverTest() {
                 requiresPermissionSource
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -829,7 +814,6 @@ class DocAnalyzerTest : DriverTest() {
                 intRangeAnnotationSource
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -872,7 +856,6 @@ class DocAnalyzerTest : DriverTest() {
                 requiresPermissionSource
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -917,7 +900,6 @@ class DocAnalyzerTest : DriverTest() {
                 intRangeAnnotationSource
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -958,7 +940,6 @@ class DocAnalyzerTest : DriverTest() {
                 intRangeAnnotationSource
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -1002,7 +983,6 @@ class DocAnalyzerTest : DriverTest() {
                 intRangeAnnotationSource
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -1041,7 +1021,6 @@ class DocAnalyzerTest : DriverTest() {
                 intRangeAnnotationSource
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -1080,7 +1059,6 @@ class DocAnalyzerTest : DriverTest() {
                 intRangeAnnotationSource
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -1136,7 +1114,6 @@ class DocAnalyzerTest : DriverTest() {
                 intRangeAnnotationSource
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             applyApiLevelsXml = """
                     <?xml version="1.0" encoding="utf-8"?>
                     <api version="2">
@@ -1203,7 +1180,6 @@ class DocAnalyzerTest : DriverTest() {
                     </api>
                     """,
             checkCompilation = true,
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package android.hardware;
@@ -1268,7 +1244,6 @@ class DocAnalyzerTest : DriverTest() {
                     </api>
                     """,
             checkCompilation = true,
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package android.pkg;
@@ -1322,7 +1297,6 @@ class DocAnalyzerTest : DriverTest() {
                     </api>
                     """,
             checkCompilation = true,
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package android.pkg;
@@ -1408,7 +1382,6 @@ class DocAnalyzerTest : DriverTest() {
                     </api>
                     """,
             checkCompilation = true,
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package android.pkg1;
@@ -1456,7 +1429,6 @@ class DocAnalyzerTest : DriverTest() {
         // If a codebase provides overview.html files in the a public package,
         // make sure that we include this in the exported stubs folder as well!
         check(
-            checkDoclava1 = false,
             sourceFiles = *arrayOf(
                 source("src/overview.html", "<html>My overview docs</html>"),
                 source(
@@ -1599,7 +1571,6 @@ class DocAnalyzerTest : DriverTest() {
                 requiresFeatureSource
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -1633,7 +1604,6 @@ class DocAnalyzerTest : DriverTest() {
                 requiresApiSource
             ),
             checkCompilation = false, // duplicate class: androidx.annotation.RequiresApi
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -1676,7 +1646,6 @@ class DocAnalyzerTest : DriverTest() {
                 )
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -1742,7 +1711,6 @@ class DocAnalyzerTest : DriverTest() {
                 )
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -1810,7 +1778,6 @@ class DocAnalyzerTest : DriverTest() {
                 )
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             warnings = null, // be unopinionated about whether there should be warnings
             stubs = arrayOf(
                     """
@@ -1891,7 +1858,6 @@ class DocAnalyzerTest : DriverTest() {
                 )
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -1987,7 +1953,6 @@ class DocAnalyzerTest : DriverTest() {
                 requiresFeatureSource
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
 
             stubs = arrayOf(
                 """
@@ -2061,7 +2026,6 @@ class DocAnalyzerTest : DriverTest() {
                 columnSource
             ),
             checkCompilation = true,
-            checkDoclava1 = false,
             warnings = """
                 src/test/pkg/ColumnTest.java:12: warning: Cannot find feature field for Cursor.NONEXISTENT required by field ColumnTest.BOGUS (may be hidden or removed) [MissingColumn]
                 """,

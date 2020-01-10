@@ -74,7 +74,6 @@ class CoreApiTest : DriverTest() {
                 libcoreCoreApi,
                 libcoreCoreHidden
             ),
-            checkDoclava1 = false, // doclava does not have non-recursive show annotation
             api =
             """
                 package libcore.api {
@@ -167,7 +166,6 @@ class CoreApiTest : DriverTest() {
                 libcoreCoreApi,
                 libcoreCoreHidden
             ),
-            checkDoclava1 = false, // doclava does not have non-recursive show annotation
             api =
             """
                 package libcore.api {
@@ -253,7 +251,6 @@ class CoreApiTest : DriverTest() {
                 libcoreCoreApi,
                 libcoreCoreHidden
             ),
-            checkDoclava1 = false, // doclava does not have non-recursive show annotation
             api =
             """
                 package libcore.api {

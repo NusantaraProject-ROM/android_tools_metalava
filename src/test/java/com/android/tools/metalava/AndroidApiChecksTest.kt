@@ -117,8 +117,7 @@ class AndroidApiChecksTest : DriverTest() {
                     """
                 ),
                 requiresPermissionSource
-            ),
-            checkDoclava1 = false
+            )
         )
     }
 
@@ -168,8 +167,7 @@ class AndroidApiChecksTest : DriverTest() {
                 ),
                 sdkConstantSource,
                 broadcastBehaviorSource
-            ),
-            checkDoclava1 = false
+            )
         )
     }
 
@@ -214,8 +212,7 @@ class AndroidApiChecksTest : DriverTest() {
                     """
                 ),
                 nullableSource
-            ),
-            checkDoclava1 = false
+            )
         )
     }
 
@@ -253,8 +250,7 @@ class AndroidApiChecksTest : DriverTest() {
                     """
                 ),
                 intDefAnnotationSource
-            ),
-            checkDoclava1 = false
+            )
         )
     }
 }

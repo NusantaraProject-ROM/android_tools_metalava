@@ -70,7 +70,6 @@ class ApiGeneratorTest : DriverTest() {
                 ARG_CURRENT_VERSION,
                 "35" // not real api level of Z
             ),
-            checkDoclava1 = false,
             sourceFiles = *arrayOf(
                 java(
                     """

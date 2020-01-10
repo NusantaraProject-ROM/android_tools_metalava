@@ -183,7 +183,6 @@ class UnhideApisTest : DriverTest() {
     fun `Including private interfaces from types`() {
         check(
             extraArguments = arrayOf(ARG_ERROR, "ReferencesHidden"),
-            checkDoclava1 = true,
             sourceFiles = *arrayOf(
                 java("""package test.pkg1; interface Interface1 { }"""),
                 java("""package test.pkg1; abstract class Class1 { }"""),
