@@ -2165,18 +2165,39 @@ class ApiLintTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             warnings = """
-                src/android/pkg/ServiceNameTest.java:6: error: Inconsistent service value; expected `OTHER`, was `something` [ServiceName] [Rule C4 in go/android-api-guidelines]
+                src/android/content/Context.java:11: error: Inconsistent service constant name; expected `SOMETHING_SERVICE`, was `OTHER_MANAGER` [ServiceName] [Rule C4 in go/android-api-guidelines]
+                src/android/content/Context.java:12: error: Inconsistent service constant name; expected `OTHER_SERVICE`, was `OTHER_MANAGER_SERVICE` [ServiceName] [Rule C4 in go/android-api-guidelines]
+                src/android/content/Context.java:9: error: Inconsistent service value; expected `other`, was `something` (Note: Do not change the name of already released services, which will break tools using `adb shell dumpsys`. Instead add `@SuppressLint("ServiceName"))` [ServiceName] [Rule C4 in go/android-api-guidelines]
                 """,
             sourceFiles = arrayOf(
                 java(
                     """
+                    package android.content;
+
+                    public class Context {
+                        private Context() { }
+                        // Good
+                        public static final String FOO_BAR_SERVICE = "foo_bar";
+                        // Unrelated
+                        public static final int NON_STRING_SERVICE = 42;
+                        // Bad
+                        public static final String OTHER_SERVICE = "something";
+                        public static final String OTHER_MANAGER = "something";
+                        public static final String OTHER_MANAGER_SERVICE = "other_manager";
+                    }
+                    """
+                ),
+                java(
+                    """
                     package android.pkg;
 
+                    // Unrelated
                     public class ServiceNameTest {
                         private ServiceNameTest() { }
                         public static final String FOO_BAR_SERVICE = "foo_bar";
                         public static final String OTHER_SERVICE = "something";
                         public static final int NON_STRING_SERVICE = 42;
+                        public static final String BIND_SOME_SERVICE = "android.permission.BIND_SOME_SERVICE";
                     }
                     """
                 )
