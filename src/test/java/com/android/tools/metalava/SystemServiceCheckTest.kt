@@ -25,7 +25,7 @@ class SystemServiceCheckTest : DriverTest() {
             warnings = "", // OK
             compatibilityMode = false,
             includeSystemApiAnnotations = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -62,7 +62,7 @@ class SystemServiceCheckTest : DriverTest() {
             warnings = "", // OK
             compatibilityMode = false,
             includeSystemApiAnnotations = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -99,7 +99,7 @@ class SystemServiceCheckTest : DriverTest() {
             warnings = "src/test/pkg/MyTest1.java:4: lint: Method 'myMethod2' must be protected with a system permission. [RequiresPermission]",
             compatibilityMode = false,
             includeSystemApiAnnotations = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -124,7 +124,7 @@ class SystemServiceCheckTest : DriverTest() {
             warnings = "",
             compatibilityMode = false,
             includeSystemApiAnnotations = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -161,7 +161,7 @@ class SystemServiceCheckTest : DriverTest() {
                 """,
             compatibilityMode = false,
             includeSystemApiAnnotations = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -189,7 +189,7 @@ class SystemServiceCheckTest : DriverTest() {
             warnings = "src/test/pkg/MyTest2.java:5: lint: Permission 'foo.bar.PERMISSION2' is not defined by manifest TESTROOT/manifest.xml. [RequiresPermission]",
             compatibilityMode = false,
             includeSystemApiAnnotations = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                         package test.pkg;
@@ -225,7 +225,7 @@ class SystemServiceCheckTest : DriverTest() {
                 "foo.bar.PERMISSION2] [RequiresPermission]",
             compatibilityMode = false,
             includeSystemApiAnnotations = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -268,7 +268,7 @@ class SystemServiceCheckTest : DriverTest() {
                 """,
             compatibilityMode = false,
             includeSystemApiAnnotations = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -299,7 +299,7 @@ class SystemServiceCheckTest : DriverTest() {
                 """,
             compatibilityMode = false,
             includeSystemApiAnnotations = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -327,7 +327,7 @@ class SystemServiceCheckTest : DriverTest() {
             warnings = "", // OK (suppressed)
             compatibilityMode = false,
             includeSystemApiAnnotations = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;

@@ -23,7 +23,7 @@ class ArtifactTaggerTest : DriverTest() {
     @Test
     fun `Tag API`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg.foo;

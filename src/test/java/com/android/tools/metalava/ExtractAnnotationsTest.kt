@@ -76,7 +76,7 @@ class ExtractAnnotationsTest : DriverTest() {
         check(
             includeSourceRetentionAnnotations = false,
             format = FileFormat.V2,
-            sourceFiles = *sourceFiles1,
+            sourceFiles = sourceFiles1,
             warnings = "src/test/pkg/IntDefTest.java:11: error: This typedef annotation class should have @Retention(RetentionPolicy.SOURCE) [AnnotationExtraction]",
             extractAnnotations = mapOf(
                 "test.pkg" to """
@@ -109,7 +109,7 @@ class ExtractAnnotationsTest : DriverTest() {
     fun `Check Kotlin and referencing hidden constants from typedef`() {
         check(
             includeSourceRetentionAnnotations = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     """
                     @file:Suppress("unused", "UseExpressionBody")
@@ -187,7 +187,7 @@ class ExtractAnnotationsTest : DriverTest() {
     fun `Check including only class retention annotations other than typedefs`() {
         check(
             includeSourceRetentionAnnotations = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     """
                     @file:Suppress("unused", "UseExpressionBody")
@@ -265,7 +265,7 @@ class ExtractAnnotationsTest : DriverTest() {
     fun `Extract permission annotations`() {
         check(
             includeSourceRetentionAnnotations = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -339,7 +339,7 @@ class ExtractAnnotationsTest : DriverTest() {
             includeSystemApiAnnotations = false,
             omitCommonPackages = false,
             warnings = "error: Unexpected reference to Nonexistent.Field [InternalError]",
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -392,8 +392,7 @@ class ExtractAnnotationsTest : DriverTest() {
             outputKotlinStyleNulls = false,
             includeSystemApiAnnotations = false,
             omitCommonPackages = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -442,7 +441,7 @@ class ExtractAnnotationsTest : DriverTest() {
         check(
             includeSourceRetentionAnnotations = false,
             warnings = "src/test/pkg/IntDefTest.java:36: warning: Returning unexpected constant UNRELATED; is @DialogStyle missing this constant? Expected one of STYLE_NORMAL, STYLE_NO_TITLE, STYLE_NO_FRAME, STYLE_NO_INPUT [ReturningUnexpectedConstant]",
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -522,7 +521,7 @@ class ExtractAnnotationsTest : DriverTest() {
                 ARG_TYPEDEFS_IN_SIGNATURES, "none"
             ),
             format = FileFormat.V2,
-            sourceFiles = *sourceFiles1,
+            sourceFiles = sourceFiles1,
             api = """
                 // Signature format: 2.0
                 package test.pkg {
@@ -558,7 +557,7 @@ class ExtractAnnotationsTest : DriverTest() {
                 ARG_TYPEDEFS_IN_SIGNATURES, "inline"
             ),
             format = FileFormat.V2,
-            sourceFiles = *sourceFiles1,
+            sourceFiles = sourceFiles1,
             api = """
                 // Signature format: 2.0
                 package test.pkg {
@@ -594,7 +593,7 @@ class ExtractAnnotationsTest : DriverTest() {
                 ARG_TYPEDEFS_IN_SIGNATURES, "ref"
             ),
             format = FileFormat.V2,
-            sourceFiles = *sourceFiles1,
+            sourceFiles = sourceFiles1,
             api = """
                 // Signature format: 2.0
                 package test.pkg {

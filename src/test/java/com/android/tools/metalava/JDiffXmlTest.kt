@@ -794,7 +794,7 @@ class JDiffXmlTest : DriverTest() {
     fun `Half float short from source`() {
         check(
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                       package test.pkg;
