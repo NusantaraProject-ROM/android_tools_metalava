@@ -45,7 +45,7 @@ class UnhideApisTest : DriverTest() {
             src/test/pkg/Foo.java:8: error: Class test.pkg.Hidden1 is not public but was referenced (as return type) from public method test.pkg.Foo.getHidden1() [ReferencesHidden]
             src/test/pkg/Foo.java:9: error: Class test.pkg.Hidden2 is hidden but was referenced (as return type) from public method test.pkg.Foo.getHidden2() [ReferencesHidden]
             """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -123,7 +123,7 @@ class UnhideApisTest : DriverTest() {
             src/test/pkg/Foo.java:7: error: Class test.pkg.Hidden2 is hidden but was referenced (as type parameter) from public method test.pkg.Foo.get(T) [ReferencesHidden]
             src/test/pkg/Foo.java:9: error: Class test.pkg.Hidden2 is hidden but was referenced (as return type) from public method test.pkg.Foo.getHidden2() [ReferencesHidden]
             """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -183,8 +183,7 @@ class UnhideApisTest : DriverTest() {
     fun `Including private interfaces from types`() {
         check(
             extraArguments = arrayOf(ARG_ERROR, "ReferencesHidden"),
-            checkDoclava1 = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java("""package test.pkg1; interface Interface1 { }"""),
                 java("""package test.pkg1; abstract class Class1 { }"""),
                 java("""package test.pkg1; abstract class Class2 { }"""),

@@ -27,7 +27,7 @@ class SdkFileWriterTest : DriverTest() {
             warnings = """
                 src/android/telephony/SubscriptionManager.java:7: lint: Field 'ACTION_DEFAULT_SUBSCRIPTION_CHANGED' is missing @BroadcastBehavior [BroadcastBehavior]
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                 package android.telephony;
@@ -56,7 +56,7 @@ class SdkFileWriterTest : DriverTest() {
     @Test
     fun `Test generating activity actions`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                 package android.content;
@@ -81,7 +81,7 @@ class SdkFileWriterTest : DriverTest() {
     @Test
     fun `Test generating widgets`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                 package android.widget;

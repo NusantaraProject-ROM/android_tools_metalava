@@ -51,7 +51,6 @@ class StubsTest : DriverTest() {
         @Language("JAVA") source: String,
         compatibilityMode: Boolean = true,
         warnings: String? = "",
-        checkDoclava1: Boolean = false,
         api: String? = null,
         extraArguments: Array<String> = emptyArray(),
         docStubs: Boolean = false,
@@ -59,15 +58,14 @@ class StubsTest : DriverTest() {
         includeSourceRetentionAnnotations: Boolean = true,
         skipEmitPackages: List<String> = listOf("java.lang", "java.util", "java.io"),
         format: FileFormat? = null,
-        vararg sourceFiles: TestFile
+        sourceFiles: Array<TestFile>
     ) {
         check(
-            sourceFiles = *sourceFiles,
+            sourceFiles = sourceFiles,
             showAnnotations = showAnnotations,
             stubs = arrayOf(source),
             compatibilityMode = compatibilityMode,
             warnings = warnings,
-            checkDoclava1 = checkDoclava1,
             checkCompilation = true,
             api = api,
             extraArguments = extraArguments,
@@ -81,7 +79,7 @@ class StubsTest : DriverTest() {
     @Test
     fun `Generate stubs for basic class`() {
         checkStubs(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     /*
@@ -143,10 +141,8 @@ class StubsTest : DriverTest() {
         // correctly (in particular, using fully qualified names instead of what appears in
         // the source code.)
         check(
-            checkDoclava1 = false,
             checkCompilation = true,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -211,7 +207,7 @@ class StubsTest : DriverTest() {
     fun `Generate stubs for class that should not get default constructor (has other constructors)`() {
         // Class without explicit constructors (shouldn't insert default constructor)
         checkStubs(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -240,7 +236,7 @@ class StubsTest : DriverTest() {
     fun `Generate stubs for class that already has a private constructor`() {
         // Class without private constructor; no default constructor should be inserted
         checkStubs(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -266,7 +262,7 @@ class StubsTest : DriverTest() {
         // Interface: makes sure the right modifiers etc are shown (and that "package private" methods
         // in the interface are taken to be public etc)
         checkStubs(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -291,7 +287,7 @@ class StubsTest : DriverTest() {
         // Interface: makes sure the right modifiers etc are shown (and that "package private" methods
         // in the interface are taken to be public etc)
         checkStubs(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -320,10 +316,7 @@ class StubsTest : DriverTest() {
         // Interface: makes sure the right modifiers etc are shown (and that "package private" methods
         // in the interface are taken to be public etc)
         checkStubs(
-            // For unknown reasons, doclava1 behaves differently here than when invoked on the
-            // whole platform
-            checkDoclava1 = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -354,7 +347,7 @@ class StubsTest : DriverTest() {
         // Make sure superclass statement is correct; unlike signature files, inherited method from parent
         // that has same signature should be included in the child
         checkStubs(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -388,7 +381,7 @@ class StubsTest : DriverTest() {
     @Test
     fun `Generate stubs for fields with initial values`() {
         checkStubs(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -451,7 +444,7 @@ class StubsTest : DriverTest() {
         // promoted to public.
         checkStubs(
             warnings = null,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -512,8 +505,7 @@ class StubsTest : DriverTest() {
         // and that they are listed separately.
 
         checkStubs(
-            checkDoclava1 = false, // Doclava1 does not generate compileable source for this
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -556,8 +548,7 @@ class StubsTest : DriverTest() {
     @Test
     fun `Skip hidden enum constants in stubs`() {
         checkStubs(
-            checkDoclava1 = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -603,7 +594,7 @@ class StubsTest : DriverTest() {
         // test. Real world example: Optional.orElseThrow.
         checkStubs(
             compatibilityMode = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -634,7 +625,7 @@ class StubsTest : DriverTest() {
     fun `Generate stubs for additional generics scenarios`() {
         // Some additional declarations where PSI default type handling diffs from doclava1
         checkStubs(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -670,7 +661,7 @@ class StubsTest : DriverTest() {
     fun `Generate stubs for even more generics scenarios`() {
         // Some additional declarations where PSI default type handling diffs from doclava1
         checkStubs(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -701,7 +692,7 @@ class StubsTest : DriverTest() {
     @Test
     fun `Generate stubs enum instance methods`() {
         checkStubs(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -754,7 +745,7 @@ class StubsTest : DriverTest() {
     @Test
     fun `Generate stubs with superclass filtering`() {
         checkStubs(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -823,8 +814,7 @@ class StubsTest : DriverTest() {
             // signature file.
             // checkDoclava1 = true,
             compatibilityMode = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -865,7 +855,7 @@ class StubsTest : DriverTest() {
         // BUG: Note that we need to implement the parent
         checkStubs(
             compatibilityMode = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -908,7 +898,7 @@ class StubsTest : DriverTest() {
     fun `Check throws list`() {
         // Make sure we format a throws list
         checkStubs(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -937,8 +927,7 @@ class StubsTest : DriverTest() {
     @Test
     fun `Check generating constants in interface without inline-able initializers`() {
         checkStubs(
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -968,9 +957,7 @@ class StubsTest : DriverTest() {
     @Test
     fun `Handle non-constant fields in final classes`() {
         checkStubs(
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1024,9 +1011,7 @@ class StubsTest : DriverTest() {
     fun `Test final instance fields`() {
         // Instance fields in a class must be initialized
         checkStubs(
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1073,8 +1058,7 @@ class StubsTest : DriverTest() {
     @Test
     fun `Check generating constants in class without inline-able initializers`() {
         checkStubs(
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1105,8 +1089,7 @@ class StubsTest : DriverTest() {
     @Test
     fun `Check generating annotation source`() {
         checkStubs(
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package android.view.View;
@@ -1165,8 +1148,7 @@ class StubsTest : DriverTest() {
     @Test
     fun `Check generating classes with generics`() {
         checkStubs(
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1192,8 +1174,7 @@ class StubsTest : DriverTest() {
     @Test
     fun `Check generating annotation for hidden constants`() {
         checkStubs(
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1250,8 +1231,7 @@ class StubsTest : DriverTest() {
         // In signature files we don't include generics in the interface list.
         // In stubs, we do.
         checkStubs(
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1291,8 +1271,7 @@ class StubsTest : DriverTest() {
     @Test
     fun `Preserve file header comments`() {
         checkStubs(
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     /*
@@ -1332,7 +1311,7 @@ class StubsTest : DriverTest() {
     @Test
     fun `Basic Kotlin class`() {
         checkStubs(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 kotlin(
                     """
                     /* My file header */
@@ -1386,8 +1365,7 @@ class StubsTest : DriverTest() {
                     public java.lang.String getProperty1() { throw new RuntimeException("Stub!"); }
                     public int someField2;
                     }
-                """,
-            checkDoclava1 = false /* doesn't support Kotlin... */
+                """
         )
     }
 
@@ -1396,7 +1374,7 @@ class StubsTest : DriverTest() {
         // Java code which explicitly specifies parameter names: make sure stub uses
         // parameter name
         checkStubs(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1417,8 +1395,7 @@ class StubsTest : DriverTest() {
                 public Foo() { throw new RuntimeException("Stub!"); }
                 public void foo(int javaParameter1, int publicParameterName) { throw new RuntimeException("Stub!"); }
                 }
-                 """,
-            checkDoclava1 = false /* doesn't support parameter names */
+                 """
         )
     }
 
@@ -1428,8 +1405,7 @@ class StubsTest : DriverTest() {
         // signature files
         checkStubs(
             compatibilityMode = false,
-            checkDoclava1 = false, // doesn't support type-use annotations
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1502,8 +1478,7 @@ class StubsTest : DriverTest() {
     fun `Arguments to super constructors`() {
         // When overriding constructors we have to supply arguments
         checkStubs(
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1584,8 +1559,7 @@ class StubsTest : DriverTest() {
         // When overriding constructors we have to supply arguments
         checkStubs(
             showAnnotations = arrayOf("android.annotation.SystemApi"),
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1668,8 +1642,7 @@ class StubsTest : DriverTest() {
         // When marked @doconly don't include in stubs or signature files
         // unless specifically asked for (which we do when generating docs-stubs).
         checkStubs(
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1722,8 +1695,7 @@ class StubsTest : DriverTest() {
         // unless specifically asked for (which we do when generating docs).
         checkStubs(
             docStubs = true,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1773,10 +1745,8 @@ class StubsTest : DriverTest() {
     @Test
     fun `Check generating required stubs from hidden super classes and interfaces`() {
         checkStubs(
-            checkDoclava1 = false,
             compatibilityMode = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -1879,9 +1849,8 @@ class StubsTest : DriverTest() {
     @Test
     fun `Rewrite unknown nullability annotations as sdk stubs`() {
         check(
-            checkDoclava1 = false,
             checkCompilation = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     "package my.pkg;\n" +
                         "public class String {\n" +
@@ -1913,9 +1882,8 @@ class StubsTest : DriverTest() {
     @Test
     fun `Rewrite unknown nullability annotations as doc stubs`() {
         check(
-            checkDoclava1 = false,
             checkCompilation = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     "package my.pkg;\n" +
                         "public class String {\n" +
@@ -1948,9 +1916,8 @@ class StubsTest : DriverTest() {
     @Test
     fun `Rewrite libcore annotations`() {
         check(
-            checkDoclava1 = false,
             checkCompilation = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     "package my.pkg;\n" +
                         "public class String {\n" +
@@ -1993,10 +1960,9 @@ class StubsTest : DriverTest() {
     @Test
     fun `Pass through libcore annotations`() {
         check(
-            checkDoclava1 = false,
             checkCompilation = true,
             extraArguments = arrayOf(ARG_PASS_THROUGH_ANNOTATION, "libcore.util.NonNull"),
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package my.pkg;
@@ -2030,7 +1996,7 @@ class StubsTest : DriverTest() {
         checkStubs(
             extraArguments = arrayOf(
                 ARG_PASS_THROUGH_ANNOTATION, "android.support.annotation.RequiresApi,android.support.annotation.Nullable"),
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package my.pkg;
@@ -2054,8 +2020,7 @@ class StubsTest : DriverTest() {
                 @android.support.annotation.Nullable
                 public java.lang.String anotherTestMethod() { throw new RuntimeException("Stub!"); }
                 }
-                 """,
-            checkDoclava1 = false
+                 """
         )
     }
 
@@ -2067,10 +2032,8 @@ class StubsTest : DriverTest() {
         // therefore hidden) but the subclass using it is also in the same package.
 
         check(
-            checkDoclava1 = false,
             checkCompilation = true,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2168,9 +2131,7 @@ class StubsTest : DriverTest() {
         // in the current class, so we need to handle this
 
         checkStubs(
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 // TODO: Try using prefixes like "A", and "AA" to make sure my generics
                 // variable renaming doesn't do something really dumb
                 java(
@@ -2240,10 +2201,8 @@ class StubsTest : DriverTest() {
     fun `Rewriting type parameters in interfaces from hidden super classes and in throws lists`() {
         checkStubs(
             extraArguments = arrayOf("--skip-inherited-methods=false"),
-            checkDoclava1 = false,
             format = FileFormat.V1,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2358,8 +2317,7 @@ class StubsTest : DriverTest() {
         // use super classes of filtered throwables
         checkStubs(
             format = FileFormat.V3,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2449,9 +2407,7 @@ class StubsTest : DriverTest() {
         // Checks some more subtle bugs around generics type variable renaming
         checkStubs(
             extraArguments = arrayOf("--skip-inherited-methods=false"),
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2516,9 +2472,7 @@ class StubsTest : DriverTest() {
     @Test
     fun `Arrays in type arguments`() {
         checkStubs(
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2558,9 +2512,8 @@ class StubsTest : DriverTest() {
         // interfaces
         // Real-world example: XmlResourceParser
         check(
-            checkDoclava1 = false,
             checkCompilation = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package android.content.res;
@@ -2613,9 +2566,7 @@ class StubsTest : DriverTest() {
     @Test
     fun `Picking Super Constructors`() {
         checkStubs(
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2791,9 +2742,7 @@ class StubsTest : DriverTest() {
     @Test
     fun `Picking Constructors`() {
         checkStubs(
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2926,9 +2875,7 @@ class StubsTest : DriverTest() {
     fun `Another Constructor Test`() {
         // A specific scenario triggered in the API where the right super class detector was not chosen
         checkStubs(
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -2987,9 +2934,7 @@ class StubsTest : DriverTest() {
     fun `Overriding protected methods`() {
         // Checks a scenario where the stubs were missing overrides
         checkStubs(
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -3064,9 +3009,7 @@ class StubsTest : DriverTest() {
     fun `Missing overridden method`() {
         // Another special case where overridden methods were missing
         checkStubs(
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -3127,9 +3070,7 @@ class StubsTest : DriverTest() {
     fun `Skip type variables in casts`() {
         // When generating casts in super constructor calls, use raw types
         checkStubs(
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -3177,8 +3118,7 @@ class StubsTest : DriverTest() {
     fun `Annotation default values`() {
         checkStubs(
             compatibilityMode = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -3324,8 +3264,7 @@ class StubsTest : DriverTest() {
             compatibilityMode = false,
             includeSourceRetentionAnnotations = false,
             skipEmitPackages = emptyList(),
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package java.lang;
@@ -3356,8 +3295,7 @@ class StubsTest : DriverTest() {
         checkStubs(
             compatibilityMode = false,
             skipEmitPackages = emptyList(),
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package java.lang;
@@ -3384,8 +3322,7 @@ class StubsTest : DriverTest() {
     @Test
     fun `Check writing package info file`() {
         checkStubs(
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     @androidx.annotation.Nullable
@@ -3423,8 +3360,7 @@ class StubsTest : DriverTest() {
     @Test
     fun `Test package-info documentation`() {
         check(
-            checkDoclava1 = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                       /** My package docs */
@@ -3461,7 +3397,7 @@ class StubsTest : DriverTest() {
     fun `Test package-info annotations`() {
         check(
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                       @RestrictTo(RestrictTo.Scope.SUBCLASSES)
@@ -3503,7 +3439,7 @@ class StubsTest : DriverTest() {
         check(
             extraArguments = arrayOf(ARG_EXCLUDE_ANNOTATIONS),
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -3541,7 +3477,7 @@ class StubsTest : DriverTest() {
         check(
             extraArguments = arrayOf(ARG_EXCLUDE_ANNOTATIONS),
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -3606,7 +3542,7 @@ class StubsTest : DriverTest() {
         check(
             extraArguments = arrayOf("--include-annotations"),
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -3677,7 +3613,7 @@ class StubsTest : DriverTest() {
         checkStubs(
             extraArguments = arrayOf(ARG_EXCLUDE_DOCUMENTATION_FROM_STUBS),
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     /*
@@ -3724,7 +3660,7 @@ class StubsTest : DriverTest() {
         checkStubs(
             extraArguments = arrayOf(ARG_EXCLUDE_DOCUMENTATION_FROM_STUBS),
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     /*
@@ -3775,7 +3711,7 @@ class StubsTest : DriverTest() {
     @Test
     fun `Annotation nested rewriting`() {
         checkStubs(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -3844,7 +3780,7 @@ class StubsTest : DriverTest() {
                 ARG_EXCLUDE_ANNOTATIONS
             ),
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -3884,7 +3820,7 @@ class StubsTest : DriverTest() {
                 ARG_EXCLUDE_ANNOTATIONS
             ),
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -3923,7 +3859,7 @@ class StubsTest : DriverTest() {
                 src/test/pkg/PublicApi.java:4: warning: Method test.pkg.PublicApi.getHiddenType() references hidden type test.pkg.HiddenType. [HiddenTypeParameter]
                 src/test/pkg/PublicApi.java:5: warning: Method test.pkg.PublicApi.getHiddenType4() references hidden type test.pkg.HiddenType4. [HiddenTypeParameter]
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -4041,7 +3977,7 @@ class StubsTest : DriverTest() {
                 src/test/pkg/PublicApi.java:4: error: Class test.pkg.PublicApi.HiddenInner is hidden but was referenced (as parameter type) from public parameter inner in test.pkg.PublicApi(test.pkg.PublicApi.HiddenInner inner) [ReferencesHidden]
                 src/test/pkg/PublicApi.java:4: warning: Parameter inner references hidden type test.pkg.PublicApi.HiddenInner. [HiddenTypeParameter]
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -4083,7 +4019,7 @@ class StubsTest : DriverTest() {
     fun `Use type argument in constructor cast`() {
         check(
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -4163,7 +4099,7 @@ class StubsTest : DriverTest() {
         check(
             compatibilityMode = false,
             warnings = "src/test/pkg/Alpha.java:2: warning: Public class test.pkg.Alpha stripped of unavailable superclass test.pkg.Beta [HiddenSuperclass]",
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -4236,7 +4172,7 @@ class StubsTest : DriverTest() {
             TESTROOT/src/test/Something2.java: error: metalava was unable to determine the package name. This usually means that a source file was where the directory does not seem to match the package declaration; we expected the path TESTROOT/src/test/Something2.java to end with /test/wrong/Something2.java [IoError]
             TESTROOT/src/test/Something2.java: error: metalava was unable to determine the package name. This usually means that a source file was where the directory does not seem to match the package declaration; we expected the path TESTROOT/src/test/Something2.java to end with /test/wrong/Something2.java [IoError]
             """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     "src/test/pkg/Something.java",
                     """

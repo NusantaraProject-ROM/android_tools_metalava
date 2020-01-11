@@ -24,7 +24,7 @@ class NullnessMigrationTest : DriverTest() {
     fun `Test Kotlin-style null signatures`() {
         check(
             format = FileFormat.V3,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -63,7 +63,7 @@ class NullnessMigrationTest : DriverTest() {
         check(
             outputKotlinStyleNulls = false,
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -112,7 +112,7 @@ class NullnessMigrationTest : DriverTest() {
         check(
             outputKotlinStyleNulls = false,
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -159,7 +159,7 @@ class NullnessMigrationTest : DriverTest() {
         check(
             outputKotlinStyleNulls = false,
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -228,7 +228,7 @@ class NullnessMigrationTest : DriverTest() {
         check(
             outputKotlinStyleNulls = true,
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -280,7 +280,7 @@ class NullnessMigrationTest : DriverTest() {
         check(
             outputKotlinStyleNulls = false,
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -330,7 +330,7 @@ class NullnessMigrationTest : DriverTest() {
     fun `Check type use annotations`() {
         check(
             format = FileFormat.V2, // compat=false, kotlin-style-nulls=false
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -387,7 +387,7 @@ class NullnessMigrationTest : DriverTest() {
         check(
             outputKotlinStyleNulls = false,
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -437,7 +437,7 @@ class NullnessMigrationTest : DriverTest() {
         check(
             outputKotlinStyleNulls = false,
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -507,7 +507,7 @@ class NullnessMigrationTest : DriverTest() {
         check(
             outputKotlinStyleNulls = false,
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -571,7 +571,7 @@ class NullnessMigrationTest : DriverTest() {
         check(
             outputKotlinStyleNulls = false,
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -638,7 +638,7 @@ class NullnessMigrationTest : DriverTest() {
     fun `Merge nullness annotations in stubs that are not in the API signature file`() {
         check(
             includeSystemApiAnnotations = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -729,7 +729,7 @@ class NullnessMigrationTest : DriverTest() {
                   }
                 }
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -790,7 +790,6 @@ class NullnessMigrationTest : DriverTest() {
                 ),
                 androidxNonNullSource
             ),
-            checkDoclava1 = false,
             stubs = arrayOf(
                 """
                 package test.pkg;

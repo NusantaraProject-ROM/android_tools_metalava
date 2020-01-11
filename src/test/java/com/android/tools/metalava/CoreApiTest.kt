@@ -27,7 +27,7 @@ class CoreApiTest : DriverTest() {
     @Test
     fun `Hidden with --hide-annotation`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                       /**
@@ -74,7 +74,6 @@ class CoreApiTest : DriverTest() {
                 libcoreCoreApi,
                 libcoreCoreHidden
             ),
-            checkDoclava1 = false, // doclava does not have non-recursive show annotation
             api =
             """
                 package libcore.api {
@@ -121,7 +120,7 @@ class CoreApiTest : DriverTest() {
     @Test
     fun `Hidden with package javadoc and hiding default constructor explicitly`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                       /**
@@ -167,7 +166,6 @@ class CoreApiTest : DriverTest() {
                 libcoreCoreApi,
                 libcoreCoreHidden
             ),
-            checkDoclava1 = false, // doclava does not have non-recursive show annotation
             api =
             """
                 package libcore.api {
@@ -214,7 +212,7 @@ class CoreApiTest : DriverTest() {
     @Test
     fun `Complain if annotating a member and the surrounding class is not included`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                       /**
@@ -253,7 +251,6 @@ class CoreApiTest : DriverTest() {
                 libcoreCoreApi,
                 libcoreCoreHidden
             ),
-            checkDoclava1 = false, // doclava does not have non-recursive show annotation
             api =
             """
                 package libcore.api {
@@ -276,7 +273,7 @@ class CoreApiTest : DriverTest() {
     @Test
     fun `Hidden with --hide-meta-annotation`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     @libcore.api.LibCoreHiddenFeature

@@ -27,22 +27,20 @@ class JavadocTest : DriverTest() {
         @Language("JAVA") source: String,
         compatibilityMode: Boolean = true,
         warnings: String? = "",
-        checkDoclava1: Boolean = false,
         api: String? = null,
         extraArguments: Array<String> = emptyArray(),
         docStubs: Boolean = false,
         showAnnotations: Array<String> = emptyArray(),
         includeSourceRetentionAnnotations: Boolean = true,
         skipEmitPackages: List<String> = listOf("java.lang", "java.util", "java.io"),
-        vararg sourceFiles: TestFile
+        sourceFiles: Array<TestFile>
     ) {
         check(
-            sourceFiles = *sourceFiles,
+            sourceFiles = sourceFiles,
             showAnnotations = showAnnotations,
             stubs = arrayOf(source),
             compatibilityMode = compatibilityMode,
             warnings = warnings,
-            checkDoclava1 = checkDoclava1,
             checkCompilation = true,
             api = api,
             extraArguments = extraArguments,
@@ -86,9 +84,7 @@ class JavadocTest : DriverTest() {
     fun `Relative documentation links in stubs`() {
         checkStubs(
             docStubs = false,
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg1;
@@ -187,9 +183,7 @@ class JavadocTest : DriverTest() {
     fun `Rewrite relative documentation links in doc-stubs`() {
         checkStubs(
             docStubs = true,
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg1;
@@ -289,9 +283,7 @@ class JavadocTest : DriverTest() {
         // Properly handle links to inherited methods
         checkStubs(
             docStubs = true,
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg1;
@@ -370,9 +362,7 @@ class JavadocTest : DriverTest() {
     fun `Rewrite relative documentation links in doc-stubs 3`() {
         checkStubs(
             docStubs = true,
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package android.accessibilityservice;
@@ -437,9 +427,7 @@ class JavadocTest : DriverTest() {
     fun `Rewrite relative documentation links in doc-stubs 4`() {
         checkStubs(
             docStubs = true,
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package android.content;
@@ -567,9 +555,7 @@ class JavadocTest : DriverTest() {
         // Properly handle links to inherited methods
         checkStubs(
             docStubs = true,
-            checkDoclava1 = false,
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package org.xmlpull.v1;
@@ -613,10 +599,8 @@ class JavadocTest : DriverTest() {
         checkStubs(
             docStubs = true,
             compatibilityMode = false,
-            checkDoclava1 = false,
             warnings = "",
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg1;
@@ -711,10 +695,8 @@ class JavadocTest : DriverTest() {
         checkStubs(
             docStubs = true,
             compatibilityMode = false,
-            checkDoclava1 = false,
             warnings = "",
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg1;
@@ -758,10 +740,8 @@ class JavadocTest : DriverTest() {
         checkStubs(
             docStubs = true,
             compatibilityMode = false,
-            checkDoclava1 = false,
             warnings = "",
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg1;
@@ -824,10 +804,8 @@ class JavadocTest : DriverTest() {
         checkStubs(
             docStubs = true,
             compatibilityMode = false,
-            checkDoclava1 = false,
             warnings = "",
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg1;
@@ -876,7 +854,6 @@ class JavadocTest : DriverTest() {
         checkStubs(
             docStubs = true,
             compatibilityMode = false,
-            checkDoclava1 = false,
             warnings =
             if (REPORT_UNRESOLVED_SYMBOLS) {
                 """
@@ -886,8 +863,7 @@ class JavadocTest : DriverTest() {
             } else {
                 ""
             },
-            sourceFiles =
-            *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg1;
@@ -929,7 +905,7 @@ class JavadocTest : DriverTest() {
         //  119190588: Javadoc link tag to constructor of static inner class not working
         // See also https://bugs.openjdk.java.net/browse/JDK-8031625
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package android.view;
@@ -969,7 +945,6 @@ class JavadocTest : DriverTest() {
                     """
                 )
             ),
-            checkDoclava1 = false,
             docStubs = true,
             // You would *think* the right link to the constructor inner class would be
             //   {@link android.view.WindowInsets.Builder#Builder(android.view.WindowInsets)
@@ -1015,7 +990,7 @@ class JavadocTest : DriverTest() {
     fun `Ensure references to classes in JavaDoc of hidden members do not affect imports`() {
         check(
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;

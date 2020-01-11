@@ -193,7 +193,6 @@ class JDiffXmlTest : DriverTest() {
         check(
             compatibilityMode = true,
             signatureSource = source,
-            checkDoclava1 = true,
             apiXml =
             """
             <api>
@@ -391,7 +390,6 @@ class JDiffXmlTest : DriverTest() {
         check(
             compatibilityMode = false,
             signatureSource = source,
-            checkDoclava1 = false, // because doclava1 does not include enum fields; see compat mode below
             apiXml =
             """
             <api>
@@ -495,7 +493,6 @@ class JDiffXmlTest : DriverTest() {
         check(
             compatibilityMode = true,
             signatureSource = source,
-            checkDoclava1 = true,
             apiXml =
             """
             <api>
@@ -797,7 +794,7 @@ class JDiffXmlTest : DriverTest() {
     fun `Half float short from source`() {
         check(
             compatibilityMode = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                       package test.pkg;
@@ -916,7 +913,6 @@ class JDiffXmlTest : DriverTest() {
         // Ensure that we treat not just static but default methods in interfaces as non-abstract
         check(
             compatibilityMode = true,
-            checkDoclava1 = true,
             format = FileFormat.V1,
             signatureSource = """
                 package test.pkg {
@@ -964,7 +960,6 @@ class JDiffXmlTest : DriverTest() {
         // inner class. See 122926140 for a scenario where this happens.
         check(
             compatibilityMode = true,
-            checkDoclava1 = true,
             format = FileFormat.V1,
             signatureSource = """
             // Signature format: 2.0
@@ -1048,7 +1043,6 @@ class JDiffXmlTest : DriverTest() {
         // Regression test for 123140708
         check(
             compatibilityMode = false,
-            checkDoclava1 = true,
             format = FileFormat.V2,
             signatureSource = """
             // Signature format: 2.0

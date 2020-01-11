@@ -32,7 +32,7 @@ class AnnotationsMergerTest : DriverTest() {
             outputKotlinStyleNulls = false,
             includeSystemApiAnnotations = false,
             omitCommonPackages = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -76,7 +76,7 @@ class AnnotationsMergerTest : DriverTest() {
     @Test
     fun `Merged class and method annotations with no arguments`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -136,7 +136,7 @@ class AnnotationsMergerTest : DriverTest() {
     @Test
     fun `Merge signature files`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -176,7 +176,7 @@ class AnnotationsMergerTest : DriverTest() {
     @Test
     fun `Merge qualifier annotations from Java stub files`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -214,7 +214,7 @@ class AnnotationsMergerTest : DriverTest() {
     fun `Merge qualifier annotations from Java stub files onto stubs that are not in the API signature file`() {
         check(
             includeSystemApiAnnotations = true,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -281,7 +281,7 @@ class AnnotationsMergerTest : DriverTest() {
     fun `Merge type use qualifier annotations from Java stub files`() {
         // See b/123223339
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                 package test.pkg;
@@ -319,7 +319,7 @@ class AnnotationsMergerTest : DriverTest() {
     @Test
     fun `Merge qualifier annotations from Java stub files making sure they apply to public members of hidden superclasses`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg;
@@ -365,7 +365,7 @@ class AnnotationsMergerTest : DriverTest() {
     fun `Merge inclusion annotations from Java stub files`() {
         check(
             warnings = "src/test/pkg/Example.annotated.java:6: error: @test.annotation.Show APIs must also be marked @hide: method test.pkg.Example.cShown() [UnhiddenSystemApi]",
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     "src/test/pkg/Example.annotated.java",
                     """
@@ -423,7 +423,7 @@ class AnnotationsMergerTest : DriverTest() {
     @Test
     fun `Merge inclusion annotations from Java stub files using --show-single-annotation`() {
         check(
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     "src/test/pkg/Example.annotated.java",
                     """

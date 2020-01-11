@@ -26,7 +26,7 @@ class AndroidApiChecksTest : DriverTest() {
                 src/android/pkg/Test.java:3: lint: Documentation mentions 'TODO' [Todo]
                 src/android/pkg/Test.java:5: lint: Documentation mentions 'TODO' [Todo]
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 // Nothing in outside of Android
                 java(
                     """
@@ -69,7 +69,7 @@ class AndroidApiChecksTest : DriverTest() {
                 src/android/pkg/PermissionTest.java:10: lint: Method 'test0' documentation mentions permissions without declaring @RequiresPermission [RequiresPermission]
                 src/android/pkg/PermissionTest.java:19: lint: Method 'test1' documentation mentions permissions already declared by @RequiresPermission [RequiresPermission]
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package android.pkg;
@@ -117,8 +117,7 @@ class AndroidApiChecksTest : DriverTest() {
                     """
                 ),
                 requiresPermissionSource
-            ),
-            checkDoclava1 = false
+            )
         )
     }
 
@@ -130,7 +129,7 @@ class AndroidApiChecksTest : DriverTest() {
                 src/android/pkg/IntentActionTest.java:16: lint: Field 'FOO_BAR_ERROR_ACTION' is missing @BroadcastBehavior [BroadcastBehavior]
                 src/android/pkg/IntentActionTest.java:16: lint: Field 'FOO_BAR_ERROR_ACTION' is missing @SdkConstant(SdkConstantType.BROADCAST_INTENT_ACTION) [SdkConstant]
                 """,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package android.pkg;
@@ -168,8 +167,7 @@ class AndroidApiChecksTest : DriverTest() {
                 ),
                 sdkConstantSource,
                 broadcastBehaviorSource
-            ),
-            checkDoclava1 = false
+            )
         )
     }
 
@@ -182,7 +180,7 @@ class AndroidApiChecksTest : DriverTest() {
                 src/android/pkg/NullMentions.java:8: warning: Field 'field2' documentation mentions 'null' without declaring @NonNull or @Nullable [Nullable]
                 """,
             extraArguments = arrayOf(ARG_WARNING, "Nullable"), // Hidden by default
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package android.pkg;
@@ -214,8 +212,7 @@ class AndroidApiChecksTest : DriverTest() {
                     """
                 ),
                 nullableSource
-            ),
-            checkDoclava1 = false
+            )
         )
     }
 
@@ -226,7 +223,7 @@ class AndroidApiChecksTest : DriverTest() {
                 src/android/pkg/NullMentions.java:15: warning: Field 'field1' documentation mentions constants without declaring an @IntDef [IntDef]
                 """,
             extraArguments = arrayOf(ARG_WARNING, "IntDef"), // Hidden by default
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package android.pkg;
@@ -253,8 +250,7 @@ class AndroidApiChecksTest : DriverTest() {
                     """
                 ),
                 intDefAnnotationSource
-            ),
-            checkDoclava1 = false
+            )
         )
     }
 }

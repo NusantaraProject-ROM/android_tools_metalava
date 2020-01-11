@@ -23,8 +23,7 @@ class ArtifactTaggerTest : DriverTest() {
     @Test
     fun `Tag API`() {
         check(
-            checkDoclava1 = false,
-            sourceFiles = *arrayOf(
+            sourceFiles = arrayOf(
                 java(
                     """
                     package test.pkg.foo;
