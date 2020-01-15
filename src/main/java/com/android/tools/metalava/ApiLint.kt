@@ -3223,6 +3223,12 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
         if (type.primitive) {
             return
         }
+        // ICU types have been added in API 24, so libraries with minSdkVersion <24 cannot use them.
+        // If the version is not set, then keep the check enabled.
+        val minSdkVersion = codebase.getMinSdkVersion()
+        if (minSdkVersion is SetMinSdkVersion && minSdkVersion.value < 24) {
+            return
+        }
         val better = when (typeString) {
             "java.util.TimeZone" -> "android.icu.util.TimeZone"
             "java.util.Calendar" -> "android.icu.util.Calendar"
