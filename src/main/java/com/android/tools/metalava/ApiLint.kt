@@ -3145,24 +3145,48 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
                             error(clazz, f, "C4", "Inconsistent service value; expected '%s'" % (expected))
          */
         val type = field.type()
-        if (!type.isString()) {
+        if (!type.isString() || !field.modifiers.isFinal() || !field.modifiers.isStatic() ||
+            field.containingClass().qualifiedName() != "android.content.Context") {
             return
         }
         val name = field.name()
-        if (name.endsWith("_SERVICE") && serviceFieldPattern.matches(name)) {
-            val value = field.initialValue() as? String
-            if (value != null) {
-                val service = name.substring(0, name.length - "_SERVICE".length)
-                if (!service.equals(value, ignoreCase = true)) {
-                    if (field.containingClass().qualifiedName() == "android.content.Context") {
-                        return
-                    }
-                    report(
-                        SERVICE_NAME, field,
-                        "Inconsistent service value; expected `$service`, was `$value`"
-                    )
-                }
+        val endsWithService = name.endsWith("_SERVICE")
+        val value = field.initialValue(requireConstant = true) as? String
+
+        if (value == null) {
+            val mustEndInService =
+                if (!endsWithService) " and its name must end with `_SERVICE`" else ""
+
+            report(
+                SERVICE_NAME, field, "Non-constant service constant `$name`. Must be static," +
+                    " final and initialized with a String literal$mustEndInService."
+            )
+            return
+        }
+
+        if (name.endsWith("_MANAGER_SERVICE")) {
+            report(
+                SERVICE_NAME, field,
+                "Inconsistent service constant name; expected " +
+                    "`${name.removeSuffix("_MANAGER_SERVICE")}_SERVICE`, was `$name`"
+            )
+        } else if (endsWithService) {
+            val service = name.substring(0, name.length - "_SERVICE".length).toLowerCase(Locale.US)
+            if (service != value) {
+                report(
+                    SERVICE_NAME, field,
+                    "Inconsistent service value; expected `$service`, was `$value` (Note: Do not" +
+                        " change the name of already released services, which will break tools" +
+                        " using `adb shell dumpsys`." +
+                        " Instead add `@SuppressLint(\"${SERVICE_NAME.name}\"))`"
+                )
             }
+        } else {
+            val valueUpper = value.toUpperCase(Locale.US)
+            report(
+                SERVICE_NAME, field, "Inconsistent service constant name;" +
+                    " expected `${valueUpper}_SERVICE`, was `$name`"
+            )
         }
     }
 
@@ -3549,7 +3573,6 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
         private val resourceFileFieldPattern = Regex("[a-z1-9_]+")
         private val resourceValueFieldPattern = Regex("[a-z][a-zA-Z1-9]*")
         private val styleFieldPattern = Regex("[A-Z][A-Za-z1-9]+(_[A-Z][A-Za-z1-9]+?)*")
-        private val serviceFieldPattern = Regex("([A-Z_]+)_SERVICE")
 
         private val acronymPattern2 = Regex("([A-Z]){2,}")
         private val acronymPattern3 = Regex("([A-Z]){3,}")
