@@ -50,8 +50,10 @@ them. With soong, if you specify the baseline explicitly, like this:
     +++ b/Android.bp
     @@ -1678,6 +1678,7 @@ droidstubs {
          },
-         api_lint: true,
-    ==>  baseline_filename: "api/baseline.txt", <==
+         api_lint: {
+             enabled: true,
+        ==>  baseline_filename: "api/baseline.txt", <==
+         }
          jdiff_enabled: true,
      }
 
