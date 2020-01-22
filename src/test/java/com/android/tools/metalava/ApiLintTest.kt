@@ -1999,6 +1999,70 @@ class ApiLintTest : DriverTest() {
     }
 
     @Test
+    fun `Check ICU types for minSdkVersion 24`() {
+        check(
+            apiLint = "", // enabled
+            compatibilityMode = false,
+            warnings = """
+                src/android/pkg/MyErrorClass1.java:7: warning: Type `java.util.TimeZone` should be replaced with richer ICU type `android.icu.util.TimeZone` [UseIcu]
+            """,
+            manifest = """<?xml version="1.0" encoding="UTF-8"?>
+                <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+                    <uses-sdk android:minSdkVersion="24" />
+                </manifest>
+            """.trimIndent(),
+            sourceFiles = arrayOf(
+                java(
+                    """
+                    package android.pkg;
+
+                    import com.android.annotations.NonNull;
+                    import java.util.TimeZone;
+
+                    public abstract class MyErrorClass1 {
+                        @NonNull
+                        public TimeZone getDefaultTimeZone() {
+                            return TimeZone.getDefault();
+                        }
+                    }
+                    """
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `Do not check ICU types for minSdkVersion less than 24`() {
+        check(
+            apiLint = "", // enabled
+            compatibilityMode = false,
+            warnings = "",
+            manifest = """<?xml version="1.0" encoding="UTF-8"?>
+                <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+                    <uses-sdk android:minSdkVersion="23" />
+                </manifest>
+            """.trimIndent(),
+            sourceFiles = arrayOf(
+                java(
+                    """
+                    package android.pkg;
+
+                    import com.android.annotations.NonNull;
+                    import java.util.TimeZone;
+
+                    public abstract class MyErrorClass1 {
+                        @NonNull
+                        public TimeZone getDefaultTimeZone() {
+                            return TimeZone.getDefault();
+                        }
+                    }
+                    """
+                )
+            )
+        )
+    }
+
+    @Test
     fun `Check Kotlin keywords`() {
         check(
             apiLint = "", // enabled
