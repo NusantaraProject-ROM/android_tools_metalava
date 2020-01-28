@@ -124,6 +124,7 @@ const val ARG_CURRENT_CODENAME = "--current-codename"
 const val ARG_CURRENT_JAR = "--current-jar"
 const val ARG_CHECK_KOTLIN_INTEROP = "--check-kotlin-interop"
 const val ARG_API_LINT = "--api-lint"
+const val ARG_API_LINT_IGNORE_PREFIX = "--api-lint-ignore-prefix"
 const val ARG_PUBLIC = "--public"
 const val ARG_PROTECTED = "--protected"
 const val ARG_PACKAGE = "--package"
@@ -333,6 +334,8 @@ class Options(
 
     /** Whether to validate the API for best practices */
     var checkApi = false
+
+    val checkApiIgnorePrefix: MutableList<String> = mutableListOf()
 
     /** If non null, an API file to use to hide for controlling what parts of the API are new */
     var checkApiBaselineApiFile: File? = null
@@ -1046,6 +1049,9 @@ class Options(
                             }
                         }
                     }
+                }
+                ARG_API_LINT_IGNORE_PREFIX -> {
+                    checkApiIgnorePrefix.add(getValue(args, ++index))
                 }
 
                 ARG_CHECK_KOTLIN_INTEROP -> checkKotlinInterop = true
@@ -2105,6 +2111,8 @@ class Options(
                 "$ARG_CHECK_COMPATIBILITY:api:current.",
             "$ARG_API_LINT [api file]", "Check API for Android API best practices. If a signature file is " +
                 "provided, only the APIs that are new since the API will be checked.",
+            "$ARG_API_LINT_IGNORE_PREFIX [prefix]", "A list of package prefixes to ignore API issues in " +
+                "when running with $ARG_API_LINT.",
             ARG_CHECK_KOTLIN_INTEROP, "Check API intended to be used from both Kotlin and Java for interoperability " +
                 "issues",
             "$ARG_MIGRATE_NULLNESS <api file>", "Compare nullness information with the previous stable API " +
