@@ -233,6 +233,11 @@ class KotlinInteropChecks {
             // in Java you still don't have the option of adding @JvmOverloads
             return
         }
+        if (method.containingClass().isInterface()) {
+            // '@JvmOverloads' annotation cannot be used on interface methods
+            // (https://github.com/JetBrains/kotlin/blob/dc7b1fbff946d1476cc9652710df85f65664baee/compiler/frontend.java/src/org/jetbrains/kotlin/resolve/jvm/diagnostics/DefaultErrorMessagesJvm.java#L50)
+            return
+        }
         val parameters = method.parameters()
         if (parameters.size <= 1) {
             // No need for overloads when there is at most one version...
