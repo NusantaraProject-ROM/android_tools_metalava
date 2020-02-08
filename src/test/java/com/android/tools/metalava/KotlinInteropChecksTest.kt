@@ -106,7 +106,6 @@ class KotlinInteropChecksTest : DriverTest() {
         check(
             extraArguments = arrayOf(ARG_CHECK_KOTLIN_INTEROP),
             warnings = """
-                src/test/pkg/Foo.kt:7: warning: Companion object constants like INTEGER_ONE should be marked @JvmField for Java interoperability; see https://android.github.io/kotlin-guides/interop.html#companion-constants [MissingJvmstatic]
                 src/test/pkg/Foo.kt:10: warning: Companion object constants like WRONG2 should be using @JvmField, not @JvmStatic; see https://android.github.io/kotlin-guides/interop.html#companion-constants [MissingJvmstatic]
                 src/test/pkg/Foo.kt:13: warning: Companion object methods like missing should be marked @JvmStatic for Java interoperability; see https://android.github.io/kotlin-guides/interop.html#companion-functions [MissingJvmstatic]
                 """,
