@@ -142,13 +142,17 @@ class KotlinInteropChecksTest : DriverTest() {
         check(
             extraArguments = arrayOf(ARG_CHECK_KOTLIN_INTEROP),
             warnings = """
-                src/test/pkg/Foo.kt:8: warning: A Kotlin method with default parameter values should be annotated with @JvmOverloads for better Java interoperability; see https://android.github.io/kotlin-guides/interop.html#function-overloads-for-defaults [MissingJvmstatic]
+                src/test/pkg/Bar.kt:12: warning: A Kotlin method with default parameter values should be annotated with @JvmOverloads for better Java interoperability; see https://android.github.io/kotlin-guides/interop.html#function-overloads-for-defaults [MissingJvmstatic]
                 """,
             sourceFiles = arrayOf(
                 kotlin(
                     """
                     package test.pkg
 
+                    interface Bar {
+                        fun ok(int: Int = 0, int2: Int = 0) { }
+                    }
+                    
                     class Foo {
                         fun ok1() { }
                         fun ok2(int: Int) { }
