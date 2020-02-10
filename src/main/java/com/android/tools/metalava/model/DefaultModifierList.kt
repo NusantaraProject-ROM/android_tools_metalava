@@ -123,6 +123,10 @@ open class DefaultModifierList(
         return isSet(INFIX)
     }
 
+    override fun isConst(): Boolean {
+        return isSet(CONST)
+    }
+
     override fun isSuspend(): Boolean {
         return isSet(SUSPEND)
     }
@@ -310,6 +314,7 @@ open class DefaultModifierList(
         const val INLINE = 1 shl 18
         const val SUSPEND = 1 shl 19
         const val COMPANION = 1 shl 20
+        const val CONST = 1 shl 21
 
         /**
          * Modifiers considered significant to include signature files (and similarly

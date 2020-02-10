@@ -132,17 +132,19 @@ class KotlinInteropChecks {
                 if (sourcePsi is KtProperty) {
                     val companionClassName = sourcePsi.containingClassOrObject?.name
                     if (companionClassName == "Companion") {
-                        // TODO and const?
-                        if (modifiers.findAnnotation("kotlin.jvm.JvmField") == null) {
-                            reporter.report(
-                                Issues.MISSING_JVMSTATIC, field,
-                                "Companion object constants like ${field.name()} should be marked @JvmField for Java interoperability; see https://android.github.io/kotlin-guides/interop.html#companion-constants"
-                            )
-                        } else if (modifiers.findAnnotation("kotlin.jvm.JvmStatic") != null) {
-                            reporter.report(
-                                Issues.MISSING_JVMSTATIC, field,
-                                "Companion object constants like ${field.name()} should be using @JvmField, not @JvmStatic; see https://android.github.io/kotlin-guides/interop.html#companion-constants"
-                            )
+                        // JvmField cannot be applied to const property (https://github.com/JetBrains/kotlin/blob/dc7b1fbff946d1476cc9652710df85f65664baee/compiler/frontend.java/src/org/jetbrains/kotlin/resolve/jvm/checkers/JvmFieldApplicabilityChecker.kt#L46)
+                        if (!modifiers.isConst()) {
+                            if (modifiers.findAnnotation("kotlin.jvm.JvmField") == null) {
+                                reporter.report(
+                                    Issues.MISSING_JVMSTATIC, field,
+                                    "Companion object constants like ${field.name()} should be marked @JvmField for Java interoperability; see https://android.github.io/kotlin-guides/interop.html#companion-constants"
+                                )
+                            } else if (modifiers.findAnnotation("kotlin.jvm.JvmStatic") != null) {
+                                reporter.report(
+                                    Issues.MISSING_JVMSTATIC, field,
+                                    "Companion object constants like ${field.name()} should be using @JvmField, not @JvmStatic; see https://android.github.io/kotlin-guides/interop.html#companion-constants"
+                                )
+                            }
                         }
                     }
                 }
