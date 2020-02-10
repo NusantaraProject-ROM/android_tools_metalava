@@ -53,6 +53,7 @@ interface ModifierList {
     fun isSealed(): Boolean = false
     fun isCompanion(): Boolean = false
     fun isInfix(): Boolean = false
+    fun isConst(): Boolean = false
     fun isSuspend(): Boolean = false
     fun isOperator(): Boolean = false
     fun isInline(): Boolean = false
