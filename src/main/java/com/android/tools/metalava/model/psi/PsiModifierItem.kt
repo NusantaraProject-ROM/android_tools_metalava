@@ -122,6 +122,9 @@ class PsiModifierItem(
                     if (ktModifierList.hasModifier(KtTokens.INFIX_KEYWORD)) {
                         flags = flags or INFIX
                     }
+                    if (ktModifierList.hasModifier(KtTokens.CONST_KEYWORD)) {
+                        flags = flags or CONST
+                    }
                     if (ktModifierList.hasModifier(KtTokens.OPERATOR_KEYWORD)) {
                         flags = flags or OPERATOR
                     }
