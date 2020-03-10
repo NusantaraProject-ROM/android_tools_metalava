@@ -59,7 +59,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.javadoc.CustomJavadocTagProvider
 import com.intellij.psi.javadoc.JavadocTagInfo
-import com.intellij.util.execution.ParametersListUtil
 import java.io.File
 import java.io.IOException
 import java.io.OutputStream
@@ -93,58 +92,26 @@ fun main(args: Array<String>) {
  * more details.
  */
 fun run(
-    args: Array<String>,
+    originalArgs: Array<String>,
     stdout: PrintWriter = PrintWriter(OutputStreamWriter(System.out)),
     stderr: PrintWriter = PrintWriter(OutputStreamWriter(System.err)),
     setExitCode: Boolean = false
 ): Boolean {
-
-    if (System.getenv(ENV_VAR_METALAVA_DUMP_ARGV) != null && !isUnderTest()
-    ) {
-        stdout.println("---Running $PROGRAM_NAME----")
-        stdout.println("pwd=${File("").absolutePath}")
-        args.forEach { arg ->
-            stdout.println("\"$arg\",")
-        }
-        stdout.println("----------------------------")
-    }
-
     var exitValue: Boolean
     var exitCode = 0
 
     try {
-        val modifiedArgs =
-            if (args.isEmpty()) {
-                arrayOf("--help")
-            } else {
-                val index = args.indexOf(ARG_GENERATE_DOCUMENTATION)
-                val prepend = envVarToArgs(ENV_VAR_METALAVA_PREPEND_ARGS)
-                val append = envVarToArgs(ENV_VAR_METALAVA_APPEND_ARGS)
-                if (prepend.isEmpty() && append.isEmpty()) {
-                    args
-                } else {
-                    val newArgs =
-                        if (index != -1) {
-                            args.sliceArray(0 until index) + prepend + args.sliceArray(index until args.size) + append
-                        } else {
-                            prepend + args + append
-                        }
-                    if (System.getenv(ENV_VAR_METALAVA_DUMP_ARGV) != null) {
-                        stdout.println("---Modified $PROGRAM_NAME arguments from environment variables ----")
-                        stdout.println("$ENV_VAR_METALAVA_PREPEND_ARGS: ${prepend.joinToString { "\"$it\"" }}")
-                        stdout.println("$ENV_VAR_METALAVA_APPEND_ARGS: ${append.joinToString { "\"$it\"" }}")
-                        newArgs.forEach { arg ->
-                            stdout.println("\"$arg\",")
-                        }
-                        stdout.println("----------------------------")
-                        stdout.flush()
-                    }
-                    newArgs
-                }
-            }
+        var modifiedArgs = preprocessArgv(originalArgs)
 
-        compatibility = Compatibility(compat = Options.useCompatMode(args))
+        progress("$PROGRAM_NAME started\n")
+
+        // Dump the arguments, and maybe generate a rerun-script.
+        maybeDumpArgv(stdout, originalArgs, modifiedArgs)
+
+        // Actual work begins here.
+        compatibility = Compatibility(compat = Options.useCompatMode(modifiedArgs))
         options = Options(modifiedArgs, stdout, stderr)
+
         processFlags()
 
         if (reporter.hasErrors() && !options.passBaselineUpdates) {
@@ -187,18 +154,9 @@ fun run(
     return exitValue
 }
 
-/**
- * Given an environment variable name pointing to a shell argument string,
- * returns the parsed argument strings (or empty array if not set)
- */
-private fun envVarToArgs(varName: String): Array<String> {
-    val value = System.getenv(varName) ?: return emptyArray()
-    return ParametersListUtil.parse(value).toTypedArray()
-}
-
 private fun exit(exitCode: Int = 0) {
     if (options.verbose) {
-        options.stdout.println("$PROGRAM_NAME exiting with exit code $exitCode")
+        progress("$PROGRAM_NAME exiting with exit code $exitCode\n")
     }
     options.stdout.flush()
     options.stderr.flush()
@@ -228,7 +186,7 @@ private fun processFlags() {
     options.manifest?.let { codebase.manifest = it }
 
     if (options.verbose) {
-        options.stdout.println("\n$PROGRAM_NAME analyzed API in ${stopwatch.elapsed(TimeUnit.SECONDS)} seconds")
+        progress("$PROGRAM_NAME analyzed API in ${stopwatch.elapsed(TimeUnit.SECONDS)} seconds\n")
     }
 
     options.subtractApi?.let {
@@ -238,18 +196,18 @@ private fun processFlags() {
     val androidApiLevelXml = options.generateApiLevelXml
     val apiLevelJars = options.apiLevelJars
     if (androidApiLevelXml != null && apiLevelJars != null) {
-        progress("\nGenerating API levels XML descriptor file, ${androidApiLevelXml.name}: ")
+        progress("Generating API levels XML descriptor file, ${androidApiLevelXml.name}: ")
         ApiGenerator.generate(apiLevelJars, androidApiLevelXml, codebase)
     }
 
     if (options.docStubsDir != null && codebase.supportsDocumentation()) {
-        progress("\nEnhancing docs: ")
+        progress("Enhancing docs: ")
         val docAnalyzer = DocAnalyzer(codebase)
         docAnalyzer.enhance()
 
         val applyApiLevelsXml = options.applyApiLevelsXml
         if (applyApiLevelsXml != null) {
-            progress("\nApplying API levels")
+            progress("Applying API levels")
             docAnalyzer.applyApiLevels(applyApiLevelsXml)
         }
     }
@@ -439,22 +397,20 @@ private fun processFlags() {
         options.docStubsSourceList?.let(writeStubsFile)
     }
     options.externalAnnotations?.let { extractAnnotations(codebase, it) }
-    progress("\n")
 
     // Coverage stats?
     if (options.dumpAnnotationStatistics) {
-        progress("\nMeasuring annotation statistics: ")
+        progress("Measuring annotation statistics: ")
         AnnotationStatistics(codebase).count()
     }
     if (options.annotationCoverageOf.isNotEmpty()) {
-        progress("\nMeasuring annotation coverage: ")
+        progress("Measuring annotation coverage: ")
         AnnotationStatistics(codebase).measureCoverageOf(options.annotationCoverageOf)
     }
 
     if (options.verbose) {
         val packageCount = codebase.size()
-        options.stdout.println("\n$PROGRAM_NAME finished handling $packageCount packages in $stopwatch")
-        options.stdout.flush()
+        progress("$PROGRAM_NAME finished handling $packageCount packages in ${stopwatch.elapsed(SECONDS)} seconds\n")
     }
 
     invokeDocumentationTool()
@@ -800,7 +756,7 @@ private fun convertToWarningNullabilityAnnotations(codebase: Codebase, filter: P
 }
 
 private fun loadFromSources(): Codebase {
-    progress("\nProcessing sources: ")
+    progress("Processing sources: ")
 
     val sources = if (options.sources.isEmpty()) {
         if (options.verbose) {
@@ -811,10 +767,10 @@ private fun loadFromSources(): Codebase {
         options.sources
     }
 
-    progress("\nReading Codebase: ")
+    progress("Reading Codebase: ")
     val codebase = parseSources(sources, "Codebase loaded from source folders")
 
-    progress("\nAnalyzing API: ")
+    progress("Analyzing API: ")
 
     val analyzer = ApiAnalyzer(codebase)
     analyzer.mergeExternalInclusionAnnotations()
@@ -827,7 +783,7 @@ private fun loadFromSources(): Codebase {
     // Copy methods from soon-to-be-hidden parents into descendant classes, when necessary. Do
     // this before merging annotations or performing checks on the API to ensure that these methods
     // can have annotations added and are checked properly.
-    progress("\nInsert missing stubs methods: ")
+    progress("Insert missing stubs methods: ")
     analyzer.generateInheritedStubs(apiEmit, apiReference)
 
     analyzer.mergeExternalQualifierAnnotations()
@@ -856,18 +812,18 @@ private fun loadFromSources(): Codebase {
                 )
             }
         ApiLint.check(codebase, previous)
-        progress("\n$PROGRAM_NAME ran api-lint in ${localTimer.elapsed(SECONDS)} seconds")
+        progress("$PROGRAM_NAME ran api-lint in ${localTimer.elapsed(SECONDS)} seconds")
     }
 
     // Compute default constructors (and add missing package private constructors
     // to make stubs compilable if necessary). Do this after all the checks as
     // these are not part of the API.
     if (options.stubsDir != null || options.docStubsDir != null) {
-        progress("\nInsert missing constructors: ")
+        progress("Insert missing constructors: ")
         analyzer.addConstructors(filterEmit)
     }
 
-    progress("\nPerforming misc API checks: ")
+    progress("Performing misc API checks: ")
     analyzer.performChecks()
 
     return codebase
@@ -923,7 +879,7 @@ internal fun parseSources(
 fun loadFromJarFile(apiJar: File, manifest: File? = null, preFiltered: Boolean = false): Codebase {
     val projectEnvironment = createProjectEnvironment()
 
-    progress("\nProcessing jar file: ")
+    progress("Processing jar file: ")
 
     // Create project environment with those paths
     val project = projectEnvironment.project
@@ -996,8 +952,7 @@ private fun extractAnnotations(codebase: Codebase, file: File) {
             outputFile
         ).extractAnnotations()
         if (options.verbose) {
-            options.stdout.print("\n$PROGRAM_NAME extracted annotations into $file in $localTimer")
-            options.stdout.flush()
+            progress("$PROGRAM_NAME extracted annotations into $file in ${localTimer.elapsed(SECONDS)} seconds\n")
         }
     }
 }
@@ -1012,9 +967,9 @@ private fun createStubFiles(stubDir: File, codebase: Codebase, docStubs: Boolean
     }
 
     if (docStubs) {
-        progress("\nGenerating documentation stub files: ")
+        progress("Generating documentation stub files: ")
     } else {
-        progress("\nGenerating stub files: ")
+        progress("Generating stub files: ")
     }
 
     val localTimer = Stopwatch.createStarted()
@@ -1063,16 +1018,9 @@ private fun createStubFiles(stubDir: File, codebase: Codebase, docStubs: Boolean
     compatibility = prevCompatibility
 
     progress(
-        "\n$PROGRAM_NAME wrote ${if (docStubs) "documentation" else ""} stubs directory $stubDir in ${
-        localTimer.elapsed(SECONDS)} seconds"
+        "$PROGRAM_NAME wrote ${if (docStubs) "documentation" else ""} stubs directory $stubDir in ${
+        localTimer.elapsed(SECONDS)} seconds\n"
     )
-}
-
-fun progress(message: String) {
-    if (options.verbose) {
-        options.stdout.print(message)
-        options.stdout.flush()
-    }
 }
 
 fun createReportFile(
@@ -1082,7 +1030,7 @@ fun createReportFile(
     createVisitor: (PrintWriter) -> ApiVisitor
 ) {
     if (description != null) {
-        progress("\nWriting $description file: ")
+        progress("Writing $description file: ")
     }
     val localTimer = Stopwatch.createStarted()
     try {
@@ -1095,27 +1043,7 @@ fun createReportFile(
         reporter.report(Issues.IO_ERROR, apiFile, "Cannot open file for write.")
     }
     if (description != null && options.verbose) {
-        options.stdout.print("\n$PROGRAM_NAME wrote $description file $apiFile in ${localTimer.elapsed(SECONDS)} seconds")
-    }
-}
-
-/** Used for verbose output to show progress bar */
-private var tick = 0
-
-/** Needed for tests to ensure we don't get unpredictable behavior of "." in output */
-fun resetTicker() {
-    tick = 0
-}
-
-/** Print progress */
-fun tick() {
-    tick++
-    if (tick % 100 == 0) {
-        if (!options.verbose) {
-            return
-        }
-        options.stdout.print(".")
-        options.stdout.flush()
+        progress("$PROGRAM_NAME wrote $description file $apiFile in ${localTimer.elapsed(SECONDS)} seconds\n")
     }
 }
 
