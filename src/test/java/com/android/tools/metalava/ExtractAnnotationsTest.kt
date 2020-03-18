@@ -413,9 +413,6 @@ class ExtractAnnotationsTest : DriverTest() {
                 @SuppressWarnings({"unchecked", "deprecation", "all"})
                 public class Test {
                 public Test() { throw new RuntimeException("Stub!"); }
-                /**
-                 * @param value Value is 10 or greater
-                 */
                 @androidx.annotation.RecentlyNullable
                 public static java.lang.String sayHello(int value) { throw new RuntimeException("Stub!"); }
                 }

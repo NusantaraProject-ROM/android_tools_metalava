@@ -252,6 +252,8 @@ abstract class DriverTest {
         @Language("JAVA") stubs: Array<String> = emptyArray(),
         /** Stub source file list generated */
         stubsSourceList: String? = null,
+        /** Doc Stub source file list generated */
+        docStubsSourceList: String? = null,
         /** Whether the stubs should be written as documentation stubs instead of plain stubs. Decides
          * whether the stubs include @doconly elements, uses rewritten/migration annotations, etc */
         docStubs: Boolean = false,
@@ -888,6 +890,14 @@ abstract class DriverTest {
             emptyArray()
         }
 
+        var docStubsSourceListFile: File? = null
+        val docStubsSourceListArgs = if (docStubsSourceList != null) {
+            docStubsSourceListFile = temporaryFolder.newFile("droiddoc-doc-src-list")
+            arrayOf(ARG_DOC_STUBS_SOURCE_LIST, docStubsSourceListFile.path)
+        } else {
+            emptyArray()
+        }
+
         val applyApiLevelsXmlFile: File?
         val applyApiLevelsXmlArgs = if (applyApiLevelsXml != null) {
             ApiLookup::class.java.getDeclaredMethod("dispose").apply { isAccessible = true }.invoke(null)
@@ -1048,6 +1058,7 @@ abstract class DriverTest {
             *subtractApiArgs,
             *stubsArgs,
             *stubsSourceListArgs,
+            *docStubsSourceListArgs,
             "$ARG_COMPAT_OUTPUT=${if (compatibilityMode) "yes" else "no"}",
             "$ARG_OUTPUT_KOTLIN_NULLS=${if (outputKotlinStyleNulls) "yes" else "no"}",
             "$ARG_INPUT_KOTLIN_NULLS=${if (inputKotlinStyleNulls) "yes" else "no"}",
@@ -1343,6 +1354,18 @@ abstract class DriverTest {
                 // space separated line
                 .replace(' ', '\n')
             assertEquals(stripComments(stubsSourceList, stripLineComments = false).trimIndent(), actualText)
+        }
+
+        if (docStubsSourceList != null && docStubsSourceListFile != null) {
+            assertTrue(
+                "${docStubsSourceListFile.path} does not exist even though --write-stubs-source-list was used",
+                docStubsSourceListFile.exists()
+            )
+            val actualText = cleanupString(readFile(docStubsSourceListFile, stripBlankLines, trim), project)
+                // To make golden files look better put one entry per line instead of a single
+                // space separated line
+                .replace(' ', '\n')
+            assertEquals(stripComments(docStubsSourceList, stripLineComments = false).trimIndent(), actualText)
         }
 
         if (checkCompilation && stubsDir != null && CHECK_STUB_COMPILATION) {

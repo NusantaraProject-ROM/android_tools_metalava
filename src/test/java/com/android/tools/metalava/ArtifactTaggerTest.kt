@@ -85,6 +85,7 @@ class ArtifactTaggerTest : DriverTest() {
                 src/test/pkg/foo/Foo.java:4: error: Class test.pkg.foo.Foo.Inner belongs to multiple artifacts: my.library.group:foo:1.0.0 and my.library.group:bar:3.1.4 [BrokenArtifactFile]
                 src/test/pkg/baz/Missing.java:2: error: No registered artifact signature file referenced class test.pkg.baz.Missing [NoArtifactData]
             """,
+            docStubs = true,
             stubs = arrayOf(
                 """
                 package test.pkg.foo;

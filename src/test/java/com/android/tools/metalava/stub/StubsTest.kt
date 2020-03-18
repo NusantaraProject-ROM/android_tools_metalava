@@ -1131,10 +1131,6 @@ class StubsTest : DriverTest() {
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public static class MeasureSpec {
                     public MeasureSpec() { throw new RuntimeException("Stub!"); }
-                    /**
-                     * @param size Value is between 0 and (1 << MeasureSpec.MODE_SHIFT) - 1 inclusive
-                     * @param mode Value is {@link android.view.View.View.MeasureSpec#UNSPECIFIED}, {@link android.view.View.View.MeasureSpec#EXACTLY}, or {@link android.view.View.View.MeasureSpec#AT_MOST}
-                     */
                     public static int makeMeasureSpec(@androidx.annotation.IntRange(from=0, to=0x40000000 - 1) int size, int mode) { throw new RuntimeException("Stub!"); }
                     public static final int AT_MOST = -2147483648; // 0x80000000
                     public static final int EXACTLY = 1073741824; // 0x40000000
@@ -1210,15 +1206,12 @@ class StubsTest : DriverTest() {
                 ),
                 requiresPermissionSource
             ),
-            warnings = "src/test/pkg/HiddenPermission.java:7: lint: Permission android.Manifest.permission.INTERACT_ACROSS_USERS required by method test.pkg.HiddenPermission.removeStickyBroadcast(Object) is hidden or removed [MissingPermission]",
+            warnings = "",
             source = """
                     package test.pkg;
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public abstract class HiddenPermission {
                     public HiddenPermission() { throw new RuntimeException("Stub!"); }
-                    /**
-                     * Requires android.Manifest.permission.INTERACT_ACROSS_USERS and {@link android.Manifest.permission#BROADCAST_STICKY}
-                     */
                     @androidx.annotation.RequiresPermission(allOf={"android.permission.INTERACT_ACROSS_USERS", android.Manifest.permission.BROADCAST_STICKY})
                     public abstract void removeStickyBroadcast(@androidx.annotation.RequiresPermission java.lang.Object intent);
                     }
