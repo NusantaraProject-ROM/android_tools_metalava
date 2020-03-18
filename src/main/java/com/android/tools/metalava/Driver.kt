@@ -242,7 +242,7 @@ private fun processFlags() {
         ApiGenerator.generate(apiLevelJars, androidApiLevelXml, codebase)
     }
 
-    if ((options.stubsDir != null || options.docStubsDir != null) && codebase.supportsDocumentation()) {
+    if (options.docStubsDir != null && codebase.supportsDocumentation()) {
         progress("\nEnhancing docs: ")
         val docAnalyzer = DocAnalyzer(codebase)
         docAnalyzer.enhance()
