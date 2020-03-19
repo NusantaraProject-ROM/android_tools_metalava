@@ -96,6 +96,7 @@ class DocAnalyzerTest : DriverTest() {
                 )
             ),
             checkCompilation = true,
+            docStubs = true,
             stubs = arrayOf(
                 """
                 package android.annotation;
@@ -132,6 +133,7 @@ class DocAnalyzerTest : DriverTest() {
                 )
             ),
             checkCompilation = true,
+            docStubs = true,
             warnings = "src/test/pkg/Foo.java:2: warning: Replaced Andriod with Android in the documentation for class test.pkg.Foo [Typo]",
             stubs = arrayOf(
                 """
@@ -325,6 +327,7 @@ class DocAnalyzerTest : DriverTest() {
                 ),
                 intRangeAnnotationSource
             ),
+            docStubs = true,
             checkCompilation = true,
             stubs = arrayOf(
                 """
@@ -374,6 +377,7 @@ class DocAnalyzerTest : DriverTest() {
                 workerThreadSource
             ),
             checkCompilation = true,
+            docStubs = true,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -418,6 +422,7 @@ class DocAnalyzerTest : DriverTest() {
             ),
             checkCompilation = true,
             warnings = "src/test/pkg/RangeTest.java:5: lint: Found more than one threading annotation on method test.pkg.RangeTest.test1(); the auto-doc feature does not handle this correctly [MultipleThreadAnnotations]",
+            docStubs = true,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -473,6 +478,7 @@ class DocAnalyzerTest : DriverTest() {
                 uiThreadSource
             ),
             checkCompilation = true,
+            docStubs = true,
             applyApiLevelsXml = """
                     <?xml version="1.0" encoding="utf-8"?>
                     <api version="2">
@@ -561,6 +567,7 @@ class DocAnalyzerTest : DriverTest() {
                 intDefAnnotationSource
             ),
             checkCompilation = true,
+            docStubs = true,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -619,6 +626,7 @@ class DocAnalyzerTest : DriverTest() {
                 intRangeAnnotationSource,
                 intDefAnnotationSource
             ),
+            docStubs = true,
             checkCompilation = true,
             stubs = arrayOf(
                 """
@@ -660,6 +668,7 @@ class DocAnalyzerTest : DriverTest() {
                 requiresPermissionSource
             ),
             checkCompilation = true,
+            docStubs = true,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -696,6 +705,7 @@ class DocAnalyzerTest : DriverTest() {
                 requiresPermissionSource
             ),
             checkCompilation = true,
+            docStubs = true,
             warnings = "src/test/pkg/RangeTest.java:4: lint: Cannot find permission field for \"MyPermission\" required by method test.pkg.RangeTest.test1() (may be hidden or removed) [MissingPermission]",
             stubs = arrayOf(
                 """
@@ -734,6 +744,7 @@ class DocAnalyzerTest : DriverTest() {
                 requiresPermissionSource
             ),
             checkCompilation = true,
+            docStubs = true,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -777,6 +788,7 @@ class DocAnalyzerTest : DriverTest() {
                 requiresPermissionSource
             ),
             checkCompilation = true,
+            docStubs = true,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -814,6 +826,7 @@ class DocAnalyzerTest : DriverTest() {
                 intRangeAnnotationSource
             ),
             checkCompilation = true,
+            docStubs = true,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -855,6 +868,7 @@ class DocAnalyzerTest : DriverTest() {
                 ),
                 requiresPermissionSource
             ),
+            docStubs = true,
             checkCompilation = true,
             stubs = arrayOf(
                 """
@@ -900,6 +914,7 @@ class DocAnalyzerTest : DriverTest() {
                 intRangeAnnotationSource
             ),
             checkCompilation = true,
+            docStubs = true,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -940,6 +955,7 @@ class DocAnalyzerTest : DriverTest() {
                 intRangeAnnotationSource
             ),
             checkCompilation = true,
+            docStubs = true,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -983,6 +999,7 @@ class DocAnalyzerTest : DriverTest() {
                 intRangeAnnotationSource
             ),
             checkCompilation = true,
+            docStubs = true,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -1021,6 +1038,7 @@ class DocAnalyzerTest : DriverTest() {
                 intRangeAnnotationSource
             ),
             checkCompilation = true,
+            docStubs = true,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -1059,6 +1077,7 @@ class DocAnalyzerTest : DriverTest() {
                 intRangeAnnotationSource
             ),
             checkCompilation = true,
+            docStubs = true,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -1114,6 +1133,7 @@ class DocAnalyzerTest : DriverTest() {
                 intRangeAnnotationSource
             ),
             checkCompilation = true,
+            docStubs = true,
             applyApiLevelsXml = """
                     <?xml version="1.0" encoding="utf-8"?>
                     <api version="2">
@@ -1180,6 +1200,7 @@ class DocAnalyzerTest : DriverTest() {
                     </api>
                     """,
             checkCompilation = true,
+            docStubs = true,
             stubs = arrayOf(
                 """
                 package android.hardware;
@@ -1244,6 +1265,7 @@ class DocAnalyzerTest : DriverTest() {
                     </api>
                     """,
             checkCompilation = true,
+            docStubs = true,
             stubs = arrayOf(
                 """
                 package android.pkg;
@@ -1297,6 +1319,7 @@ class DocAnalyzerTest : DriverTest() {
                     </api>
                     """,
             checkCompilation = true,
+            docStubs = true,
             stubs = arrayOf(
                 """
                 package android.pkg;
@@ -1382,6 +1405,7 @@ class DocAnalyzerTest : DriverTest() {
                     </api>
                     """,
             checkCompilation = true,
+            docStubs = true,
             stubs = arrayOf(
                 """
                 package android.pkg1;
@@ -1411,7 +1435,7 @@ class DocAnalyzerTest : DriverTest() {
                 package android.pkg3;
                 """
             ),
-            stubsSourceList = """
+            docStubsSourceList = """
                 TESTROOT/stubs/android/pkg1/package-info.java
                 TESTROOT/stubs/android/pkg1/Test1.java
                 TESTROOT/stubs/android/pkg1/Test2.java
@@ -1571,6 +1595,7 @@ class DocAnalyzerTest : DriverTest() {
                 requiresFeatureSource
             ),
             checkCompilation = true,
+            docStubs = true,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -1603,6 +1628,7 @@ class DocAnalyzerTest : DriverTest() {
 
                 requiresApiSource
             ),
+            docStubs = true,
             checkCompilation = false, // duplicate class: androidx.annotation.RequiresApi
             stubs = arrayOf(
                 """
@@ -1646,6 +1672,7 @@ class DocAnalyzerTest : DriverTest() {
                 )
             ),
             checkCompilation = true,
+            docStubs = true,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -1662,7 +1689,7 @@ class DocAnalyzerTest : DriverTest() {
                  * @deprecated Blah blah blah 1
                  */
                 @Deprecated
-                @android.annotation.NonNull
+                @androidx.annotation.NonNull
                 public java.lang.String toString() { throw new RuntimeException("Stub!"); }
                 /**
                  * My description
@@ -1779,6 +1806,7 @@ class DocAnalyzerTest : DriverTest() {
             ),
             checkCompilation = true,
             warnings = null, // be unopinionated about whether there should be warnings
+            docStubs = true,
             stubs = arrayOf(
                     """
                     package javax.security;
@@ -1914,7 +1942,7 @@ class DocAnalyzerTest : DriverTest() {
 
         check(
             extraArguments = arrayOf(
-                ARG_STUBS_SOURCE_LIST,
+                ARG_DOC_STUBS_SOURCE_LIST,
                 sourceList,
                 ARG_GENERATE_DOCUMENTATION,
                 javadoc.path,
@@ -1926,6 +1954,7 @@ class DocAnalyzerTest : DriverTest() {
                 androidJar,
                 "STUBS_SOURCE_LIST"
             ),
+            docStubs = true,
             sourceFiles = arrayOf(
                 java(
                     """
@@ -2029,6 +2058,7 @@ class DocAnalyzerTest : DriverTest() {
             warnings = """
                 src/test/pkg/ColumnTest.java:12: warning: Cannot find feature field for Cursor.NONEXISTENT required by field ColumnTest.BOGUS (may be hidden or removed) [MissingColumn]
                 """,
+            docStubs = true,
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -2039,19 +2069,19 @@ class DocAnalyzerTest : DriverTest() {
                 /**
                  * This constant represents a column name that can be used with a {@link android.content.ContentProvider} through a {@link android.content.ContentValues} or {@link android.database.Cursor} object. The values stored in this column are {@link Cursor.NONEXISTENT}, and are read-only and cannot be mutated.
                  */
-                @android.provider.Column(value=Cursor.NONEXISTENT, readOnly=true) public static final java.lang.String BOGUS = "bogus";
+                public static final java.lang.String BOGUS = "bogus";
                 /**
                  * This constant represents a column name that can be used with a {@link android.content.ContentProvider} through a {@link android.content.ContentValues} or {@link android.database.Cursor} object. The values stored in this column are {@link android.database.Cursor#FIELD_TYPE_STRING Cursor#FIELD_TYPE_STRING} .
                  */
-                @android.provider.Column(android.database.Cursor.FIELD_TYPE_STRING) public static final java.lang.String DATA = "_data";
+                public static final java.lang.String DATA = "_data";
                 /**
                  * This constant represents a column name that can be used with a {@link android.content.ContentProvider} through a {@link android.content.ContentValues} or {@link android.database.Cursor} object. The values stored in this column are {@link android.database.Cursor#FIELD_TYPE_BLOB Cursor#FIELD_TYPE_BLOB} , and are read-only and cannot be mutated.
                  */
-                @android.provider.Column(value=android.database.Cursor.FIELD_TYPE_BLOB, readOnly=true) public static final java.lang.String HASH = "_hash";
+                public static final java.lang.String HASH = "_hash";
                 /**
                  * This constant represents a column name that can be used with a {@link android.content.ContentProvider} through a {@link android.content.ContentValues} or {@link android.database.Cursor} object. The values stored in this column are {@link android.database.Cursor#FIELD_TYPE_STRING Cursor#FIELD_TYPE_STRING} , and are read-only and cannot be mutated.
                  */
-                @android.provider.Column(value=android.database.Cursor.FIELD_TYPE_STRING, readOnly=true) public static final java.lang.String TITLE = "title";
+                public static final java.lang.String TITLE = "title";
                 }
                 """
             )

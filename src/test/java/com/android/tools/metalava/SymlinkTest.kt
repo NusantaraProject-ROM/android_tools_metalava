@@ -95,26 +95,12 @@ class SymlinkTest : DriverTest() {
                     @SuppressWarnings({"unchecked", "deprecation", "all"})
                     public class Foo {
                     public Foo() { throw new RuntimeException("Stub!"); }
-                    /**
-                     * These are the docs for method1.
-                     * @param factor1 This value must never be {@code null}.
-                     * @param factor2 This value must never be {@code null}.
-                     * @return This value may be {@code null}.
-                     */
+                    /** These are the docs for method1. */
                     @android.annotation.Nullable
                     public java.lang.Double method1(@android.annotation.NonNull java.lang.Double factor1, @android.annotation.NonNull java.lang.Double factor2) { throw new RuntimeException("Stub!"); }
-                    /**
-                     * These are the docs for method2. It can sometimes return null.
-                     * @param factor1 This value must never be {@code null}.
-                     * @param factor2 This value must never be {@code null}.
-                     */
+                    /** These are the docs for method2. It can sometimes return null. */
                     @android.annotation.Nullable
                     public java.lang.Double method2(@android.annotation.NonNull java.lang.Double factor1, @android.annotation.NonNull java.lang.Double factor2) { throw new RuntimeException("Stub!"); }
-                    /**
-                     * @param factor1 This value must never be {@code null}.
-                     * @param factor2 This value must never be {@code null}.
-                     * @return This value may be {@code null}.
-                     */
                     @android.annotation.Nullable
                     public java.lang.Double method3(@android.annotation.NonNull java.lang.Double factor1, @android.annotation.NonNull java.lang.Double factor2) { throw new RuntimeException("Stub!"); }
                     }
