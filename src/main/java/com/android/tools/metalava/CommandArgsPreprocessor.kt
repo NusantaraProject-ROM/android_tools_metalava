@@ -151,7 +151,7 @@ private fun createRerunScriptBaseFilename(): String {
         DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss.SSS"))
 
     val uniqueInt = Random.nextInt(0, Int.MAX_VALUE)
-    val dir = System.getenv("TMP") ?: System.getenv("TEMP") ?: "/tmp"
+    val dir = System.getenv("METALAVA_TEMP") ?: System.getenv("TMP") ?: System.getenv("TEMP") ?: "/tmp"
     val file = "$PROGRAM_NAME-rerun-${timestamp}_$uniqueInt" // no extension
 
     return dir + File.separator + file
@@ -190,11 +190,21 @@ private fun generateRerunScript(stdout: PrintWriter, args: Array<String>) {
             |
             |export $ENV_VAR_METALAVA_DUMP_ARGV=1
             |
-            |${"$"}METALAVA_RUN_PREFIX $java \
+            |# Overwrite JVM options with ${"$"}METALAVA_JVM_OPTS, if available
+            |jvm_opts=(${"$"}METALAVA_JVM_OPTS)
+            |
+            |if [ ${"$"}{#jvm_opts[@]} -eq 0 ] ; then
             """.trimMargin())
+
         jvmOptions.forEach {
-            out.println("""        ${shellEscape(it)} \""")
+            out.println("""    jvm_opts+=(${shellEscape(it)})""")
         }
+
+        out.println("""
+            |fi
+            |
+            |${"$"}METALAVA_RUN_PREFIX $java "${"$"}{jvm_opts[@]}" \
+            """.trimMargin())
         out.println("""    -jar $jar \""")
 
         // Write the actual metalava options
