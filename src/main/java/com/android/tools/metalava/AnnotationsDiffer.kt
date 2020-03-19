@@ -116,7 +116,7 @@ class AnnotationsDiffer(
         val apiReference = ApiPredicate(ignoreShown = true)
         val apiEmit = apiFilter.and(predicate)
 
-        progress("\nWriting annotation diff file: ")
+        progress("Writing annotation diff file: ")
         try {
             val stringWriter = StringWriter()
             val writer = PrintWriter(stringWriter)
