@@ -398,7 +398,7 @@ METALAVA_APPEND_ARGS
         val stdout = StringWriter()
         val stderr = StringWriter()
         run(
-            args = args.toTypedArray(),
+            originalArgs = args.toTypedArray(),
             stdout = PrintWriter(stdout),
             stderr = PrintWriter(stderr)
         )
@@ -421,7 +421,7 @@ $FLAGS
         val stdout = StringWriter()
         val stderr = StringWriter()
         run(
-            args = args.toTypedArray(),
+            originalArgs = args.toTypedArray(),
             stdout = PrintWriter(stdout),
             stderr = PrintWriter(stderr)
         )
