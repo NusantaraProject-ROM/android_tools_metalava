@@ -190,6 +190,7 @@ private fun processFlags() {
     }
 
     options.subtractApi?.let {
+        progress("Subtracting API: ")
         subtractApi(codebase, it)
     }
 
@@ -534,6 +535,7 @@ fun checkCompatibility(
     codebase: Codebase,
     check: CheckRequest
 ) {
+    progress("Checking API compatibility ($check): ")
     val signatureFile = check.file
 
     val current =
@@ -799,6 +801,7 @@ private fun loadFromSources(): Codebase {
     AndroidApiChecks().check(codebase)
 
     if (options.checkApi) {
+        progress("API Lint: ")
         val localTimer = Stopwatch.createStarted()
         // See if we should provide a previous codebase to provide a delta from?
         val previousApiFile = options.checkApiBaselineApiFile
