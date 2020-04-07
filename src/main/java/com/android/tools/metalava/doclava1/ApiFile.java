@@ -896,7 +896,7 @@ public class ApiFile {
         }
 
         SourcePositionInfo pos() {
-            return new SourcePositionInfo(mFilename, mLine, 0);
+            return new SourcePositionInfo(mFilename, mLine);
         }
 
         public int getLine() {
