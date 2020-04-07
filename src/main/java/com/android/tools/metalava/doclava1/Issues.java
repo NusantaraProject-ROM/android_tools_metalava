@@ -16,7 +16,6 @@
 package com.android.tools.metalava.doclava1;
 
 import com.android.tools.metalava.Severity;
-import com.google.common.base.Splitter;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
@@ -35,9 +34,7 @@ public class Issues {
         @Nullable
         String fieldName;
 
-        private Severity level;
-        private final Severity defaultLevel;
-        boolean setByUser;
+        public final Severity defaultLevel;
 
         /**
          * The name of this issue if known
@@ -49,7 +46,7 @@ public class Issues {
          * When {@code level} is set to {@link Severity#INHERIT}, this is the parent from
          * which the issue will inherit its level.
          */
-        private final Issue parent;
+        public final Issue parent;
 
         /** Related rule, if any */
         public final String rule;
@@ -60,79 +57,31 @@ public class Issues {
         /** Applicable category */
         public final Category category;
 
-        private Issue(int code, Severity level) {
-            this(code, level, Category.UNKNOWN);
+        private Issue(int code, Severity defaultLevel) {
+            this(code, defaultLevel, Category.UNKNOWN);
         }
 
-        private Issue(int code, Severity level, Category category) {
-            this(code, level, null, category, null, null);
+        private Issue(int code, Severity defaultLevel, Category category) {
+            this(code, defaultLevel, null, category, null, null);
         }
 
-        private Issue(int code, Severity level, Category category, String rule) {
-            this(code, level, null, category, rule, null);
+        private Issue(int code, Severity defaultLevel, Category category, String rule) {
+            this(code, defaultLevel, null, category, rule, null);
         }
 
         private Issue(int code, Issue parent, Category category) {
             this(code, Severity.INHERIT, parent, category, null, null);
         }
 
-        private Issue(int code, Severity level, Issue parent, Category category,
+        private Issue(int code, Severity defaultLevel, Issue parent, Category category,
                       String rule, String explanation) {
             this.code = code;
-            this.level = level;
-            this.defaultLevel = level;
+            this.defaultLevel = defaultLevel;
             this.parent = parent;
             this.category = category;
             this.rule = rule;
             this.explanation = explanation;
             ISSUES.add(this);
-        }
-
-        /**
-         * Returns the implied level for this issue.
-         * <p>
-         * If the level is {@link Severity#INHERIT}, the level will be returned for the
-         * parent.
-         *
-         * @throws IllegalStateException if the level is {@link Severity#INHERIT} and the
-         *                               parent is {@code null}
-         */
-        public Severity getLevel() {
-            if (level == Severity.INHERIT) {
-                if (parent == null) {
-                    throw new IllegalStateException("Issue with level INHERIT must have non-null parent");
-                }
-                return parent.getLevel();
-            }
-            return level;
-        }
-
-        public boolean isInherit() {
-            return level == Severity.INHERIT;
-        }
-
-        public Issue getParent() {
-            return parent;
-        }
-
-        /**
-         * Sets the level.
-         * <p>
-         * Valid arguments are:
-         * <ul>
-         * <li>{@link Severity#HIDDEN}
-         * <li>{@link Severity#WARNING}
-         * <li>{@link Severity#ERROR}
-         * </ul>
-         *
-         * @param level the level to set
-         */
-        void setLevel(Severity level) {
-            if (level == Severity.INHERIT) {
-                throw new IllegalArgumentException("Issue level may not be set to INHERIT");
-            }
-            this.level = level;
-            this.setByUser = true;
         }
 
         public String toString() {
@@ -383,51 +332,14 @@ public class Issues {
         return nameToIssue.get(id);
     }
 
-    public static boolean setIssueLevel(String id, Severity level, boolean setByUser) {
-        if (id.contains(",")) { // Handle being passed in multiple comma separated id's
-            boolean ok = true;
-            for (String individualId : Splitter.on(',').trimResults().split(id)) {
-                ok = setIssueLevel(individualId, level, setByUser) && ok;
-            }
-            return ok;
-        }
-        int code = -1;
-        if (Character.isDigit(id.charAt(0))) {
-            code = Integer.parseInt(id);
-        }
-
-        Issue issue = nameToIssue.get(id);
-        if (issue == null) {
-            try {
-                int n = Integer.parseInt(id);
-                issue = idToIssue.get(n);
-            } catch (NumberFormatException ignore) {
+    @Nullable
+    public static Issue findIssueByIdIgnoringCase(String id) {
+        for (Issue e : ISSUES) {
+            if (id.equalsIgnoreCase(e.name)) {
+                return e;
             }
         }
-
-        if (issue == null) {
-            for (Issue e : ISSUES) {
-                if (e.code == code || id.equalsIgnoreCase(e.name)) {
-                    issue = e;
-                    break;
-                }
-            }
-        }
-
-        if (issue != null) {
-            issue.setLevel(level);
-            issue.setByUser = setByUser;
-            return true;
-        }
-        return false;
-    }
-
-    // Primary needed by unit tests; ensure that a previous test doesn't influence
-    // a later one
-    public static void resetLevels() {
-        for (Issue issue : ISSUES) {
-            issue.level = issue.defaultLevel;
-        }
+        return null;
     }
 }
 

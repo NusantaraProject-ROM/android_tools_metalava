@@ -265,7 +265,7 @@ class Baseline(
         for (entry in list) {
             val count = entry.value
             val issue = entry.key
-            writer.println("    ${String.format("%5d", count)} ${String.format("%-30s", issue.name)} ${issue.level}")
+            writer.println("    ${String.format("%5d", count)} ${String.format("%-30s", issue.name)} ${configuration.getSeverity(issue)}")
             total += count
         }
         writer.println("" +
