@@ -107,6 +107,14 @@ public class Issues {
             return level;
         }
 
+        public boolean isInherit() {
+            return level == Severity.INHERIT;
+        }
+
+        public Issue getParent() {
+            return parent;
+        }
+
         /**
          * Sets the level.
          * <p>
