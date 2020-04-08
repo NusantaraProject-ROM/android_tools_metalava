@@ -25,7 +25,13 @@ class ErrorConfiguration {
 
     /** Returns the severity of the given issue */
     fun getSeverity(issue: Issues.Issue): Severity {
-        return overrides[issue] ?: issue.level
+        overrides[issue]?.let { return it }
+        // TODO(b/153446763): We cannot just use the inherit logic in issue.level because that
+        //  doesn't know if the parent has an override applied.
+        if (issue.isInherit) {
+            return getSeverity(issue.parent)
+        }
+        return issue.level
     }
 
     private fun setSeverity(issue: Issues.Issue, severity: Severity) {

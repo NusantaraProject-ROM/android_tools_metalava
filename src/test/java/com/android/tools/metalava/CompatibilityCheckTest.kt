@@ -1812,7 +1812,7 @@ CompatibilityCheckTest : DriverTest() {
             includeSystemApiAnnotations = true,
             warnings = """
                 TESTROOT/current-api.txt:4: error: Removed method android.rolecontrollerservice.RoleControllerService.onClearRoleHolders() [RemovedMethod]
-                src/android/rolecontrollerservice/RoleControllerService.java:7: warning: Added method android.rolecontrollerservice.RoleControllerService.onGrantDefaultRoles() to the system API [AddedAbstractMethod]
+                src/android/rolecontrollerservice/RoleControllerService.java:7: error: Added method android.rolecontrollerservice.RoleControllerService.onGrantDefaultRoles() to the system API [AddedAbstractMethod]
                 """,
             sourceFiles = arrayOf(
                 java(
@@ -2176,6 +2176,41 @@ CompatibilityCheckTest : DriverTest() {
                         public native abstract void myMethod2(); // Note that Errors.CHANGE_NATIVE is hidden by default
                         public static void myMethod3() {}
                         public void myMethod4() {}
+                    }
+                    """
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `Test remove deprecated API is an error`() {
+        // Regression test for b/145745855
+        check(
+            warnings = """
+                TESTROOT/released-api.txt:6: error: Removed deprecated class test.pkg.DeprecatedClass [RemovedDeprecatedClass]
+                TESTROOT/released-api.txt:3: error: Removed deprecated constructor test.pkg.SomeClass() [RemovedDeprecatedMethod]
+                TESTROOT/released-api.txt:4: error: Removed deprecated method test.pkg.SomeClass.deprecatedMethod() [RemovedDeprecatedMethod]
+                """,
+            checkCompatibilityApiReleased = """
+                package test.pkg {
+                  public class SomeClass {
+                      ctor deprecated public SomeClass();
+                      method deprecated public void deprecatedMethod();
+                  }
+                  deprecated public class DeprecatedClass {
+                      ctor deprecated public DeprecatedClass();
+                      method deprecated public void deprecatedMethod();
+                  }
+                }
+                """,
+            sourceFiles = arrayOf(
+                java(
+                    """
+                    package test.pkg;
+
+                    public class SomeClass {
+                        private SomeClass() {}
                     }
                     """
                 )
@@ -2964,7 +2999,7 @@ CompatibilityCheckTest : DriverTest() {
         // Regression test for 134754815
         check(
             warnings = """
-            src/androidx/room/Relation.java:5: warning: Added method androidx.room.Relation.IHaveNoDefault() [AddedAbstractMethod]
+            src/androidx/room/Relation.java:5: error: Added method androidx.room.Relation.IHaveNoDefault() [AddedAbstractMethod]
             """,
             compatibilityMode = false,
             inputKotlinStyleNulls = true,
