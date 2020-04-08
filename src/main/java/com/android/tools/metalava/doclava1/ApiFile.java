@@ -57,10 +57,6 @@ import static kotlin.text.Charsets.UTF_8;
 // metalava's richer files, e.g. annotations)
 //
 public class ApiFile {
-    public static TextCodebase parseApi(File file) throws ApiParseException {
-        return parseApi(file, null);
-    }
-
     public static TextCodebase parseApi(File file,
                                         Boolean kotlinStyleNulls) throws ApiParseException {
         try {
@@ -71,7 +67,6 @@ public class ApiFile {
         }
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
     @VisibleForTesting
     public static TextCodebase parseApi(String filename, String apiText,
                                         Boolean kotlinStyleNulls) throws ApiParseException {
