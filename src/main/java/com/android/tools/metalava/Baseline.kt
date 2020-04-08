@@ -224,11 +224,11 @@ class Baseline(
             sb.append(format.header())
             sb.append(headerComment)
 
-            map.keys.asSequence().sortedBy { it.name ?: it.code.toString() }.forEach { issue ->
+            map.keys.asSequence().sortedBy { it.name }.forEach { issue ->
                 val idMap = map[issue]
                 idMap?.keys?.sorted()?.forEach { elementId ->
                     val message = idMap[elementId]!!
-                    sb.append(issue.name ?: issue.code.toString()).append(": ")
+                    sb.append(issue.name).append(": ")
                     sb.append(elementId)
                     sb.append(":\n    ")
                     sb.append(message).append('\n')
@@ -260,7 +260,7 @@ class Baseline(
             "    Count Issue Id                       Severity\n" +
             "    ---------------------------------------------\n")
         val list = counts.entries.toMutableList()
-        list.sortWith(compareBy({ -it.value }, { it.key.name ?: it.key.code.toString() }))
+        list.sortWith(compareBy({ -it.value }, { it.key.name }))
         var total = 0
         for (entry in list) {
             val count = entry.value

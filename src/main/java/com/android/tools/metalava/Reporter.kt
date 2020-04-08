@@ -328,7 +328,7 @@ open class Reporter(private val rootFolder: File? = File("").absoluteFile) {
             sb.append(resetTerminal())
             sb.append(message)
             id?.let {
-                sb.append(" [").append(if (it.name != null) it.name else it.code).append("]")
+                sb.append(" [").append(it.name).append("]")
             }
         } else {
             if (!omitLocations) {
@@ -344,7 +344,7 @@ open class Reporter(private val rootFolder: File? = File("").absoluteFile) {
                     INHERIT, HIDDEN -> {
                     }
                 }
-                id?.let { sb.append(if (it.name != null) it.name else it.code).append(": ") }
+                id?.let { sb.append(it.name).append(": ") }
                 sb.append(message)
             } else {
                 when (severity) {
@@ -358,13 +358,9 @@ open class Reporter(private val rootFolder: File? = File("").absoluteFile) {
                 sb.append(message)
                 id?.let {
                     sb.append(" [")
-                    if (it.name != null) {
-                        sb.append(it.name)
-                    }
-                    if (compatibility.includeExitCode || it.name == null) {
-                        if (it.name != null) {
-                            sb.append(":")
-                        }
+                    sb.append(it.name)
+                    if (compatibility.includeExitCode) {
+                        sb.append(":")
                         sb.append(it.code)
                     }
                     sb.append("]")
