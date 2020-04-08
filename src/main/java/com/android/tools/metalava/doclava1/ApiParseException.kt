@@ -19,28 +19,14 @@ class ApiParseException : Exception {
     private var file: String? = null
     private var line = 0
 
-    internal constructor(message: String) : super(message) {}
-    internal constructor(message: String, cause: Exception?) : super(message, cause) {
-        if (cause is ApiParseException) {
-            file = cause.file
-            line = cause.line
-        }
-    }
-
-    internal constructor(message: String, tokenizer: ApiFile.Tokenizer) : this(
-        message,
-        tokenizer.fileName,
-        tokenizer.line
-    )
-
-    private constructor(message: String, file: String?, line: Int) : super(
-        message
-    ) {
+    internal constructor(message: String) : super(message)
+    internal constructor(message: String, file: String, cause: Exception?) : super(message, cause) {
         this.file = file
-        this.line = line
     }
-
-    internal constructor(message: String, line: Int) : this(message, null, line)
+    internal constructor(message: String, tokenizer: ApiFile.Tokenizer) : super(message) {
+        file = tokenizer.fileName
+        line = tokenizer.line
+    }
 
     override val message: String
         get() {
