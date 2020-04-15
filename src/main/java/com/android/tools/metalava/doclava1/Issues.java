@@ -237,6 +237,8 @@ public class Issues {
     public static final Issue INFIX_REMOVAL = new Issue(138, Severity.ERROR, Category.COMPATIBILITY);
     public static final Issue VARARG_REMOVAL = new Issue(139, Severity.ERROR, Category.COMPATIBILITY);
     public static final Issue ADD_SEALED = new Issue(140, Severity.ERROR, Category.COMPATIBILITY);
+    public static final Issue DEFAULT_VALUE_CHANGE = new Issue(141, Severity.ERROR, Category.COMPATIBILITY); // Formerly 144, then 382
+
     public static final Issue ANNOTATION_EXTRACTION = new Issue(146, Severity.ERROR);
     public static final Issue SUPERFLUOUS_PREFIX = new Issue(147, Severity.WARNING);
     public static final Issue HIDDEN_TYPEDEF_CONSTANT = new Issue(148, Severity.ERROR);
@@ -343,7 +345,6 @@ public class Issues {
     public static final Issue UNIQUE_KOTLIN_OPERATOR = new Issue(379, Severity.ERROR, Category.API_LINT);
     public static final Issue SAM_SHOULD_BE_LAST = new Issue(380, Severity.WARNING, Category.API_LINT); // Formerly 142
     public static final Issue MISSING_JVMSTATIC = new Issue(381, Severity.WARNING, Category.API_LINT); // Formerly 143
-    public static final Issue DEFAULT_VALUE_CHANGE = new Issue(382, Severity.ERROR, Category.API_LINT); // Formerly 144
     public static final Issue DOCUMENT_EXCEPTIONS = new Issue(383, Severity.ERROR, Category.API_LINT); // Formerly 145
     public static final Issue FORBIDDEN_SUPER_CLASS = new Issue(384, Severity.ERROR, Category.API_LINT);
     public static final Issue MISSING_NULLABILITY = new Issue(385, Severity.ERROR, Category.API_LINT);
