@@ -307,10 +307,10 @@ public class ApiFile {
             if (token.startsWith("@")) {
                 // Annotation
                 String annotation = token;
-                if (annotation.indexOf('.') == -1) {
-                    // Restore annotations that were shortened on export
-                    annotation = AnnotationItem.Companion.unshortenAnnotation(annotation);
-                }
+
+                // Restore annotations that were shortened on export
+                annotation = AnnotationItem.Companion.unshortenAnnotation(annotation);
+
                 token = tokenizer.requireToken();
                 if (token.equals("(")) {
                     // Annotation arguments; potentially nested
