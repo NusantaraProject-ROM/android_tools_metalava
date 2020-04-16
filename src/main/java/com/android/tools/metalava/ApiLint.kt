@@ -211,7 +211,10 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
                 options.stdout.println("""
                 ************************************************************
                 Your API changes are triggering API Lint warnings or errors.
-                To make these errors go away, you have two choices:
+                To make these errors go away, fix the code according to the
+                error and/or warning messages above.
+
+                If it's not possible to do so, there are two workarounds:
 
                 1. You can suppress the errors with @SuppressLint("<id>")
                 2. You can update the baseline by executing the following
