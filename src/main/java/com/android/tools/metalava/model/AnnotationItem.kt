@@ -546,6 +546,9 @@ interface AnnotationItem {
                     source.startsWith("@TargetApi") ||
                     source.startsWith("@SuppressLint") ->
                     "@android.annotation." + source.substring(1)
+                // If the first character of the name (after "@") is lower-case, then
+                // assume it's a package name, so no need to shorten it.
+                source.startsWith("@") && source[1].isLowerCase() -> source
                 else -> {
                     "@androidx.annotation." + source.substring(1)
                 }
