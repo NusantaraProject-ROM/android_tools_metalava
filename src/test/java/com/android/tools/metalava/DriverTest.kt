@@ -278,7 +278,12 @@ abstract class DriverTest {
         @Language("JAVA") mergeJavaStubAnnotations: String? = null,
         /** Inclusion annotations to merge in (in Java stub format) */
         @Language("JAVA") mergeInclusionAnnotations: String? = null,
-        /** An optional API signature file content to load **instead** of Java/Kotlin source files */
+        /** Otional API signature files content to load **instead** of Java/Kotlin source files */
+        @Language("TEXT") signatureSources: Array<String> = emptyArray(),
+        /**
+         * An otional API signature file content to load **instead** of Java/Kotlin source files.
+         * This is added to [signatureSources]. This argument exists for backward compatibility.
+         */
         @Language("TEXT") signatureSource: String? = null,
         /** An optional API jar file content to load **instead** of Java/Kotlin source files */
         apiJar: File? = null,
@@ -451,20 +456,25 @@ abstract class DriverTest {
         }
 
         val sourceList =
-            if (signatureSource != null) {
+            if (!signatureSources.isEmpty() || signatureSource != null) {
                 sourcePathDir.mkdirs()
-                assert(sourceFiles.isEmpty()) { "Shouldn't combine sources with signature file loads" }
-                val signatureFile = File(project, "load-api.txt")
-                signatureFile.writeText(signatureSource.trimIndent())
-                if (includeStrippedSuperclassWarnings) {
-                    arrayOf(signatureFile.path)
-                } else {
-                    arrayOf(
-                        signatureFile.path,
-                        ARG_HIDE,
-                        "HiddenSuperclass"
-                    ) // Suppress warning #111
+
+                // if signatureSource is set, add it to signatureSources.
+                val sources = signatureSources.toMutableList()
+                signatureSource?. let { sources.add(it) }
+
+                var num = 0
+                var args = mutableListOf<String>()
+                sources.forEach { file ->
+                    val signatureFile = File(project, "load-api${ if (++num == 1) "" else num }.txt")
+                    signatureFile.writeText(file.trimIndent())
+                    args.add(signatureFile.path)
                 }
+                if (!includeStrippedSuperclassWarnings) {
+                    args.add(ARG_HIDE)
+                    args.add("HiddenSuperclass") // Suppress warning #111
+                }
+                args.toTypedArray()
             } else if (apiJar != null) {
                 sourcePathDir.mkdirs()
                 assert(sourceFiles.isEmpty()) { "Shouldn't combine sources with API jar file loads" }
