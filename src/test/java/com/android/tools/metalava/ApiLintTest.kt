@@ -1281,9 +1281,11 @@ class ApiLintTest : DriverTest() {
     @Test
     fun `Check exception related issues`() {
         check(
-            extraArguments = arrayOf(ARG_API_LINT,
+            extraArguments = arrayOf(
+                ARG_API_LINT,
                 // Conflicting advice:
-                ARG_HIDE, "BannedThrow"),
+                ARG_HIDE, "BannedThrow"
+            ),
             compatibilityMode = false,
             warnings = """
                 src/android/pkg/MyClass.java:6: error: Methods must not throw generic exceptions (`java.lang.Exception`) [GenericException] [Rule S1 in go/android-api-guidelines]
@@ -2682,7 +2684,8 @@ class ApiLintTest : DriverTest() {
                         }
                     """
                 ),
-                kotlin("""
+                kotlin(
+                    """
                     package android.pkg
 
                     object Bar

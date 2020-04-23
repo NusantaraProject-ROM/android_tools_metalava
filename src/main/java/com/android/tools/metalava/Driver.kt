@@ -114,7 +114,7 @@ fun run(
 
         processFlags()
 
-        if (reporter.hasErrors() && !options.passBaselineUpdates) {
+        if (options.allReporters.any { it.hasErrors() } && !options.passBaselineUpdates) {
             exitCode = -1
         }
         exitValue = true
@@ -133,16 +133,24 @@ fun run(
         Disposer.dispose(LintCoreApplicationEnvironment.get().parentDisposable)
     }
 
-    if (options.updateBaseline) {
+    // Update and close all baseline files.
+    options.allBaselines.forEach { baseline ->
         if (options.verbose) {
-            options.baseline?.dumpStats(options.stdout)
+            baseline.dumpStats(options.stdout)
         }
-        if (!options.quiet) {
-            stdout.println("$PROGRAM_NAME wrote updated baseline to ${options.baseline?.updateFile}")
+        if (baseline.close()) {
+            if (!options.quiet) {
+                stdout.println("$PROGRAM_NAME wrote updated baseline to ${baseline.updateFile}")
+            }
         }
     }
-    options.baseline?.close()
+
     options.reportEvenIfSuppressedWriter?.close()
+
+    // Show failure messages, if any.
+    options.allReporters.forEach {
+        it.writeErrorMessage(stderr)
+    }
 
     stdout.flush()
     stderr.flush()
@@ -794,8 +802,10 @@ private fun loadFromSources(): Codebase {
     options.nullabilityAnnotationsValidator?.report()
     analyzer.handleStripping()
 
+    val apiLintReporter = options.reporterApiLint
+
     if (options.checkKotlinInterop) {
-        KotlinInteropChecks().check(codebase)
+        KotlinInteropChecks(apiLintReporter).check(codebase)
     }
 
     // General API checks for Android APIs
@@ -815,8 +825,8 @@ private fun loadFromSources(): Codebase {
                     kotlinStyleNulls = options.inputKotlinStyleNulls
                 )
             }
-        ApiLint.check(codebase, previous)
-        progress("$PROGRAM_NAME ran api-lint in ${localTimer.elapsed(SECONDS)} seconds")
+        ApiLint.check(codebase, previous, apiLintReporter)
+        progress("$PROGRAM_NAME ran api-lint in ${localTimer.elapsed(SECONDS)} seconds with ${apiLintReporter.getBaselineDescription()}")
     }
 
     // Compute default constructors (and add missing package private constructors
