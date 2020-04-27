@@ -67,7 +67,7 @@ public class ApiFile {
             String apiText = Files.asCharSource(file, UTF_8).read();
             return parseApi(file.getPath(), apiText, kotlinStyleNulls);
         } catch (IOException ex) {
-            throw new ApiParseException("Error reading API file", ex);
+            throw new ApiParseException("Error reading API file", file.getPath(), ex);
         }
     }
 
@@ -946,7 +946,7 @@ public class ApiFile {
             if (token != null) {
                 return token;
             } else {
-                throw new ApiParseException("Unexpected end of file", mLine);
+                throw new ApiParseException("Unexpected end of file", this);
             }
         }
 
@@ -989,11 +989,11 @@ public class ApiFile {
                 int state = STATE_BEGIN;
                 while (true) {
                     if (mPos >= mBuf.length) {
-                        throw new ApiParseException("Unexpected end of file for \" starting at " + line, mLine);
+                        throw new ApiParseException("Unexpected end of file for \" starting at " + line, this);
                     }
                     final char k = mBuf[mPos];
                     if (k == '\n' || k == '\r') {
-                        throw new ApiParseException("Unexpected newline for \" starting at " + line + " in " + mFilename, mLine);
+                        throw new ApiParseException("Unexpected newline for \" starting at " + line +" in " + mFilename, this);
                     }
                     mPos++;
                     switch (state) {
@@ -1052,7 +1052,7 @@ public class ApiFile {
                 } while (mPos < mBuf.length
                     && ((!isSpace(mBuf[mPos]) && !isSeparator(mBuf[mPos], parenIsSep)) || genericDepth != 0));
                 if (mPos >= mBuf.length) {
-                    throw new ApiParseException("Unexpected end of file for \" starting at " + line, mLine);
+                    throw new ApiParseException("Unexpected end of file for \" starting at " + line, this);
                 }
                 mCurrent = new String(mBuf, start, mPos - start);
                 return mCurrent;
