@@ -168,17 +168,19 @@ private fun processFlags() {
 
     processNonCodebaseFlags()
 
+    val sources = options.sources
     val codebase =
-        if (options.sources.size == 1 && options.sources[0].path.endsWith(DOT_TXT)) {
-            SignatureFileLoader.load(
-                file = options.sources[0],
-                kotlinStyleNulls = options.inputKotlinStyleNulls
-            )
+        if (sources.size >= 1 && sources[0].path.endsWith(DOT_TXT)) {
+            // Make sure all the source files have .txt extensions.
+            sources.firstOrNull { !it.path.endsWith(DOT_TXT) }?. let {
+                throw DriverException("Inconsistent input file types: The first file is of $DOT_TXT, but detected different extension in ${it.path}")
+            }
+            SignatureFileLoader.loadFiles(sources, options.inputKotlinStyleNulls)
         } else if (options.apiJar != null) {
             loadFromJarFile(options.apiJar!!)
-        } else if (options.sources.size == 1 && options.sources[0].path.endsWith(DOT_JAR)) {
-            loadFromJarFile(options.sources[0])
-        } else if (options.sources.isNotEmpty() || options.sourcePath.isNotEmpty()) {
+        } else if (sources.size == 1 && sources[0].path.endsWith(DOT_JAR)) {
+            loadFromJarFile(sources[0])
+        } else if (sources.isNotEmpty() || options.sourcePath.isNotEmpty()) {
             loadFromSources()
         } else {
             return
@@ -382,7 +384,6 @@ private fun processFlags() {
     if (options.docStubsDir == null && options.stubsDir == null) {
         val writeStubsFile: (File) -> Unit = { file ->
             val root = File("").absoluteFile
-            val sources = options.sources
             val rootPath = root.path
             val contents = sources.joinToString(" ") {
                 val path = it.path
@@ -907,6 +908,16 @@ fun loadFromJarFile(apiJar: File, manifest: File? = null, preFiltered: Boolean =
     analyzer.generateInheritedStubs(apiEmit, apiReference)
     codebase.bindingContext = trace.bindingContext
     return codebase
+}
+
+private fun loadFromApiSignatureFiles(files: List<File>, kotlinStyleNulls: Boolean? = null): Codebase {
+    // Make sure all the source files have .txt extensions.
+    files.forEach { file ->
+        if (!file.path.endsWith(DOT_TXT)) {
+                throw DriverException("Inconsistent input file types: The first file is of .$DOT_TXT, but detected different extension in ${file.path}")
+        }
+    }
+    return SignatureFileLoader.loadFiles(files, kotlinStyleNulls)
 }
 
 private fun createProjectEnvironment(): LintCoreProjectEnvironment {
