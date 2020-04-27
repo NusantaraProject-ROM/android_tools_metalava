@@ -2087,4 +2087,51 @@ class DocAnalyzerTest : DriverTest() {
             )
         )
     }
+
+    @Test
+    fun `Trailing comment close`() {
+        check(
+            sourceFiles = arrayOf(
+                java(
+                    """
+                    package android.widget;
+
+                    public class Toolbar {
+                        /**
+                        * Existing documentation for {@linkplain #getCurrentContentInsetEnd()} here. */
+                        public int getCurrentContentInsetEnd() {
+                            return 0;
+                        }
+                    }
+                    """
+                ),
+                intRangeAnnotationSource
+            ),
+            checkCompilation = true,
+            docStubs = true,
+            applyApiLevelsXml = """
+                    <?xml version="1.0" encoding="utf-8"?>
+                    <api version="2">
+                        <class name="android/widget/Toolbar" since="21">
+                            <method name="getCurrentContentInsetEnd()I" since="24"/>
+                        </class>
+                    </api>
+                    """,
+            stubs = arrayOf(
+                """
+                package android.widget;
+                /** @apiSince 21 */
+                @SuppressWarnings({"unchecked", "deprecation", "all"})
+                public class Toolbar {
+                public Toolbar() { throw new RuntimeException("Stub!"); }
+                /**
+                 * Existing documentation for {@linkplain #getCurrentContentInsetEnd()} here.
+                 * @apiSince 24
+                 */
+                public int getCurrentContentInsetEnd() { throw new RuntimeException("Stub!"); }
+                }
+                """
+            )
+        )
+    }
 }
