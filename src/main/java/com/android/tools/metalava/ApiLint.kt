@@ -53,6 +53,7 @@ import com.android.tools.metalava.doclava1.Issues.ALL_UPPER
 import com.android.tools.metalava.doclava1.Issues.ANDROID_URI
 import com.android.tools.metalava.doclava1.Issues.ARRAY_RETURN
 import com.android.tools.metalava.doclava1.Issues.AUTO_BOXING
+import com.android.tools.metalava.doclava1.Issues.BAD_FUTURE
 import com.android.tools.metalava.doclava1.Issues.BANNED_THROW
 import com.android.tools.metalava.doclava1.Issues.BUILDER_SET_STYLE
 import com.android.tools.metalava.doclava1.Issues.CALLBACK_INTERFACE
@@ -282,6 +283,7 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
         checkBitSet(type, typeString, item)
         checkHasNullability(item)
         checkUri(typeString, item)
+        checkFutures(typeString, item)
     }
 
     private fun checkClass(
@@ -3416,6 +3418,13 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
                 "${cls.simpleName()} should not extend `Activity`. Activity subclasses are impossible to compose. Expose a composable API instead."
             )
         }
+        badFutureTypes.firstOrNull { cls.extendsOrImplements(it) }?.let {
+            val extendOrImplement = if (cls.extends(it)) "extend" else "implement"
+            report(
+                BAD_FUTURE, cls, "${cls.simpleName()} should not $extendOrImplement `$it`." +
+                    " In AndroidX, use (but do not extend) ListenableFuture. In platform, use a combination of Consumer<T>, Executor, and CancellationSignal`."
+            )
+        }
     }
 
     private fun checkTypedef(cls: ClassItem) {
@@ -3458,6 +3467,15 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
         }
     }
 
+    private fun checkFutures(typeString: String, item: Item) {
+        badFutureTypes.firstOrNull { typeString.contains(it) }?.let {
+            report(
+                BAD_FUTURE, item, "Use ListenableFuture (library), " +
+                    "or a combination of Consumer<T>, Executor, and CancellationSignal (platform) instead of $it (${item.describe()})"
+            )
+        }
+    }
+
     private fun isInteresting(cls: ClassItem): Boolean {
         val name = cls.qualifiedName()
         for (prefix in options.checkApiIgnorePrefix) {
@@ -3475,6 +3493,11 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
         )
 
         private val badUriTypes = listOf("java.net.URL", "java.net.URI", "android.net.URL")
+
+        private val badFutureTypes = listOf(
+            "java.util.concurrent.CompletableFuture",
+            "java.util.concurrent.Future"
+        )
 
         /**
          * Classes for manipulating file descriptors directly, where using ParcelFileDescriptor
