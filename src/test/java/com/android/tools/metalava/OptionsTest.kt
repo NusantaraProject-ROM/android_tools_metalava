@@ -16,6 +16,8 @@
 
 package com.android.tools.metalava
 
+import com.android.tools.metalava.doclava1.Issues
+import com.android.tools.metalava.model.defaultConfiguration
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.io.PrintWriter
@@ -436,6 +438,71 @@ $DESCRIPTION
 $FLAGS
 
 """.trimIndent(), stdout.toString()
+        )
+    }
+
+    @Test
+    fun `Test issue severity options`() {
+        check(
+            extraArguments = arrayOf(
+                "--hide",
+                "StartWithLower",
+                "--lint",
+                "EndsWithImpl",
+                "--warning",
+                "StartWithUpper",
+                "--error",
+                "ArrayReturn"
+            )
+        )
+        assertEquals(Severity.HIDDEN, defaultConfiguration.getSeverity(Issues.START_WITH_LOWER))
+        assertEquals(Severity.LINT, defaultConfiguration.getSeverity(Issues.ENDS_WITH_IMPL))
+        assertEquals(Severity.WARNING, defaultConfiguration.getSeverity(Issues.START_WITH_UPPER))
+        assertEquals(Severity.ERROR, defaultConfiguration.getSeverity(Issues.ARRAY_RETURN))
+    }
+
+    @Test
+    fun `Test multiple issue severity options`() {
+        check(
+            extraArguments = arrayOf("--hide", "StartWithLower,StartWithUpper,ArrayReturn")
+        )
+        assertEquals(Severity.HIDDEN, defaultConfiguration.getSeverity(Issues.START_WITH_LOWER))
+        assertEquals(Severity.HIDDEN, defaultConfiguration.getSeverity(Issues.START_WITH_UPPER))
+        assertEquals(Severity.HIDDEN, defaultConfiguration.getSeverity(Issues.ARRAY_RETURN))
+    }
+
+    @Test
+    fun `Test issue severity options with inheriting issues`() {
+        check(
+            extraArguments = arrayOf("--error", "RemovedClass")
+        )
+        assertEquals(Severity.ERROR, defaultConfiguration.getSeverity(Issues.REMOVED_CLASS))
+        assertEquals(Severity.ERROR, defaultConfiguration.getSeverity(Issues.REMOVED_DEPRECATED_CLASS))
+    }
+
+    @Test
+    fun `Test issue severity options by numeric id`() {
+        check(
+            extraArguments = arrayOf("--hide", "366"),
+            warnings = "warning: Issue lookup by numeric id is deprecated, use --hide ArrayReturn instead of --hide 366 [DeprecatedOption]"
+        )
+        assertEquals(Severity.HIDDEN, defaultConfiguration.getSeverity(Issues.ARRAY_RETURN))
+    }
+
+    @Test
+    fun `Test issue severity options with case insensitive names`() {
+        check(
+            extraArguments = arrayOf("--hide", "arrayreturn"),
+            warnings = "warning: Case-insensitive issue matching is deprecated, use --hide ArrayReturn instead of --hide arrayreturn [DeprecatedOption]"
+        )
+        assertEquals(Severity.HIDDEN, defaultConfiguration.getSeverity(Issues.ARRAY_RETURN))
+    }
+
+    @Test
+    fun `Test issue severity options with non-existing issue`() {
+        check(
+            extraArguments = arrayOf("--hide", "ThisIssueDoesNotExist"),
+            expectedFail = "Unknown issue id: --hide ThisIssueDoesNotExist"
         )
     }
 }
