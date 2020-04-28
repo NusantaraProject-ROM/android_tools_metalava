@@ -31,8 +31,8 @@ import com.android.tools.lint.checks.infrastructure.TestFiles
 import com.android.tools.lint.checks.infrastructure.TestFiles.java
 import com.android.tools.lint.checks.infrastructure.stripComments
 import com.android.tools.metalava.doclava1.ApiFile
-import com.android.tools.metalava.doclava1.Issues
 import com.android.tools.metalava.model.SUPPORT_TYPE_USE_ANNOTATIONS
+import com.android.tools.metalava.model.defaultConfiguration
 import com.android.tools.metalava.model.parseDocument
 import com.android.utils.FileUtils
 import com.android.utils.SdkUtils
@@ -424,7 +424,7 @@ abstract class DriverTest {
                 "Can't specify both compatibilityMode and mergeInclusionAnnotations"
             )
         }
-        Issues.resetLevels()
+        defaultConfiguration.reset()
 
         @Suppress("NAME_SHADOWING")
         val expectedFail = expectedFail ?: if ((checkCompatibilityApi != null ||
