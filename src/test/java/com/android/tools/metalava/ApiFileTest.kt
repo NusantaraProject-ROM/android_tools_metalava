@@ -3759,4 +3759,223 @@ class ApiFileTest : DriverTest() {
 
         )
     }
+
+    @Test
+    fun `Test merging API signature files`() {
+        val source1 = """
+            package Test.pkg {
+              public final class Class1 {
+                method public void method1();
+              }
+            }
+            package Test.pkg1 {
+              public final class Class1 {
+                method public void method1();
+              }
+            }
+                    """
+        val source2 = """
+            package Test.pkg {
+              public final class Class2 {
+                method public void method1(String);
+              }
+            }
+            package Test.pkg2 {
+              public final class Class1 {
+                method public void method1(String, String);
+              }
+            }
+                    """
+        val expected = """
+            package Test.pkg {
+              public final class Class1 {
+                method public void method1();
+              }
+              public final class Class2 {
+                method public void method1(java.lang.String);
+              }
+            }
+            package Test.pkg1 {
+              public final class Class1 {
+                method public void method1();
+              }
+            }
+            package Test.pkg2 {
+              public final class Class1 {
+                method public void method1(java.lang.String, java.lang.String);
+              }
+            }
+                    """
+        check(
+            signatureSources = arrayOf(source1, source2),
+            api = expected
+        )
+    }
+
+    val MERGE_TEST_SOURCE_1 = """
+            package test.pkg {
+              public final class BaseClass {
+                method public void method1();
+              }
+            }
+                    """
+    val MERGE_TEST_SOURCE_2 = """
+            package test.pkg {
+              public final class SubClass extends test.pkg.BaseClass {
+              }
+            }
+                    """
+    val MERGE_TEST_EXPECTED = """
+            package test.pkg {
+              public final class BaseClass {
+                method public void method1();
+              }
+              public final class SubClass extends test.pkg.BaseClass {
+              }
+            }
+            """
+
+    @Test
+    fun `Test merging API signature files, one refer to another`() {
+        check(
+            signatureSources = arrayOf(MERGE_TEST_SOURCE_1, MERGE_TEST_SOURCE_2),
+            api = MERGE_TEST_EXPECTED
+        )
+    }
+
+    @Test
+    fun `Test merging API signature files, one refer to another, in reverse order`() {
+        // Exactly the same as the previous test, but read them in the reverse order
+        check(
+            signatureSources = arrayOf(MERGE_TEST_SOURCE_2, MERGE_TEST_SOURCE_1),
+            api = MERGE_TEST_EXPECTED
+        )
+    }
+
+    @Test
+    fun `Test merging API signature files with reverse dependency`() {
+        val source1 = """
+            package test.pkg {
+              public final class Class1 {
+                method public void method1(test.pkg.Class2 arg);
+              }
+            }
+                    """
+        val source2 = """
+            package test.pkg {
+              public final class Class2 {
+              }
+            }
+                    """
+        val expected = """
+            package test.pkg {
+              public final class Class1 {
+                method public void method1(test.pkg.Class2);
+              }
+              public final class Class2 {
+              }
+            }
+                    """
+        check(
+            signatureSources = arrayOf(source1, source2),
+            api = expected
+        )
+    }
+
+    @Test
+    fun `Test merging 3 API signature files`() {
+        val source1 = """
+            package test.pkg1 {
+              public final class BaseClass1 {
+                method public void method1();
+              }
+
+              public final class AnotherSubClass extends test.pkg2.AnotherBase {
+                method public void method1();
+              }
+            }
+                    """
+        val source2 = """
+            package test.pkg2 {
+              public final class SubClass1 extends test.pkg1.BaseClass1 {
+              }
+            }
+                    """
+        val source3 = """
+            package test.pkg2 {
+              public final class SubClass2 extends test.pkg2.SubClass1 {
+                method public void bar();
+              }
+
+              public final class AnotherBase {
+                method public void baz();
+              }
+            }
+                    """
+        val expected = """
+            package test.pkg1 {
+              public final class AnotherSubClass extends test.pkg2.AnotherBase {
+                method public void method1();
+              }
+              public final class BaseClass1 {
+                method public void method1();
+              }
+            }
+            package test.pkg2 {
+              public final class AnotherBase {
+                method public void baz();
+              }
+              public final class SubClass1 extends test.pkg1.BaseClass1 {
+              }
+              public final class SubClass2 extends test.pkg2.SubClass1 {
+                method public void bar();
+              }
+            }
+                    """
+        check(
+            signatureSources = arrayOf(source1, source2, source3),
+            api = expected
+        )
+    }
+
+    @Test
+    fun `Test cannot merging API signature files with duplicate class`() {
+        val source1 = """
+            package Test.pkg {
+              public final class Class1 {
+                method public void method1();
+              }
+            }
+                    """
+        val source2 = """
+            package Test.pkg {
+              public final class Class1 {
+                method public void method1();
+              }
+            }
+                    """
+        check(
+            signatureSources = arrayOf(source1, source2),
+            expectedFail = "Unable to parse signature file: TESTROOT/project/load-api2.txt:2: Duplicate class found: Test.pkg.Class1"
+        )
+    }
+
+    @Test
+    fun `Test cannot merging API signature files with different file formats`() {
+        val source1 = """
+            // Signature format: 2.0
+            package Test.pkg {
+            }
+                    """
+        val source2 = """
+            // Signature format: 3.0
+            package Test.pkg {
+            }
+                    """
+        check(
+            signatureSources = arrayOf(source1, source2),
+            expectedFail = "Unable to parse signature file: Cannot merge different formats of signature files. " +
+                "First file format=V2, current file format=V3: file=TESTROOT/project/load-api2.txt"
+        )
+    }
 }

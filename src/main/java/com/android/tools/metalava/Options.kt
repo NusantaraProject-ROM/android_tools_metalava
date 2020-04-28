@@ -296,10 +296,9 @@ class Options(
      * Whether reading signature files should assume the input is formatted as Kotlin-style nulls
      * (e.g. ? means nullable, ! means unknown, empty means not null).
      *
-     * If not specified, it depends on the format of the signature file (v1 and v2 does not use
-     * Kotlin style nulls; v3 does.)
+     * Even when it's false, if the format supports Kotlin-style nulls, we'll still allow them.
      */
-    var inputKotlinStyleNulls: Boolean? = null
+    var inputKotlinStyleNulls: Boolean = false
 
     /** If true, treat all warnings as errors */
     var warningsAreErrors: Boolean = false

@@ -245,7 +245,7 @@ class TextCodebase(location: File) : DefaultCodebase(location) {
             // Add to package
             val endIndex = erased.lastIndexOf('.')
             val pkgPath = if (endIndex != -1) erased.substring(0, endIndex) else ""
-            val pkg = findPackage(pkgPath) as? TextPackageItem ?: run {
+            val pkg = findPackage(pkgPath) ?: run {
                 val newPkg = TextPackageItem(
                     this,
                     pkgPath,
@@ -272,7 +272,7 @@ class TextCodebase(location: File) : DefaultCodebase(location) {
         resolveInnerClasses(packages)
     }
 
-    override fun findPackage(pkgName: String): PackageItem? {
+    override fun findPackage(pkgName: String): TextPackageItem? {
         return mPackages[pkgName]
     }
 
@@ -406,7 +406,7 @@ class TextCodebase(location: File) : DefaultCodebase(location) {
                 }
 
                 private fun getOrAddPackage(pkgName: String): TextPackageItem {
-                    val pkg = delta.findPackage(pkgName) as? TextPackageItem
+                    val pkg = delta.findPackage(pkgName)
                     if (pkg != null) {
                         return pkg
                     }

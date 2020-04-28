@@ -183,6 +183,10 @@ abstract class PsiItem(
             documentation[end - 1] != '\n') {
             end--
         }
+        // The comment ends with:
+        // * some comment here */
+        var insertNewLine: Boolean = documentation[end - 1] != '\n'
+
         var indent: String
         var linePrefix = ""
         val secondLine = documentation.indexOf('\n')
@@ -204,7 +208,7 @@ abstract class PsiItem(
                 linePrefix = "* "
             }
         }
-        val s = documentation.substring(0, end) + indent + linePrefix + tagSection + " " + commentLine + "\n" + indent + " */"
+        val s = documentation.substring(0, end) + (if (insertNewLine) "\n" else "") + indent + linePrefix + tagSection + " " + commentLine + "\n" + indent + " */"
         return s
     }
 
