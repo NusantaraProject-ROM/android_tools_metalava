@@ -352,6 +352,7 @@ public class Issues {
     public static final Issue INTERNAL_FIELD = new Issue(387, Severity.ERROR, Category.API_LINT, "F2");
     public static final Issue PUBLIC_TYPEDEF = new Issue(388, Severity.ERROR, Category.API_LINT, "FW15");
     public static final Issue ANDROID_URI = new Issue(389, Severity.ERROR, Category.API_LINT, "FW14");
+    public static final Issue BAD_FUTURE = new Issue(390, Severity.ERROR, Category.API_LINT);
 
     static {
         // Attempt to initialize issue names based on the field names
