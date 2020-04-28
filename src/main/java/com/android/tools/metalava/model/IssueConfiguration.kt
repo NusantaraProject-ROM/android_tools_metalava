@@ -19,15 +19,15 @@ package com.android.tools.metalava.model
 import com.android.tools.metalava.Severity
 import com.android.tools.metalava.doclava1.Issues
 
-/** An error configuration is a set of overrides for severities for various [Issues.Issue] */
-class ErrorConfiguration {
+/** An issue configuration is a set of overrides for severities for various [Issues.Issue] */
+class IssueConfiguration {
     private val overrides = mutableMapOf<Issues.Issue, Severity>()
 
     /** Returns the severity of the given issue */
     fun getSeverity(issue: Issues.Issue): Severity {
         overrides[issue]?.let { return it }
         if (issue.defaultLevel == Severity.INHERIT) {
-            return getSeverity(issue.parent)
+            return getSeverity(issue.parent!!)
         }
         return issue.defaultLevel
     }
@@ -52,8 +52,8 @@ class ErrorConfiguration {
     }
 }
 
-/** Default error configuration: uses all the severities initialized in the [Issues] class */
-val defaultConfiguration = ErrorConfiguration()
+/** Default error configuration: uses the severities as configured in [Options] */
+val defaultConfiguration = IssueConfiguration()
 
 /** Current configuration to apply when reporting errors */
 var configuration = defaultConfiguration

@@ -17,7 +17,7 @@
 package com.android.tools.metalava
 
 import com.android.tools.metalava.doclava1.Issues
-import com.android.tools.metalava.model.ErrorConfiguration
+import com.android.tools.metalava.model.IssueConfiguration
 
 enum class ReleaseType(val flagName: String, private val displayName: String = flagName) {
     DEV("current", "development") {
@@ -30,8 +30,8 @@ enum class ReleaseType(val flagName: String, private val displayName: String = f
          * "-error 16 -error 17 -error 18 -error 19 -error 20 -error 21 -error 23 -error 24 " +
          * "-error 25 -error 26 -error 27",
          */
-        override fun getErrorConfiguration(): ErrorConfiguration {
-            return super.getErrorConfiguration().apply {
+        override fun getIssueConfiguration(): IssueConfiguration {
+            return super.getIssueConfiguration().apply {
                 error(Issues.ADDED_CLASS)
                 error(Issues.ADDED_FIELD)
                 error(Issues.ADDED_FINAL_UNINSTANTIABLE)
@@ -58,8 +58,8 @@ enum class ReleaseType(val flagName: String, private val displayName: String = f
          * "-error 7 -error 8 -error 9 -error 10 -error 11 -error 12 -error 13 -error 14 -error 15 " +
          * "-error 16 -error 17 -error 18 -error 31",
          */
-        override fun getErrorConfiguration(): ErrorConfiguration {
-            return super.getErrorConfiguration().apply {
+        override fun getIssueConfiguration(): IssueConfiguration {
+            return super.getIssueConfiguration().apply {
                 error(Issues.ADDED_ABSTRACT_METHOD)
                 hide(Issues.ADDED_CLASS)
                 hide(Issues.ADDED_FIELD)
@@ -75,8 +75,8 @@ enum class ReleaseType(val flagName: String, private val displayName: String = f
     };
 
     /** Returns the error configuration to use for the given release type */
-    open fun getErrorConfiguration(): ErrorConfiguration {
-        return ErrorConfiguration().apply {
+    open fun getIssueConfiguration(): IssueConfiguration {
+        return IssueConfiguration().apply {
             error(Issues.ADDED_FINAL)
             error(Issues.CHANGED_STATIC)
             error(Issues.CHANGED_SUPERCLASS)
