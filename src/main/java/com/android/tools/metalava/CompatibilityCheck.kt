@@ -869,10 +869,10 @@ class CompatibilityCheck(
         ) {
             val filter = apiType.getEmitFilter()
             val checker = CompatibilityCheck(filter, previous, apiType, base)
-            val errorConfiguration = releaseType.getErrorConfiguration()
+            val issueConfiguration = releaseType.getIssueConfiguration()
             val previousConfiguration = configuration
             try {
-                configuration = errorConfiguration
+                configuration = issueConfiguration
                 CodebaseComparator().compare(checker, previous, codebase, filter)
             } finally {
                 configuration = previousConfiguration
