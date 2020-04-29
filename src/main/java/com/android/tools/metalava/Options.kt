@@ -20,6 +20,7 @@ import com.android.SdkConstants
 import com.android.sdklib.SdkVersionInfo
 import com.android.tools.metalava.CompatibilityCheck.CheckRequest
 import com.android.tools.metalava.doclava1.Issues
+import com.android.tools.metalava.model.defaultConfiguration
 import com.android.utils.SdkUtils.wrap
 import com.google.common.base.CharMatcher
 import com.google.common.base.Splitter
@@ -30,6 +31,7 @@ import java.io.IOException
 import java.io.OutputStreamWriter
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.lang.NumberFormatException
 import java.util.Locale
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.memberProperties
@@ -1018,10 +1020,18 @@ class Options(
                     annotationCoverageMemberReport = stringToNewFile(getValue(args, ++index))
                 }
 
-                ARG_ERROR, "-error" -> Issues.setIssueLevel(getValue(args, ++index), Severity.ERROR, true)
-                ARG_WARNING, "-warning" -> Issues.setIssueLevel(getValue(args, ++index), Severity.WARNING, true)
-                ARG_LINT, "-lint" -> Issues.setIssueLevel(getValue(args, ++index), Severity.LINT, true)
-                ARG_HIDE, "-hide" -> Issues.setIssueLevel(getValue(args, ++index), Severity.HIDDEN, true)
+                ARG_ERROR, "-error" -> setIssueSeverity(
+                    getValue(args, ++index),
+                    Severity.ERROR,
+                    arg
+                )
+                ARG_WARNING, "-warning" -> setIssueSeverity(
+                    getValue(args, ++index),
+                    Severity.WARNING,
+                    arg
+                )
+                ARG_LINT, "-lint" -> setIssueSeverity(getValue(args, ++index), Severity.LINT, arg)
+                ARG_HIDE, "-hide" -> setIssueSeverity(getValue(args, ++index), Severity.HIDDEN, arg)
 
                 ARG_WARNINGS_AS_ERRORS -> warningsAreErrors = true
                 ARG_LINTS_AS_ERRORS -> lintsAreErrors = true
@@ -2257,6 +2267,42 @@ class Options(
         fun useCompatMode(args: Array<String>): Boolean {
             return COMPAT_MODE_BY_DEFAULT && !args.contains("$ARG_COMPAT_OUTPUT=no") &&
                 (args.none { it.startsWith("$ARG_FORMAT=") } || args.contains("--format=v1"))
+        }
+
+        private fun setIssueSeverity(
+            id: String,
+            severity: Severity,
+            arg: String
+        ) {
+            if (id.contains(",")) { // Handle being passed in multiple comma separated id's
+                id.split(",").forEach {
+                    setIssueSeverity(it.trim(), severity, arg)
+                }
+                return
+            }
+
+            val numericId = try {
+                id.toInt()
+            } catch (e: NumberFormatException) {
+                -1
+            }
+
+            val issue = Issues.findIssueById(id)
+                ?: Issues.findIssueById(numericId)?.also {
+                    reporter.report(
+                        Issues.DEPRECATED_OPTION, null as File?,
+                        "Issue lookup by numeric id is deprecated, use " +
+                            "$arg ${it.name} instead of $arg $id"
+                    )
+                } ?: Issues.findIssueByIdIgnoringCase(id)?.also {
+                    reporter.report(
+                        Issues.DEPRECATED_OPTION, null as File?,
+                        "Case-insensitive issue matching is deprecated, use " +
+                            "$arg ${it.name} instead of $arg $id"
+                    )
+                } ?: throw DriverException("Unknown issue id: $arg $id")
+
+            defaultConfiguration.setSeverity(issue, severity)
         }
     }
 }

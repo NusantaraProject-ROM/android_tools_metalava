@@ -19,22 +19,21 @@ package com.android.tools.metalava.model
 import com.android.tools.metalava.Severity
 import com.android.tools.metalava.doclava1.Issues
 
-/** An error configuration is a set of overrides for severities for various [Issues.Issue] */
-class ErrorConfiguration {
+/** An issue configuration is a set of overrides for severities for various [Issues.Issue] */
+class IssueConfiguration {
     private val overrides = mutableMapOf<Issues.Issue, Severity>()
 
     /** Returns the severity of the given issue */
     fun getSeverity(issue: Issues.Issue): Severity {
         overrides[issue]?.let { return it }
-        // TODO(b/153446763): We cannot just use the inherit logic in issue.level because that
-        //  doesn't know if the parent has an override applied.
-        if (issue.isInherit) {
-            return getSeverity(issue.parent)
+        if (issue.defaultLevel == Severity.INHERIT) {
+            return getSeverity(issue.parent!!)
         }
-        return issue.level
+        return issue.defaultLevel
     }
 
-    private fun setSeverity(issue: Issues.Issue, severity: Severity) {
+    fun setSeverity(issue: Issues.Issue, severity: Severity) {
+        check(severity != Severity.INHERIT)
         overrides[issue] = severity
     }
 
@@ -47,10 +46,14 @@ class ErrorConfiguration {
     fun hide(issue: Issues.Issue) {
         setSeverity(issue, Severity.HIDDEN)
     }
+
+    fun reset() {
+        overrides.clear()
+    }
 }
 
-/** Default error configuration: uses all the severities initialized in the [Issues] class */
-val defaultConfiguration = ErrorConfiguration()
+/** Default error configuration: uses the severities as configured in [Options] */
+val defaultConfiguration = IssueConfiguration()
 
 /** Current configuration to apply when reporting errors */
 var configuration = defaultConfiguration
