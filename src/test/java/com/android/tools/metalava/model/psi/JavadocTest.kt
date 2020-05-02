@@ -901,9 +901,6 @@ class JavadocTest : DriverTest() {
 
     @Test
     fun `Javadoc link to innerclass constructor`() {
-        // Regression test for
-        //  119190588: Javadoc link tag to constructor of static inner class not working
-        // See also https://bugs.openjdk.java.net/browse/JDK-8031625
         check(
             sourceFiles = arrayOf(
                 java(
@@ -946,14 +943,6 @@ class JavadocTest : DriverTest() {
                 )
             ),
             docStubs = true,
-            // You would *think* the right link to the constructor inner class would be
-            //   {@link android.view.WindowInsets.Builder#Builder(android.view.WindowInsets)
-            // but that does not work; per https://bugs.openjdk.java.net/browse/JDK-8031625
-            // we instead have to use
-            //   {@link android.view.WindowInsets.Builder#android.view.WindowInsets.Builder(android.view.WindowInsets)
-            // to get javadoc to turn it into a valid link. (In the platform builds there's
-            // also doclava's LinkReference class which does some validation; it's unclear
-            // whether it works.)
             stubs = arrayOf(
                 """
                 package android.view;
@@ -969,7 +958,7 @@ class JavadocTest : DriverTest() {
                  * @param right New right inset in pixels
                  * @param bottom New bottom inset in pixels
                  * @return A modified copy of this WindowInsets
-                 * @deprecated use {@link android.view.WindowInsets.Builder#WindowInsets.Builder(android.view.WindowInsets) Builder#Builder(WindowInsets)} with
+                 * @deprecated use {@link android.view.WindowInsets.Builder#Builder(android.view.WindowInsets) Builder#Builder(WindowInsets)} with
                  *             {@link android.view.WindowInsets.Builder#setSystemWindowInsets(Insets) Builder#setSystemWindowInsets(Insets)} instead.
                  */
                 @Deprecated
