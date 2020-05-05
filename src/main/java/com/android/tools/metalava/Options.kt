@@ -149,8 +149,12 @@ const val ARG_DEX_API_MAPPING = "--dex-api-mapping"
 const val ARG_GENERATE_DOCUMENTATION = "--generate-documentation"
 const val ARG_REPLACE_DOCUMENTATION = "--replace-documentation"
 const val ARG_BASELINE = "--baseline"
+const val ARG_BASELINE_API_LINT = "--baseline:api-lint"
+const val ARG_BASELINE_CHECK_COMPATIBILITY_RELEASED = "--baseline:compatibility:released"
 const val ARG_REPORT_EVEN_IF_SUPPRESSED = "--report-even-if-suppressed"
 const val ARG_UPDATE_BASELINE = "--update-baseline"
+const val ARG_UPDATE_BASELINE_API_LINT = "--update-baseline:api-lint"
+const val ARG_UPDATE_BASELINE_CHECK_COMPATIBILITY_RELEASED = "--update-baseline:compatibility:released"
 const val ARG_MERGE_BASELINE = "--merge-baseline"
 const val ARG_STUB_PACKAGES = "--stub-packages"
 const val ARG_STUB_IMPORT_PACKAGES = "--stub-import-packages"
@@ -159,6 +163,9 @@ const val ARG_SUBTRACT_API = "--subtract-api"
 const val ARG_TYPEDEFS_IN_SIGNATURES = "--typedefs-in-signatures"
 const val ARG_FORCE_CONVERT_TO_WARNING_NULLABILITY_ANNOTATIONS = "--force-convert-to-warning-nullability-annotations"
 const val ARG_IGNORE_CLASSES_ON_CLASSPATH = "--ignore-classes-on-classpath"
+const val ARG_ERROR_MESSAGE_API_LINT = "--error-message:api-lint"
+const val ARG_ERROR_MESSAGE_CHECK_COMPATIBILITY_RELEASED = "--error-message:compatibility:released"
+const val ARG_ERROR_MESSAGE_CHECK_COMPATIBILITY_CURRENT = "--error-message:compatibility:current"
 
 class Options(
     private val args: Array<String>,
@@ -559,8 +566,48 @@ class Options(
     /** A baseline to check against */
     var baseline: Baseline? = null
 
-    /** Whether all baseline files need to be updated */
-    var updateBaseline = false
+    /** A baseline to check against, specifically used for "API lint" (i.e. [ARG_API_LINT]) */
+    var baselineApiLint: Baseline? = null
+
+    /**
+     * A baseline to check against, specifically used for "check-compatibility:*:released"
+     * (i.e. [ARG_CHECK_COMPATIBILITY_API_RELEASEED] and [ARG_CHECK_COMPATIBILITY_REMOVED_RELEASEED])
+     */
+    var baselineCompatibilityReleased: Baseline? = null
+
+    var allBaselines: List<Baseline>
+
+    /** If set, metalava will show this error message when "API lint" (i.e. [ARG_API_LINT]) fails. */
+    var errorMessageApiLint: String? = null
+
+    /**
+     * If set, metalava will show this error message when "check-compatibility:*:released" fails.
+     * (i.e. [ARG_CHECK_COMPATIBILITY_API_RELEASEED] and [ARG_CHECK_COMPATIBILITY_REMOVED_RELEASEED])
+     */
+    var errorMessageCompatibilityReleased: String? = null
+
+    /**
+     * If set, metalava will show this error message when "check-compatibility:*:current" fails.
+     * (i.e. [ARG_CHECK_COMPATIBILITY_API_CURRENT] and [ARG_CHECK_COMPATIBILITY_REMOVED_CURRENT])
+     */
+    var errorMessageCompatibilityCurrent: String? = null
+
+    /** [Reporter] for "api-lint" */
+    var reporterApiLint: Reporter
+
+    /**
+     * [Reporter] for "check-compatibility:*:released".
+     * (i.e. [ARG_CHECK_COMPATIBILITY_API_RELEASEED] and [ARG_CHECK_COMPATIBILITY_REMOVED_RELEASEED])
+     */
+    var reporterCompatibilityReleased: Reporter
+
+    /**
+     * [Reporter] for "check-compatibility:*:current".
+     * (i.e. [ARG_CHECK_COMPATIBILITY_API_CURRENT] and [ARG_CHECK_COMPATIBILITY_REMOVED_CURRENT])
+     */
+    var reporterCompatibilityCurrent: Reporter
+
+    var allReporters: List<Reporter>
 
     /** If updating baselines, don't fail the build */
     var passBaselineUpdates = false
@@ -647,11 +694,20 @@ class Options(
 
         var androidJarPatterns: MutableList<String>? = null
         var currentJar: File? = null
-        var updateBaselineFile: File? = null
-        var baselineFile: File? = null
-        var mergeBaseline = false
         var delayedCheckApiFiles = false
         var skipGenerateAnnotations = false
+
+        var baselineBuilder = Baseline.Builder().apply { description = "base" }
+        var baselineApiLintBuilder = Baseline.Builder().apply { description = "api-lint" }
+        var baselineCompatibilityReleasedBuilder = Baseline.Builder().apply { description = "compatibility:released" }
+
+        fun getBaselineBuilderForArg(flag: String): Baseline.Builder = when (flag) {
+                ARG_BASELINE, ARG_UPDATE_BASELINE, ARG_MERGE_BASELINE -> baselineBuilder
+                ARG_BASELINE_API_LINT, ARG_UPDATE_BASELINE_API_LINT -> baselineApiLintBuilder
+                ARG_BASELINE_CHECK_COMPATIBILITY_RELEASED, ARG_UPDATE_BASELINE_CHECK_COMPATIBILITY_RELEASED
+                    -> baselineCompatibilityReleasedBuilder
+                else -> error("Internal error: Invalid flag: $flag")
+            }
 
         var index = 0
         while (index < args.size) {
@@ -852,10 +908,10 @@ class Options(
                     allowClassesFromClasspath = false
                 }
 
-                ARG_BASELINE -> {
-                    val relative = getValue(args, ++index)
-                    assert(baselineFile == null) { "Only one baseline is allowed; found both $baselineFile and $relative" }
-                    baselineFile = stringToExistingFile(relative)
+                ARG_BASELINE, ARG_BASELINE_API_LINT, ARG_BASELINE_CHECK_COMPATIBILITY_RELEASED -> {
+                    val nextArg = getValue(args, ++index)
+                    val builder = getBaselineBuilderForArg(arg)
+                    builder.file = stringToExistingFile(nextArg)
                 }
 
                 ARG_REPORT_EVEN_IF_SUPPRESSED -> {
@@ -867,18 +923,22 @@ class Options(
                     reportEvenIfSuppressedWriter = reportEvenIfSuppressed?.printWriter()
                 }
 
-                ARG_UPDATE_BASELINE, ARG_MERGE_BASELINE -> {
-                    updateBaseline = true
-                    mergeBaseline = arg == ARG_MERGE_BASELINE
+                ARG_MERGE_BASELINE, ARG_UPDATE_BASELINE, ARG_UPDATE_BASELINE_API_LINT, ARG_UPDATE_BASELINE_CHECK_COMPATIBILITY_RELEASED -> {
+                    val builder = getBaselineBuilderForArg(arg)
+                    builder.merge = (arg == ARG_MERGE_BASELINE)
                     if (index < args.size - 1) {
                         val nextArg = args[index + 1]
                         if (!nextArg.startsWith("-")) {
-                            val file = stringToNewOrExistingFile(nextArg)
                             index++
-                            updateBaselineFile = file
+                            builder.updateFile = stringToNewOrExistingFile(nextArg)
                         }
                     }
                 }
+
+                ARG_ERROR_MESSAGE_API_LINT -> errorMessageApiLint = getValue(args, ++index)
+                ARG_ERROR_MESSAGE_CHECK_COMPATIBILITY_RELEASED -> errorMessageCompatibilityReleased = getValue(args, ++index)
+                ARG_ERROR_MESSAGE_CHECK_COMPATIBILITY_CURRENT -> errorMessageCompatibilityCurrent = getValue(args, ++index)
+
                 ARG_PASS_BASELINE_UPDATES -> passBaselineUpdates = true
                 ARG_DELETE_EMPTY_BASELINES -> deleteEmptyBaselines = true
 
@@ -1557,27 +1617,50 @@ class Options(
             removedDexApiFile = null
         }
 
-        if (baselineFile == null) {
+        // Fix up [Baseline] files and [Reporter]s.
+
+        val baselineHeaderComment = if (isBuildingAndroid())
+            "// See tools/metalava/API-LINT.md for how to update this file.\n\n"
+        else
+            ""
+        baselineBuilder.headerComment = baselineHeaderComment
+        baselineApiLintBuilder.headerComment = baselineHeaderComment
+        baselineCompatibilityReleasedBuilder.headerComment = baselineHeaderComment
+
+        if (baselineBuilder.file == null) {
+            // If default baseline is a file, use it.
             val defaultBaselineFile = getDefaultBaselineFile()
             if (defaultBaselineFile != null && defaultBaselineFile.isFile) {
-                if (updateBaseline && updateBaselineFile == null) {
-                    updateBaselineFile = defaultBaselineFile
-                }
-                baseline = Baseline(defaultBaselineFile, updateBaselineFile, mergeBaseline)
-            } else if (updateBaselineFile != null) {
-                baseline = Baseline(null, updateBaselineFile, mergeBaseline)
+                baselineBuilder.file = defaultBaselineFile
             }
-        } else {
-            // Add helpful doc in AOSP baseline files?
-            val headerComment = if (isBuildingAndroid())
-                "// See tools/metalava/API-LINT.md for how to update this file.\n\n"
-            else
-                ""
-            if (updateBaseline && updateBaselineFile == null) {
-                updateBaselineFile = baselineFile
-            }
-            baseline = Baseline(baselineFile, updateBaselineFile, mergeBaseline, headerComment)
         }
+
+        baseline = baselineBuilder.build()
+        baselineApiLint = baselineApiLintBuilder.build()
+        baselineCompatibilityReleased = baselineCompatibilityReleasedBuilder.build()
+
+        reporterApiLint = Reporter(
+            baselineApiLint ?: baseline,
+            errorMessageApiLint
+        )
+        reporterCompatibilityReleased = Reporter(
+            baselineCompatibilityReleased ?: baseline,
+            errorMessageCompatibilityReleased
+        )
+        reporterCompatibilityCurrent = Reporter(
+            // Note, the compat-check:current shouldn't take a baseline file, so we don't have
+            // a task specific baseline file, but we still respect the global baseline file.
+            baseline,
+            errorMessageCompatibilityCurrent
+        )
+
+        // Build "all baselines" and "all reporters"
+
+        // Baselines are nullable, so selectively add to the list.
+        allBaselines = listOfNotNull(baseline, baselineApiLint, baselineCompatibilityReleased)
+
+        // Reporters are non-null.
+        allReporters = listOf<Reporter>(reporterApiLint, reporterCompatibilityReleased, reporterCompatibilityCurrent)
 
         checkFlagConsistency()
     }
@@ -2139,6 +2222,13 @@ class Options(
                 "If some warnings have been fixed, this will delete them from the baseline files. If a file " +
                 "is provided, the updated baseline is written to the given file; otherwise the original source " +
                 "baseline file is updated.",
+            "$ARG_BASELINE_API_LINT <file> $ARG_UPDATE_BASELINE_API_LINT [file]", "Same as $ARG_BASELINE and " +
+                "$ARG_UPDATE_BASELINE respectively, but used specifically for API lint issues performed by " +
+                "$ARG_API_LINT.",
+            "$ARG_BASELINE_CHECK_COMPATIBILITY_RELEASED <file> $ARG_UPDATE_BASELINE_CHECK_COMPATIBILITY_RELEASED [file]",
+                "Same as $ARG_BASELINE and " +
+                "$ARG_UPDATE_BASELINE respectively, but used specifically for API compatibility issues performed by " +
+                "$ARG_CHECK_COMPATIBILITY_API_RELEASED and $ARG_CHECK_COMPATIBILITY_REMOVED_RELEASED.",
             "$ARG_MERGE_BASELINE [file]", "Like $ARG_UPDATE_BASELINE, but instead of always replacing entries " +
                 "in the baseline, it will merge the existing baseline with the new baseline. This is useful " +
                 "if $PROGRAM_NAME runs multiple times on the same source tree with different flags at different " +
@@ -2148,6 +2238,11 @@ class Options(
                 "all the baselines in the source tree can be updated in one go.",
             ARG_DELETE_EMPTY_BASELINES, "Whether to delete baseline files if they are updated and there is nothing " +
                 "to include.",
+            "$ARG_ERROR_MESSAGE_API_LINT <message>", "If set, $PROGRAM_NAME shows it when errors are detected in $ARG_API_LINT.",
+            "$ARG_ERROR_MESSAGE_CHECK_COMPATIBILITY_RELEASED <message>", "If set, $PROGRAM_NAME shows it " +
+                " when errors are detected in $ARG_CHECK_COMPATIBILITY_API_RELEASED and $ARG_CHECK_COMPATIBILITY_REMOVED_RELEASED.",
+            "$ARG_ERROR_MESSAGE_CHECK_COMPATIBILITY_CURRENT <message>", "If set, $PROGRAM_NAME shows it " +
+                " when errors are detected in $ARG_CHECK_COMPATIBILITY_API_CURRENT and $ARG_CHECK_COMPATIBILITY_REMOVED_CURRENT.",
 
             "", "\nJDiff:",
             "$ARG_XML_API <file>", "Like $ARG_API, but emits the API in the JDiff XML format instead",
