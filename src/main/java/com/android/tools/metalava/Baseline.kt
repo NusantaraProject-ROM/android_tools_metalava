@@ -40,6 +40,8 @@ import kotlin.text.Charsets.UTF_8
 const val DEFAULT_BASELINE_NAME = "baseline.txt"
 
 class Baseline(
+    /** Description of this baseline. e.g. "api-lint. */
+    val description: String,
     val file: File?,
     var updateFile: File?,
     var merge: Boolean = false,
@@ -176,8 +178,9 @@ class Baseline(
         return path.replace('\\', '/')
     }
 
-    fun close() {
-        write()
+    /** Close the baseline file. If "update file" is set, update this file, and returns TRUE. If not, returns false. */
+    fun close(): Boolean {
+        return write()
     }
 
     private fun read() {
@@ -217,8 +220,8 @@ class Baseline(
         }
     }
 
-    private fun write() {
-        val updateFile = this.updateFile ?: return
+    private fun write(): Boolean {
+        val updateFile = this.updateFile ?: return false
         if (!map.isEmpty() || !options.deleteEmptyBaselines) {
             val sb = StringBuilder()
             sb.append(format.header())
@@ -245,6 +248,7 @@ class Baseline(
         } else {
             updateFile.delete()
         }
+        return true
     }
 
     fun dumpStats(writer: PrintWriter) {
@@ -255,7 +259,7 @@ class Baseline(
             counts[issue] = count
         }
 
-        writer.println("Baseline issue type counts:")
+        writer.println("Baseline issue type counts for $description baseline:")
         writer.println("" +
             "    Count Issue Id                       Severity\n" +
             "    ---------------------------------------------\n")
@@ -272,5 +276,43 @@ class Baseline(
             "    ---------------------------------------------\n" +
             "    ${String.format("%5d", total)}")
         writer.println()
+    }
+
+    /**
+     * Builder for [Baseline]. [build] will return a non-null [Baseline] if either [file] or
+     * [updateFile] is set.
+     */
+    class Builder {
+        var description: String = ""
+
+        var file: File? = null
+            set(value) {
+                if (field != null) {
+                    throw DriverException("Only one baseline is allowed; found both $field and $value")
+                }
+                field = value
+            }
+        var merge: Boolean = false
+
+        var updateFile: File? = null
+            set(value) {
+                if (field != null) {
+                    throw DriverException("Only one update-baseline is allowed; found both $field and $value")
+                }
+                field = value
+            }
+
+        var headerComment: String = ""
+
+        fun build(): Baseline? {
+            // If neither file nor updateFile is set, don't return an instance.
+            if (file == null && updateFile == null) {
+                return null
+            }
+            if (description.isEmpty()) {
+                throw DriverException("Baseline description must be set")
+            }
+            return Baseline(description, file, updateFile, merge, headerComment)
+        }
     }
 }

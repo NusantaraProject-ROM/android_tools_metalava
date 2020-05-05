@@ -36,7 +36,7 @@ import org.jetbrains.uast.kotlin.KotlinUField
 //   https://android.github.io/kotlin-guides/interop.html
 //
 // Also potentially makes other API suggestions.
-class KotlinInteropChecks {
+class KotlinInteropChecks(val reporter: Reporter) {
     fun check(codebase: Codebase) {
 
         codebase.accept(object : ApiVisitor(
