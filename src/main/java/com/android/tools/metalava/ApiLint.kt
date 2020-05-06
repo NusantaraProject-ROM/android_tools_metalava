@@ -165,7 +165,7 @@ import java.util.function.Predicate
  * The [ApiLint] analyzer checks the API against a known set of preferred API practices
  * by the Android API council.
  */
-class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?) : ApiVisitor(
+class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?, private val reporter: Reporter) : ApiVisitor(
     // Sort by source order such that warnings follow source line number order
     methodComparator = MethodItem.sourceOrderComparator,
     fieldComparator = FieldItem.comparator,
@@ -239,7 +239,7 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
 
     // The previous Kotlin interop tests are also part of API lint now (though they can be
     // run independently as well; therefore, only run them here if not running separately)
-    private val kotlinInterop = if (!options.checkKotlinInterop) KotlinInteropChecks() else null
+    private val kotlinInterop = if (!options.checkKotlinInterop) KotlinInteropChecks(reporter) else null
 
     override fun visitClass(cls: ClassItem) {
         val methods = cls.filteredMethods(filterReference).asSequence()
@@ -3634,8 +3634,8 @@ class ApiLint(private val codebase: Codebase, private val oldCodebase: Codebase?
             }
         }
 
-        fun check(codebase: Codebase, oldCodebase: Codebase?) {
-            ApiLint(codebase, oldCodebase).check()
+        fun check(codebase: Codebase, oldCodebase: Codebase?, reporter: Reporter) {
+            ApiLint(codebase, oldCodebase, reporter).check()
         }
     }
 }

@@ -48,7 +48,8 @@ class CompatibilityCheck(
     val filterReference: Predicate<Item>,
     private val oldCodebase: Codebase,
     private val apiType: ApiType,
-    private val base: Codebase? = null
+    private val base: Codebase? = null,
+    private val reporter: Reporter
 ) : ComparisonVisitor() {
 
     /**
@@ -868,7 +869,7 @@ class CompatibilityCheck(
             base: Codebase? = null
         ) {
             val filter = apiType.getEmitFilter()
-            val checker = CompatibilityCheck(filter, previous, apiType, base)
+            val checker = CompatibilityCheck(filter, previous, apiType, base, getReporterForReleaseType(releaseType))
             val issueConfiguration = releaseType.getIssueConfiguration()
             val previousConfiguration = configuration
             try {
@@ -884,6 +885,11 @@ class CompatibilityCheck(
             if (checker.foundProblems) {
                 throw DriverException(exitCode = -1, stderr = message)
             }
+        }
+
+        private fun getReporterForReleaseType(releaseType: ReleaseType): Reporter = when (releaseType) {
+            ReleaseType.DEV -> options.reporterCompatibilityCurrent
+            ReleaseType.RELEASED -> options.reporterCompatibilityReleased
         }
     }
 }
