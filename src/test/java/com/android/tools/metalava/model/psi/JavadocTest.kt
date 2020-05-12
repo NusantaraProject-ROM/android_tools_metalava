@@ -40,7 +40,7 @@ class JavadocTest : DriverTest() {
             showAnnotations = showAnnotations,
             stubs = arrayOf(source),
             compatibilityMode = compatibilityMode,
-            warnings = warnings,
+            expectedIssues = warnings,
             checkCompilation = true,
             api = api,
             extraArguments = extraArguments,

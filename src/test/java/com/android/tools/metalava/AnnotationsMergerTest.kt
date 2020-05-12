@@ -364,7 +364,7 @@ class AnnotationsMergerTest : DriverTest() {
     @Test
     fun `Merge inclusion annotations from Java stub files`() {
         check(
-            warnings = "src/test/pkg/Example.annotated.java:6: error: @test.annotation.Show APIs must also be marked @hide: method test.pkg.Example.cShown() [UnhiddenSystemApi]",
+            expectedIssues = "src/test/pkg/Example.annotated.java:6: error: @test.annotation.Show APIs must also be marked @hide: method test.pkg.Example.cShown() [UnhiddenSystemApi]",
             sourceFiles = arrayOf(
                 java(
                     "src/test/pkg/Example.annotated.java",

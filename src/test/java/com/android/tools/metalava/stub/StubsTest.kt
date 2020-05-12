@@ -65,7 +65,7 @@ class StubsTest : DriverTest() {
             showAnnotations = showAnnotations,
             stubs = arrayOf(source),
             compatibilityMode = compatibilityMode,
-            warnings = warnings,
+            expectedIssues = warnings,
             checkCompilation = true,
             api = api,
             extraArguments = extraArguments,
@@ -171,7 +171,7 @@ class StubsTest : DriverTest() {
                     """
                 )
             ),
-            warnings = "",
+            expectedIssues = "",
             stubs = arrayOf(
                 """
                 package test.pkg;
@@ -1851,7 +1851,7 @@ class StubsTest : DriverTest() {
                         "}\n"
                 )
             ),
-            warnings = "",
+            expectedIssues = "",
             api = """
                     package my.pkg {
                       public class String {
@@ -1884,7 +1884,7 @@ class StubsTest : DriverTest() {
                         "}\n"
                 )
             ),
-            warnings = "",
+            expectedIssues = "",
             api = """
                     package my.pkg {
                       public class String {
@@ -1918,7 +1918,7 @@ class StubsTest : DriverTest() {
                         "}\n"
                 )
             ),
-            warnings = "",
+            expectedIssues = "",
             api = """
                     package my.pkg {
                       public class String {
@@ -1965,7 +1965,7 @@ class StubsTest : DriverTest() {
                     """
                 )
             ),
-            warnings = "",
+            expectedIssues = "",
             api = """
                     package my.pkg {
                       public class String {
@@ -2063,7 +2063,7 @@ class StubsTest : DriverTest() {
                     """
                 )
             ),
-            warnings = "",
+            expectedIssues = "",
             api = """
                     package test.pkg {
                       public class MyClass1 {
@@ -3845,7 +3845,7 @@ class StubsTest : DriverTest() {
         // Real world example: android.net.http.Connection in apache-http referenced from RequestHandle
         check(
             compatibilityMode = false,
-            warnings = """
+            expectedIssues = """
                 src/test/pkg/PublicApi.java:4: error: Class test.pkg.HiddenType is not public but was referenced (as return type) from public method test.pkg.PublicApi.getHiddenType() [ReferencesHidden]
                 src/test/pkg/PublicApi.java:5: error: Class test.pkg.HiddenType4 is hidden but was referenced (as return type) from public method test.pkg.PublicApi.getHiddenType4() [ReferencesHidden]
                 src/test/pkg/PublicApi.java:5: warning: Method test.pkg.PublicApi.getHiddenType4 returns unavailable type HiddenType4 [UnavailableSymbol]
@@ -3966,7 +3966,7 @@ class StubsTest : DriverTest() {
         // referenced from outer class constructor
         check(
             compatibilityMode = false,
-            warnings = """
+            expectedIssues = """
                 src/test/pkg/PublicApi.java:4: error: Class test.pkg.PublicApi.HiddenInner is hidden but was referenced (as parameter type) from public parameter inner in test.pkg.PublicApi(test.pkg.PublicApi.HiddenInner inner) [ReferencesHidden]
                 src/test/pkg/PublicApi.java:4: warning: Parameter inner references hidden type test.pkg.PublicApi.HiddenInner. [HiddenTypeParameter]
                 """,
@@ -4091,7 +4091,7 @@ class StubsTest : DriverTest() {
         // """
         check(
             compatibilityMode = false,
-            warnings = "src/test/pkg/Alpha.java:2: warning: Public class test.pkg.Alpha stripped of unavailable superclass test.pkg.Beta [HiddenSuperclass]",
+            expectedIssues = "src/test/pkg/Alpha.java:2: warning: Public class test.pkg.Alpha stripped of unavailable superclass test.pkg.Beta [HiddenSuperclass]",
             sourceFiles = arrayOf(
                 java(
                     """
@@ -4161,7 +4161,7 @@ class StubsTest : DriverTest() {
         // Regression test for 124333557: Handle empty java files
         check(
             compatibilityMode = false,
-            warnings = """
+            expectedIssues = """
             TESTROOT/src/test/Something2.java: error: metalava was unable to determine the package name. This usually means that a source file was where the directory does not seem to match the package declaration; we expected the path TESTROOT/src/test/Something2.java to end with /test/wrong/Something2.java [IoError]
             TESTROOT/src/test/Something2.java: error: metalava was unable to determine the package name. This usually means that a source file was where the directory does not seem to match the package declaration; we expected the path TESTROOT/src/test/Something2.java to end with /test/wrong/Something2.java [IoError]
             """,
