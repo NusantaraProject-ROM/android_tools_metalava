@@ -696,6 +696,7 @@ class Options(
         var currentJar: File? = null
         var delayedCheckApiFiles = false
         var skipGenerateAnnotations = false
+        reporter = Reporter(null, null)
 
         var baselineBuilder = Baseline.Builder().apply { description = "base" }
         var baselineApiLintBuilder = Baseline.Builder().apply { description = "api-lint" }
@@ -1660,7 +1661,12 @@ class Options(
         allBaselines = listOfNotNull(baseline, baselineApiLint, baselineCompatibilityReleased)
 
         // Reporters are non-null.
-        allReporters = listOf<Reporter>(reporterApiLint, reporterCompatibilityReleased, reporterCompatibilityCurrent)
+        allReporters = listOf(
+            reporter,
+            reporterApiLint,
+            reporterCompatibilityReleased,
+            reporterCompatibilityCurrent
+        )
 
         checkFlagConsistency()
     }
