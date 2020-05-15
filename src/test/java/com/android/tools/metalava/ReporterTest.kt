@@ -30,6 +30,10 @@ class ReporterTest : DriverTest() {
             errorSeverityExpectedIssues = """
                 src/test/pkg/foo.java:2: error: Class must start with uppercase char: foo [StartWithUpper] [Rule S1 in go/android-api-guidelines]
             """,
+            expectedFail = """
+                2 new API lint issues were found.
+                See tools/metalava/API-LINT.md for how to handle these.
+            """,
             sourceFiles = arrayOf(
                 java(
                     """

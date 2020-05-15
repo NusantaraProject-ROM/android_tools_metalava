@@ -43,7 +43,7 @@ import java.io.PrintWriter
  * "Global" [Reporter] used by most operations.
  * Certain operations, such as api-lint and compatibility check, may use a custom [Reporter]
  */
-val reporter = Reporter(null, null)
+lateinit var reporter: Reporter
 
 enum class Severity(private val displayName: String) {
     INHERIT("inherit"),
