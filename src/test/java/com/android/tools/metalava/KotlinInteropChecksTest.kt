@@ -23,7 +23,7 @@ class KotlinInteropChecksTest : DriverTest() {
     fun `Hard Kotlin keywords`() {
         check(
             extraArguments = arrayOf(ARG_CHECK_KOTLIN_INTEROP),
-            warnings = """
+            expectedIssues = """
                 src/test/pkg/Test.java:5: error: Avoid method names that are Kotlin hard keywords ("fun"); see https://android.github.io/kotlin-guides/interop.html#no-hard-keywords [KotlinKeyword]
                 src/test/pkg/Test.java:6: error: Avoid parameter names that are Kotlin hard keywords ("typealias"); see https://android.github.io/kotlin-guides/interop.html#no-hard-keywords [KotlinKeyword]
                 src/test/pkg/Test.java:7: error: Avoid field names that are Kotlin hard keywords ("object"); see https://android.github.io/kotlin-guides/interop.html#no-hard-keywords [KotlinKeyword]
@@ -50,7 +50,7 @@ class KotlinInteropChecksTest : DriverTest() {
     fun `Sam-compatible parameters should be last`() {
         check(
             extraArguments = arrayOf(ARG_CHECK_KOTLIN_INTEROP),
-            warnings = """
+            expectedIssues = """
                 src/test/pkg/Test.java:18: warning: SAM-compatible parameters (such as parameter 1, "run", in test.pkg.Test.error1) should be last to improve Kotlin interoperability; see https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions [SamShouldBeLast]
                 src/test/pkg/Test.java:19: warning: SAM-compatible parameters (such as parameter 2, "callback", in test.pkg.Test.error2) should be last to improve Kotlin interoperability; see https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions [SamShouldBeLast]
                 src/test/pkg/test.kt:7: warning: lambda parameters (such as parameter 1, "bar", in test.pkg.TestKt.error) should be last to improve Kotlin interoperability; see https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions [SamShouldBeLast]
@@ -105,7 +105,7 @@ class KotlinInteropChecksTest : DriverTest() {
     fun `Companion object methods should be marked with JvmStatic`() {
         check(
             extraArguments = arrayOf(ARG_CHECK_KOTLIN_INTEROP),
-            warnings = """
+            expectedIssues = """
                 src/test/pkg/Foo.kt:8: warning: Companion object constants like BIG_INTEGER_ONE should be marked @JvmField for Java interoperability; see https://developer.android.com/kotlin/interop#companion_constants [MissingJvmstatic]
                 src/test/pkg/Foo.kt:10: warning: Companion object constants like WRONG should be using @JvmField, not @JvmStatic; see https://developer.android.com/kotlin/interop#companion_constants [MissingJvmstatic]
                 src/test/pkg/Foo.kt:11: warning: Companion object constants like WRONG2 should be using @JvmField, not @JvmStatic; see https://developer.android.com/kotlin/interop#companion_constants [MissingJvmstatic]
@@ -143,7 +143,7 @@ class KotlinInteropChecksTest : DriverTest() {
     fun `Methods with default parameters should specify JvmOverloads`() {
         check(
             extraArguments = arrayOf(ARG_CHECK_KOTLIN_INTEROP),
-            warnings = """
+            expectedIssues = """
                 src/test/pkg/Bar.kt:12: warning: A Kotlin method with default parameter values should be annotated with @JvmOverloads for better Java interoperability; see https://android.github.io/kotlin-guides/interop.html#function-overloads-for-defaults [MissingJvmstatic]
                 """,
             sourceFiles = arrayOf(
@@ -174,7 +174,7 @@ class KotlinInteropChecksTest : DriverTest() {
     fun `Methods which throw exceptions should document them`() {
         check(
             extraArguments = arrayOf(ARG_CHECK_KOTLIN_INTEROP),
-            warnings = """
+            expectedIssues = """
                 src/test/pkg/Foo.kt:6: error: Method Foo.error_throws_multiple_times appears to be throwing java.io.FileNotFoundException; this should be recorded with a @Throws annotation; see https://android.github.io/kotlin-guides/interop.html#document-exceptions [DocumentExceptions]
                 src/test/pkg/Foo.kt:16: error: Method Foo.error_throwsCheckedExceptionWithWrongExceptionClassInThrows appears to be throwing java.io.FileNotFoundException; this should be recorded with a @Throws annotation; see https://android.github.io/kotlin-guides/interop.html#document-exceptions [DocumentExceptions]
                 src/test/pkg/Foo.kt:37: error: Method Foo.error_throwsRuntimeExceptionDocsMissing appears to be throwing java.lang.UnsupportedOperationException; this should be listed in the documentation; see https://android.github.io/kotlin-guides/interop.html#document-exceptions [DocumentExceptions]

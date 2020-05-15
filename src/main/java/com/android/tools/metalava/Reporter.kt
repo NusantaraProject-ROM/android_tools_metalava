@@ -317,7 +317,10 @@ class Reporter(
             warningCount++
         }
 
-        reportPrinter(format(effectiveSeverity, location, message, id, color, options.omitLocations))
+        reportPrinter(
+            format(effectiveSeverity, location, message, id, color, options.omitLocations),
+            effectiveSeverity
+        )
         return true
     }
 
@@ -441,10 +444,15 @@ class Reporter(
         internal var rootFolder: File? = File("").absoluteFile
 
         /** Injection point for unit tests. */
-        internal var reportPrinter: (String) -> Unit = { message ->
-            options.stdout.println()
-            options.stdout.print(message.trim())
-            options.stdout.flush()
+        internal var reportPrinter: (String, Severity) -> Unit = { message, severity ->
+            val output = if (severity == ERROR) {
+                options.stderr
+            } else {
+                options.stdout
+            }
+            output.println()
+            output.print(message.trim())
+            output.flush()
         }
     }
 }

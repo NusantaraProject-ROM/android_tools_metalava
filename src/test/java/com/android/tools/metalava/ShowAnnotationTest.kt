@@ -10,7 +10,7 @@ class ShowAnnotationTest : DriverTest() {
     fun `Basic showAnnotation test`() {
         check(
             includeSystemApiAnnotations = true,
-            warnings = "src/test/pkg/Foo.java:17: error: @SystemApi APIs must also be marked @hide: method test.pkg.Foo.method4() [UnhiddenSystemApi]",
+            expectedIssues = "src/test/pkg/Foo.java:17: error: @SystemApi APIs must also be marked @hide: method test.pkg.Foo.method4() [UnhiddenSystemApi]",
             sourceFiles = arrayOf(
                 java(
                     """
@@ -67,7 +67,7 @@ class ShowAnnotationTest : DriverTest() {
         check(
             includeSystemApiAnnotations = true,
             showUnannotated = true,
-            warnings = "src/test/pkg/Foo.java:17: error: @SystemApi APIs must also be marked @hide: method test.pkg.Foo.method4() [UnhiddenSystemApi]",
+            expectedIssues = "src/test/pkg/Foo.java:17: error: @SystemApi APIs must also be marked @hide: method test.pkg.Foo.method4() [UnhiddenSystemApi]",
             sourceFiles = arrayOf(
                 java(
                     """
@@ -254,7 +254,7 @@ class ShowAnnotationTest : DriverTest() {
     @Test
     fun `No UnhiddenSystemApi warning for --show-single-annotations`() {
         check(
-            warnings = "",
+            expectedIssues = "",
             sourceFiles = arrayOf(
                 java(
                     """
@@ -500,7 +500,7 @@ class ShowAnnotationTest : DriverTest() {
                 ),
                 restrictToSource
             ),
-            warnings = null,
+            expectedIssues = null,
             api = """
                 // Signature format: 3.0
                 package a {

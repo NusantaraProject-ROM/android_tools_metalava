@@ -106,7 +106,7 @@ class ApiLintBaselineTest : DriverTest() {
                 Enum: android.pkg.MyEnum:
                     Enums are discouraged in Android APIs
             """,
-            warnings = """
+            expectedIssues = """
                 src/android/pkg/MyEnum.java:3: error: Enums are discouraged in Android APIs [Enum] [Rule F5 in go/android-api-guidelines]
                 """,
             sourceFiles = arrayOf(
@@ -130,7 +130,7 @@ class ApiLintBaselineTest : DriverTest() {
             compatibilityMode = false,
             baselineApiLint = "",
             errorMessageApiLint = "*** api-lint failed ***",
-            warnings = """
+            expectedIssues = """
                 src/android/pkg/MyClassImpl.java:3: error: Don't expose your implementation details: `MyClassImpl` ends with `Impl` [EndsWithImpl]
                 """,
             sourceFiles = arrayOf(
@@ -158,7 +158,7 @@ class ApiLintBaselineTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             baselineApiLint = "",
-            warnings = """
+            expectedIssues = """
                 src/android/pkg/MyClassImpl.java:3: error: Don't expose your implementation details: `MyClassImpl` ends with `Impl` [EndsWithImpl]
                 """,
             sourceFiles = arrayOf(

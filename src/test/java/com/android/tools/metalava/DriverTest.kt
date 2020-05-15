@@ -274,8 +274,10 @@ abstract class DriverTest {
         trim: Boolean = true,
         /** Whether to remove blank lines in the output (the signature file usually contains a lot of these) */
         stripBlankLines: Boolean = true,
-        /** Warnings expected to be generated when analyzing these sources */
-        warnings: String? = "",
+        /** All expected issues to be generated when analyzing these sources */
+        expectedIssues: String? = "",
+        /** Expected [Severity.ERROR] issues to be generated when analyzing these sources */
+        errorSeverityExpectedIssues: String? = null,
         checkCompilation: Boolean = false,
         /** Annotations to merge in (in .xml format) */
         @Language("XML") mergeXmlAnnotations: String? = null,
@@ -456,7 +458,7 @@ abstract class DriverTest {
             checkCompatibilityApiReleased != null ||
             checkCompatibilityRemovedApiCurrent != null ||
             checkCompatibilityRemovedApiReleased != null) &&
-            (warnings != null && !warnings.trim().isEmpty())
+            (expectedIssues != null && !expectedIssues.trim().isEmpty())
         ) {
             "Aborting: Found compatibility problems with --check-compatibility"
         } else {
@@ -519,10 +521,15 @@ abstract class DriverTest {
             emptyArray()
         }
 
-        val reportedWarnings = StringBuilder()
+        val allReportedIssues = StringBuilder()
+        val errorSeverityReportedIssues = StringBuilder()
         Reporter.rootFolder = project
-        Reporter.reportPrinter = { message ->
-            reportedWarnings.append(cleanupString(message, project).trim()).append('\n')
+        Reporter.reportPrinter = { message, severity ->
+            val cleanedUpMessage = cleanupString(message, project).trim()
+            if (severity == Severity.ERROR) {
+                errorSeverityReportedIssues.append(cleanedUpMessage).append('\n')
+            }
+            allReportedIssues.append(cleanedUpMessage).append('\n')
         }
 
         val mergeAnnotationsArgs = if (mergeXmlAnnotations != null) {
@@ -1351,10 +1358,16 @@ abstract class DriverTest {
             assertEquals(sdk_widgets.trimIndent().trim(), actual.trim())
         }
 
-        if (warnings != null) {
+        if (expectedIssues != null) {
             assertEquals(
-                warnings.trimIndent().trim(),
-                cleanupString(reportedWarnings.toString(), project)
+                expectedIssues.trimIndent().trim(),
+                cleanupString(allReportedIssues.toString(), project)
+            )
+        }
+        if (errorSeverityExpectedIssues != null) {
+            assertEquals(
+                errorSeverityExpectedIssues.trimIndent().trim(),
+                cleanupString(errorSeverityReportedIssues.toString(), project)
             )
         }
 
