@@ -502,7 +502,7 @@ $FLAGS
     fun `Test issue severity options by numeric id`() {
         check(
             extraArguments = arrayOf("--hide", "366"),
-            warnings = "warning: Issue lookup by numeric id is deprecated, use --hide ArrayReturn instead of --hide 366 [DeprecatedOption]"
+            expectedIssues = "warning: Issue lookup by numeric id is deprecated, use --hide ArrayReturn instead of --hide 366 [DeprecatedOption]"
         )
         assertEquals(Severity.HIDDEN, defaultConfiguration.getSeverity(Issues.ARRAY_RETURN))
     }
@@ -511,7 +511,7 @@ $FLAGS
     fun `Test issue severity options with case insensitive names`() {
         check(
             extraArguments = arrayOf("--hide", "arrayreturn"),
-            warnings = "warning: Case-insensitive issue matching is deprecated, use --hide ArrayReturn instead of --hide arrayreturn [DeprecatedOption]"
+            expectedIssues = "warning: Case-insensitive issue matching is deprecated, use --hide ArrayReturn instead of --hide arrayreturn [DeprecatedOption]"
         )
         assertEquals(Severity.HIDDEN, defaultConfiguration.getSeverity(Issues.ARRAY_RETURN))
     }

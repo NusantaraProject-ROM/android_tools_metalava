@@ -22,7 +22,7 @@ class AndroidApiChecksTest : DriverTest() {
     @Test
     fun `Flag TODO documentation`() {
         check(
-            warnings = """
+            expectedIssues = """
                 src/android/pkg/Test.java:3: lint: Documentation mentions 'TODO' [Todo]
                 src/android/pkg/Test.java:5: lint: Documentation mentions 'TODO' [Todo]
                 """,
@@ -65,7 +65,7 @@ class AndroidApiChecksTest : DriverTest() {
     @Test
     fun `Document Permissions`() {
         check(
-            warnings = """
+            expectedIssues = """
                 src/android/pkg/PermissionTest.java:10: lint: Method 'test0' documentation mentions permissions without declaring @RequiresPermission [RequiresPermission]
                 src/android/pkg/PermissionTest.java:19: lint: Method 'test1' documentation mentions permissions already declared by @RequiresPermission [RequiresPermission]
                 """,
@@ -124,7 +124,7 @@ class AndroidApiChecksTest : DriverTest() {
     @Test
     fun `Document Intent Actions`() {
         check(
-            warnings = """
+            expectedIssues = """
                 src/android/pkg/IntentActionTest.java:27: lint: Field 'BAR_FOO_ERROR_ACTION' is missing @SdkConstant(SdkConstantType.ACTIVITY_INTENT_ACTION) [SdkConstant]
                 src/android/pkg/IntentActionTest.java:16: lint: Field 'FOO_BAR_ERROR_ACTION' is missing @BroadcastBehavior [BroadcastBehavior]
                 src/android/pkg/IntentActionTest.java:16: lint: Field 'FOO_BAR_ERROR_ACTION' is missing @SdkConstant(SdkConstantType.BROADCAST_INTENT_ACTION) [SdkConstant]
@@ -174,7 +174,7 @@ class AndroidApiChecksTest : DriverTest() {
     @Test
     fun `Check Warnings for missing nullness annotations`() {
         check(
-            warnings = """
+            expectedIssues = """
                 src/android/pkg/NullMentions.java:18: warning: Parameter 'param1' of 'method3' documentation mentions 'null' without declaring @NonNull or @Nullable [Nullable]
                 src/android/pkg/NullMentions.java:19: warning: Return value of 'method4' documentation mentions 'null' without declaring @NonNull or @Nullable [Nullable]
                 src/android/pkg/NullMentions.java:8: warning: Field 'field2' documentation mentions 'null' without declaring @NonNull or @Nullable [Nullable]
@@ -219,7 +219,7 @@ class AndroidApiChecksTest : DriverTest() {
     @Test
     fun `Check IntDef Warnings`() {
         check(
-            warnings = """
+            expectedIssues = """
                 src/android/pkg/NullMentions.java:15: warning: Field 'field1' documentation mentions constants without declaring an @IntDef [IntDef]
                 """,
             extraArguments = arrayOf(ARG_WARNING, "IntDef"), // Hidden by default

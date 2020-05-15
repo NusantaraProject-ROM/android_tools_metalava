@@ -107,7 +107,7 @@ class PsiBasedCodebaseTest : DriverTest() {
     @Test
     fun `Invalid syntax`() {
         check(
-            warnings = """
+            expectedIssues = """
                 src/test/pkg/Foo.java:3: error: Syntax error: `'{' or ';' expected` [InvalidSyntax]
             """,
             sourceFiles = arrayOf(
