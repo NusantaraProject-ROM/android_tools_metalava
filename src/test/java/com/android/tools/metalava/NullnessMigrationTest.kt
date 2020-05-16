@@ -712,7 +712,7 @@ class NullnessMigrationTest : DriverTest() {
     @Test
     fun `Test inherited methods`() {
         check(
-            warnings = """
+            expectedIssues = """
                 """,
             migrateNullsApi = """
                 package test.pkg {

@@ -106,9 +106,13 @@ class ApiLintBaselineTest : DriverTest() {
                 Enum: android.pkg.MyEnum:
                     Enums are discouraged in Android APIs
             """,
-            warnings = """
+            expectedIssues = """
                 src/android/pkg/MyEnum.java:3: error: Enums are discouraged in Android APIs [Enum] [Rule F5 in go/android-api-guidelines]
                 """,
+            expectedFail = """
+                1 new API lint issues were found.
+                See tools/metalava/API-LINT.md for how to handle these.
+            """,
             sourceFiles = arrayOf(
                 java(
                     """
@@ -130,7 +134,7 @@ class ApiLintBaselineTest : DriverTest() {
             compatibilityMode = false,
             baselineApiLint = "",
             errorMessageApiLint = "*** api-lint failed ***",
-            warnings = """
+            expectedIssues = """
                 src/android/pkg/MyClassImpl.java:3: error: Don't expose your implementation details: `MyClassImpl` ends with `Impl` [EndsWithImpl]
                 """,
             sourceFiles = arrayOf(
@@ -143,7 +147,11 @@ class ApiLintBaselineTest : DriverTest() {
                     """
                 )
             ),
-            expectedFail = "",
+            expectedFail = """
+                1 new API lint issues were found.
+                See tools/metalava/API-LINT.md for how to handle these.
+                *** api-lint failed ***
+            """,
             expectedOutput = """
                 1 new API lint issues were found.
                 See tools/metalava/API-LINT.md for how to handle these.
@@ -158,7 +166,7 @@ class ApiLintBaselineTest : DriverTest() {
             apiLint = "", // enabled
             compatibilityMode = false,
             baselineApiLint = "",
-            warnings = """
+            expectedIssues = """
                 src/android/pkg/MyClassImpl.java:3: error: Don't expose your implementation details: `MyClassImpl` ends with `Impl` [EndsWithImpl]
                 """,
             sourceFiles = arrayOf(
@@ -171,7 +179,10 @@ class ApiLintBaselineTest : DriverTest() {
                     """
                 )
             ),
-            expectedFail = "",
+            expectedFail = """
+                1 new API lint issues were found.
+                See tools/metalava/API-LINT.md for how to handle these.
+            """,
             expectedOutput = """
                 1 new API lint issues were found.
                 See tools/metalava/API-LINT.md for how to handle these.

@@ -34,7 +34,7 @@ class UnhideApisTest : DriverTest() {
                 ARG_ERROR,
                 "ReferencesHidden"
             ),
-            warnings = """
+            expectedIssues = """
             src/test/pkg/Foo.java:3: error: Class test.pkg.Hidden1 is not public but was referenced (as field type) from public field test.pkg.Foo.hidden1 [ReferencesHidden]
             src/test/pkg/Foo.java:4: error: Class test.pkg.Hidden2 is hidden but was referenced (as field type) from public field test.pkg.Foo.hidden2 [ReferencesHidden]
             src/test/pkg/Foo.java:5: error: Class test.pkg.Hidden1 is not public but was referenced (as parameter type) from public parameter hidden1 in test.pkg.Foo.method(test.pkg.Hidden1 hidden1, test.pkg.Hidden2 hidden2) [ReferencesHidden]
@@ -116,7 +116,7 @@ class UnhideApisTest : DriverTest() {
                 ARG_ERROR,
                 "ReferencesHidden"
             ),
-            warnings = """
+            expectedIssues = """
             src/test/pkg/Foo.java:4: error: Class test.pkg.Hidden2 is hidden but was referenced (as field type) from public field test.pkg.Foo.hidden2 [ReferencesHidden]
             src/test/pkg/Foo.java:5: error: Class test.pkg.Hidden2 is hidden but was referenced (as parameter type) from public parameter hidden2 in test.pkg.Foo.method(test.pkg.Hidden1 hidden1, test.pkg.Hidden2 hidden2) [ReferencesHidden]
             src/test/pkg/Foo.java:5: error: Class test.pkg.Hidden3 is hidden but was referenced (as exception) from public method test.pkg.Foo.method(test.pkg.Hidden1,test.pkg.Hidden2) [ReferencesHidden]
@@ -214,7 +214,7 @@ class UnhideApisTest : DriverTest() {
             ),
 
             // TODO: Test annotations! (values, annotation classes, etc.)
-            warnings = """
+            expectedIssues = """
                     src/test/pkg1/Usage.java:7: error: Class test.pkg1.Class3 is not public but was referenced (as field type) from public field test.pkg1.Usage.myClass1 [ReferencesHidden]
                     src/test/pkg1/Usage.java:8: error: Class test.pkg1.Class4 is not public but was referenced (as field type argument class) from public field test.pkg1.Usage.myClass2 [ReferencesHidden]
                     src/test/pkg1/Usage.java:9: error: Class test.pkg1.Class5 is not public but was referenced (as field type argument class) from public field test.pkg1.Usage.myClass3 [ReferencesHidden]

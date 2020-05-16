@@ -97,11 +97,10 @@ fun run(
     stderr: PrintWriter = PrintWriter(OutputStreamWriter(System.err)),
     setExitCode: Boolean = false
 ): Boolean {
-    var exitValue: Boolean
     var exitCode = 0
 
     try {
-        var modifiedArgs = preprocessArgv(originalArgs)
+        val modifiedArgs = preprocessArgv(originalArgs)
 
         progress("$PROGRAM_NAME started\n")
 
@@ -117,7 +116,6 @@ fun run(
         if (options.allReporters.any { it.hasErrors() } && !options.passBaselineUpdates) {
             exitCode = -1
         }
-        exitValue = true
     } catch (e: DriverException) {
         stdout.flush()
         stderr.flush()
@@ -128,7 +126,6 @@ fun run(
             stdout.println("\n${e.stdout}")
         }
         exitCode = e.exitCode
-        exitValue = false
     } finally {
         Disposer.dispose(LintCoreApplicationEnvironment.get().parentDisposable)
     }
@@ -159,7 +156,7 @@ fun run(
         exit(exitCode)
     }
 
-    return exitValue
+    return exitCode == 0
 }
 
 private fun exit(exitCode: Int = 0) {
