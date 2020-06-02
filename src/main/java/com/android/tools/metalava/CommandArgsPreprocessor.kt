@@ -168,7 +168,7 @@ private fun generateRerunScript(stdout: PrintWriter, args: Array<String>) {
     // Metalava's jar path.
     val jar = ApiLint::class.java.protectionDomain?.codeSource?.location?.toURI()?.path
     // JVM options.
-    val jvmOptions = ManagementWrapper.getVmArguments()
+    val jvmOptions = runtimeMXBean.inputArguments
     if (jvmOptions == null || jar == null) {
         stdout.println("$PROGRAM_NAME unable to get my jar file path.")
         return
