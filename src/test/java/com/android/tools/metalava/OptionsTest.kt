@@ -407,8 +407,12 @@ Sandboxing:
 --strict-input-files <file>                  
                                              Do not read files that are not explicitly specified in the command line.
                                              All violations are written to the given file. Reads on directories are
-                                             always allowed, but metalava still trackes reads on directories that are
-                                             not specified in the command line, and write them to the file.
+                                             always allowed, but metalava still tracks reads on directories that are not
+                                             specified in the command line, and write them to the file.
+--strict-input-files:warn <file>             
+                                             Warn when files not explicitly specified on the command line are read. All
+                                             violations are written to the given file. Reads on directories not
+                                             specified in the command line are allowed but also logged.
 --strict-input-files:stack <file>            
                                              Same as --strict-input-files but also print stacktraces.
 --strict-input-files-exempt <files or dirs>  

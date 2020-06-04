@@ -169,6 +169,7 @@ const val ARG_ERROR_MESSAGE_CHECK_COMPATIBILITY_CURRENT = "--error-message:compa
 const val ARG_NO_IMPLICIT_ROOT = "--no-implicit-root"
 const val ARG_STRICT_INPUT_FILES = "--strict-input-files"
 const val ARG_STRICT_INPUT_FILES_STACK = "--strict-input-files:stack"
+const val ARG_STRICT_INPUT_FILES_WARN = "--strict-input-files:warn"
 const val ARG_STRICT_INPUT_FILES_EXEMPT = "--strict-input-files-exempt"
 
 class Options(
@@ -667,12 +668,14 @@ class Options(
     enum class StrictInputFileMode {
         PERMISSIVE,
         STRICT,
+        STRICT_WARN,
         STRICT_WITH_STACK;
 
         companion object {
             fun fromArgument(arg: String): StrictInputFileMode {
                 return when (arg) {
                     ARG_STRICT_INPUT_FILES -> STRICT
+                    ARG_STRICT_INPUT_FILES_WARN -> STRICT_WARN
                     ARG_STRICT_INPUT_FILES_STACK -> STRICT_WITH_STACK
                     else -> PERMISSIVE
                 }
@@ -682,7 +685,8 @@ class Options(
 
     /**
      * Whether we should allow metalava to read files that are not explicitly specified in the
-     * command line. See [ARG_STRICT_INPUT_FILES] and [ARG_STRICT_INPUT_FILES_STACK]
+     * command line. See [ARG_STRICT_INPUT_FILES], [ARG_STRICT_INPUT_FILES_WARN] and
+     * [ARG_STRICT_INPUT_FILES_STACK].
      */
     var strictInputFiles = StrictInputFileMode.PERMISSIVE
 
@@ -1333,9 +1337,9 @@ class Options(
                     allowImplicitRoot = false
                 }
 
-                ARG_STRICT_INPUT_FILES, ARG_STRICT_INPUT_FILES_STACK -> {
+                ARG_STRICT_INPUT_FILES, ARG_STRICT_INPUT_FILES_WARN, ARG_STRICT_INPUT_FILES_STACK -> {
                     if (strictInputViolationsFile != null) {
-                        throw DriverException("$ARG_STRICT_INPUT_FILES and $ARG_STRICT_INPUT_FILES_STACK may be specified only once")
+                        throw DriverException("$ARG_STRICT_INPUT_FILES, $ARG_STRICT_INPUT_FILES_WARN and $ARG_STRICT_INPUT_FILES_STACK may be specified only once")
                     }
                     strictInputFiles = StrictInputFileMode.fromArgument(arg)
 
@@ -2398,8 +2402,11 @@ class Options(
                 "Otherwise, $PROGRAM_NAME adds in source roots implied by the source files",
             "$ARG_STRICT_INPUT_FILES <file>", "Do not read files that are not explicitly specified in the command line. " +
                 "All violations are written to the given file. Reads on directories are always allowed, but " +
-                "$PROGRAM_NAME still trackes reads on directories that are not specified in the command line, " +
+                "$PROGRAM_NAME still tracks reads on directories that are not specified in the command line, " +
                 "and write them to the file.",
+            "$ARG_STRICT_INPUT_FILES_WARN <file>", "Warn when files not explicitly specified on the command line are " +
+                "read. All violations are written to the given file. Reads on directories not specified in the command " +
+                "line are allowed but also logged.",
             "$ARG_STRICT_INPUT_FILES_STACK <file>", "Same as $ARG_STRICT_INPUT_FILES but also print stacktraces.",
             "$ARG_STRICT_INPUT_FILES_EXEMPT <files or dirs>", "Used with $ARG_STRICT_INPUT_FILES. Explicitly allow " +
                 "access to files and/or directories (separated by `${File.pathSeparator}). Can also be " +
