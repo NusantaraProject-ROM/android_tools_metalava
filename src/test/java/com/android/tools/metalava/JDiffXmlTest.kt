@@ -457,6 +457,7 @@ class JDiffXmlTest : DriverTest() {
              final="true"
              deprecated="not deprecated"
              visibility="public"
+             metalava:enumConstant="true"
             >
             </field>
             <field name="B"
@@ -467,6 +468,7 @@ class JDiffXmlTest : DriverTest() {
              final="true"
              deprecated="not deprecated"
              visibility="public"
+             metalava:enumConstant="true"
             >
             </field>
             </class>
