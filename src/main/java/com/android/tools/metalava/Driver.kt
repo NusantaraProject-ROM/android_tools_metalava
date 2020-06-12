@@ -122,7 +122,9 @@ fun run(
         }
         if (hasFileReadViolations) {
             stderr.println("$PROGRAM_NAME detected access to files that are not explicitly specified. See ${options.strictInputViolationsFile} for details.")
-            exitCode = -1
+            if (options.strictInputFiles == Options.StrictInputFileMode.STRICT) {
+                exitCode = -1
+            }
         }
     } catch (e: DriverException) {
         stdout.flush()
@@ -186,14 +188,20 @@ private fun maybeActivateSandbox() {
     val writer = options.strictInputViolationsPrintWriter!!
 
     // Writes all violations to [Options.strictInputFiles].
-    // Note violation reads on directories are logged, but is considered to be a "warning" and
-    // doesn't affect the exit code. See [FileReadSandbox] for the details.
+    // If Options.StrictInputFile.Mode is STRICT, then all violations on reads are logged, and the
+    // tool exits with a negative error code if there are any file read violations. Directory read
+    // violations are logged, but are considered to be a "warning" and doesn't affect the exit code.
+    // If STRICT_WARN, all violations on reads are logged similar to STRICT, but the exit code is
+    // unaffected.
+    // If STRICT_WITH_STACK, similar to STRICT, but also logs the stack trace to
+    // Options.strictInputFiles.
+    // See [FileReadSandbox] for the details.
     FileReadSandbox.activate(object : FileReadSandbox.Listener {
         var seen = mutableSetOf<String>()
         override fun onViolation(absolutePath: String, isDirectory: Boolean) {
             if (!seen.contains(absolutePath)) {
                 val suffix = if (isDirectory) "/" else ""
-                writer.println("Sandbox violation: $absolutePath$suffix")
+                writer.println("$absolutePath$suffix")
                 if (options.strictInputFiles == Options.StrictInputFileMode.STRICT_WITH_STACK) {
                     Throwable().printStackTrace(writer)
                 }
