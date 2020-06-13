@@ -86,6 +86,8 @@ fun main(args: Array<String>) {
     run(args, setExitCode = true)
 }
 
+internal var hasFileReadViolations = false
+
 /**
  * The metadata driver is a command line interface to extracting various metadata
  * from a source tree (or existing signature files etc). Run with --help to see
@@ -111,10 +113,18 @@ fun run(
         compatibility = Compatibility(compat = Options.useCompatMode(modifiedArgs))
         options = Options(modifiedArgs, stdout, stderr)
 
+        maybeActivateSandbox()
+
         processFlags()
 
         if (options.allReporters.any { it.hasErrors() } && !options.passBaselineUpdates) {
             exitCode = -1
+        }
+        if (hasFileReadViolations) {
+            stderr.println("$PROGRAM_NAME detected access to files that are not explicitly specified. See ${options.strictInputViolationsFile} for details.")
+            if (options.strictInputFiles == Options.StrictInputFileMode.STRICT) {
+                exitCode = -1
+            }
         }
     } catch (e: DriverException) {
         stdout.flush()
@@ -143,6 +153,7 @@ fun run(
     }
 
     options.reportEvenIfSuppressedWriter?.close()
+    options.strictInputViolationsPrintWriter?.close()
 
     // Show failure messages, if any.
     options.allReporters.forEach {
@@ -166,6 +177,41 @@ private fun exit(exitCode: Int = 0) {
     options.stdout.flush()
     options.stderr.flush()
     System.exit(exitCode)
+}
+
+private fun maybeActivateSandbox() {
+    // Set up a sandbox to detect access to files that are not explicitly specified.
+    if (options.strictInputFiles == Options.StrictInputFileMode.PERMISSIVE) {
+        return
+    }
+
+    val writer = options.strictInputViolationsPrintWriter!!
+
+    // Writes all violations to [Options.strictInputFiles].
+    // If Options.StrictInputFile.Mode is STRICT, then all violations on reads are logged, and the
+    // tool exits with a negative error code if there are any file read violations. Directory read
+    // violations are logged, but are considered to be a "warning" and doesn't affect the exit code.
+    // If STRICT_WARN, all violations on reads are logged similar to STRICT, but the exit code is
+    // unaffected.
+    // If STRICT_WITH_STACK, similar to STRICT, but also logs the stack trace to
+    // Options.strictInputFiles.
+    // See [FileReadSandbox] for the details.
+    FileReadSandbox.activate(object : FileReadSandbox.Listener {
+        var seen = mutableSetOf<String>()
+        override fun onViolation(absolutePath: String, isDirectory: Boolean) {
+            if (!seen.contains(absolutePath)) {
+                val suffix = if (isDirectory) "/" else ""
+                writer.println("$absolutePath$suffix")
+                if (options.strictInputFiles == Options.StrictInputFileMode.STRICT_WITH_STACK) {
+                    Throwable().printStackTrace(writer)
+                }
+                seen.add(absolutePath)
+                if (!isDirectory) {
+                    hasFileReadViolations = true
+                }
+            }
+        }
+    })
 }
 
 private fun processFlags() {
@@ -863,10 +909,13 @@ internal fun parseSources(
     val joined = mutableListOf<File>()
     joined.addAll(sourcePath.mapNotNull { if (it.path.isNotBlank()) it.absoluteFile else null })
     joined.addAll(classpath.map { it.absoluteFile })
+
     // Add in source roots implied by the source files
     val sourceRoots = mutableListOf<File>()
-    extractRoots(sources, sourceRoots)
-    joined.addAll(sourceRoots)
+    if (options.allowImplicitRoot) {
+        extractRoots(sources, sourceRoots)
+        joined.addAll(sourceRoots)
+    }
 
     // Create project environment with those paths
     projectEnvironment.registerPaths(joined)

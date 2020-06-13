@@ -166,6 +166,11 @@ const val ARG_IGNORE_CLASSES_ON_CLASSPATH = "--ignore-classes-on-classpath"
 const val ARG_ERROR_MESSAGE_API_LINT = "--error-message:api-lint"
 const val ARG_ERROR_MESSAGE_CHECK_COMPATIBILITY_RELEASED = "--error-message:compatibility:released"
 const val ARG_ERROR_MESSAGE_CHECK_COMPATIBILITY_CURRENT = "--error-message:compatibility:current"
+const val ARG_NO_IMPLICIT_ROOT = "--no-implicit-root"
+const val ARG_STRICT_INPUT_FILES = "--strict-input-files"
+const val ARG_STRICT_INPUT_FILES_STACK = "--strict-input-files:stack"
+const val ARG_STRICT_INPUT_FILES_WARN = "--strict-input-files:warn"
+const val ARG_STRICT_INPUT_FILES_EXEMPT = "--strict-input-files-exempt"
 
 class Options(
     private val args: Array<String>,
@@ -657,6 +662,37 @@ class Options(
     /** How to handle typedef annotations in signature files; corresponds to $ARG_TYPEDEFS_IN_SIGNATURES */
     var typedefMode = TypedefMode.NONE
 
+    /** Allow implicit root detection (which is the default behavior). See [ARG_NO_IMPLICIT_ROOT] */
+    var allowImplicitRoot = true
+
+    enum class StrictInputFileMode {
+        PERMISSIVE,
+        STRICT,
+        STRICT_WARN,
+        STRICT_WITH_STACK;
+
+        companion object {
+            fun fromArgument(arg: String): StrictInputFileMode {
+                return when (arg) {
+                    ARG_STRICT_INPUT_FILES -> STRICT
+                    ARG_STRICT_INPUT_FILES_WARN -> STRICT_WARN
+                    ARG_STRICT_INPUT_FILES_STACK -> STRICT_WITH_STACK
+                    else -> PERMISSIVE
+                }
+            }
+        }
+    }
+
+    /**
+     * Whether we should allow metalava to read files that are not explicitly specified in the
+     * command line. See [ARG_STRICT_INPUT_FILES], [ARG_STRICT_INPUT_FILES_WARN] and
+     * [ARG_STRICT_INPUT_FILES_STACK].
+     */
+    var strictInputFiles = StrictInputFileMode.PERMISSIVE
+
+    var strictInputViolationsFile: File? = null
+    var strictInputViolationsPrintWriter: PrintWriter? = null
+
     /** File conversion tasks */
     data class ConvertFile(
         val fromApiFile: File,
@@ -974,7 +1010,7 @@ class Options(
                     if (index < args.size - 1) {
                         val nextArg = args[index + 1]
                         if (!nextArg.startsWith("-")) {
-                            val file = fileForPath(nextArg)
+                            val file = stringToExistingFile(nextArg)
                             if (file.isFile) {
                                 index++
                                 migrateNullsFrom = file
@@ -1005,7 +1041,7 @@ class Options(
                     if (index < args.size - 1) {
                         val nextArg = args[index + 1]
                         if (!nextArg.startsWith("-")) {
-                            val file = fileForPath(nextArg)
+                            val file = stringToExistingFile(nextArg)
                             if (file.isFile) {
                                 index++
                                 mutableCompatibilityChecks.add(CheckRequest(file, ApiType.PUBLIC_API, ReleaseType.DEV))
@@ -1294,6 +1330,28 @@ class Options(
                         level == null -> throw DriverException("$value is not a valid or supported Java language level")
                         level.isLessThan(LanguageLevel.JDK_1_7) -> throw DriverException("$arg must be at least 1.7")
                         else -> javaLanguageLevel = level
+                    }
+                }
+
+                ARG_NO_IMPLICIT_ROOT -> {
+                    allowImplicitRoot = false
+                }
+
+                ARG_STRICT_INPUT_FILES, ARG_STRICT_INPUT_FILES_WARN, ARG_STRICT_INPUT_FILES_STACK -> {
+                    if (strictInputViolationsFile != null) {
+                        throw DriverException("$ARG_STRICT_INPUT_FILES, $ARG_STRICT_INPUT_FILES_WARN and $ARG_STRICT_INPUT_FILES_STACK may be specified only once")
+                    }
+                    strictInputFiles = StrictInputFileMode.fromArgument(arg)
+
+                    val file = stringToNewOrExistingFile(getValue(args, ++index))
+                    strictInputViolationsFile = file
+                    strictInputViolationsPrintWriter = file.printWriter()
+                }
+                ARG_STRICT_INPUT_FILES_EXEMPT -> {
+                    val listString = getValue(args, ++index)
+                    listString.split(File.pathSeparatorChar).forEach { path ->
+                        // Throw away the result; just let the function add the files to the whitelist.
+                        stringToExistingFilesOrDirs(path)
                     }
                 }
 
@@ -1689,6 +1747,10 @@ class Options(
      * Produce a default file name for the baseline. It's normally "baseline.txt", but can
      * be prefixed by show annotations; e.g. @TestApi -> test-baseline.txt, @SystemApi -> system-baseline.txt,
      * etc.
+     *
+     * Note because the default baseline file is not explicitly set in the command line,
+     * this file would trigger a --strict-input-files violation. To avoid that, always explicitly
+     * pass a baseline file.
      */
     private fun getDefaultBaselineFile(): File? {
         if (sourcePath.isNotEmpty() && sourcePath[0].path.isNotBlank()) {
@@ -1712,6 +1774,13 @@ class Options(
         }
     }
 
+    /**
+     * Find an android stub jar that matches the given criteria.
+     *
+     * Note because the default baseline file is not explicitly set in the command line,
+     * this file would trigger a --strict-input-files violation. To avoid that, use
+     * --strict-input-files-exempt to exempt the jar directory.
+     */
     private fun findAndroidJars(
         androidJarPatterns: List<String>,
         currentApiLevel: Int,
@@ -1774,8 +1843,9 @@ class Options(
     }
 
     private fun getAndroidJarFile(apiLevel: Int, patterns: List<String>): File? {
+        // Note this method doesn't register the result to [FileReadSandbox]
         return patterns
-            .map { fileForPath(it.replace("%", Integer.toString(apiLevel))) }
+            .map { fileForPathInner(it.replace("%", Integer.toString(apiLevel))) }
             .firstOrNull { it.isFile }
     }
 
@@ -1854,78 +1924,86 @@ class Options(
     }
 
     private fun stringToExistingDir(value: String): File {
-        val file = fileForPath(value)
+        val file = fileForPathInner(value)
         if (!file.isDirectory) {
             throw DriverException("$file is not a directory")
         }
-        return file
+        return FileReadSandbox.allowAccess(file)
     }
 
     @Suppress("unused")
     private fun stringToExistingDirs(value: String): List<File> {
         val files = mutableListOf<File>()
         for (path in value.split(File.pathSeparatorChar)) {
-            val file = fileForPath(path)
+            val file = fileForPathInner(path)
             if (!file.isDirectory) {
                 throw DriverException("$file is not a directory")
             }
             files.add(file)
         }
-        return files
+        return FileReadSandbox.allowAccess(files)
     }
 
     private fun stringToExistingDirsOrJars(value: String): List<File> {
         val files = mutableListOf<File>()
         for (path in value.split(File.pathSeparatorChar)) {
-            val file = fileForPath(path)
+            val file = fileForPathInner(path)
             if (!file.isDirectory && !(file.path.endsWith(SdkConstants.DOT_JAR) && file.isFile)) {
                 throw DriverException("$file is not a jar or directory")
             }
             files.add(file)
         }
-        return files
+        return FileReadSandbox.allowAccess(files)
     }
 
     private fun stringToExistingDirsOrFiles(value: String): List<File> {
         val files = mutableListOf<File>()
         for (path in value.split(File.pathSeparatorChar)) {
-            val file = fileForPath(path)
+            val file = fileForPathInner(path)
             if (!file.exists()) {
                 throw DriverException("$file does not exist")
             }
             files.add(file)
         }
-        return files
+        return FileReadSandbox.allowAccess(files)
     }
 
     private fun stringToExistingFile(value: String): File {
-        val file = fileForPath(value)
+        val file = fileForPathInner(value)
         if (!file.isFile) {
             throw DriverException("$file is not a file")
         }
-        return file
+        return FileReadSandbox.allowAccess(file)
     }
 
     @Suppress("unused")
     private fun stringToExistingFileOrDir(value: String): File {
-        val file = fileForPath(value)
+        val file = fileForPathInner(value)
         if (!file.exists()) {
             throw DriverException("$file is not a file or directory")
         }
-        return file
+        return FileReadSandbox.allowAccess(file)
     }
 
     private fun stringToExistingFiles(value: String): List<File> {
+        return stringToExistingFilesOrDirsInternal(value, false)
+    }
+
+    private fun stringToExistingFilesOrDirs(value: String): List<File> {
+        return stringToExistingFilesOrDirsInternal(value, true)
+    }
+
+    private fun stringToExistingFilesOrDirsInternal(value: String, allowDirs: Boolean): List<File> {
         val files = mutableListOf<File>()
         value.split(File.pathSeparatorChar)
-            .map { fileForPath(it) }
+            .map { fileForPathInner(it) }
             .forEach { file ->
                 if (file.path.startsWith("@")) {
                     // File list; files to be read are stored inside. SHOULD have been one per line
                     // but sadly often uses spaces for separation too (so we split by whitespace,
                     // which means you can't point to files in paths with spaces)
                     val listFile = File(file.path.substring(1))
-                    if (!listFile.isFile) {
+                    if (!allowDirs && !listFile.isFile) {
                         throw DriverException("$listFile is not a file")
                     }
                     val contents = Files.asCharSource(listFile, UTF_8).read()
@@ -1933,23 +2011,23 @@ class Options(
                         contents
                     )
                     pathList.asSequence().map { File(it) }.forEach {
-                        if (!it.isFile) {
+                        if (!allowDirs && !it.isFile) {
                             throw DriverException("$it is not a file")
                         }
                         files.add(it)
                     }
                 } else {
-                    if (!file.isFile) {
+                    if (!allowDirs && !file.isFile) {
                         throw DriverException("$file is not a file")
                     }
                     files.add(file)
                 }
             }
-        return files
+        return FileReadSandbox.allowAccess(files)
     }
 
     private fun stringToNewFile(value: String): File {
-        val output = fileForPath(value)
+        val output = fileForPathInner(value)
 
         if (output.exists()) {
             if (output.isDirectory) {
@@ -1966,22 +2044,22 @@ class Options(
             }
         }
 
-        return output
+        return FileReadSandbox.allowAccess(output)
     }
 
     private fun stringToNewOrExistingDir(value: String): File {
-        val dir = fileForPath(value)
+        val dir = fileForPathInner(value)
         if (!dir.isDirectory) {
             val ok = dir.mkdirs()
             if (!ok) {
                 throw DriverException("Could not create $dir")
             }
         }
-        return dir
+        return FileReadSandbox.allowAccess(dir)
     }
 
     private fun stringToNewOrExistingFile(value: String): File {
-        val file = fileForPath(value)
+        val file = fileForPathInner(value)
         if (!file.exists()) {
             val parentFile = file.parentFile
             if (parentFile != null && !parentFile.isDirectory) {
@@ -1991,11 +2069,11 @@ class Options(
                 }
             }
         }
-        return file
+        return FileReadSandbox.allowAccess(file)
     }
 
     private fun stringToNewDir(value: String): File {
-        val output = fileForPath(value)
+        val output = fileForPathInner(value)
         val ok =
             if (output.exists()) {
                 if (output.isDirectory) {
@@ -2013,10 +2091,19 @@ class Options(
             throw DriverException("Could not create $output")
         }
 
-        return output
+        return FileReadSandbox.allowAccess(output)
     }
 
-    private fun fileForPath(path: String): File {
+    /**
+     * Converts a path to a [File] that represents the absolute path, with the following special
+     * behavior:
+     * - "~" will be expanded into the home directory path.
+     * - If the given path starts with "@", it'll be converted into "@" + [file's absolute path]
+     *
+     * Note, unlike the other "stringToXxx" methods, this method won't register the given path
+     * to [FileReadSandbox].
+     */
+    private fun fileForPathInner(path: String): File {
         // java.io.File doesn't automatically handle ~/ -> home directory expansion.
         // This isn't necessary when metalava is run via the command line driver
         // (since shells will perform this expansion) but when metalava is run
@@ -2309,6 +2396,21 @@ class Options(
             ARG_CURRENT_VERSION, "Sets the current API level of the current source code",
             ARG_CURRENT_CODENAME, "Sets the code name for the current source code",
             ARG_CURRENT_JAR, "Points to the current API jar, if any",
+
+            "", "\nSandboxing:",
+            ARG_NO_IMPLICIT_ROOT, "Disable implicit root directory detection. " +
+                "Otherwise, $PROGRAM_NAME adds in source roots implied by the source files",
+            "$ARG_STRICT_INPUT_FILES <file>", "Do not read files that are not explicitly specified in the command line. " +
+                "All violations are written to the given file. Reads on directories are always allowed, but " +
+                "$PROGRAM_NAME still tracks reads on directories that are not specified in the command line, " +
+                "and write them to the file.",
+            "$ARG_STRICT_INPUT_FILES_WARN <file>", "Warn when files not explicitly specified on the command line are " +
+                "read. All violations are written to the given file. Reads on directories not specified in the command " +
+                "line are allowed but also logged.",
+            "$ARG_STRICT_INPUT_FILES_STACK <file>", "Same as $ARG_STRICT_INPUT_FILES but also print stacktraces.",
+            "$ARG_STRICT_INPUT_FILES_EXEMPT <files or dirs>", "Used with $ARG_STRICT_INPUT_FILES. Explicitly allow " +
+                "access to files and/or directories (separated by `${File.pathSeparator}). Can also be " +
+                "@ followed by a path to a text file containing paths to the full set of files and/or directories.",
 
             "", "\nEnvironment Variables:",
             ENV_VAR_METALAVA_DUMP_ARGV, "Set to true to have metalava emit all the arguments it was invoked with. " +
