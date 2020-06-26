@@ -188,6 +188,24 @@ internal object FileReadSandbox {
         return false
     }
 
+    fun isDirectory(file: File): Boolean {
+        try {
+            temporaryExempt.set(true)
+            return file.isDirectory()
+        } finally {
+            temporaryExempt.set(false)
+        }
+    }
+
+    fun isFile(file: File): Boolean {
+        try {
+            temporaryExempt.set(true)
+            return file.isFile()
+        } finally {
+            temporaryExempt.set(false)
+        }
+    }
+
     /** Used to skip all checks on any filesystem access made within the [check] method. */
     private val temporaryExempt = ThreadLocal<Boolean>()
 
