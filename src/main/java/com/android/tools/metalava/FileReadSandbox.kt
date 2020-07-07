@@ -172,6 +172,9 @@ internal object FileReadSandbox {
     }
 
     fun isAccessAllowed(file: File): Boolean {
+        if (!file.exists()) {
+            return true
+        }
         val absPath = file.absolutePath
 
         if (allowedPaths.contains(absPath)) {
