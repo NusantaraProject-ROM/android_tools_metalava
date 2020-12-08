@@ -70,7 +70,10 @@ API sources:
                                              parse.
 --source-path <paths>                        
                                              One or more directories (separated by `:`) containing source files (within
-                                             a package hierarchy)
+                                             a package hierarchy). If --strict-input-files, --strict-input-files:warn,
+                                             or --strict-input-files:stack are used, files accessed under --source-path
+                                             that are not explicitly specified in --source-files are reported as
+                                             violations.
 --classpath <paths>                          
                                              One or more directories or jars (separated by `:`) containing classes that
                                              should be on the classpath when parsing the source files

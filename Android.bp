@@ -82,6 +82,9 @@ java_library {
         ":private-stub-annotations",
     ],
     sdk_version: "core_current",
+    // private-stub-annotations-jar ends up in android.jar in the SDK and should
+    // use -target 8.
+    java_version: "1.8",
 }
 
 droiddoc_exported_dir {
